@@ -1,7 +1,3 @@
-# Nested repos (tracked independently)
-CHATVOTE-BackEnd/
-CHATVOTE-FrontEnd/
-
 # Tool/plugin state
 .osgrep
 .omc/

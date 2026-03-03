@@ -1,0 +1,8 @@
+[submodule "CHATVOTE-BackEnd"]
+	path = CHATVOTE-BackEnd
+	url = git@github.com:TANDEM-Association/CHATVOTE-BackEnd.git
+	branch = main
+[submodule "CHATVOTE-FrontEnd"]
+	path = CHATVOTE-FrontEnd
+	url = git@github.com:TANDEM-Association/CHATVOTE-FrontEnd.git
+	branch = main
