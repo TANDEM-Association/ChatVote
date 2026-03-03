@@ -1,0 +1,16 @@
+# Nested repos (tracked independently)
+CHATVOTE-BackEnd/
+CHATVOTE-FrontEnd/
+
+# Tool/plugin state
+.osgrep
+.omc/
+.quint/
+.claude/
+.playwright-mcp/
+
+# Editor/IDE
+.mcp.json
+
+# OS
+.DS_Store
