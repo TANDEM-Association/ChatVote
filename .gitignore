@@ -5,8 +5,7 @@
 .osgrep
 .omc/
 .quint/
-.claude/*
-!.claude/settings.json
+.claude/todos
 .playwright-mcp/
 
 # Editor/IDE
