@@ -1,0 +1,8 @@
+{
+  "name": "chatvote-firebase",
+  "private": true,
+  "description": "Firebase emulator tooling for ChatVote local development",
+  "dependencies": {
+    "firebase-tools": "^14.0.0"
+  }
+}
