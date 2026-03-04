@@ -87,14 +87,21 @@ dev: dev-infra
 	@echo ""
 
 dev-infra:
-	@if curl -sf http://localhost:11434/ > /dev/null 2>&1; then \
+	@PROFILES=""; \
+	if curl -sf http://localhost:11434/ > /dev/null 2>&1; then \
 		echo "Native Ollama detected on :11434 — skipping Docker Ollama (GPU accelerated)."; \
-		docker compose -f docker-compose.dev.yml up -d --wait; \
 	else \
 		echo "No native Ollama found — starting Ollama in Docker (CPU only, slow on macOS)."; \
 		echo "TIP: For Apple Silicon, install natively: brew install ollama && ollama serve"; \
-		docker compose -f docker-compose.dev.yml --profile ollama up -d --wait; \
-	fi
+		PROFILES="$$PROFILES --profile ollama"; \
+	fi; \
+	if curl -sf http://localhost:8081/ > /dev/null 2>&1; then \
+		echo "Native Firebase emulators detected on :8081 — skipping Docker emulators."; \
+	else \
+		echo "No native Firebase emulators found — starting in Docker."; \
+		PROFILES="$$PROFILES --profile firebase"; \
+	fi; \
+	docker compose -f docker-compose.dev.yml $$PROFILES up -d --wait
 
 # Backward-compat alias — Firebase emulators now run inside Docker via dev-infra
 dev-emulators: dev-infra
@@ -180,7 +187,7 @@ logs:
 
 stop:
 	@echo "Stopping all services..."
-	docker compose -f docker-compose.dev.yml --profile ollama down
+	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase down
 	@for svc in backend frontend; do \
 		if [ -f .logs/$$svc.pid ]; then \
 			kill $$(cat .logs/$$svc.pid) 2>/dev/null || true; \
@@ -191,4 +198,4 @@ stop:
 	@echo "All services stopped."
 
 clean: stop
-	docker compose -f docker-compose.dev.yml --profile ollama down -v
+	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase down -v
