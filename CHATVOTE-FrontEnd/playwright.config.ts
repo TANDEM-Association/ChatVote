@@ -61,10 +61,13 @@ export default defineConfig({
   webServer: {
     // Use port 3001 so the test frontend is isolated from the dev server on :3000.
     // The mock Socket.IO server runs on :8082 (not :8080, which is the real backend).
-    command: 'PORT=3001 npm run dev',
+    // CI uses a production build (fast startup); local dev uses Turbopack HMR.
+    command: process.env.CI
+      ? 'npm run build && PORT=3001 npm run start'
+      : 'PORT=3001 npm run dev',
     url: 'http://localhost:3001',
     reuseExistingServer: !process.env.CI,
-    timeout: 120000,
+    timeout: process.env.CI ? 180000 : 120000,
     env: {
       NEXT_PUBLIC_FIREBASE_API_KEY: 'fake-api-key',
       NEXT_PUBLIC_FIREBASE_AUTH_DOMAIN: 'localhost',
