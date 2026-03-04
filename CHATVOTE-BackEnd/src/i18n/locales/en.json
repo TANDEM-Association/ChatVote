@@ -1,0 +1,29 @@
+{
+  "welcome": "Welcome to the ChatVote API",
+  "errors": {
+    "generic": "Sorry, an error occurred. Please try again later.",
+    "cannot_answer": "Unfortunately, I cannot answer this question.",
+    "session_not_started": "It seems the chat session has not been started.",
+    "timeout_party_documents": "Timeout while fetching the documents.",
+    "timeout_party_responses": "Timeout while fetching the responses.",
+    "validation_error": "Data validation error."
+  },
+  "chat": {
+    "summary_placeholder": "A summary should appear here...",
+    "no_title": "No title assigned",
+    "default_title": "Political discussion"
+  },
+  "rag": {
+    "no_info_found": "No relevant information found in the document collection.",
+    "no_candidate_info": "No relevant information found on candidate websites.",
+    "no_manifesto_info": "No information found in official programs."
+  },
+  "voting_behavior": {
+    "no_votes_found": "No matching votes found.",
+    "cannot_provide_info": "Unfortunately, I cannot provide information on this topic."
+  },
+  "prompts": {
+    "response_language": "Respond exclusively in English.",
+    "use_simple_language": "Use simple English and briefly explain technical terms."
+  }
+}

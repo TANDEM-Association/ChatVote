@@ -1,0 +1,40 @@
+# SPDX-FileCopyrightText: 2025 chatvote
+#
+# SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
+
+# Development docker-compose with hot-reload
+# Usage: docker-compose -f docker-compose.dev.yml up --build
+
+services:
+  qdrant:
+    image: qdrant/qdrant:latest
+    ports:
+      - "6333:6333"
+      - "6334:6334"
+    volumes:
+      - qdrant_data:/qdrant/storage
+    environment:
+      - QDRANT__SERVICE__GRPC_PORT=6334
+
+  chatvote-api:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    ports:
+      - "8080:8080"
+    env_file:
+      - .env
+    environment:
+      - QDRANT_URL=http://qdrant:6333
+      - PYTHONDONTWRITEBYTECODE=1
+      - PYTHONUNBUFFERED=1
+    depends_on:
+      - qdrant
+    volumes:
+      # Mount source code for hot-reload
+      - ./src:/app/src:ro
+      - ./firebase:/app/firebase:ro
+      - ./chat-vote-dev-firebase-adminsdk-fbsvc-5357066618.json:/app/chat-vote-dev-firebase-adminsdk-fbsvc-5357066618.json:ro
+
+volumes:
+  qdrant_data:

@@ -1,0 +1,14 @@
+{
+    "chat-vote": {
+        "is_already_in_parliament": false,
+        "candidate": "ChatVote Assistant",
+        "background_color": "#4A90D9",
+        "website_url": "https://chatvote.fr",
+        "party_id": "chat-vote",
+        "name": "ChatVote",
+        "election_result_forecast_percent": 0,
+        "description": "L'assistant ChatVote peut répondre aux questions générales sur les élections municipales, le système électoral français et l'application ChatVote.",
+        "election_manifesto_url": "https://chatvote.fr/presse",
+        "long_name": "ChatVote Assistant"
+    }
+}

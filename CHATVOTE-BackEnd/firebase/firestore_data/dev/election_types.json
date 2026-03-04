@@ -1,0 +1,30 @@
+{
+    "_metadata": {
+        "description": "Types d'élections disponibles dans l'application",
+        "last_updated": "2026-01-27"
+    },
+    "municipalities-2026": {
+        "election_type_id": "municipalities-2026",
+        "name": "Élections Municipales 2026",
+        "short_name": "Municipales 2026",
+        "type": "municipalities",
+        "year": 2026,
+        "description": "Élections municipales françaises de mars 2026. Les électeurs élisent les conseillers municipaux qui désigneront ensuite le maire.",
+        "first_round_date": "2026-03-15",
+        "second_round_date": "2026-03-22",
+        "scope": "local",
+        "is_active": true
+    },
+    "presidential-2027": {
+        "election_type_id": "presidential-2027",
+        "name": "Élection Présidentielle 2027",
+        "short_name": "Présidentielle 2027",
+        "type": "presidential",
+        "year": 2027,
+        "description": "Élection présidentielle française d'avril 2027. Les électeurs élisent le Président de la République au suffrage universel direct.",
+        "first_round_date": "2027-04-11",
+        "second_round_date": "2027-04-25",
+        "scope": "national",
+        "is_active": false
+    }
+}

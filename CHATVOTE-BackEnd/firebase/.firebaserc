@@ -1,0 +1,9 @@
+{
+  "projects": {
+    "default": "chat-vote-dev",
+    "dev": "chat-vote-dev",
+    "prod": "chat-vote"
+  },
+  "targets": {},
+  "etags": {}
+}

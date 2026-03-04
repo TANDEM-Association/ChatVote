@@ -5,9 +5,6 @@
 # ---------------------------------------------------------------------------
 
 setup:
-	@echo "==> Initialising submodules..."
-	git submodule update --init --recursive
-	@echo ""
 	@echo "==> Creating .env files from templates (skipping if already present)..."
 	@test -f CHATVOTE-BackEnd/.env \
 		&& echo "     CHATVOTE-BackEnd/.env already exists — skipped" \

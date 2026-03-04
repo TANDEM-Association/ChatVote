@@ -1,0 +1,414 @@
+{
+  "common": {
+    "chatvote": "chatvote",
+    "loading": "Loading...",
+    "loadingPdf": "Loading PDF...",
+    "error": "Error",
+    "oops": "Oops!",
+    "errorOccurred": "An error occurred.",
+    "retry": "Retry",
+    "back": "Back",
+    "close": "Close",
+    "send": "Send",
+    "cancel": "Cancel",
+    "save": "Save",
+    "yes": "Yes",
+    "no": "No",
+    "other": "Other",
+    "sources": "Sources",
+    "page": "Page {page}",
+    "step": "Step {current} of {total}",
+    "moreParties": "More parties",
+    "lessParties": "Less parties",
+    "maxReached": "Maximum reached",
+    "errorReload": "An error occurred. Please reload the page.",
+    "copy": "Copy",
+    "zoom": "Zoom",
+    "previousSlide": "Previous slide",
+    "nextSlide": "Next slide",
+    "toggleSidebar": "Toggle sidebar",
+    "toggleTheme": "Toggle theme",
+    "contactUs": "Contact us",
+    "description": "Description",
+    "otherLinks": "Other links",
+    "justification": "Justification",
+    "votes": "Votes",
+    "history": "History",
+    "newChat": "New chat",
+    "createNewChat": "Create new chat",
+    "serverOverloaded": "Server currently overloaded!",
+    "openMenu": "Open menu",
+    "serverOverloadedDescription": "Continue chatting with suggested questions or log in to ask your own questions.",
+    "serverOverloadedDescriptionShort": "Continue with suggested questions or log in to ask your own questions.",
+    "connectToAsk": "log in",
+    "iframePermissionRequired": "Embedding permission required",
+    "iframePermissionDescription": "To use chatvote in an iFrame, please contact us at the email address"
+  },
+  "navigation": {
+    "home": "Home",
+    "guide": "Guide",
+    "supportUs": "Support us",
+    "about": "About",
+    "donate": "Donate",
+    "sources": "Sources",
+    "feedback": "Feedback",
+    "legalNotice": "Legal notice",
+    "privacyPolicy": "Privacy policy",
+    "login": "Log in"
+  },
+  "auth": {
+    "login": "Log in",
+    "register": "Sign up",
+    "logout": "Log out",
+    "email": "Email",
+    "password": "Password",
+    "forgotPassword": "Forgot password?",
+    "noAccount": "Don't have an account yet?",
+    "hasAccount": "Already have an account?",
+    "emailPlaceholder": "john@example.com",
+    "loginDescription": "You can log in to chatvote to save your conversations and access them from multiple devices.",
+    "registerDescription": "You can sign up to chatvote to save your conversations and access them from multiple devices.",
+    "privacyConsent": "By clicking {action} you agree to our",
+    "orUseProviders": "Or use one of the following providers",
+    "invalidCredentials": "The entered credentials are invalid.",
+    "methodNotAvailable": "This login method is not available at the moment.",
+    "errorReload": "An error occurred. Please reload the page and try again.",
+    "loginSuccess": "Successfully logged in",
+    "userAvatar": "User avatar",
+    "resetPassword": {
+      "title": "Forgot password?",
+      "description": "Enter your email and we will send you a link to reset your password.",
+      "sendLink": "Send link",
+      "emailSent": "Password reset email sent."
+    },
+    "account": {
+      "title": "Account",
+      "description": "View your personal information here.",
+      "name": "Name"
+    },
+    "newsletter": {
+      "title": "Subscribe to newsletter?",
+      "description": "Can we occasionally send you an email with news about chatvote?"
+    }
+  },
+  "home": {
+    "selectParty": "Choose a party and ask your questions to the AI",
+    "compareParties": "Select multiple parties to compare",
+    "howItWorks": "How does chatvote work?",
+    "howItWorksDescription": "Discover what you can do with Chatvote and what features you can use.",
+    "supportUsTitle": "Rethinking political education",
+    "supportUsDescription": "Help us cover the AI operating costs!",
+    "stayInformed": "Stay informed",
+    "stayInformedDescription": "Find us on social media or contact us by email.",
+    "seenIn": "Seen in:",
+    "newsletter": {
+      "loading": "One moment, we're adding your email...",
+      "success": "Thank you! We'll inform you when the programs are available.",
+      "error": "An error occurred. Please try again later."
+    },
+    "keepUpToDate": {
+      "title": "Electoral programs!",
+      "subtitle": "Coming soon on",
+      "description": "Share your email to be notified when the programs are available on chatvote.",
+      "emailPlaceholder": "Email",
+      "notifyMe": "Notify me"
+    }
+  },
+  "chat": {
+    "placeholder": "Write a message...",
+    "placeholderParties": "Ask your questions to the parties...",
+    "emptyView": {
+      "partyDescription": "Ask questions about the {party} party program and compare their answers with those of other parties.",
+      "genericDescription": "Ask questions about all election-related topics or directly ask parties about their positions in their program.",
+      "groupDescription": "Start your comparative chat with the following parties:"
+    },
+    "thinking": {
+      "searchingSources": "Searching for relevant sources...",
+      "analyzingSources": "Analyzing sources...",
+      "processingData": "Processing data...",
+      "generatingResults": "Generating results...",
+      "finalizing": "Finalizing..."
+    },
+    "proCon": {
+      "understandingTopic": "Understanding the topic...",
+      "analyzingFeasibility": "Analyzing feasibility...",
+      "identifyingShortTerm": "Identifying short-term effects...",
+      "identifyingLongTerm": "Identifying long-term effects...",
+      "finalizingAnalysis": "Finalizing analysis...",
+      "show": "Show",
+      "hide": "Hide",
+      "containsEvaluatedPosition": "This message contains an",
+      "evaluatedPosition": "evaluated position",
+      "scrollForMore": "Scroll for more"
+    },
+    "votingBehavior": {
+      "searchingMotions": "Searching for parliamentary motions...",
+      "searchingRecords": "Searching for voting records...",
+      "analyzingSubmitters": "Analyzing submitter information...",
+      "comparingInfo": "Comparing information...",
+      "summarizingResults": "Summarizing results...",
+      "show": "Show",
+      "hide": "Hide",
+      "submittingParty": "Submitting party:",
+      "submittingParties": "Submitting parties:",
+      "containsVotingInfo": "This message contains additional information about the party's",
+      "partyVotingBehavior": "voting behavior",
+      "ofTheParty": "."
+    },
+    "actions": {
+      "evaluatePosition": "Evaluate position",
+      "evaluatePositionTooltip": "Evaluate the position as Pro or Con",
+      "votingBehavior": "Voting behavior",
+      "votingBehaviorTooltip": "Analyze the party's voting behavior",
+      "showVotes": "Show votes"
+    },
+    "sources": {
+      "title": "Sources",
+      "description": "Click on a source to open it in a new window.",
+      "referencedInText": "Referenced in text:",
+      "additionallyAnalyzed": "Additionally analyzed:",
+      "publishedOn": "Published on:"
+    },
+    "copy": {
+      "success": "Text copied to clipboard"
+    },
+    "errors": {
+      "reloadToResend": "Please reload the page to resend a message.",
+      "errorOccurred": "An error occurred. Please try again or reload the page."
+    },
+    "dislikeFeedback": {
+      "placeholder": "Please enter your feedback here. (optional)",
+      "title": "Give feedback",
+      "description": "What don't you like about this response?",
+      "submit": "Submit feedback"
+    },
+    "resend": "Resend",
+    "voteChart": {
+      "yes": "Yes",
+      "no": "No",
+      "abstention": "Abstention",
+      "notVoted": "Not voted"
+    },
+    "groupSelect": {
+      "maxPartiesError": "You can only select up to {max} parties"
+    },
+    "survey": {
+      "title": "Help us improve chatvote!",
+      "description": "We would be very grateful if you shared your opinion about this chat and our platform.",
+      "startSurvey": "Start the survey"
+    },
+    "sidebar": {
+      "description": "Start a new chat or select a previous conversation.",
+      "newChat": "New chat",
+      "supportChatvote": "Support chatvote",
+      "login": "Log in",
+      "account": "Account",
+      "donate": "Donate",
+      "feedback": "Feedback",
+      "information": "Information",
+      "about": "About chatvote",
+      "howItWorks": "How does chatvote work?",
+      "sources": "Sources",
+      "legalNotice": "Legal notice",
+      "privacy": "Privacy",
+      "loadingHistory": "Loading history...",
+      "compareParties": "Compare parties"
+    },
+    "groupSelect": {
+      "partySelection": "Party selection",
+      "modifyParties": "Modify the selected parties.",
+      "selectParties": "Select up to seven parties to start the chat with.",
+      "modifyButton": "Modify parties",
+      "startButton": "Start comparative chat"
+    },
+    "voteChart": {
+      "notVoted": "Not voted",
+      "abstention": "Abstention",
+      "no": "No",
+      "yes": "Yes",
+      "noValidVotes": "No valid votes recorded",
+      "noResultDetermined": "No result could be determined",
+      "selectParty": "Select a party",
+      "independents": "Independents",
+      "members": "Members",
+      "motion": "Motion",
+      "adopted": "Adopted",
+      "rejected": "Rejected",
+      "tie": "Tie",
+      "motionAdopted": "Motion adopted with {percentage}% of votes.",
+      "motionRejected": "Motion rejected with {percentage}% of votes.",
+      "motionTie": "Motion tied with {percentage}% of votes each."
+    },
+    "partyDetail": {
+      "listLeader": "List leader:",
+      "learnMoreOn": "Learn more about the party on",
+      "checkManifesto": "Or check out the",
+      "electoralManifesto": "electoral manifesto"
+    }
+  },
+  "feedback": {
+    "title": "Feedback!",
+    "description": "We are happy to receive your feedback on chatvote.",
+    "writeEmail": "Write us an email",
+    "fillForm": "Fill out our feedback form"
+  },
+  "donation": {
+    "title": "Keep Chatvote alive with your donation!",
+    "description": "We are currently funding Chatvote entirely out of our own pocket. Your donation helps us maintain this project and cover server and AI costs.",
+    "oneTimeDonation": "one-time donation",
+    "peopleInformed": "people informed",
+    "donateButton": "Donate"
+  },
+  "guide": {
+    "title": "What can I do with chatvote?",
+    "intro": {
+      "description": "chatvote is an interactive AI tool that helps you learn about the positions and projects of parties. You can ask the AI assistant questions about various political topics, and it will provide neutral answers based on the programs and other publications of the parties.",
+      "processTitle": "The process is simple:",
+      "step1": "You ask a question",
+      "step2": "chatvote searches relevant documents like programs to find the appropriate information.",
+      "step3": "The relevant information is then used to generate an understandable and neutral answer.",
+      "step4": "You can then have the party's position evaluated by clicking the button below the answer. Or have the answer analyzed based on the party's voting behavior."
+    },
+    "questions": {
+      "title": "Questions",
+      "whatCanIAsk": "What questions can I ask?",
+      "description": "In principle, you can ask all the questions you have about party programs or their positions. Additionally, you can also ask questions about general topics like the course of an election.",
+      "partySpecificTitle": "Examples of party-specific questions:",
+      "compareTitle": "Examples of comparative questions:",
+      "generalTitle": "Examples of general questions:",
+      "partyExamples": [
+        "What is LFI's position on climate?",
+        "How does RN position itself on public debt?",
+        "How does Renaissance want to reduce bureaucracy?",
+        "How do the Ecologists want to advance the digital transition?",
+        "How do PS and PCF want to implement working time reform?",
+        "How do EELV and Renaissance want to improve European cooperation?"
+      ],
+      "compareExamples": [
+        "How do parties differ in the fight against climate change?",
+        "What are the position differences between Renaissance and RN on debt?",
+        "Compare the positions of LFI and RN on migration."
+      ],
+      "generalExamples": [
+        "How can I vote by proxy?",
+        "Who is behind chatvote?",
+        "How does proxy voting work?"
+      ]
+    },
+    "numberOfParties": {
+      "title": "Number of parties",
+      "question": "How many parties can I chat with?",
+      "description": "You can start the chat with up to {max} parties simultaneously, but you have the option to add more parties during the conversation.",
+      "addMore": "Additionally, you can easily add or remove parties from the chat via the button above the text field."
+    },
+    "evaluatePosition": {
+      "title": "Evaluate position",
+      "description": "When you click this button below one of the messages, the position of the message is evaluated. The following criteria are considered: Feasibility, Short-term and long-term effects.",
+      "perplexityInfo": "We use current information and sources from the Internet provided by Perplexity.ai."
+    },
+    "votingBehavior": {
+      "title": "Analyze voting behavior",
+      "description": "When you click this button below one of the messages, the party's past voting behavior is analyzed. Additionally, by clicking \"Show votes\" you can see detailed information about the party's votes."
+    },
+    "data": {
+      "title": "Data sources",
+      "question": "What data is used?",
+      "description": "To provide well-founded and neutral answers, chatvote uses a variety of data sources:",
+      "programs": "Programs and other relevant documents:",
+      "programsDescription": "In addition to election programs, basic programs and other documents from parties are used to get a complete picture of party positions.",
+      "positionPapers": "Position papers:",
+      "positionPapersDescription": "In addition to basic programs, election programs, position papers and other party documents are used to get a complete picture of positions.",
+      "internetSources": "Internet sources for position evaluation:",
+      "internetSourcesDescription": "For differentiated position evaluation, chatvote uses the Perplexity.ai service, which relies on quality Internet sources like news sites.",
+      "sourcesLink": "We have listed all the sources that chatvote uses here."
+    },
+    "guidelines": {
+      "title": "Guidelines",
+      "question": "What guidelines does chatvote follow in its answers?",
+      "description": "The following guidelines apply to answers in chats:",
+      "sourceBased": "Source-based:",
+      "sourceBasedDescription": "Answers must be based on relevant statements from the provided program excerpts.",
+      "neutrality": "Neutrality:",
+      "neutralityDescription": "Party positions must be presented neutrally and without judgment.",
+      "transparency": "Transparency:",
+      "transparencyDescription": "For each statement, relevant sources must be directly linked to allow detailed examination and content verification."
+    },
+    "partySelection": {
+      "title": "Party selection",
+      "question": "What criteria are used to select parties?",
+      "description": "The initial selection of parties was made based on the publication of their election programs. We now want to gradually add missing parties and are very happy for your help.",
+      "missingParty": "If you are missing a party, feel free to send us an email with their program in PDF attached to info@chatvote.org, and we will add it as soon as possible."
+    }
+  },
+  "electionFlow": {
+    "dialogueWith": "I engage with candidates and parties",
+    "selectScope": "Local or national level?",
+    "local": "Municipal or intermunicipal",
+    "national": "National",
+    "loadingParties": "Loading parties...",
+    "loadingCandidates": "Loading candidates...",
+    "errorLoadingParties": "Error loading parties",
+    "errorLoadingCandidates": "Error loading candidates",
+    "askQuestions": "Ask your questions about candidates and parties at the national level.",
+    "chatWithAI": "Chat with AI",
+    "chatWithAIAbout": "Chat with AI about {municipality}",
+    "candidatesIn": "Candidates in {municipality}",
+    "noCandidates": "No candidates registered for this municipality.",
+    "noCandidatesFound": "No candidates found",
+    "noCandidatesYet": "There are no candidates registered yet for {municipality}.",
+    "candidate": "candidate",
+    "candidates": "candidates",
+    "selectCandidatesDescription": "Select one or more candidates to discuss their program with the AI.",
+    "selectedCount": "{count} candidate selected",
+    "selectedCountPlural": "{count} candidates selected",
+    "canSelectMore": "You can select {count} more",
+    "chatAnyway": "Chat anyway",
+    "firstName": "First name:",
+    "lastName": "Last name:",
+    "party": "Party:",
+    "parties": "Parties:",
+    "website": "Website:",
+    "whereDoYouLive": "Where do you live?",
+    "municipalityPrompt": "Before asking your question, enter your municipality or postal code",
+    "municipalityPlaceholder": "Municipality name or postal code...",
+    "clearSelection": "Clear selection",
+    "showMore": "Show more ({remaining} remaining)",
+    "searchHint": "Search for your municipality by name or postal code."
+  },
+  "aiDisclaimer": {
+    "canMakeErrors": "chatvote can make mistakes.",
+    "learnMore": "Learn more here.",
+    "title": "AI Notice",
+    "intro": "The answers on chatvote are generated by artificial intelligence. They are based on information extracted from publicly accessible party programs and election programs. While chatvote strives to provide accurate information about party positions and values, it should be noted:",
+    "automated": "The processing and generation of all content is automated.",
+    "notOfficial": "The answers should not be considered as official party statements.",
+    "complexPositions": "Complex political positions may not be captured in all their nuances.",
+    "inaccuracies": "Inaccuracies or misinterpretations may sometimes occur.",
+    "educationalTool": "This AI chat serves as an educational tool for discovering different political positions. For binding information, please use official party sources."
+  },
+  "language": {
+    "select": "Language",
+    "fr": "FR",
+    "en": "EN"
+  },
+  "theme": {
+    "light": "Light",
+    "dark": "Dark",
+    "system": "System"
+  },
+  "pdf": {
+    "loading": "Loading PDF...",
+    "error": "Error loading PDF"
+  },
+  "donateResult": {
+    "success": "Your donation was successful!",
+    "successDescription": "Thank you very much for your support! We will use your donation to enable neutral and independent information.",
+    "backToHome": "Back to home",
+    "failed": "Unfortunately, your donation was not successful.",
+    "failedDescription": "Please try again.",
+    "backToDonate": "Back to donation page"
+  },
+  "about": {
+    "title": "About"
+  }
+}

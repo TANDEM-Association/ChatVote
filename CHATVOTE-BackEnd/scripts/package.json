@@ -1,0 +1,22 @@
+{
+  "name": "chatvote-scripts",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "import:all": "npm run import:parties && npm run import:questions && npm run import:municipalities && npm run import:candidates && npm run import:election-types",
+    "import:all:clean": "npm run import:parties:clean && npm run import:questions:clean && npm run import:municipalities:clean && npm run import:candidates:clean && npm run import:election-types:clean",
+    "import:parties": "node import-firestore.js parties ../firebase/firestore_data/dev/parties.json",
+    "import:parties:clean": "node import-firestore.js parties ../firebase/firestore_data/dev/parties.json --clean",
+    "import:questions": "node import-firestore.js proposed_questions ../firebase/firestore_data/dev/proposed_questions.json",
+    "import:questions:clean": "node import-firestore.js proposed_questions ../firebase/firestore_data/dev/proposed_questions.json --clean",
+    "import:municipalities": "node import-firestore.js municipalities ../firebase/firestore_data/dev/municipalities.json",
+    "import:municipalities:clean": "node import-firestore.js municipalities ../firebase/firestore_data/dev/municipalities.json --clean",
+    "import:candidates": "node import-firestore.js candidates ../firebase/firestore_data/dev/candidates.json",
+    "import:candidates:clean": "node import-firestore.js candidates ../firebase/firestore_data/dev/candidates.json --clean",
+    "import:election-types": "node import-firestore.js election_types ../firebase/firestore_data/dev/election_types.json",
+    "import:election-types:clean": "node import-firestore.js election_types ../firebase/firestore_data/dev/election_types.json --clean"
+  },
+  "dependencies": {
+    "firebase-admin": "^13.6.0"
+  }
+}

@@ -1,0 +1,24 @@
+{
+  "$schema": "https://unpkg.com/knip@latest/schema.json",
+  "project": ["src/**/*.{ts,tsx}", "*.{ts,mjs,mts}"],
+  "ignoreDependencies": [
+    "pdfjs-dist",
+    "react-remove-scroll",
+    "@typescript-eslint/parser",
+    "eslint-import-resolver-typescript",
+    "eslint-plugin-import",
+    "eslint-plugin-react-hooks",
+    "@tailwindcss/typography",
+    "tailwind-animate"
+  ],
+  "paths": {
+    "@config": ["src/config"],
+    "@config/*": ["src/config/*"],
+    "@lib/*": ["src/lib/*"],
+    "@i18n/*": ["src/i18n/*"],
+    "@actions/*": ["src/app/_actions/*"],
+    "@components/*": ["src/components/*"],
+    "@hooks/*": ["src/hooks/*"],
+    "@types/*": ["src/types/*"]
+  }
+}

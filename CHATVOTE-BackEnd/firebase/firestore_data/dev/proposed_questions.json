@@ -1,0 +1,26 @@
+{
+"proposed_questions/chat-vote": {},
+"proposed_questions/chat-vote/questions/home_question_1": {"topic":"chatvote","location":"home","content":"Que puis-je demander ?"},
+"proposed_questions/chat-vote/questions/home_question_2": {"topic":"chatvote","location":"home","content":"Comment sont générées les réponses ?"},
+"proposed_questions/chat-vote/questions/home_question_3": {"topic":"chatvote","location":"home","content":"Puis-je interroger plusieurs listes ?"},
+"proposed_questions/chat-vote/questions/question_1": {"topic":"élections","location":"chat","content":"Comment fonctionne le système électoral municipal ?"},
+"proposed_questions/chat-vote/questions/question_2": {"topic":"chatvote","location":"chat","content":"Puis-je voir les votes passés des listes au conseil municipal ?"},
+"proposed_questions/chat-vote/questions/question_3": {"topic":"chatvote","location":"chat","content":"Puis-je comparer plusieurs listes entre elles ?"},
+"proposed_questions/chat-vote/questions/question_4": {"topic":"élections","location":"chat","content":"Comment sont attribués les sièges au conseil municipal ?"},
+"proposed_questions/group": {},
+"proposed_questions/group/questions/question_1": {"content":"Quels sont les principaux objectifs des listes ?","topic":"général","location":"chat"},
+"proposed_questions/group/questions/question_2": {"content":"Quelle est la position des listes sur les transports ?","topic":"transports","location":"chat"},
+"proposed_questions/group/questions/question_3": {"content":"Comment les listes veulent-elles améliorer le logement ?","topic":"logement","location":"chat"},
+"proposed_questions/group/questions/question_4": {"content":"Quelle est la politique environnementale des listes ?","topic":"environnement","location":"chat"},
+"metadata": {"timestamp":"2025-01-20_00-00-00","ref":"proposed_questions"},
+"_README": {
+    "_comment": "Ce fichier contient les questions suggérées pour chaque liste. Pour ajouter des questions pour une nouvelle liste, créez une entrée 'proposed_questions/[party_id]' et ajoutez des questions dans 'proposed_questions/[party_id]/questions/'.",
+    "_structure": {
+        "topic": "Le thème de la question (ex: transports, logement, environnement, éducation, économie, sécurité, etc.)",
+        "location": "'home' pour les questions affichées sur la page d'accueil, 'chat' pour celles du chat, 'banner' pour les bannières",
+        "content": "Le texte de la question"
+    },
+    "_example": "proposed_questions/ma-liste/questions/question_1: {\"topic\":\"transports\",\"location\":\"chat\",\"content\":\"Comment améliorer les transports en commun ?\"}",
+    "_note": "Supprimez cet objet _README après avoir ajouté vos vraies questions."
+}
+}

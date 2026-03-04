@@ -1,0 +1,29 @@
+{
+  "welcome": "Bienvenue sur l'API ChatVote",
+  "errors": {
+    "generic": "Désolé, une erreur s'est produite. Veuillez réessayer plus tard.",
+    "cannot_answer": "Je ne peux malheureusement pas répondre à cette question.",
+    "session_not_started": "Il semble que la session de chat n'a pas été démarrée.",
+    "timeout_party_documents": "Délai d'attente dépassé lors de la récupération des documents.",
+    "timeout_party_responses": "Délai d'attente dépassé lors de la récupération des réponses.",
+    "validation_error": "Erreur de validation des données."
+  },
+  "chat": {
+    "summary_placeholder": "Un résumé devrait apparaître ici...",
+    "no_title": "Aucun titre attribué",
+    "default_title": "Discussion politique"
+  },
+  "rag": {
+    "no_info_found": "Aucune information pertinente trouvée dans la collection de documents.",
+    "no_candidate_info": "Aucune information pertinente trouvée sur les sites web des candidats.",
+    "no_manifesto_info": "Aucune information trouvée dans les programmes officiels."
+  },
+  "voting_behavior": {
+    "no_votes_found": "Aucun vote correspondant trouvé.",
+    "cannot_provide_info": "Je ne peux malheureusement pas fournir d'informations à ce sujet."
+  },
+  "prompts": {
+    "response_language": "Réponds exclusivement en français.",
+    "use_simple_language": "Utilise un français simple et explique brièvement les termes techniques."
+  }
+}

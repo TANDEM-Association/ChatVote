@@ -12,10 +12,8 @@ jobs:
     timeout-minutes: 20
 
     steps:
-      - name: Checkout with submodules
+      - name: Checkout
         uses: actions/checkout@v4
-        with:
-          submodules: recursive
 
       # Java is required by Firebase emulators
       - name: Set up Java 17
