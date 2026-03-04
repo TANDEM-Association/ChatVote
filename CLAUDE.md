@@ -14,19 +14,16 @@ ChatVote is an AI-powered political information chatbot for French elections. Ci
 ### Local Development (zero cloud keys)
 
 ```bash
-make dev-infra                     # Start Qdrant + Ollama via Docker Compose
-make seed                          # Seed Firestore emulator + create Qdrant collections
+make setup                         # One-time: init submodules, create .env, install deps
+make dev                           # Start everything (Docker, Firebase, backend, frontend)
+make check                         # Health-check all services
+make logs                          # Tail all service logs
+make stop                          # Stop everything
+make clean                         # Stop + remove Docker volumes
+make seed                          # Re-seed Firestore + Qdrant collections
 make seed-vectors                  # Same + generate sample embeddings via Ollama
-make dev-backend                   # Start backend on :8080
-make dev-frontend                  # Start frontend on :3000
-make dev                           # Start infra + print next steps
-make stop                          # Stop Docker containers
-make clean                         # Stop + remove volumes
-```
-
-Firebase emulators (run separately):
-```bash
-cd CHATVOTE-BackEnd/firebase && npx firebase emulators:start --project chat-vote-dev --only firestore,auth
+make dev-backend                   # Start backend in foreground (debugging)
+make dev-frontend                  # Start frontend in foreground (debugging)
 ```
 
 ### Backend (`CHATVOTE-BackEnd/`)

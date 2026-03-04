@@ -8,5 +8,11 @@
 # Editor/IDE
 .mcp.json
 
+# Logs
+.logs/
+
 # OS
 .DS_Store
+
+# Visual QA screenshots
+*.png

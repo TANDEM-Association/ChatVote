@@ -1,4 +1,21 @@
 services:
+  firebase-emulators:
+    image: node:20
+    working_dir: /firebase
+    volumes:
+      - ./CHATVOTE-BackEnd/firebase:/firebase
+    command: >
+      sh -c "npm install && npx firebase emulators:start --project chat-vote-dev --only firestore,auth"
+    ports:
+      - "8081:8081"
+      - "9099:9099"
+    healthcheck:
+      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081"]
+      interval: 5s
+      timeout: 3s
+      retries: 12
+      start_period: 30s
+
   qdrant:
     image: qdrant/qdrant:latest
     ports:
@@ -12,20 +29,25 @@ services:
       timeout: 3s
       retries: 5
 
+  # Ollama in Docker (CPU only — slow on macOS).
+  # On Apple Silicon, run Ollama natively instead: brew install ollama && ollama serve
+  # The Makefile auto-detects a native Ollama and skips these containers.
   ollama:
     image: ollama/ollama:latest
+    profiles: ["ollama"]
     ports:
       - "11434:11434"
     volumes:
       - ollama_dev_data:/root/.ollama
     healthcheck:
-      test: ["CMD", "curl", "-f", "http://localhost:11434/"]
+      test: ["CMD", "ollama", "list"]
       interval: 5s
       timeout: 3s
       retries: 5
 
   ollama-setup:
     image: ollama/ollama:latest
+    profiles: ["ollama"]
     depends_on:
       ollama:
         condition: service_healthy

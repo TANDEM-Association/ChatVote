@@ -1,0 +1,109 @@
+name: E2E Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  e2e:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+
+    steps:
+      - name: Checkout with submodules
+        uses: actions/checkout@v4
+        with:
+          submodules: recursive
+
+      # ── Python / Backend ──────────────────────────────────────────────────
+      - name: Set up Python 3.12
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+
+      - name: Install Poetry
+        uses: snok/install-poetry@v1
+        with:
+          version: latest
+          virtualenvs-in-project: true
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: CHATVOTE-BackEnd/.venv
+          key: poetry-${{ runner.os }}-${{ hashFiles('CHATVOTE-BackEnd/poetry.lock') }}
+
+      - name: Install backend dependencies
+        working-directory: CHATVOTE-BackEnd
+        run: poetry install --with dev
+
+      # ── Node / Frontend ───────────────────────────────────────────────────
+      - name: Install pnpm
+        uses: pnpm/action-setup@v4
+        with:
+          version: '9'
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: CHATVOTE-FrontEnd/pnpm-lock.yaml
+
+      - name: Install frontend dependencies
+        working-directory: CHATVOTE-FrontEnd
+        run: pnpm install --frozen-lockfile
+
+      # ── Playwright browsers ───────────────────────────────────────────────
+      - name: Cache Playwright browsers
+        uses: actions/cache@v4
+        id: playwright-cache
+        with:
+          path: ~/.cache/ms-playwright
+          key: playwright-${{ runner.os }}-${{ hashFiles('CHATVOTE-FrontEnd/pnpm-lock.yaml') }}
+
+      - name: Install Playwright browsers
+        working-directory: CHATVOTE-FrontEnd
+        run: |
+          if [ "${{ steps.playwright-cache.outputs.cache-hit }}" != "true" ]; then
+            npx playwright install --with-deps chromium
+          else
+            npx playwright install-deps chromium
+          fi
+
+      # ── Infrastructure ────────────────────────────────────────────────────
+      - name: Start Qdrant + Firebase emulators
+        run: docker compose -f docker-compose.dev.yml up -d --wait
+
+      - name: Wait for services
+        run: |
+          for i in $(seq 1 30); do
+            if curl -sf http://localhost:6333/healthz > /dev/null 2>&1 && \
+               curl -sf http://localhost:8081 > /dev/null 2>&1; then
+              echo "Services ready"
+              break
+            fi
+            echo "Waiting... ($i/30)"
+            sleep 2
+          done
+
+      - name: Seed Firestore + Qdrant
+        run: make seed
+
+      # ── Run tests ─────────────────────────────────────────────────────────
+      - name: Run Playwright E2E tests
+        working-directory: CHATVOTE-FrontEnd
+        run: npx playwright test --reporter=list
+        env:
+          CI: 'true'
+
+      # ── Artifacts ─────────────────────────────────────────────────────────
+      - name: Upload Playwright report
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: playwright-report
+          path: CHATVOTE-FrontEnd/playwright-report/
+          retention-days: 7
