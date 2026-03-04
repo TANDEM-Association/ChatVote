@@ -14,6 +14,9 @@
 # Logs
 .logs/
 
+# Emulator/runtime artifacts
+.qdrant-initialized
+
 # OS
 .DS_Store
 
