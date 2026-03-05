@@ -55,7 +55,9 @@ test.describe('Authentication Extended', () => {
     expect(isValid).toBe(false);
   });
 
-  test('12.5 Login with invalid credentials shows error toast', async ({ page }) => {
+  test('12.5 Login with invalid credentials shows error toast', async ({ page, expectedErrors }) => {
+    // Firebase Auth emulator logs auth errors to console — expected here
+    expectedErrors.push(/FirebaseError: Firebase: Error/);
     await openLoginModal(page);
 
     await page.locator('input[type="email"]').fill('nonexistent@example.com');

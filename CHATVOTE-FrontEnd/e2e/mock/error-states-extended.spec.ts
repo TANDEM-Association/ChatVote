@@ -43,7 +43,9 @@ test.describe('Error States Extended', () => {
     expect(alertFired).toBe(false);
   });
 
-  test('1.8 Navigating to non-existent chat session ID shows error or redirects', async ({ page }) => {
+  test('1.8 Navigating to non-existent chat session ID shows error or redirects', async ({ page, expectedErrors }) => {
+    // Server logs "Chat session not found" to console — expected here
+    expectedErrors.push(/Chat session not found/);
     await page.goto('/chat/nonexistent-chat-id-12345', { waitUntil: 'domcontentloaded' });
 
     // The app must not crash with an unhandled error boundary message
