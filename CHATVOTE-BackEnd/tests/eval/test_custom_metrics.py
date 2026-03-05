@@ -130,9 +130,9 @@ COMPLETENESS_CASES = [
         "id": "complete_coverage",
         "input": "Que proposent les partis sur l'écologie ?",
         "actual_output": (
-            "Les Écologistes proposent la sortie du nucléaire et 100% renouvelables. "
-            "La France Insoumise défend une planification écologique avec création d'emplois verts. "
-            "Renaissance soutient le nucléaire comme pilier de la transition énergétique."
+            "Les Écologistes : sortie du nucléaire et 100% renouvelables [1]. "
+            "La France Insoumise : planification écologique avec création d'emplois verts [2]. "
+            "Renaissance : nucléaire comme pilier de la transition énergétique [3]."
         ),
         "retrieval_context": [
             "Écologistes : sortie du nucléaire, 100% renouvelables.",

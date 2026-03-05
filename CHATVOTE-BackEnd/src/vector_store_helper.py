@@ -233,7 +233,7 @@ async def _identify_relevant_documents(
     namespace: Optional[str],
     rag_query: str,
     n_docs: int = 5,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Identify relevant documents based on the provided query and namespace.
@@ -299,7 +299,7 @@ async def identify_relevant_docs(
     party: Party,
     rag_query: str,
     n_docs: int = 5,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     return await _identify_relevant_documents(
         vector_store=get_qdrant_vector_store(),
@@ -315,7 +315,7 @@ async def identify_relevant_docs_with_reranking(
     party: Party,
     rag_query: str,
     n_docs: int = 20,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     relevant_docs = await _identify_relevant_documents(
         vector_store=get_qdrant_vector_store(),
@@ -336,7 +336,7 @@ async def identify_relevant_docs_with_llm_based_reranking(
     chat_history: str,
     user_message: str,
     n_docs: int = 20,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
     target_party_id: Optional[str] = None,
 ) -> list[Document]:
     from src.models.assistant import ASSISTANT_ID
@@ -364,7 +364,7 @@ async def identify_relevant_docs_with_llm_based_reranking(
     # If score sorting is critical, we could modify _identify_relevant_documents
     # to return scores as well
 
-    if len(relevant_docs) >= 5:
+    if len(relevant_docs) >= 3:
         # get indices of relevant docs
         relevant_docs = await rerank_documents(
             relevant_docs=relevant_docs,
@@ -377,7 +377,7 @@ async def identify_relevant_docs_with_llm_based_reranking(
 
 
 async def identify_relevant_votes(
-    rag_query: str, n_docs: int = 5, score_threshold: float = 0.5
+    rag_query: str, n_docs: int = 5, score_threshold: float = 0.65
 ) -> list[Document]:
     """
     Identify relevant votes based on the provided query.
@@ -423,7 +423,7 @@ async def _identify_relevant_candidate_documents(
     municipality_code: Optional[str] = None,
     candidate_id: Optional[str] = None,
     n_docs: int = 10,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Identify relevant candidate documents based on the provided query.
@@ -503,7 +503,7 @@ async def identify_relevant_candidate_docs(
     candidate: Candidate,
     rag_query: str,
     n_docs: int = 10,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Identify relevant documents for a specific candidate.
@@ -520,7 +520,7 @@ async def identify_relevant_candidate_docs_by_municipality(
     municipality_code: str,
     rag_query: str,
     n_docs: int = 15,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Identify relevant candidate documents for all candidates in a municipality.
@@ -537,7 +537,7 @@ async def identify_relevant_candidate_docs_by_municipality(
 async def identify_relevant_candidate_docs_national(
     rag_query: str,
     n_docs: int = 15,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Identify relevant candidate documents across all candidates (national scope).
@@ -557,7 +557,7 @@ async def identify_relevant_candidate_docs_with_reranking(
     user_message: str,
     municipality_code: Optional[str] = None,
     n_docs: int = 20,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Identify relevant candidate documents with LLM-based reranking.
@@ -573,7 +573,7 @@ async def identify_relevant_candidate_docs_with_reranking(
         score_threshold=score_threshold,
     )
 
-    if len(relevant_docs) >= 5:
+    if len(relevant_docs) >= 3:
         relevant_docs = await rerank_documents(
             relevant_docs=relevant_docs,
             user_message=user_message,
@@ -594,7 +594,7 @@ async def identify_relevant_docs_combined(
     municipality_code: Optional[str] = None,
     n_docs_manifesto: int = 10,
     n_docs_candidates: int = 10,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> tuple[list[Document], list[Document]]:
     """
     Combined search across party manifestos and candidate websites.
@@ -706,14 +706,14 @@ async def identify_relevant_docs_combined(
             unique_candidate_docs.append(doc)
 
     # Rerank each set if we have enough docs
-    if len(unique_manifesto_docs) >= 5:
+    if len(unique_manifesto_docs) >= 3:
         unique_manifesto_docs = await rerank_documents(
             relevant_docs=unique_manifesto_docs,
             user_message=user_message,
             chat_history=chat_history,
         )
 
-    if len(unique_candidate_docs) >= 5:
+    if len(unique_candidate_docs) >= 3:
         unique_candidate_docs = await rerank_documents(
             relevant_docs=unique_candidate_docs,
             user_message=user_message,
@@ -741,7 +741,7 @@ async def _search_candidate_docs_by_party(
     rag_query: str,
     party_ids: list[str],
     n_docs: int = 10,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Search candidate documents filtered by party affiliation (national scope).
@@ -801,7 +801,7 @@ async def _search_candidate_docs_by_party_and_municipality(
     party_ids: list[str],
     municipality_code: str,
     n_docs: int = 10,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Search candidate documents filtered by party affiliation AND municipality (local scope).
@@ -868,7 +868,7 @@ async def _identify_relevant_manifesto_documents(
     rag_query: str,
     namespace: str,
     n_docs: int = 10,
-    score_threshold: float = 0.5,
+    score_threshold: float = 0.65,
 ) -> list[Document]:
     """
     Search for relevant manifesto documents in the party index.
