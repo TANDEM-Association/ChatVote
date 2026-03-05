@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/base-test';
 import { setupChat, sendMessage, waitForResponseComplete } from '../support/test-helpers';
 
 const FIRESTORE_HOST = 'http://localhost:8081';

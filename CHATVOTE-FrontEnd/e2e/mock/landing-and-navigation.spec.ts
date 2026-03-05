@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/base-test';
 import { goToChat, setupChat, sendMessage, waitForResponseComplete, selectMunicipality, getChatInput } from '../support/test-helpers';
 
 test.describe('Landing Page and Navigation', () => {

@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/base-test';
 import { setupChat, sendMessage, getChatInput } from '../support/test-helpers';
 
 test.describe('Error States Extended', () => {

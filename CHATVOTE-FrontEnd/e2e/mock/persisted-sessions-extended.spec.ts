@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/base-test';
 import { setupChat, sendMessage, waitForResponseComplete } from '../support/test-helpers';
 
 // These tests depend on streaming completing — run serially to avoid

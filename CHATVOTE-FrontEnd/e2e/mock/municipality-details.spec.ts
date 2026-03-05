@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/base-test';
 import { goToChat, selectMunicipality, getChatInput } from '../support/test-helpers';
 
 test.describe('Municipality Details', () => {

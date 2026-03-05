@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/base-test';
 import { goToChat, setupChat, sendMessage } from '../support/test-helpers';
 
 /**

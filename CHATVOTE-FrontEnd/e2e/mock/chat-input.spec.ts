@@ -1,4 +1,4 @@
-import { test, expect } from '@playwright/test';
+import { test, expect } from '../support/base-test';
 import { setupChat, goToChat, getChatInput } from '../support/test-helpers';
 
 test.describe('Chat Input and Message Submission', () => {
