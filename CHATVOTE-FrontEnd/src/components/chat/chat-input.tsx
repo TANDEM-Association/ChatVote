@@ -61,7 +61,7 @@ const ChatInput = ({ disabled }: Props) => {
       aria-disabled={disabled}
       data-testid={user?.uid ? "chat-form-ready" : undefined}
       className={cn(
-        "relative w-full overflow-hidden rounded-4xl border border-purple-400 bg-purple-500 transition-colors focus-within:border-zinc-300 dark:focus-within:border-zinc-700",
+        "relative w-full overflow-hidden rounded-4xl border border-border-strong bg-surface-input transition-colors focus-within:border-zinc-400 dark:focus-within:border-zinc-700",
         quickReplies?.length > 0 && "rounded-2xl",
       )}
     >

@@ -220,7 +220,7 @@ const MunicipalitySearch = ({
           {showSuggestions && visibleSuggestions.length > 0 ? (
             <div
               ref={suggestionsRef}
-              className="absolute top-24 z-50 w-full overflow-hidden rounded-3xl border border-purple-400 bg-purple-500 p-2 shadow-lg"
+              className="absolute top-24 z-50 w-full overflow-hidden rounded-3xl border border-border-strong bg-surface-input p-2 shadow-lg"
             >
               <ul className="max-h-80 space-y-1 overflow-auto">
                 {visibleSuggestions.map((municipality) => (

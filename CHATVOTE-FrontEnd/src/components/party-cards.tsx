@@ -76,7 +76,7 @@ function PartyCards({
                 width={0}
                 height={0}
                 sizes="100vw"
-                className="size-10"
+                className="logo-theme size-10"
                 loading="eager"
               />
             </Link>

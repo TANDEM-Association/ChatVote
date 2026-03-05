@@ -56,7 +56,7 @@ export const Modal: React.FC<ModalProps> = ({
         >
           <motion.div
             className={cn(
-              "relative max-h-[80dvh] w-fit max-w-257.5 rounded-lg border border-purple-400 bg-purple-900",
+              "relative max-h-[80dvh] w-fit max-w-257.5 rounded-lg border border-border-strong bg-surface",
               className,
             )}
             onClick={(event) => {
@@ -72,7 +72,7 @@ export const Modal: React.FC<ModalProps> = ({
           >
             <button
               onClick={onClose}
-              className="absolute top-2 right-2 cursor-pointer text-neutral-400 transition-colors hover:text-neutral-100"
+              className="absolute top-2 right-2 cursor-pointer text-muted transition-colors hover:text-foreground"
             >
               <svg
                 className="size-5"

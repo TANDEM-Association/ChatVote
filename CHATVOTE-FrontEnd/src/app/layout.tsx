@@ -142,7 +142,7 @@ export default async function RootLayout({
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body
-        className={`${merriweatherSans.variable} ${merriweather.variable} bg-purple-900 text-neutral-100 antialiased`}
+        className={`${merriweatherSans.variable} ${merriweather.variable} bg-background text-foreground antialiased`}
       >
         <NextIntlClientProvider messages={messages}>
           <AppProvider

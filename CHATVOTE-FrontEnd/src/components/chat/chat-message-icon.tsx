@@ -11,7 +11,7 @@ export const ChatMessageIcon = () => {
         sizes="100vw"
         width={0}
         height={0}
-        className="size-full object-contain"
+        className="logo-theme size-full object-contain"
       />
     </div>
   );

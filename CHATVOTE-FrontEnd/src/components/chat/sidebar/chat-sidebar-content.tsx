@@ -53,7 +53,7 @@ const ChatSidebarContent = ({ auth, history }: Props) => {
                 width={0}
                 height={0}
                 sizes="100vw"
-                className="size-12"
+                className="logo-theme size-12"
               />
             </Link>
             <Link href="/" className="flex items-center">
@@ -63,7 +63,7 @@ const ChatSidebarContent = ({ auth, history }: Props) => {
                 width={0}
                 height={0}
                 sizes="100vw"
-                className="size-12"
+                className="logo-theme size-12"
               />
             </Link>
           </div>

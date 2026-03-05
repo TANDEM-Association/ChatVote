@@ -23,7 +23,7 @@ function CreateNewChatDropdownButton() {
       />
       <DropdownMenuContent
         align="end"
-        className="w-[80vw] max-w-[300px] bg-purple-900 p-3"
+        className="w-[80vw] max-w-[300px] bg-surface p-3"
       >
         <div className="mb-2 flex flex-col">
           <h2 className="text-lg font-bold">{t("newChat")}</h2>

@@ -24,7 +24,7 @@ const ChatSidebarDesktop = ({ auth }: Props) => {
   const isAuthenticated = auth.session !== null && !auth.session.isAnonymous;
 
   return (
-    <div className="hidden h-screen w-16 flex-none flex-col items-center gap-12 overflow-hidden border-r border-purple-500 bg-purple-900 px-2 py-4 md:flex">
+    <div className="hidden h-screen w-16 flex-none flex-col items-center gap-12 overflow-hidden border-r border-border-subtle bg-surface px-2 py-4 md:flex">
       <div className={"flex flex-col items-center"}>
         <Link href="https://tndm.fr" className="flex items-center">
           <Image
@@ -33,7 +33,7 @@ const ChatSidebarDesktop = ({ auth }: Props) => {
             width={0}
             height={0}
             sizes="100vw"
-            className="size-12"
+            className="logo-theme size-12"
           />
         </Link>
         <SidebarTrigger />
