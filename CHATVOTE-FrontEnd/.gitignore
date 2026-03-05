@@ -62,3 +62,4 @@ playwright-report/
 
 # Demo recordings
 *.cast
+.e2e-ports.json

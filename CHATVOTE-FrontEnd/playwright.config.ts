@@ -1,4 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
+import { readPorts } from './e2e/support/port-utils';
+
+const ports = readPorts();
 
 export default defineConfig({
   testDir: './e2e/mock',
@@ -11,7 +14,7 @@ export default defineConfig({
   globalTeardown: './e2e/global-teardown.ts',
   timeout: 60000,
   use: {
-    baseURL: 'http://localhost:3001',
+    baseURL: `http://localhost:${ports.frontend}`,
     trace: 'on-first-retry',
     navigationTimeout: 45000,
   },
@@ -59,13 +62,13 @@ export default defineConfig({
     },
   ],
   webServer: {
-    // Use port 3001 so the test frontend is isolated from the dev server on :3000.
-    // The mock Socket.IO server runs on :8082 (not :8080, which is the real backend).
+    // Dynamic port avoids conflicts with dev servers on :3000/:3001.
+    // The mock Socket.IO server port is also dynamic (see global-setup.ts).
     // CI uses a production build (fast startup); local dev uses Turbopack HMR.
     command: process.env.CI
-      ? 'npm run build && PORT=3001 npm run start'
-      : 'PORT=3001 npm run dev',
-    url: 'http://localhost:3001',
+      ? `npm run build && PORT=${ports.frontend} npm run start`
+      : `PORT=${ports.frontend} npm run dev`,
+    url: `http://localhost:${ports.frontend}`,
     reuseExistingServer: !process.env.CI,
     timeout: process.env.CI ? 180000 : 120000,
     env: {
@@ -76,8 +79,8 @@ export default defineConfig({
       NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: '000000000000',
       NEXT_PUBLIC_FIREBASE_APP_ID: '1:000000000000:web:fake',
       NEXT_PUBLIC_USE_FIREBASE_EMULATORS: 'true',
-      NEXT_PUBLIC_API_URL: 'http://localhost:8082',
-      NEXT_PUBLIC_APP_URL: 'http://localhost:3001',
+      NEXT_PUBLIC_API_URL: `http://localhost:${ports.mockSocket}`,
+      NEXT_PUBLIC_APP_URL: `http://localhost:${ports.frontend}`,
       FIRESTORE_EMULATOR_HOST: 'localhost:8081',
       FIREBASE_AUTH_EMULATOR_HOST: 'localhost:9099',
     },

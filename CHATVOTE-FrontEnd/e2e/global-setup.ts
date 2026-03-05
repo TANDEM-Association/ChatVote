@@ -2,11 +2,16 @@ import { startMockServer } from './support/mock-socket-server';
 import { chromium } from '@playwright/test';
 import { ChildProcess, spawn, execSync } from 'child_process';
 import path from 'path';
+import { allocatePorts, readPorts } from './support/port-utils';
 
 let mockServer: { close: () => Promise<void> } | null = null;
 let emulatorProcess: ChildProcess | null = null;
 
 async function globalSetup() {
+  // Allocate dynamic ports FIRST so playwright.config.ts can read them on re-evaluation
+  const ports = await allocatePorts();
+  console.log(`Allocated ports — frontend: ${ports.frontend}, mockSocket: ${ports.mockSocket}`);
+
   // Check if emulators are already running
   const emulatorsRunning = await isServiceRunning('http://localhost:8081');
 
@@ -54,29 +59,30 @@ async function globalSetup() {
   // Seed test data
   await seedEmulatorData();
 
-  // Start mock Socket.IO server on port 8082 (not 8080, which is the real backend).
+  // Start mock Socket.IO server on the allocated port.
   // Wrap in try/catch: multiple parallel worker runs may race to start it,
   // and EADDRINUSE means another worker already started it — treat as "already running".
-  const mockRunning = await isServiceRunning('http://localhost:8082');
+  const mockUrl = `http://localhost:${ports.mockSocket}`;
+  const mockRunning = await isServiceRunning(mockUrl);
   if (!mockRunning) {
     try {
-      mockServer = await startMockServer(8082);
-      console.log('Mock Socket.IO server started on :8082');
+      mockServer = await startMockServer(ports.mockSocket);
+      console.log(`Mock Socket.IO server started on :${ports.mockSocket}`);
     } catch (err: unknown) {
       if ((err as NodeJS.ErrnoException).code === 'EADDRINUSE') {
-        console.log('Mock server already running on :8082 (caught EADDRINUSE from race)');
+        console.log(`Mock server already running on :${ports.mockSocket} (caught EADDRINUSE from race)`);
       } else {
         throw err;
       }
     }
   } else {
-    console.log('Mock server already running on :8082');
+    console.log(`Mock server already running on :${ports.mockSocket}`);
   }
 
-  // Warm up the Next.js test server (port 3001) using a real browser so Turbopack
+  // Warm up the Next.js test server using a real browser so Turbopack
   // compiles ALL client-side bundles before tests run.
   console.log('Warming up Next.js dev server...');
-  await browserWarmup('http://localhost:3001/chat');
+  await browserWarmup(`http://localhost:${ports.frontend}/chat`);
   console.log('Dev server warmed up');
 
   // Store references for teardown

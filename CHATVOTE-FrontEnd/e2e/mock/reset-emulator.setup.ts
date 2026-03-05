@@ -1,5 +1,6 @@
 import { test as setup, chromium } from '@playwright/test';
 import { resetEmulatorState } from '../support/emulator-cleanup';
+import { readPorts } from '../support/port-utils';
 
 /**
  * Setup project that resets Firebase emulator state once before
@@ -15,10 +16,11 @@ setup('reset firebase emulator', async () => {
   // in browsers uses WebChannel for reads/writes. Navigate a real browser to
   // the app so the Firebase SDK establishes its WebChannel connection to the
   // emulator before any test browser tries to write (createChatSession).
+  const ports = readPorts();
   const browser = await chromium.launch();
   try {
     const page = await browser.newPage();
-    await page.goto('http://localhost:3001/chat', { waitUntil: 'load', timeout: 30000 });
+    await page.goto(`http://localhost:${ports.frontend}/chat`, { waitUntil: 'load', timeout: 30000 });
     // Allow Firestore SDK time to complete its initial connection handshake.
     await page.waitForTimeout(2000);
     console.log('[EmulatorReset] Browser WebChannel warmup complete');

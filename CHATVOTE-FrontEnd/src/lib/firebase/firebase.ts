@@ -267,9 +267,11 @@ export async function updateQuickRepliesOfMessage(
   messageId: string,
   quickReplies: string[],
 ) {
-  await updateDoc(doc(db, "chat_sessions", sessionId, "messages", messageId), {
-    quick_replies: quickReplies,
-  });
+  await setDoc(
+    doc(db, "chat_sessions", sessionId, "messages", messageId),
+    { quick_replies: quickReplies },
+    { merge: true },
+  );
 }
 
 export async function updateTitleOfMessage(sessionId: string, title: string) {
@@ -283,9 +285,10 @@ export async function updateMessageInChatSession(
   messageId: string,
   data: Partial<GroupedMessage>,
 ) {
-  await updateDoc(
+  await setDoc(
     doc(db, "chat_sessions", sessionId, "messages", messageId),
     data,
+    { merge: true },
   );
 }
 

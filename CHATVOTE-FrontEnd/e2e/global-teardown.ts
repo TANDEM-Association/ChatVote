@@ -1,3 +1,5 @@
+import { cleanupPortFile } from './support/port-utils';
+
 async function globalTeardown() {
   // Stop mock server
   const mockServer = (globalThis as any).__MOCK_SERVER__;
@@ -16,6 +18,9 @@ async function globalTeardown() {
     }
     console.log('Firebase emulators stopped');
   }
+
+  // Clean up the port allocation file
+  cleanupPortFile();
 }
 
 export default globalTeardown;
