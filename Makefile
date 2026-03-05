@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-vectors test-e2e check stop clean logs
+.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-vectors test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
 
 # ---------------------------------------------------------------------------
 # Setup — run once after cloning
@@ -193,6 +193,34 @@ stop:
 		fi; \
 	done
 	@echo "All services stopped."
+
+# ---------------------------------------------------------------------------
+# RAG Evaluation (DeepEval)
+# ---------------------------------------------------------------------------
+
+eval:
+	cd CHATVOTE-BackEnd && poetry run deepeval test run tests/eval/ tests/red_team/ -v
+
+eval-static:
+	cd CHATVOTE-BackEnd && poetry run deepeval test run tests/eval/test_rag_generator.py tests/eval/test_custom_metrics.py tests/red_team/ -v -k "static or neutrality or attribution or completeness or french or refusal or injection or bias"
+
+eval-e2e:
+	cd CHATVOTE-BackEnd && poetry run deepeval test run tests/eval/test_rag_e2e.py tests/eval/test_rag_retriever.py -v
+
+red-team:
+	cd CHATVOTE-BackEnd && poetry run deepeval test run tests/red_team/ -v
+
+generate-goldens:
+	cd CHATVOTE-BackEnd && poetry run python scripts/generate_goldens.py
+
+optimize-prompts:
+	cd CHATVOTE-BackEnd && poetry run python scripts/optimize_prompts.py
+
+eval-report:
+	cd CHATVOTE-BackEnd && poetry run python scripts/eval_report.py --tests all
+
+eval-report-static:
+	cd CHATVOTE-BackEnd && poetry run python scripts/eval_report.py --tests static
 
 clean: stop
 	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase down -v
