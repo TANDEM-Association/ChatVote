@@ -35,8 +35,9 @@ OPENAI_API_KEY = StringParam("OPENAI_API_KEY")
 QDRANT_URL = StringParam("QDRANT_URL")
 QDRANT_API_KEY = StringParam("QDRANT_API_KEY")
 
+# IMPORTANT: Keep in sync with src/model_config.py (OPENAI_EMBED_MODEL / OPENAI_EMBED_DIM)
 EMBEDDING_MODEL = "text-embedding-3-large"
-EMBEDDING_SIZE = 3072  # Embedding sizes for the OpenAI models: https://platform.openai.com/docs/guides/embeddings#how-to-get-embeddings
+EMBEDDING_SIZE = 3072
 
 # Get environment from OS environment variable or Firebase project ID for region selection
 # This is evaluated at module load time, before StringParam values are available

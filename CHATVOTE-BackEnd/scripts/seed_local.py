@@ -32,6 +32,7 @@ os.environ.setdefault("ENV", "local")
 os.environ.setdefault("API_NAME", "chatvote-api")
 os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:8081")
 os.environ.setdefault("QDRANT_URL", "http://localhost:6333")
+# Model defaults — see src/model_config.py for the central registry
 os.environ.setdefault("OLLAMA_BASE_URL", "http://localhost:11434")
 os.environ.setdefault("OLLAMA_MODEL", "qwen3:32b")
 os.environ.setdefault("OLLAMA_EMBED_MODEL", "nomic-embed-text")
@@ -195,10 +196,11 @@ def create_qdrant_collections():
 
 def seed_crawled_vectors():
     """
-    Read crawled markdown from crawled_content/, chunk, embed via Ollama,
-    and index into Qdrant collections matching the production metadata format.
+    Read crawled markdown from crawled_content/, chunk, embed, and index
+    into Qdrant collections matching the production metadata format.
+
+    Supports Ollama (local) or Scaleway (cloud) embeddings.
     """
-    from langchain_ollama import OllamaEmbeddings
     from langchain_text_splitters import RecursiveCharacterTextSplitter
     from qdrant_client import QdrantClient
     from qdrant_client.models import PointStruct
@@ -211,12 +213,33 @@ def seed_crawled_vectors():
         return
 
     qdrant_url = os.environ["QDRANT_URL"]
-    ollama_base_url = os.environ["OLLAMA_BASE_URL"]
-    embed_model = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 
-    logger.info(f"Generating embeddings via Ollama ({embed_model})...")
+    # Choose embedding provider: Scaleway (cloud) or Ollama (local)
+    scaleway_key = os.environ.get("SCALEWAY_EMBED_API_KEY") or os.environ.get("QWEN3_8B_SCW_SECRET_KEY")
+    embedding_provider = os.environ.get("EMBEDDING_PROVIDER", "").lower()
 
-    embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
+    if embedding_provider == "scaleway" or (scaleway_key and embedding_provider != "ollama"):
+        from langchain_openai import OpenAIEmbeddings
+
+        base_url = os.environ.get(
+            "SCALEWAY_EMBED_BASE_URL",
+            "https://api.scaleway.ai/78c3d473-15a8-46bf-9c9a-339d618c75b5/v1",
+        )
+        model = os.environ.get("SCALEWAY_EMBED_MODEL", "qwen3-embedding-8b")
+        logger.info(f"Generating embeddings via Scaleway ({model})...")
+        embeddings = OpenAIEmbeddings(
+            model=model,
+            openai_api_key=scaleway_key,
+            openai_api_base=base_url,
+            dimensions=int(os.environ.get("SCALEWAY_EMBED_DIM", "4096")),
+        )
+    else:
+        from langchain_ollama import OllamaEmbeddings
+
+        ollama_base_url = os.environ["OLLAMA_BASE_URL"]
+        embed_model = os.environ.get("OLLAMA_EMBED_MODEL", "nomic-embed-text")
+        logger.info(f"Generating embeddings via Ollama ({embed_model})...")
+        embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
     client = QdrantClient(url=qdrant_url)
 
     text_splitter = RecursiveCharacterTextSplitter(

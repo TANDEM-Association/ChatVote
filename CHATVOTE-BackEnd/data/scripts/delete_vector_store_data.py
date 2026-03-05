@@ -19,8 +19,9 @@ print(f"ENV={os.getenv('ENV')}")
 
 logger = logging.getLogger(__name__)
 
+# IMPORTANT: Keep in sync with src/model_config.py (OPENAI_EMBED_MODEL / OPENAI_EMBED_DIM)
 EMBEDDING_MODEL = "text-embedding-3-large"
-EMBEDDING_SIZE = 3072  # Embedding sizes for the OpenAI models: https://platform.openai.com/docs/guides/embeddings#how-to-get-embeddings
+EMBEDDING_SIZE = 3072
 
 INDEX_NAME = "all-parties-index"
 

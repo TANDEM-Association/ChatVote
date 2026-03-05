@@ -19,6 +19,17 @@ from qdrant_client.models import (
 from src.models.candidate import Candidate
 from src.models.party import Party
 
+from src.model_config import (
+    GOOGLE_EMBED_MODEL,
+    GOOGLE_EMBED_DIM,
+    SCALEWAY_EMBED_MODEL,
+    SCALEWAY_EMBED_DIM,
+    SCALEWAY_EMBED_DEFAULT_URL,
+    OPENAI_EMBED_MODEL,
+    OPENAI_EMBED_DIM,
+    OLLAMA_EMBED_MODEL,
+    OLLAMA_EMBED_DIM,
+)
 from src.utils import load_env, safe_load_api_key
 
 from src.chatbot_async import rerank_documents, Responder
@@ -38,63 +49,109 @@ VOTING_BEHAVIOR_INDEX_NAME = f"justified_voting_behavior{env_suffix}"
 PARLIAMENTARY_QUESTIONS_INDEX_NAME = f"parliamentary_questions{env_suffix}"
 CANDIDATES_INDEX_NAME = f"candidates_websites{env_suffix}"
 
-# Embedding dimensions for different providers
-GOOGLE_EMBEDDING_DIM = 3072  # gemini-embedding-001 outputs 3072 dimensions
-OPENAI_EMBEDDING_DIM = 3072  # text-embedding-3-large
-
 
 def _get_embeddings() -> tuple[Embeddings, int]:
     """
     Get the embeddings model based on available API keys.
-    Prefers Google Embeddings, falls back to OpenAI if available.
+    Priority: EMBEDDING_PROVIDER override > Google > Scaleway > OpenAI > Ollama.
     Returns tuple of (embeddings, dimension).
     """
+    # Allow forcing a specific provider via env var
+    forced_provider = os.getenv("EMBEDDING_PROVIDER", "").lower()
+
     google_api_key = safe_load_api_key("GOOGLE_API_KEY")
     openai_api_key = safe_load_api_key("OPENAI_API_KEY")
+    scaleway_api_key = safe_load_api_key("SCALEWAY_EMBED_API_KEY") or safe_load_api_key("QWEN3_8B_SCW_SECRET_KEY")
 
+    if forced_provider == "google" and google_api_key:
+        return _google_embeddings(google_api_key)
+    if forced_provider == "scaleway" and scaleway_api_key:
+        return _scaleway_embeddings(scaleway_api_key)
+    if forced_provider == "openai" and openai_api_key:
+        return _openai_embeddings(openai_api_key)
+    if forced_provider == "ollama":
+        return _ollama_embeddings()
+    if forced_provider and forced_provider not in ("google", "scaleway", "openai", "ollama"):
+        logger.warning(f"Unknown EMBEDDING_PROVIDER '{forced_provider}', falling back to auto-detect")
+
+    # Auto-detect: Google > Scaleway > OpenAI > Ollama
     if google_api_key:
-        from langchain_google_genai import GoogleGenerativeAIEmbeddings
+        return _google_embeddings(google_api_key)
 
-        logger.info("Using Google Generative AI Embeddings")
-        return (
-            GoogleGenerativeAIEmbeddings(
-                model="models/gemini-embedding-001",
-                google_api_key=google_api_key,
-            ),
-            GOOGLE_EMBEDDING_DIM,
-        )
+    if scaleway_api_key:
+        return _scaleway_embeddings(scaleway_api_key)
 
     if openai_api_key:
-        from langchain_openai import OpenAIEmbeddings
-
-        logger.info("Using OpenAI Embeddings")
-        return (
-            OpenAIEmbeddings(
-                model="text-embedding-3-large",
-                openai_api_key=openai_api_key,
-            ),
-            OPENAI_EMBEDDING_DIM,
-        )
+        return _openai_embeddings(openai_api_key)
 
     ollama_base_url = os.getenv("OLLAMA_BASE_URL")
     if ollama_base_url:
-        from langchain_ollama import OllamaEmbeddings
-
-        ollama_embed_model = os.getenv("OLLAMA_EMBED_MODEL", "nomic-embed-text")
-        ollama_embed_dim = int(os.getenv("OLLAMA_EMBED_DIM", "768"))
-        logger.info(
-            f"Using Ollama Embeddings ({ollama_embed_model}, {ollama_embed_dim}d)"
-        )
-        return (
-            OllamaEmbeddings(
-                model=ollama_embed_model,
-                base_url=ollama_base_url,
-            ),
-            ollama_embed_dim,
-        )
+        return _ollama_embeddings()
 
     raise ValueError(
-        "No embedding API key found. Please set GOOGLE_API_KEY, OPENAI_API_KEY, or OLLAMA_BASE_URL."
+        "No embedding API key found. Set GOOGLE_API_KEY, SCALEWAY_EMBED_API_KEY, OPENAI_API_KEY, or OLLAMA_BASE_URL."
+    )
+
+
+def _google_embeddings(api_key: str) -> tuple[Embeddings, int]:
+    from langchain_google_genai import GoogleGenerativeAIEmbeddings
+
+    logger.info("Using Google Generative AI Embeddings")
+    return (
+        GoogleGenerativeAIEmbeddings(
+            model=GOOGLE_EMBED_MODEL,
+            google_api_key=api_key,
+        ),
+        GOOGLE_EMBED_DIM,
+    )
+
+
+def _scaleway_embeddings(api_key: str) -> tuple[Embeddings, int]:
+    from langchain_openai import OpenAIEmbeddings
+
+    base_url = os.getenv("SCALEWAY_EMBED_BASE_URL", SCALEWAY_EMBED_DEFAULT_URL)
+    model = SCALEWAY_EMBED_MODEL
+    dim = SCALEWAY_EMBED_DIM
+    logger.info(f"Using Scaleway Embeddings ({model}, {dim}d)")
+    return (
+        OpenAIEmbeddings(
+            model=model,
+            openai_api_key=api_key,
+            openai_api_base=base_url,
+            dimensions=dim,
+        ),
+        dim,
+    )
+
+
+def _openai_embeddings(api_key: str) -> tuple[Embeddings, int]:
+    from langchain_openai import OpenAIEmbeddings
+
+    logger.info("Using OpenAI Embeddings")
+    return (
+        OpenAIEmbeddings(
+            model=OPENAI_EMBED_MODEL,
+            openai_api_key=api_key,
+        ),
+        OPENAI_EMBED_DIM,
+    )
+
+
+def _ollama_embeddings() -> tuple[Embeddings, int]:
+    from langchain_ollama import OllamaEmbeddings
+
+    ollama_base_url = os.getenv("OLLAMA_BASE_URL")
+    if not ollama_base_url:
+        raise ValueError("OLLAMA_BASE_URL not set")
+    logger.info(
+        f"Using Ollama Embeddings ({OLLAMA_EMBED_MODEL}, {OLLAMA_EMBED_DIM}d)"
+    )
+    return (
+        OllamaEmbeddings(
+            model=OLLAMA_EMBED_MODEL,
+            base_url=ollama_base_url,
+        ),
+        OLLAMA_EMBED_DIM,
     )
 
 

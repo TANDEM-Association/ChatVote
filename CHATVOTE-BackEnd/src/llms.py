@@ -12,6 +12,23 @@ from langchain_ollama import ChatOllama
 from langchain_core.messages.base import BaseMessage, BaseMessageChunk
 from pydantic import BaseModel
 from src.firebase_service import awrite_llm_status
+from src.model_config import (
+    GEMINI_2_FLASH,
+    GPT_4O,
+    GPT_4O_MINI,
+    AZURE_GPT_4O_DEPLOYMENT,
+    AZURE_GPT_4O_MINI_DEPLOYMENT,
+    CLAUDE_SONNET,
+    CLAUDE_HAIKU,
+    OLLAMA_CHAT_MODEL,
+    CAPACITY_GEMINI_2_FLASH,
+    CAPACITY_GPT_4O_OPENAI_TIER_5,
+    CAPACITY_GPT_4O_AZURE,
+    CAPACITY_GPT_4O_MINI_OPENAI_TIER_5,
+    CAPACITY_GPT_4O_MINI_AZURE,
+    CAPACITY_CLAUDE_SONNET,
+    CAPACITY_CLAUDE_HAIKU,
+)
 from src.models.general import LLM, LLMSize
 from src.utils import load_env, safe_load_api_key
 
@@ -19,7 +36,7 @@ load_env()
 
 # Ollama configuration (conditionally initialized)
 _ollama_base_url = os.getenv("OLLAMA_BASE_URL")
-_ollama_model_name = os.getenv("OLLAMA_MODEL", "llama3.2")
+_ollama_model_name = OLLAMA_CHAT_MODEL
 _is_local = os.getenv("ENV") == "local"
 
 logger = logging.getLogger(__name__)
@@ -61,13 +78,7 @@ def _track_llm_request() -> None:
         )
 
 
-CAPACITY_GEMINI_2_FLASH = 108
-CAPACITY_GPT_4O_OPENAI_TIER_5 = 3759
-CAPACITY_GPT_4O_AZURE = 112
-CAPACITY_GPT_4O_MINI_OPENAI_TIER_5 = 4054
-CAPACITY_GPT_4O_MINI_AZURE = 108
-CAPACITY_CLAUDE_SONNET = 50
-CAPACITY_CLAUDE_HAIKU = 100
+# Capacity constants imported from model_config
 
 # Load API keys (conditionally)
 _azure_api_key = safe_load_api_key("AZURE_OPENAI_API_KEY")
@@ -81,7 +92,7 @@ _anthropic_api_key = safe_load_api_key("ANTHROPIC_API_KEY")
 azure_gpt_4o = (
     AzureChatOpenAI(
         azure_endpoint=_azure_endpoint,
-        deployment_name="gpt-4o-2024-08-06",
+        deployment_name=AZURE_GPT_4O_DEPLOYMENT,
         openai_api_version=_azure_api_version,
         api_key=_azure_api_key,
         max_retries=0,
@@ -93,7 +104,7 @@ azure_gpt_4o = (
 azure_gpt_4o_mini = (
     AzureChatOpenAI(
         azure_endpoint=_azure_endpoint,
-        deployment_name="gpt-4o-mini-2024-07-18",
+        deployment_name=AZURE_GPT_4O_MINI_DEPLOYMENT,
         openai_api_version=_azure_api_version,
         api_key=_azure_api_key,
         max_retries=0,
@@ -105,7 +116,7 @@ azure_gpt_4o_mini = (
 # Google Gemini models (conditionally initialized)
 google_gemini_2_flash = (
     ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+        model=GEMINI_2_FLASH,
         api_key=_google_api_key,
         max_retries=0,
     )
@@ -116,7 +127,7 @@ google_gemini_2_flash = (
 # OpenAI models (conditionally initialized)
 openai_gpt_4o = (
     ChatOpenAI(
-        model="gpt-4o-2024-08-06",
+        model=GPT_4O,
         api_key=_openai_api_key,
         max_retries=0,
     )
@@ -126,7 +137,7 @@ openai_gpt_4o = (
 
 openai_gpt_4o_mini = (
     ChatOpenAI(
-        model="gpt-4o-mini",
+        model=GPT_4O_MINI,
         api_key=_openai_api_key,
         max_retries=0,
     )
@@ -137,7 +148,7 @@ openai_gpt_4o_mini = (
 # Anthropic Claude models (conditionally initialized)
 anthropic_claude_sonnet = (
     ChatAnthropic(
-        model="claude-sonnet-4-5-20250929",
+        model=CLAUDE_SONNET,
         api_key=_anthropic_api_key,
         max_retries=0,
     )
@@ -147,7 +158,7 @@ anthropic_claude_sonnet = (
 
 anthropic_claude_haiku = (
     ChatAnthropic(
-        model="claude-haiku-4-5-20251001",
+        model=CLAUDE_HAIKU,
         api_key=_anthropic_api_key,
         max_retries=0,
     )
@@ -278,7 +289,7 @@ logger.info(
 azure_gpt_4o_mini_det = (
     AzureChatOpenAI(
         azure_endpoint=_azure_endpoint,
-        deployment_name="gpt-4o-mini-2024-07-18",
+        deployment_name=AZURE_GPT_4O_MINI_DEPLOYMENT,
         openai_api_version=_azure_api_version,
         api_key=_azure_api_key,
         temperature=0.0,
@@ -290,7 +301,7 @@ azure_gpt_4o_mini_det = (
 
 google_gemini_2_flash_det = (
     ChatGoogleGenerativeAI(
-        model="gemini-2.0-flash",
+        model=GEMINI_2_FLASH,
         api_key=_google_api_key,
         temperature=0.0,
         max_retries=0,
@@ -301,7 +312,7 @@ google_gemini_2_flash_det = (
 
 openai_gpt_4o_mini_det = (
     ChatOpenAI(
-        model="gpt-4o-mini",
+        model=GPT_4O_MINI,
         api_key=_openai_api_key,
         temperature=0.0,
         max_retries=0,
@@ -313,7 +324,7 @@ openai_gpt_4o_mini_det = (
 # Anthropic Claude deterministic models (conditionally initialized)
 anthropic_claude_sonnet_det = (
     ChatAnthropic(
-        model="claude-sonnet-4-5-20250929",
+        model=CLAUDE_SONNET,
         api_key=_anthropic_api_key,
         temperature=0.0,
         max_retries=0,
@@ -324,7 +335,7 @@ anthropic_claude_sonnet_det = (
 
 anthropic_claude_haiku_det = (
     ChatAnthropic(
-        model="claude-haiku-4-5-20251001",
+        model=CLAUDE_HAIKU,
         api_key=_anthropic_api_key,
         temperature=0.0,
         max_retries=0,
