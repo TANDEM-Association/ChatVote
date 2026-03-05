@@ -2,15 +2,15 @@ import { startMockServer } from './support/mock-socket-server';
 import { chromium } from '@playwright/test';
 import { ChildProcess, spawn, execSync } from 'child_process';
 import path from 'path';
-import { allocatePorts, readPorts } from './support/port-utils';
+import { readPorts } from './support/port-utils';
 
 let mockServer: { close: () => Promise<void> } | null = null;
 let emulatorProcess: ChildProcess | null = null;
 
 async function globalSetup() {
-  // Allocate dynamic ports FIRST so playwright.config.ts can read them on re-evaluation
-  const ports = await allocatePorts();
-  console.log(`Allocated ports — frontend: ${ports.frontend}, mockSocket: ${ports.mockSocket}`);
+  // Ports are already allocated synchronously by playwright.config.ts — just read them.
+  const ports = readPorts();
+  console.log(`Using ports — frontend: ${ports.frontend}, mockSocket: ${ports.mockSocket}`);
 
   // Check if emulators are already running
   const emulatorsRunning = await isServiceRunning('http://localhost:8081');

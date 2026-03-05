@@ -1,7 +1,7 @@
 import { defineConfig, devices } from '@playwright/test';
-import { readPorts } from './e2e/support/port-utils';
+import { getOrAllocatePorts } from './e2e/support/port-utils';
 
-const ports = readPorts();
+const ports = getOrAllocatePorts();
 
 export default defineConfig({
   testDir: './e2e/mock',

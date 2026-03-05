@@ -1,31 +1,37 @@
 import net from 'node:net';
 import fs from 'node:fs';
 import path from 'node:path';
+import { execSync } from 'node:child_process';
 
 const PORT_FILE = path.resolve(__dirname, '../../.e2e-ports.json');
 const BASE_PORT = 10_000;
 
-/** Check if a TCP port is available by attempting to listen on it. */
-function isPortAvailable(port: number): Promise<boolean> {
-  return new Promise((resolve) => {
-    const server = net.createServer();
-    server.once('error', () => resolve(false));
-    server.once('listening', () => {
-      server.close(() => resolve(true));
-    });
-    server.listen(port, '127.0.0.1');
-  });
+export interface E2EPorts {
+  /** Next.js test server */
+  frontend: number;
+  /** Mock Socket.IO server */
+  mockSocket: number;
 }
 
-/** Find N available ports starting from `base`. */
-export async function findAvailablePorts(
-  count: number,
-  base = BASE_PORT,
-): Promise<number[]> {
+/** Check if a TCP port is available synchronously using a subprocess. */
+function isPortAvailableSync(port: number): boolean {
+  try {
+    execSync(
+      `node -e "const s=require('net').createServer();s.listen(${port},'127.0.0.1',()=>{s.close(()=>process.exit(0))});s.on('error',()=>process.exit(1))"`,
+      { timeout: 3000, stdio: 'ignore' },
+    );
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+/** Find N available ports synchronously starting from `base`. */
+function findAvailablePortsSync(count: number, base = BASE_PORT): number[] {
   const ports: number[] = [];
   let candidate = base;
   while (ports.length < count && candidate < base + 1000) {
-    if (await isPortAvailable(candidate)) {
+    if (isPortAvailableSync(candidate)) {
       ports.push(candidate);
     }
     candidate++;
@@ -36,27 +42,25 @@ export async function findAvailablePorts(
   return ports;
 }
 
-export interface E2EPorts {
-  /** Next.js test server */
-  frontend: number;
-  /** Mock Socket.IO server */
-  mockSocket: number;
-}
+/**
+ * Get E2E ports. Allocates and persists them if not already done.
+ * Safe to call from playwright.config.ts (runs synchronously).
+ */
+export function getOrAllocatePorts(): E2EPorts {
+  // If ports were already allocated this run, reuse them
+  if (fs.existsSync(PORT_FILE)) {
+    return JSON.parse(fs.readFileSync(PORT_FILE, 'utf-8'));
+  }
 
-/** Discover and persist two available ports for the E2E test run. */
-export async function allocatePorts(): Promise<E2EPorts> {
-  const [frontend, mockSocket] = await findAvailablePorts(2, BASE_PORT);
+  // Allocate fresh ports
+  const [frontend, mockSocket] = findAvailablePortsSync(2, BASE_PORT);
   const ports: E2EPorts = { frontend, mockSocket };
   fs.writeFileSync(PORT_FILE, JSON.stringify(ports));
   return ports;
 }
 
-/** Read previously allocated ports (written by global-setup). */
+/** Read previously allocated ports (must exist). */
 export function readPorts(): E2EPorts {
-  if (!fs.existsSync(PORT_FILE)) {
-    // Fallback if port file doesn't exist yet (config evaluation before global-setup)
-    return { frontend: BASE_PORT, mockSocket: BASE_PORT + 1 };
-  }
   return JSON.parse(fs.readFileSync(PORT_FILE, 'utf-8'));
 }
 
