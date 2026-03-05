@@ -1,0 +1,16 @@
+url,type,status,depth,title,pdf_links_count,found_on,saved_as,size_kb,error
+https://www.virginie2026.fr/_files/ugd/8b2293_a13cf60e3d25469494502b9450f1aa1c.pdf,pdf,downloaded,0,,0,https://www.virginie2026.fr,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-bordeaux-012/pdfs/8b2293_a13cf60e3d25469494502b9450f1aa1c.pdf,7328.1,
+https://www.virginie2026.fr/_files/ugd/8b2293_a2779e92aee6440db04b065697c03bc3.pdf,pdf,downloaded,0,,0,https://www.virginie2026.fr,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-bordeaux-012/pdfs/8b2293_a2779e92aee6440db04b065697c03bc3.pdf,14782.2,
+https://www.virginie2026.fr,page,crawled,0,Virginie Bonthoux Tournay - Municipales Bordeaux 2026 | Programme municipale Bordeaux,2,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-bordeaux-012/markdown/index.md,,
+https://www.virginie2026.fr/_files/ugd/8b2293_a2779e92aee6440db04b065697c03bc3.pdf,page,error,1,,0,,,,"Page.goto: Download is starting
+Call log:
+  - navigating to ""https://www.virginie2026.fr/_files/ugd/8b2293_a2779e92aee6440db04b065697c03bc3.pdf"", waiting until ""domcontentloaded""
+"
+https://www.virginie2026.fr/blank,page,crawled,1,404 | Virginie2026,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-bordeaux-012/markdown/blank.md,,
+https://www.virginie2026.fr/mentions-légales-politique-de-confiden,page,crawled,1,Mentions légales & Politique de confiden | Virginie2026,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-bordeaux-012/markdown/mentions-légales-politique-de-confiden.md,,
+https://www.virginie2026.fr/parcours-engagements,page,crawled,1,PARCOURS & ENGAGEMENTS | Virginie2026,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-bordeaux-012/markdown/parcours-engagements.md,,
+https://www.virginie2026.fr/_files/ugd/8b2293_a13cf60e3d25469494502b9450f1aa1c.pdf,page,error,1,,0,,,,"Page.goto: Download is starting
+Call log:
+  - navigating to ""https://www.virginie2026.fr/_files/ugd/8b2293_a13cf60e3d25469494502b9450f1aa1c.pdf"", waiting until ""domcontentloaded""
+"
+https://www.virginie2026.fr/les-grands-axes,page,crawled,1,LES GRANDS AXES | Virginie2026,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-bordeaux-012/markdown/les-grands-axes.md,,

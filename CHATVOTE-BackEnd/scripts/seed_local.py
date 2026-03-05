@@ -193,16 +193,21 @@ def create_qdrant_collections():
     logger.info("Qdrant collections ready.")
 
 
-def seed_sample_vectors():
-    """Generate sample embeddings from party descriptions and index into Qdrant."""
+def seed_crawled_vectors():
+    """
+    Read crawled markdown from crawled_content/, chunk, embed via Ollama,
+    and index into Qdrant collections matching the production metadata format.
+    """
     from langchain_ollama import OllamaEmbeddings
+    from langchain_text_splitters import RecursiveCharacterTextSplitter
     from qdrant_client import QdrantClient
     from qdrant_client.models import PointStruct
+    import re
     import uuid
 
-    parties_path = FIREBASE_DATA_DIR / "parties.json"
-    if not parties_path.exists():
-        logger.warning("No parties.json found, skipping vector seeding")
+    crawled_dir = FIREBASE_DATA_DIR / "crawled_content"
+    if not crawled_dir.exists():
+        logger.warning("No crawled_content/ directory found, skipping vector seeding")
         return
 
     qdrant_url = os.environ["QDRANT_URL"]
@@ -214,44 +219,148 @@ def seed_sample_vectors():
     embeddings = OllamaEmbeddings(model=embed_model, base_url=ollama_base_url)
     client = QdrantClient(url=qdrant_url)
 
-    parties_data = json.loads(parties_path.read_text(encoding="utf-8"))
-    entries = {k: v for k, v in parties_data.items() if not k.startswith("_")}
+    text_splitter = RecursiveCharacterTextSplitter(
+        chunk_size=1000,
+        chunk_overlap=200,
+        length_function=len,
+        separators=["\n\n", "\n", ". ", "? ", "! ", "; ", " ", ""],
+    )
 
-    points = []
-    for party_id, party in entries.items():
-        description = party.get("description", "")
-        name = party.get("name", "")
-        long_name = party.get("long_name", "")
+    # Load party names for metadata
+    parties_path = FIREBASE_DATA_DIR / "parties.json"
+    party_names = {}
+    if parties_path.exists():
+        parties_data = json.loads(parties_path.read_text(encoding="utf-8"))
+        for pid, p in parties_data.items():
+            if not pid.startswith("_"):
+                party_names[pid] = p.get("name", pid)
 
-        text = f"{name} ({long_name}): {description}"
-        if not text.strip() or text.strip() == "():":
-            continue
+    # Load candidate data for metadata
+    candidates_path = FIREBASE_DATA_DIR / "candidates.json"
+    candidate_data = {}
+    if candidates_path.exists():
+        cand_raw = json.loads(candidates_path.read_text(encoding="utf-8"))
+        for cid, c in cand_raw.items():
+            if not cid.startswith("_"):
+                candidate_data[cid] = c
 
-        logger.info(f"  Embedding party '{name}'...")
-        vector = embeddings.embed_query(text)
+    def _extract_source_url(md_text: str) -> str:
+        """Extract source URL from crawler-ingest markdown format."""
+        match = re.search(r"^> Source: (.+)$", md_text, re.MULTILINE)
+        return match.group(1).strip() if match else ""
 
-        points.append(
-            PointStruct(
-                id=str(uuid.uuid4()),
-                vector={"dense": vector},
-                payload={
-                    "page_content": text,
-                    "metadata": {
-                        "namespace": party_id,
-                        "document_name": f"{name} - Description",
-                        "document_publish_date": "2024",
-                    },
+    def _embed_and_collect(
+        md_files: list[Path],
+        namespace: str,
+        metadata_base: dict,
+    ) -> list[PointStruct]:
+        """Read markdown files, chunk, embed, and return Qdrant points."""
+        points = []
+        for md_file in md_files:
+            content = md_file.read_text(encoding="utf-8")
+            if len(content.strip()) < 50:
+                continue
+
+            source_url = _extract_source_url(content)
+            chunks = text_splitter.split_text(content)
+
+            for i, chunk in enumerate(chunks):
+                vector = embeddings.embed_query(chunk)
+                metadata = {
+                    **metadata_base,
+                    "namespace": namespace,
+                    "url": source_url,
+                    "page_title": md_file.stem,
+                    "page": i + 1,
+                    "chunk_index": i,
+                    "total_chunks": len(chunks),
+                    "document_publish_date": None,
+                }
+                points.append(
+                    PointStruct(
+                        id=str(uuid.uuid4()),
+                        vector={"dense": vector},
+                        payload={
+                            "page_content": chunk,
+                            "metadata": metadata,
+                        },
+                    )
+                )
+        return points
+
+    # --- Seed party crawled content ---
+    parties_dir = crawled_dir / "parties"
+    if parties_dir.exists():
+        for party_dir in sorted(parties_dir.iterdir()):
+            if not party_dir.is_dir():
+                continue
+            party_id = party_dir.name
+            party_name = party_names.get(party_id, party_id)
+            md_files = sorted(party_dir.glob("*.md"))
+            if not md_files:
+                continue
+
+            logger.info(f"  Indexing {len(md_files)} pages for party '{party_name}'...")
+            points = _embed_and_collect(
+                md_files,
+                namespace=party_id,
+                metadata_base={
+                    "party_id": party_id,
+                    "party_name": party_name,
+                    "document_name": f"{party_name} - Site web",
+                    "source_document": "party_website",
                 },
             )
-        )
+            if points:
+                # Upsert in batches of 50
+                for i in range(0, len(points), 50):
+                    client.upsert(
+                        collection_name="all_parties_dev",
+                        points=points[i : i + 50],
+                    )
+                logger.info(f"    Indexed {len(points)} chunks into 'all_parties_dev'")
 
-    if points:
-        client.upsert(collection_name="all_parties_dev", points=points)
-        logger.info(f"  Indexed {len(points)} party descriptions into 'all_parties_dev'")
-    else:
-        logger.warning("  No party descriptions to index")
+    # --- Seed candidate crawled content ---
+    candidates_dir = crawled_dir / "candidates"
+    if candidates_dir.exists():
+        for cand_dir in sorted(candidates_dir.iterdir()):
+            if not cand_dir.is_dir():
+                continue
+            candidate_id = cand_dir.name
+            cand_info = candidate_data.get(candidate_id, {})
+            cand_name = cand_info.get("full_name", candidate_id)
+            municipality_code = cand_info.get("municipality_code", "")
+            municipality_name = cand_info.get("municipality_name", "")
+            party_ids = cand_info.get("party_ids", [])
+            party_ids_str = ",".join(party_ids) if isinstance(party_ids, list) else str(party_ids)
 
-    logger.info("Sample vector seeding complete.")
+            md_files = sorted(cand_dir.glob("*.md"))
+            if not md_files:
+                continue
+
+            logger.info(f"  Indexing {len(md_files)} pages for candidate '{cand_name}'...")
+            points = _embed_and_collect(
+                md_files,
+                namespace=candidate_id,
+                metadata_base={
+                    "candidate_id": candidate_id,
+                    "candidate_name": cand_name,
+                    "municipality_code": municipality_code,
+                    "municipality_name": municipality_name,
+                    "party_ids": party_ids_str,
+                    "document_name": f"{cand_name} - Site web",
+                    "source_document": "candidate_website",
+                },
+            )
+            if points:
+                for i in range(0, len(points), 50):
+                    client.upsert(
+                        collection_name="candidates_websites_dev",
+                        points=points[i : i + 50],
+                    )
+                logger.info(f"    Indexed {len(points)} chunks into 'candidates_websites_dev'")
+
+    logger.info("Crawled content vector seeding complete.")
 
 
 def main():
@@ -275,10 +384,10 @@ def main():
     logger.info("\n--- Creating Qdrant Collections ---")
     create_qdrant_collections()
 
-    # Step 3 (optional): Seed sample vectors
+    # Step 3 (optional): Seed vectors from crawled content
     if args.with_vectors:
-        logger.info("\n--- Seeding Sample Vectors ---")
-        seed_sample_vectors()
+        logger.info("\n--- Seeding Crawled Content Vectors ---")
+        seed_crawled_vectors()
 
     logger.info("\n=== Seeding complete! ===")
 

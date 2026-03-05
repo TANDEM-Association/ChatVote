@@ -1,0 +1,17 @@
+url,type,status,depth,title,pdf_links_count,found_on,saved_as,size_kb,error
+https://coeurlyonnais.fr/wp-content/uploads/2026/03/coeur-lyonnais-mesures-detaillees-addendum.pdf,pdf,downloaded,0,,0,https://coeurlyonnais.fr,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/pdfs/coeur-lyonnais-mesures-detaillees-addendum.pdf,3752.0,
+https://coeurlyonnais.fr/wp-content/uploads/2026/03/le_programme_de_la_metropole_avec_veronique_sarselli.pdf,pdf,downloaded,0,,0,https://coeurlyonnais.fr,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/pdfs/le_programme_de_la_metropole_avec_veronique_sarselli.pdf,1318.0,
+https://coeurlyonnais.fr,page,crawled,0,Home - Cœur Lyonnais,2,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/index.md,,
+https://coeurlyonnais.fr/,page,crawled,1,Home - Cœur Lyonnais,2,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/index.md,,
+https://coeurlyonnais.fr/lyon-de-demain,page,crawled,1,Lyon de demain - Cœur Lyonnais,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/lyon-de-demain.md,,
+https://coeurlyonnais.fr/pacte-lyonnais,page,crawled,1,Pacte Lyonnais - Cœur Lyonnais,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/pacte-lyonnais.md,,
+https://coeurlyonnais.fr/wp-content/uploads/2026/03/le_programme_de_la_metropole_avec_veronique_sarselli.pdf,page,error,1,,0,,,,"Page.goto: Download is starting
+Call log:
+  - navigating to ""https://coeurlyonnais.fr/wp-content/uploads/2026/03/le_programme_de_la_metropole_avec_veronique_sarselli.pdf"", waiting until ""domcontentloaded""
+"
+https://coeurlyonnais.fr/dons-par-cheque,page,crawled,1,Dons par chèque - Cœur Lyonnais,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/dons-par-cheque.md,,
+https://coeurlyonnais.fr/partagez-vos-idees,page,crawled,1,Partagez vos idées - Cœur Lyonnais,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/partagez-vos-idees.md,,
+https://coeurlyonnais.fr/actualites,page,crawled,1,Actualités - Cœur Lyonnais,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/actualites.md,,
+https://coeurlyonnais.fr/lyon-et-le-monde,page,crawled,1,Lyon et le Monde - Cœur Lyonnais,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/lyon-et-le-monde.md,,
+https://coeurlyonnais.fr/faire-un-don,page,crawled,1,Faire un don - Cœur Lyonnais,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/faire-un-don.md,,
+https://coeurlyonnais.fr/mentions-legales,page,crawled,1,Mentions légales - Cœur Lyonnais,0,,/Users/adelinb/Documents/Projects/ChatVote/CHATVOTE-BackEnd/firebase/firestore_data/dev/crawled_content/candidates/cand-lyon-001/markdown/mentions-legales.md,,

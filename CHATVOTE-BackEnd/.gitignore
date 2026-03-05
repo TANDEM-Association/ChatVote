@@ -199,3 +199,8 @@ cython_debug/
 
 # Logs
 .logs/
+
+# DeepEval
+.deepeval/
+reports/
+prompts_optimized/
