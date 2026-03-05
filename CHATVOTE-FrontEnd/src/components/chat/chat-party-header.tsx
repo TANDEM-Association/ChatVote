@@ -34,7 +34,7 @@ const ChatPartyHeader = ({ parties }: Props) => {
               width={0}
               height={0}
               sizes="100vw"
-              className="size-full p-4"
+              className="logo-theme size-full p-4"
             />
           )}
         </div>

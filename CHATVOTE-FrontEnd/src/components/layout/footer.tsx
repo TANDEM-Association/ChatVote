@@ -18,7 +18,7 @@ export const Footer: React.FC = () => {
         width={0}
         height={0}
         sizes="100vw"
-        className="size-5"
+        className="logo-theme size-5"
       />
 
       <section className="flex grow flex-wrap items-center justify-center gap-2 underline md:justify-end">

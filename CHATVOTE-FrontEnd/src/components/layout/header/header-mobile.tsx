@@ -161,7 +161,7 @@ export const HeaderMobile: React.FC<HeaderMobileProps> = ({
             variants={menuVariants}
             animate={isMenuOpen === true ? "open" : "closed"}
             initial="closed"
-            className="fixed inset-0 z-40 flex h-dvh w-screen flex-col items-start justify-between gap-6 overflow-hidden bg-purple-900"
+            className="fixed inset-0 z-40 flex h-dvh w-screen flex-col items-start justify-between gap-6 overflow-hidden bg-surface"
             onAnimationComplete={(animationDefinition) => {
               if (animationDefinition === "closed" && pendingPath !== null) {
                 setPendingPath(null);
@@ -207,7 +207,7 @@ export const HeaderMobile: React.FC<HeaderMobileProps> = ({
           initial="closed"
           animate={isMenuOpen === true ? "open" : "closed"}
         >
-          <div className="relative z-50 flex w-full flex-row items-center justify-between text-neutral-100">
+          <div className="relative z-50 flex w-full flex-row items-center justify-between text-foreground">
             <HeaderMobileMenuToggle toggle={onToggle} />
             <a
               onClick={redirectToRoute("/")}
@@ -219,7 +219,7 @@ export const HeaderMobile: React.FC<HeaderMobileProps> = ({
                 width={0}
                 height={0}
                 sizes="100vw"
-                className="w-8"
+                className="logo-theme w-8"
                 loading="eager"
               />
             </a>

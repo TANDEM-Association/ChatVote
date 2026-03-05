@@ -195,7 +195,7 @@ const Sidebar = React.forwardRef<
         <div
           ref={ref}
           className={cn(
-            "flex-col overflow-hidden border-r border-purple-500 bg-purple-900 duration-200",
+            "flex-col overflow-hidden border-r border-border-subtle bg-surface duration-200",
             // Expanded state
             state === "expanded" ? "w-full md:w-95" : "w-0",
             className,
@@ -216,7 +216,7 @@ const Sidebar = React.forwardRef<
         {state === "expanded" ? (
           <div
             className={
-              "flex-1 cursor-pointer bg-purple-900/20 backdrop-blur-sm"
+              "flex-1 cursor-pointer bg-surface/20 backdrop-blur-sm"
             }
             onClick={toggleSidebar}
           />

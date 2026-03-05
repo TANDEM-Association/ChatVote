@@ -48,7 +48,7 @@ const ChatEmptyView = ({
 
   return (
     <div className="flex grow flex-col items-center justify-center gap-4 px-8">
-      <div className="relative flex size-28 items-center justify-center rounded-md border-2 border-purple-400 md:size-36">
+      <div className="relative flex size-28 items-center justify-center rounded-md border-2 border-border-strong md:size-36">
         {party ? (
           <Image
             alt={party.name}
@@ -64,7 +64,7 @@ const ChatEmptyView = ({
             width={0}
             height={0}
             sizes="100vw"
-            className="size-full p-4"
+            className="logo-theme size-full p-4"
           />
         )}
       </div>

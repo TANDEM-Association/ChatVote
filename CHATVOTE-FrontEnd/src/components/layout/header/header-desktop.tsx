@@ -50,7 +50,7 @@ export const HeaderDesktop: React.FC<HeaderDesktopProps> = ({
             width={0}
             height={0}
             sizes="100vw"
-            className="size-8 rounded-md md:size-12"
+            className="logo-theme size-8 rounded-md md:size-12"
           />
         </Link>
 

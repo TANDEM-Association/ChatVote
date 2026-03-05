@@ -7,12 +7,50 @@
 :root {
   --background: #f5f5f5;
   --foreground: #0a0a0a;
+  --surface: #ffffff;
+  --surface-elevated: #f0f0f5;
+  --surface-input: #e8e8f0;
+  --border-subtle: #d4d4e0;
+  --border-strong: #b0b0c0;
+  --muted: #e5e7eb;
+  --muted-foreground: #6b7280;
+  --card: #ffffff;
+  --card-foreground: #0a0a0a;
+  --accent: #e8e5f8;
+  --accent-foreground: #1a1a2e;
+  --input: #d4d4e0;
+  --border: #d4d4e0;
+  --ring: #381AF3;
+  --primary-foreground: #ffffff;
+  --secondary: #e5e7eb;
+  --secondary-foreground: #1a1a2e;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   color-scheme: light;
 }
 
 :root[data-theme="dark"] {
   --background: var(--color-purple-800);
   --foreground: #f5f5f5;
+  --surface: var(--color-purple-900);
+  --surface-elevated: var(--color-purple-500);
+  --surface-input: var(--color-purple-500);
+  --border-subtle: var(--color-purple-500);
+  --border-strong: var(--color-purple-400);
+  --muted: #2E275A;
+  --muted-foreground: #a1a1aa;
+  --card: var(--color-purple-900);
+  --card-foreground: #f5f5f5;
+  --accent: var(--color-purple-500);
+  --accent-foreground: #f5f5f5;
+  --input: var(--color-purple-400);
+  --border: var(--color-purple-500);
+  --ring: #6053a6;
+  --primary-foreground: #ffffff;
+  --secondary: var(--color-purple-500);
+  --secondary-foreground: #f5f5f5;
+  --destructive: #ef4444;
+  --destructive-foreground: #ffffff;
   color-scheme: dark;
 }
 
@@ -33,6 +71,25 @@
 
   --color-background: var(--background);
   --color-foreground: var(--foreground);
+  --color-surface: var(--surface);
+  --color-surface-elevated: var(--surface-elevated);
+  --color-surface-input: var(--surface-input);
+  --color-border-subtle: var(--border-subtle);
+  --color-border-strong: var(--border-strong);
+  --color-muted: var(--muted);
+  --color-muted-foreground: var(--muted-foreground);
+  --color-card: var(--card);
+  --color-card-foreground: var(--card-foreground);
+  --color-accent: var(--accent);
+  --color-accent-foreground: var(--accent-foreground);
+  --color-input: var(--input);
+  --color-border: var(--border);
+  --color-ring: var(--ring);
+  --color-primary-foreground: var(--primary-foreground);
+  --color-secondary: var(--secondary);
+  --color-secondary-foreground: var(--secondary-foreground);
+  --color-destructive: var(--destructive);
+  --color-destructive-foreground: var(--destructive-foreground);
 
   --text-xxs: 0.625rem;
 
@@ -70,6 +127,10 @@ body {
 
 @utility no-scrollbar {
   @apply [scrollbar-width:none] [&::-webkit-scrollbar]:hidden;
+}
+
+@utility logo-theme {
+  @apply brightness-0 dark:brightness-100;
 }
 
 @keyframes scroll-text {

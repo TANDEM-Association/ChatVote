@@ -19,7 +19,7 @@ const EmbedOpenWebsiteButton = async () => {
           width={0}
           height={0}
           sizes="100vw"
-          className="size-4"
+          className="logo-theme size-4"
         />
         Vers chatvote
       </Link>
