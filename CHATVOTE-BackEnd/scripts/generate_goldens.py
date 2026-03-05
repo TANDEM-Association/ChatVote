@@ -88,6 +88,7 @@ def _build_ollama_model():
     """Build OllamaModel for the DeepEval Synthesizer."""
     from deepeval.models import OllamaModel
 
+    # Model defaults — see src/model_config.py for the central registry
     ollama_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
     ollama_model = os.environ.get("OLLAMA_MODEL", "qwen3:32b")
 
