@@ -33,7 +33,7 @@ os.environ.setdefault("API_NAME", "chatvote-api")
 os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:8081")
 os.environ.setdefault("QDRANT_URL", "http://localhost:6333")
 os.environ.setdefault("OLLAMA_BASE_URL", "http://localhost:11434")
-os.environ.setdefault("OLLAMA_MODEL", "llama3.2")
+os.environ.setdefault("OLLAMA_MODEL", "qwen3:32b")
 os.environ.setdefault("OLLAMA_EMBED_MODEL", "nomic-embed-text")
 os.environ.setdefault("OLLAMA_EMBED_DIM", "768")
 
