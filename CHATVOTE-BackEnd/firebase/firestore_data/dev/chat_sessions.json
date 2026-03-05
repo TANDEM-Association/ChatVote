@@ -1,0 +1,220 @@
+{
+  "012d73e7-373e-4453-8436-3427a5700bac": {
+    "user_id": "fzzp6NBg0aQlxseoUWBoUUcCoVl2",
+    "created_at": "2026-01-23T09:36:14.300Z",
+    "updated_at": "2026-01-23T09:36:14.300Z",
+    "party_ids": [
+      "place-publique",
+      "chat-vote"
+    ]
+  },
+  "012d73e7-373e-4453-8436-3427a5700bac/messages/b99d5c06-9f02-423b-9c37-2b8a326555fe": {
+    "id": "b99d5c06-9f02-423b-9c37-2b8a326555fe",
+    "messages": [
+      {
+        "id": "b514eeae-8acd-47a3-9baa-9e806b1eac5a",
+        "content": "Parle moi du programme proposé par le parti place publique",
+        "sources": [],
+        "created_at": "2026-01-23T09:36:14.452Z",
+        "role": "user"
+      }
+    ],
+    "quick_replies": [],
+    "role": "user",
+    "created_at": "2026-01-23T09:36:14.452Z"
+  },
+  "012d73e7-373e-4453-8436-3427a5700bac/messages/db70136a-c295-4583-a357-78468f50ec6e": {
+    "created_at": "2026-01-23T09:36:18.009Z",
+    "messages": [
+      {
+        "id": "c6dcde41-1823-45c2-bca0-9ef7d633c9a2",
+        "content": "Place Publique est un mouvement politique de gauche sociale-démocrate et écologiste, fondé par Raphaël Glucksmann, mettant l'accent sur l'Europe, la justice sociale et les droits humains [].  \\nTu peux consulter leur programme électoral ici : https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf [].\n",
+        "sources": [],
+        "party_id": "chat-vote",
+        "created_at": "2026-01-23T09:36:18.009Z",
+        "role": "assistant"
+      }
+    ],
+    "id": "db70136a-c295-4583-a357-78468f50ec6e"
+  },
+  "0183b773-cadf-4f1a-a56b-aa8358d95b36": {
+    "user_id": "eEYPF4pwhxdzciQyugHOdUdT7n62",
+    "party_ids": [
+      "place-publique"
+    ],
+    "created_at": "2026-02-28T21:36:21.067Z",
+    "updated_at": "2026-02-28T21:36:21.067Z",
+    "title": "Chiens et Place Publique"
+  },
+  "0183b773-cadf-4f1a-a56b-aa8358d95b36/messages/1eddd050-fa0c-40ed-b7de-e6229132fd61": {
+    "id": "1eddd050-fa0c-40ed-b7de-e6229132fd61",
+    "messages": [
+      {
+        "id": "7f471655-47c3-418f-ad77-53eca5f6822a",
+        "content": "Les chiens",
+        "sources": [],
+        "created_at": "2026-02-28T21:36:21.391Z",
+        "role": "user"
+      }
+    ],
+    "quick_replies": [],
+    "role": "user",
+    "created_at": "2026-02-28T21:36:21.391Z"
+  },
+  "0183b773-cadf-4f1a-a56b-aa8358d95b36/messages/c906cf86-44aa-4154-bb58-dd8197601607": {
+    "created_at": "2026-02-28T21:36:24.055Z",
+    "messages": [
+      {
+        "id": "993945e1-f88a-4289-b240-9a59826d3b58",
+        "content": "Le parti Place Publique propose un plan de défense des animaux de compagnie [0]. Ce plan inclut le renforcement de leur traçabilité, un encadrement strict de leur commerce, et la promotion de la stérilisation et de l'accueil par les collectivités pendant les vacances [0].\n",
+        "sources": [
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 55,
+            "content_preview": "30 La condition animale est un enjeu éthique qui dépasse la  simple réponse à l’...",
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_type": "manifesto",
+            "party_id": "place-publique"
+          },
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 56,
+            "content_preview": "l’élevage en cage, l’interdiction de l’élevage pour  la fourrure, ainsi que le r...",
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_type": "manifesto",
+            "party_id": "place-publique"
+          },
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 9,
+            "content_preview": "6 Une France   puissante grâce   à une Europe   souveraine 1",
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_type": "manifesto",
+            "party_id": "place-publique"
+          },
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 68,
+            "content_preview": "36 Un nouveau  contrat social et  démocratique  pour une France  plus juste 2",
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_type": "manifesto",
+            "party_id": "place-publique"
+          },
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 25,
+            "content_preview": "15 partie 1 : Une France puisssante grâce à une Europe souveraine",
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_type": "manifesto",
+            "party_id": "place-publique"
+          }
+        ],
+        "party_id": "place-publique",
+        "created_at": "2026-02-28T21:36:24.055Z",
+        "role": "assistant"
+      }
+    ],
+    "id": "c906cf86-44aa-4154-bb58-dd8197601607",
+    "quick_replies": [
+      "Traçabilité : c'est quoi ?",
+      "Pourquoi un encadrement strict du commerce ?",
+      "Quelle politique sur l'accueil par les collectivités"
+    ]
+  },
+  "02021b9d-a90e-4397-bf2b-3f81c9d5b5d9": {
+    "user_id": "PPYNVDBcw3f3cwc7fNaU4tSVbwW2",
+    "created_at": "2026-01-27T08:26:47.250Z",
+    "updated_at": "2026-01-27T08:26:47.250Z",
+    "party_ids": [
+      "la-france-insoumise",
+      "europe-ecologie-les-verts",
+      "reconquete",
+      "chat-vote"
+    ],
+    "title": "Position des listes sur l'Euro"
+  },
+  "02021b9d-a90e-4397-bf2b-3f81c9d5b5d9/messages/8a419d9a-f471-4fd0-a3e3-e1de3aa342ec": {
+    "id": "8a419d9a-f471-4fd0-a3e3-e1de3aa342ec",
+    "messages": [
+      {
+        "id": "83f27ac8-3392-4265-805e-700b0d5677b2",
+        "content": "quelle est votre position au sujet de l'EURO ?",
+        "sources": [],
+        "created_at": "2026-01-27T08:26:47.455Z",
+        "role": "user"
+      }
+    ],
+    "quick_replies": [],
+    "role": "user",
+    "created_at": "2026-01-27T08:26:47.455Z"
+  },
+  "02021b9d-a90e-4397-bf2b-3f81c9d5b5d9/messages/9ea8d28a-ea21-447f-9645-3bf492afb0d6": {
+    "created_at": "2026-01-27T08:26:51.353Z",
+    "messages": [
+      {
+        "id": "48551421-4a40-4719-a285-dcba126a0b29",
+        "content": "Pourrais-tu me préciser de quelle liste tu souhaites connaître la position sur l'Euro ?\n",
+        "sources": [
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 24,
+            "content_preview": "exigées chez nous (mesures miroirs).    Créer un label européen pour l’épargne a...",
+            "document_publish_date": null,
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_document": "election_manifesto"
+          },
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 19,
+            "content_preview": "institutionnelle, clarifiant et démocratisant le  fonctionnement de l’Union pass...",
+            "document_publish_date": null,
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_document": "election_manifesto"
+          },
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 25,
+            "content_preview": "15 partie 1 : Une France puisssante grâce à une Europe souveraine",
+            "document_publish_date": null,
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_document": "election_manifesto"
+          },
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 57,
+            "content_preview": "31 partie 1 : Une France puisssante grâce à une Europe souveraine   32",
+            "document_publish_date": null,
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_document": "election_manifesto"
+          },
+          {
+            "source": "Place Publique - Programme électoral",
+            "page": 68,
+            "content_preview": "36 Un nouveau  contrat social et  démocratique  pour une France  plus juste 2",
+            "document_publish_date": null,
+            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "source_document": "election_manifesto"
+          }
+        ],
+        "party_id": "chat-vote",
+        "created_at": "2026-01-27T08:26:51.353Z",
+        "role": "assistant"
+      }
+    ],
+    "id": "9ea8d28a-ea21-447f-9645-3bf492afb0d6",
+    "quick_replies": [
+      "EELV, quelle est votre position sur les transports ?",
+      "Comment fonctionnent les élections ?",
+      "Comment fonctionne ChatVote ?"
+    ]
+  },
+  "02a98481-7cee-4fc2-8c78-42683bd7b0c5": {
+    "user_id": "cjlZBLiua2eAbB4twzY6XGMXgGc2",
+    "party_ids": [
+      "place-publique"
+    ],
+    "created_at": "2026-03-02T10:34:36.088Z",
+    "updated_at": "2026-03-02T10:34:36.088Z",
+    "title": "Démocratie selon Place Publique"
+  }
+}

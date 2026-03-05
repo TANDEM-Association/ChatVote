@@ -1,5 +1,5 @@
 {
-    "llm_status": {
-        "is_at_rate_limit": false
-    }
+  "llm_status": {
+    "is_at_rate_limit": false
+  }
 }

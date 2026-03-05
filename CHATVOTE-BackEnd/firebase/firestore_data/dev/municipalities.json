@@ -1,0 +1,7888 @@
+{
+  "10387": {
+    "code": "10387",
+    "nom": "Troyes",
+    "zone": "metro",
+    "population": 62443,
+    "surface": 1329.38,
+    "codesPostaux": [
+      "10000"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "10",
+    "siren": "211003744",
+    "codeEpci": "200069250",
+    "epci": {
+      "code": "200069250",
+      "nom": "CA Troyes Champagne Métropole"
+    },
+    "departement": {
+      "code": "10",
+      "nom": "Aube"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142123"
+  },
+  "11069": {
+    "code": "11069",
+    "nom": "Carcassonne",
+    "zone": "metro",
+    "population": 46429,
+    "surface": 6513.35,
+    "codesPostaux": [
+      "11000"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "11",
+    "siren": "211100698",
+    "codeEpci": "200035715",
+    "epci": {
+      "code": "200035715",
+      "nom": "CA Carcassonne Agglo"
+    },
+    "departement": {
+      "code": "11",
+      "nom": "Aude"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142198"
+  },
+  "11262": {
+    "code": "11262",
+    "nom": "Narbonne",
+    "zone": "metro",
+    "population": 56692,
+    "surface": 17477,
+    "codesPostaux": [
+      "11100"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "11",
+    "siren": "211102629",
+    "codeEpci": "241100593",
+    "epci": {
+      "code": "241100593",
+      "nom": "CA Le Grand Narbonne"
+    },
+    "departement": {
+      "code": "11",
+      "nom": "Aude"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142324"
+  },
+  "13001": {
+    "code": "13001",
+    "nom": "Aix-en-Provence",
+    "zone": "metro",
+    "population": 147933,
+    "surface": 18749.92,
+    "codesPostaux": [
+      "13080",
+      "13090",
+      "13100",
+      "13290",
+      "13540"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211300017",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142639"
+  },
+  "13004": {
+    "code": "13004",
+    "nom": "Arles",
+    "zone": "metro",
+    "population": 51156,
+    "surface": 75678,
+    "codesPostaux": [
+      "13104",
+      "13123",
+      "13129",
+      "13200",
+      "13280"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211300041",
+    "codeEpci": "241300417",
+    "epci": {
+      "code": "241300417",
+      "nom": "CA d'Arles-Crau-Camargue-Montagnette"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142641"
+  },
+  "13005": {
+    "code": "13005",
+    "nom": "Aubagne",
+    "zone": "metro",
+    "population": 47724,
+    "surface": 5477.36,
+    "codesPostaux": [
+      "13400"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211300058",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142641"
+  },
+  "13028": {
+    "code": "13028",
+    "nom": "La Ciotat",
+    "zone": "metro",
+    "population": 37599,
+    "surface": 3202.99,
+    "codesPostaux": [
+      "13600"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211300280",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142655"
+  },
+  "13047": {
+    "code": "13047",
+    "nom": "Istres",
+    "zone": "metro",
+    "population": 44044,
+    "surface": 11423.83,
+    "codesPostaux": [
+      "13118",
+      "13800"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211300470",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142667"
+  },
+  "13054": {
+    "code": "13054",
+    "nom": "Marignane",
+    "zone": "metro",
+    "population": 33164,
+    "surface": 2356.88,
+    "codesPostaux": [
+      "13700"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211300546",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142671"
+  },
+  "13055": {
+    "code": "13055",
+    "nom": "Marseille",
+    "zone": "metro",
+    "population": 877215,
+    "surface": 23793.29,
+    "codesPostaux": [
+      "13001",
+      "13002",
+      "13003",
+      "13004",
+      "13005",
+      "13006",
+      "13007",
+      "13008",
+      "13009",
+      "13010",
+      "13011",
+      "13012",
+      "13013",
+      "13014",
+      "13015",
+      "13016"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211300553",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142672"
+  },
+  "13056": {
+    "code": "13056",
+    "nom": "Martigues",
+    "zone": "metro",
+    "population": 48818,
+    "surface": 7260.5,
+    "codesPostaux": [
+      "13117",
+      "13500"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211300561",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142673"
+  },
+  "13103": {
+    "code": "13103",
+    "nom": "Salon-de-Provence",
+    "zone": "metro",
+    "population": 44553,
+    "surface": 7052.85,
+    "codesPostaux": [
+      "13300"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211301031",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142701"
+  },
+  "13117": {
+    "code": "13117",
+    "nom": "Vitrolles",
+    "zone": "metro",
+    "population": 36612,
+    "surface": 3675.2,
+    "codesPostaux": [
+      "13127"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "13",
+    "siren": "211301171",
+    "codeEpci": "200054807",
+    "epci": {
+      "code": "200054807",
+      "nom": "Métropole d'Aix-Marseille-Provence"
+    },
+    "departement": {
+      "code": "13",
+      "nom": "Bouches-du-Rhône"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142710"
+  },
+  "14118": {
+    "code": "14118",
+    "nom": "Caen",
+    "zone": "metro",
+    "population": 108398,
+    "surface": 2569.73,
+    "codesPostaux": [
+      "14000"
+    ],
+    "codeRegion": "28",
+    "codeDepartement": "14",
+    "siren": "211401187",
+    "codeEpci": "200065597",
+    "epci": {
+      "code": "200065597",
+      "nom": "CU Caen la Mer"
+    },
+    "departement": {
+      "code": "14",
+      "nom": "Calvados"
+    },
+    "region": {
+      "code": "28",
+      "nom": "Normandie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.142765"
+  },
+  "16015": {
+    "code": "16015",
+    "nom": "Angoulême",
+    "zone": "metro",
+    "population": 41423,
+    "surface": 2174.24,
+    "codesPostaux": [
+      "16000"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "16",
+    "siren": "211600150",
+    "codeEpci": "200071827",
+    "epci": {
+      "code": "200071827",
+      "nom": "CA du Grand Angoulême"
+    },
+    "departement": {
+      "code": "16",
+      "nom": "Charente"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.143209"
+  },
+  "17300": {
+    "code": "17300",
+    "nom": "La Rochelle",
+    "zone": "metro",
+    "population": 79961,
+    "surface": 3000.58,
+    "codesPostaux": [
+      "17000"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "17",
+    "siren": "211703004",
+    "codeEpci": "241700434",
+    "epci": {
+      "code": "241700434",
+      "nom": "CA de La Rochelle"
+    },
+    "departement": {
+      "code": "17",
+      "nom": "Charente-Maritime"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.143626"
+  },
+  "18033": {
+    "code": "18033",
+    "nom": "Bourges",
+    "zone": "metro",
+    "population": 64238,
+    "surface": 6865.41,
+    "codesPostaux": [
+      "18000"
+    ],
+    "codeRegion": "24",
+    "codeDepartement": "18",
+    "siren": "211800339",
+    "codeEpci": "241800507",
+    "epci": {
+      "code": "241800507",
+      "nom": "CA Bourges Plus"
+    },
+    "departement": {
+      "code": "18",
+      "nom": "Cher"
+    },
+    "region": {
+      "code": "24",
+      "nom": "Centre-Val de Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.143755"
+  },
+  "19031": {
+    "code": "19031",
+    "nom": "Brive-la-Gaillarde",
+    "zone": "metro",
+    "population": 46769,
+    "surface": 4864.75,
+    "codesPostaux": [
+      "19100"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "19",
+    "siren": "211903109",
+    "codeEpci": "200043172",
+    "epci": {
+      "code": "200043172",
+      "nom": "CA du Bassin de Brive"
+    },
+    "departement": {
+      "code": "19",
+      "nom": "Corrèze"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.143934"
+  },
+  "21231": {
+    "code": "21231",
+    "nom": "Dijon",
+    "zone": "metro",
+    "population": 159941,
+    "surface": 4170.33,
+    "codesPostaux": [
+      "21000"
+    ],
+    "codeRegion": "27",
+    "codeDepartement": "21",
+    "siren": "212102313",
+    "codeEpci": "242100410",
+    "epci": {
+      "code": "242100410",
+      "nom": "Dijon Métropole"
+    },
+    "departement": {
+      "code": "21",
+      "nom": "Côte-d'Or"
+    },
+    "region": {
+      "code": "27",
+      "nom": "Bourgogne-Franche-Comté"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.144224"
+  },
+  "22278": {
+    "code": "22278",
+    "nom": "Saint-Brieuc",
+    "zone": "metro",
+    "population": 44607,
+    "surface": 1922.19,
+    "codesPostaux": [
+      "22000"
+    ],
+    "codeRegion": "53",
+    "codeDepartement": "22",
+    "siren": "212202782",
+    "codeEpci": "200069409",
+    "epci": {
+      "code": "200069409",
+      "nom": "CA Saint-Brieuc Armor Agglomération"
+    },
+    "departement": {
+      "code": "22",
+      "nom": "Côtes-d'Armor"
+    },
+    "region": {
+      "code": "53",
+      "nom": "Bretagne"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.144670"
+  },
+  "25056": {
+    "code": "25056",
+    "nom": "Besançon",
+    "zone": "metro",
+    "population": 120057,
+    "surface": 6516.07,
+    "codesPostaux": [
+      "25000"
+    ],
+    "codeRegion": "27",
+    "codeDepartement": "25",
+    "siren": "212500565",
+    "codeEpci": "242500361",
+    "epci": {
+      "code": "242500361",
+      "nom": "CU Grand Besançon Métropole"
+    },
+    "departement": {
+      "code": "25",
+      "nom": "Doubs"
+    },
+    "region": {
+      "code": "27",
+      "nom": "Bourgogne-Franche-Comté"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.145236"
+  },
+  "26198": {
+    "code": "26198",
+    "nom": "Montélimar",
+    "zone": "metro",
+    "population": 40356,
+    "surface": 4641.24,
+    "codesPostaux": [
+      "26200"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "26",
+    "siren": "212601983",
+    "codeEpci": "200040459",
+    "epci": {
+      "code": "200040459",
+      "nom": "CA Montélimar Agglomération"
+    },
+    "departement": {
+      "code": "26",
+      "nom": "Drôme"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.145685"
+  },
+  "26281": {
+    "code": "26281",
+    "nom": "Romans-sur-Isère",
+    "zone": "metro",
+    "population": 33139,
+    "surface": 3354.06,
+    "codesPostaux": [
+      "26100"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "26",
+    "siren": "212602817",
+    "codeEpci": "200068781",
+    "epci": {
+      "code": "200068781",
+      "nom": "CA Valence Romans Agglo"
+    },
+    "departement": {
+      "code": "26",
+      "nom": "Drôme"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.145734"
+  },
+  "26362": {
+    "code": "26362",
+    "nom": "Valence",
+    "zone": "metro",
+    "population": 64288,
+    "surface": 3673.58,
+    "codesPostaux": [
+      "26000"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "26",
+    "siren": "212603625",
+    "codeEpci": "200068781",
+    "epci": {
+      "code": "200068781",
+      "nom": "CA Valence Romans Agglo"
+    },
+    "departement": {
+      "code": "26",
+      "nom": "Drôme"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.145782"
+  },
+  "27229": {
+    "code": "27229",
+    "nom": "Évreux",
+    "zone": "metro",
+    "population": 48335,
+    "surface": 2641.68,
+    "codesPostaux": [
+      "27000"
+    ],
+    "codeRegion": "28",
+    "codeDepartement": "27",
+    "siren": "212702294",
+    "codeEpci": "200071454",
+    "epci": {
+      "code": "200071454",
+      "nom": "CA Evreux Portes de Normandie"
+    },
+    "departement": {
+      "code": "27",
+      "nom": "Eure"
+    },
+    "region": {
+      "code": "28",
+      "nom": "Normandie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.145915"
+  },
+  "28085": {
+    "code": "28085",
+    "nom": "Chartres",
+    "zone": "metro",
+    "population": 37990,
+    "surface": 1692.69,
+    "codesPostaux": [
+      "28000"
+    ],
+    "codeRegion": "24",
+    "codeDepartement": "28",
+    "siren": "212800858",
+    "codeEpci": "200033181",
+    "epci": {
+      "code": "200033181",
+      "nom": "CA Chartres Métropole"
+    },
+    "departement": {
+      "code": "28",
+      "nom": "Eure-et-Loir"
+    },
+    "region": {
+      "code": "24",
+      "nom": "Centre-Val de Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.146261"
+  },
+  "28134": {
+    "code": "28134",
+    "nom": "Dreux",
+    "zone": "metro",
+    "population": 31205,
+    "surface": 2423.79,
+    "codesPostaux": [
+      "28100"
+    ],
+    "codeRegion": "24",
+    "codeDepartement": "28",
+    "siren": "212801344",
+    "codeEpci": "200040277",
+    "epci": {
+      "code": "200040277",
+      "nom": "CA Agglo du Pays de Dreux"
+    },
+    "departement": {
+      "code": "28",
+      "nom": "Eure-et-Loir"
+    },
+    "region": {
+      "code": "24",
+      "nom": "Centre-Val de Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.146289"
+  },
+  "29019": {
+    "code": "29019",
+    "nom": "Brest",
+    "zone": "metro",
+    "population": 140993,
+    "surface": 4918.51,
+    "codesPostaux": [
+      "29200"
+    ],
+    "codeRegion": "53",
+    "codeDepartement": "29",
+    "siren": "212900195",
+    "codeEpci": "242900314",
+    "epci": {
+      "code": "242900314",
+      "nom": "Brest Métropole"
+    },
+    "departement": {
+      "code": "29",
+      "nom": "Finistère"
+    },
+    "region": {
+      "code": "53",
+      "nom": "Bretagne"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.146464"
+  },
+  "29232": {
+    "code": "29232",
+    "nom": "Quimper",
+    "zone": "metro",
+    "population": 64530,
+    "surface": 8432.79,
+    "codesPostaux": [
+      "29000"
+    ],
+    "codeRegion": "53",
+    "codeDepartement": "29",
+    "siren": "212902324",
+    "codeEpci": "200068120",
+    "epci": {
+      "code": "200068120",
+      "nom": "CA Quimper Bretagne Occidentale"
+    },
+    "departement": {
+      "code": "29",
+      "nom": "Finistère"
+    },
+    "region": {
+      "code": "53",
+      "nom": "Bretagne"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.146592"
+  },
+  "30007": {
+    "code": "30007",
+    "nom": "Alès",
+    "zone": "metro",
+    "population": 45025,
+    "surface": 2328.26,
+    "codesPostaux": [
+      "30100"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "30",
+    "siren": "213000078",
+    "codeEpci": "200066918",
+    "epci": {
+      "code": "200066918",
+      "nom": "CA Alès Agglomération"
+    },
+    "departement": {
+      "code": "30",
+      "nom": "Gard"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.146874"
+  },
+  "30189": {
+    "code": "30189",
+    "nom": "Nîmes",
+    "zone": "metro",
+    "population": 150444,
+    "surface": 16118.12,
+    "codesPostaux": [
+      "30000",
+      "30900"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "30",
+    "siren": "213001894",
+    "codeEpci": "243000643",
+    "epci": {
+      "code": "243000643",
+      "nom": "CA de Nîmes Métropole"
+    },
+    "departement": {
+      "code": "30",
+      "nom": "Gard"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.147086"
+  },
+  "31149": {
+    "code": "31149",
+    "nom": "Colomiers",
+    "zone": "metro",
+    "population": 40916,
+    "surface": 2103.92,
+    "codesPostaux": [
+      "31770"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "31",
+    "siren": "213101496",
+    "codeEpci": "243100518",
+    "epci": {
+      "code": "243100518",
+      "nom": "Toulouse Métropole"
+    },
+    "departement": {
+      "code": "31",
+      "nom": "Haute-Garonne"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.147283"
+  },
+  "31555": {
+    "code": "31555",
+    "nom": "Toulouse",
+    "zone": "metro",
+    "population": 511684,
+    "surface": 11805.53,
+    "codesPostaux": [
+      "31000",
+      "31100",
+      "31200",
+      "31300",
+      "31400",
+      "31500"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "31",
+    "siren": "213105554",
+    "codeEpci": "243100518",
+    "epci": {
+      "code": "243100518",
+      "nom": "Toulouse Métropole"
+    },
+    "departement": {
+      "code": "31",
+      "nom": "Haute-Garonne"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.147534"
+  },
+  "33039": {
+    "code": "33039",
+    "nom": "Bègles",
+    "zone": "metro",
+    "population": 30968,
+    "surface": 1087.47,
+    "codesPostaux": [
+      "33130"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "33",
+    "siren": "213300395",
+    "codeEpci": "243300316",
+    "epci": {
+      "code": "243300316",
+      "nom": "Bordeaux Métropole"
+    },
+    "departement": {
+      "code": "33",
+      "nom": "Gironde"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.147869"
+  },
+  "33063": {
+    "code": "33063",
+    "nom": "Bordeaux",
+    "zone": "metro",
+    "population": 265328,
+    "surface": 4977.4,
+    "codesPostaux": [
+      "33000",
+      "33100",
+      "33200",
+      "33300",
+      "33800"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "33",
+    "siren": "213300635",
+    "codeEpci": "243300316",
+    "epci": {
+      "code": "243300316",
+      "nom": "Bordeaux Métropole"
+    },
+    "departement": {
+      "code": "33",
+      "nom": "Gironde"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.147883"
+  },
+  "33281": {
+    "code": "33281",
+    "nom": "Mérignac",
+    "zone": "metro",
+    "population": 77136,
+    "surface": 4796.68,
+    "codesPostaux": [
+      "33700"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "33",
+    "siren": "213302813",
+    "codeEpci": "243300316",
+    "epci": {
+      "code": "243300316",
+      "nom": "Bordeaux Métropole"
+    },
+    "departement": {
+      "code": "33",
+      "nom": "Gironde"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148015"
+  },
+  "33318": {
+    "code": "33318",
+    "nom": "Pessac",
+    "zone": "metro",
+    "population": 66874,
+    "surface": 3867.38,
+    "codesPostaux": [
+      "33600"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "33",
+    "siren": "213303183",
+    "codeEpci": "243300316",
+    "epci": {
+      "code": "243300316",
+      "nom": "Bordeaux Métropole"
+    },
+    "departement": {
+      "code": "33",
+      "nom": "Gironde"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148036"
+  },
+  "33449": {
+    "code": "33449",
+    "nom": "Saint-Médard-en-Jalles",
+    "zone": "metro",
+    "population": 32749,
+    "surface": 8497.64,
+    "codesPostaux": [
+      "33160"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "33",
+    "siren": "213304496",
+    "codeEpci": "243300316",
+    "epci": {
+      "code": "243300316",
+      "nom": "Bordeaux Métropole"
+    },
+    "departement": {
+      "code": "33",
+      "nom": "Gironde"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148114"
+  },
+  "33522": {
+    "code": "33522",
+    "nom": "Talence",
+    "zone": "metro",
+    "population": 45869,
+    "surface": 833.81,
+    "codesPostaux": [
+      "33400"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "33",
+    "siren": "213305220",
+    "codeEpci": "243300316",
+    "epci": {
+      "code": "243300316",
+      "nom": "Bordeaux Métropole"
+    },
+    "departement": {
+      "code": "33",
+      "nom": "Gironde"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148156"
+  },
+  "33550": {
+    "code": "33550",
+    "nom": "Villenave-d'Ornon",
+    "zone": "metro",
+    "population": 42185,
+    "surface": 2122.72,
+    "codesPostaux": [
+      "33140"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "33",
+    "siren": "213305501",
+    "codeEpci": "243300316",
+    "epci": {
+      "code": "243300316",
+      "nom": "Bordeaux Métropole"
+    },
+    "departement": {
+      "code": "33",
+      "nom": "Gironde"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148175"
+  },
+  "34032": {
+    "code": "34032",
+    "nom": "Béziers",
+    "zone": "metro",
+    "population": 80815,
+    "surface": 9577.82,
+    "codesPostaux": [
+      "34500"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "34",
+    "siren": "213400328",
+    "codeEpci": "243400769",
+    "epci": {
+      "code": "243400769",
+      "nom": "CA de Béziers-Méditerranée"
+    },
+    "departement": {
+      "code": "34",
+      "nom": "Hérault"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148198"
+  },
+  "34172": {
+    "code": "34172",
+    "nom": "Montpellier",
+    "zone": "metro",
+    "population": 307101,
+    "surface": 5709.67,
+    "codesPostaux": [
+      "34000",
+      "34070",
+      "34080",
+      "34090"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "34",
+    "siren": "213401722",
+    "codeEpci": "243400017",
+    "epci": {
+      "code": "243400017",
+      "nom": "Montpellier Méditerranée Métropole"
+    },
+    "departement": {
+      "code": "34",
+      "nom": "Hérault"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148285"
+  },
+  "34301": {
+    "code": "34301",
+    "nom": "Sète",
+    "zone": "metro",
+    "population": 45090,
+    "surface": 4058.11,
+    "codesPostaux": [
+      "34200"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "34",
+    "siren": "213403017",
+    "codeEpci": "200066355",
+    "epci": {
+      "code": "200066355",
+      "nom": "CA Sète Agglopôle Méditerranée"
+    },
+    "departement": {
+      "code": "34",
+      "nom": "Hérault"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148365"
+  },
+  "35238": {
+    "code": "35238",
+    "nom": "Rennes",
+    "zone": "metro",
+    "population": 227830,
+    "surface": 5033.19,
+    "codesPostaux": [
+      "35000",
+      "35200",
+      "35700"
+    ],
+    "codeRegion": "53",
+    "codeDepartement": "35",
+    "siren": "213502388",
+    "codeEpci": "243500139",
+    "epci": {
+      "code": "243500139",
+      "nom": "Rennes Métropole"
+    },
+    "departement": {
+      "code": "35",
+      "nom": "Ille-et-Vilaine"
+    },
+    "region": {
+      "code": "53",
+      "nom": "Bretagne"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148529"
+  },
+  "35288": {
+    "code": "35288",
+    "nom": "Saint-Malo",
+    "zone": "metro",
+    "population": 47255,
+    "surface": 3640.72,
+    "codesPostaux": [
+      "35400"
+    ],
+    "codeRegion": "53",
+    "codeDepartement": "35",
+    "siren": "213502883",
+    "codeEpci": "243500782",
+    "epci": {
+      "code": "243500782",
+      "nom": "CA du Pays de Saint Malo Agglomération"
+    },
+    "departement": {
+      "code": "35",
+      "nom": "Ille-et-Vilaine"
+    },
+    "region": {
+      "code": "53",
+      "nom": "Bretagne"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148560"
+  },
+  "36044": {
+    "code": "36044",
+    "nom": "Châteauroux",
+    "zone": "metro",
+    "population": 43079,
+    "surface": 2556.15,
+    "codesPostaux": [
+      "36000"
+    ],
+    "codeRegion": "24",
+    "codeDepartement": "36",
+    "siren": "213600448",
+    "codeEpci": "243600327",
+    "epci": {
+      "code": "243600327",
+      "nom": "CA Châteauroux Métropole"
+    },
+    "departement": {
+      "code": "36",
+      "nom": "Indre"
+    },
+    "region": {
+      "code": "24",
+      "nom": "Centre-Val de Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148627"
+  },
+  "37122": {
+    "code": "37122",
+    "nom": "Joué-lès-Tours",
+    "zone": "metro",
+    "population": 38432,
+    "surface": 3248.78,
+    "codesPostaux": [
+      "37300"
+    ],
+    "codeRegion": "24",
+    "codeDepartement": "37",
+    "siren": "213701220",
+    "codeEpci": "243700754",
+    "epci": {
+      "code": "243700754",
+      "nom": "Tours Métropole Val de Loire"
+    },
+    "departement": {
+      "code": "37",
+      "nom": "Indre-et-Loire"
+    },
+    "region": {
+      "code": "24",
+      "nom": "Centre-Val de Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148828"
+  },
+  "37261": {
+    "code": "37261",
+    "nom": "Tours",
+    "zone": "metro",
+    "population": 138668,
+    "surface": 3337.27,
+    "codesPostaux": [
+      "37000",
+      "37100",
+      "37200"
+    ],
+    "codeRegion": "24",
+    "codeDepartement": "37",
+    "siren": "213702616",
+    "codeEpci": "243700754",
+    "epci": {
+      "code": "243700754",
+      "nom": "Tours Métropole Val de Loire"
+    },
+    "departement": {
+      "code": "37",
+      "nom": "Indre-et-Loire"
+    },
+    "region": {
+      "code": "24",
+      "nom": "Centre-Val de Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.148909"
+  },
+  "38151": {
+    "code": "38151",
+    "nom": "Échirolles",
+    "zone": "metro",
+    "population": 36708,
+    "surface": 787.7,
+    "codesPostaux": [
+      "38130"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "38",
+    "siren": "213801517",
+    "codeEpci": "200040715",
+    "epci": {
+      "code": "200040715",
+      "nom": "Grenoble-Alpes-Métropole"
+    },
+    "departement": {
+      "code": "38",
+      "nom": "Isère"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.149005"
+  },
+  "38185": {
+    "code": "38185",
+    "nom": "Grenoble",
+    "zone": "metro",
+    "population": 156389,
+    "surface": 1843.37,
+    "codesPostaux": [
+      "38000",
+      "38100"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "38",
+    "siren": "213801855",
+    "codeEpci": "200040715",
+    "epci": {
+      "code": "200040715",
+      "nom": "Grenoble-Alpes-Métropole"
+    },
+    "departement": {
+      "code": "38",
+      "nom": "Isère"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.149024"
+  },
+  "38421": {
+    "code": "38421",
+    "nom": "Saint-Martin-d'Hères",
+    "zone": "metro",
+    "population": 38022,
+    "surface": 952.24,
+    "codesPostaux": [
+      "38400"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "38",
+    "siren": "213804214",
+    "codeEpci": "200040715",
+    "epci": {
+      "code": "200040715",
+      "nom": "Grenoble-Alpes-Métropole"
+    },
+    "departement": {
+      "code": "38",
+      "nom": "Isère"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.149159"
+  },
+  "38544": {
+    "code": "38544",
+    "nom": "Vienne",
+    "zone": "metro",
+    "population": 31555,
+    "surface": 2259.86,
+    "codesPostaux": [
+      "38200"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "38",
+    "siren": "213805443",
+    "codeEpci": "200077014",
+    "epci": {
+      "code": "200077014",
+      "nom": "CA Vienne Condrieu"
+    },
+    "departement": {
+      "code": "38",
+      "nom": "Isère"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.149229"
+  },
+  "40192": {
+    "code": "40192",
+    "nom": "Mont-de-Marsan",
+    "zone": "metro",
+    "population": 31455,
+    "surface": 3659.54,
+    "codesPostaux": [
+      "40000"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "40",
+    "siren": "214001927",
+    "codeEpci": "244000808",
+    "epci": {
+      "code": "244000808",
+      "nom": "CA Mont de Marsan Agglomération"
+    },
+    "departement": {
+      "code": "40",
+      "nom": "Landes"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.149674"
+  },
+  "41018": {
+    "code": "41018",
+    "nom": "Blois",
+    "zone": "metro",
+    "population": 47092,
+    "surface": 3761.64,
+    "codesPostaux": [
+      "41000"
+    ],
+    "codeRegion": "24",
+    "codeDepartement": "41",
+    "siren": "214100182",
+    "codeEpci": "200030385",
+    "epci": {
+      "code": "200030385",
+      "nom": "CA de Blois ''Agglopolys''"
+    },
+    "departement": {
+      "code": "41",
+      "nom": "Loir-et-Cher"
+    },
+    "region": {
+      "code": "24",
+      "nom": "Centre-Val de Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.149771"
+  },
+  "42187": {
+    "code": "42187",
+    "nom": "Roanne",
+    "zone": "metro",
+    "population": 35364,
+    "surface": 1612.53,
+    "codesPostaux": [
+      "42300"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "42",
+    "siren": "214201873",
+    "codeEpci": "200035731",
+    "epci": {
+      "code": "200035731",
+      "nom": "CA Roannais Agglomération"
+    },
+    "departement": {
+      "code": "42",
+      "nom": "Loire"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.150192"
+  },
+  "42207": {
+    "code": "42207",
+    "nom": "Saint-Chamond",
+    "zone": "metro",
+    "population": 35586,
+    "surface": 5519.92,
+    "codesPostaux": [
+      "42400"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "42",
+    "siren": "214202079",
+    "codeEpci": "244200770",
+    "epci": {
+      "code": "244200770",
+      "nom": "Saint-Étienne Métropole"
+    },
+    "departement": {
+      "code": "42",
+      "nom": "Loire"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.150206"
+  },
+  "42218": {
+    "code": "42218",
+    "nom": "Saint-Étienne",
+    "zone": "metro",
+    "population": 172569,
+    "surface": 8003.07,
+    "codesPostaux": [
+      "42000",
+      "42100",
+      "42230"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "42",
+    "siren": "214202186",
+    "codeEpci": "244200770",
+    "epci": {
+      "code": "244200770",
+      "nom": "Saint-Étienne Métropole"
+    },
+    "departement": {
+      "code": "42",
+      "nom": "Loire"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.150213"
+  },
+  "44109": {
+    "code": "44109",
+    "nom": "Nantes",
+    "zone": "metro",
+    "population": 325070,
+    "surface": 6572.58,
+    "codesPostaux": [
+      "44000",
+      "44100",
+      "44200",
+      "44300"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "44",
+    "siren": "214401093",
+    "codeEpci": "244400404",
+    "epci": {
+      "code": "244400404",
+      "nom": "Nantes Métropole"
+    },
+    "departement": {
+      "code": "44",
+      "nom": "Loire-Atlantique"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.150601"
+  },
+  "44143": {
+    "code": "44143",
+    "nom": "Rezé",
+    "zone": "metro",
+    "population": 43349,
+    "surface": 1564.9,
+    "codesPostaux": [
+      "44400"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "44",
+    "siren": "214401432",
+    "codeEpci": "244400404",
+    "epci": {
+      "code": "244400404",
+      "nom": "Nantes Métropole"
+    },
+    "departement": {
+      "code": "44",
+      "nom": "Loire-Atlantique"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.150629"
+  },
+  "44162": {
+    "code": "44162",
+    "nom": "Saint-Herblain",
+    "zone": "metro",
+    "population": 50561,
+    "surface": 3000.19,
+    "codesPostaux": [
+      "44800"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "44",
+    "siren": "214401622",
+    "codeEpci": "244400404",
+    "epci": {
+      "code": "244400404",
+      "nom": "Nantes Métropole"
+    },
+    "departement": {
+      "code": "44",
+      "nom": "Loire-Atlantique"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.150641"
+  },
+  "44184": {
+    "code": "44184",
+    "nom": "Saint-Nazaire",
+    "zone": "metro",
+    "population": 73111,
+    "surface": 5020.94,
+    "codesPostaux": [
+      "44600"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "44",
+    "siren": "214401846",
+    "codeEpci": "244400644",
+    "epci": {
+      "code": "244400644",
+      "nom": "CA de la Région Nazairienne et de l'Estuaire (CARENE)"
+    },
+    "departement": {
+      "code": "44",
+      "nom": "Loire-Atlantique"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.150655"
+  },
+  "45234": {
+    "code": "45234",
+    "nom": "Orléans",
+    "zone": "metro",
+    "population": 116344,
+    "surface": 2764.07,
+    "codesPostaux": [
+      "45000",
+      "45100"
+    ],
+    "codeRegion": "24",
+    "codeDepartement": "45",
+    "siren": "214502346",
+    "codeEpci": "244500468",
+    "epci": {
+      "code": "244500468",
+      "nom": "Orléans Métropole"
+    },
+    "departement": {
+      "code": "45",
+      "nom": "Loiret"
+    },
+    "region": {
+      "code": "24",
+      "nom": "Centre-Val de Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.150882"
+  },
+  "47001": {
+    "code": "47001",
+    "nom": "Agen",
+    "zone": "metro",
+    "population": 32193,
+    "surface": 1152.27,
+    "codesPostaux": [
+      "47000"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "47",
+    "siren": "214700015",
+    "codeEpci": "200096956",
+    "epci": {
+      "code": "200096956",
+      "nom": "CA Agglomération d'Agen"
+    },
+    "departement": {
+      "code": "47",
+      "nom": "Lot-et-Garonne"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.151221"
+  },
+  "49007": {
+    "code": "49007",
+    "nom": "Angers",
+    "zone": "metro",
+    "population": 157555,
+    "surface": 4449.42,
+    "codesPostaux": [
+      "49000",
+      "49100"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "49",
+    "siren": "214900078",
+    "codeEpci": "244900015",
+    "epci": {
+      "code": "244900015",
+      "nom": "CU Angers Loire Métropole"
+    },
+    "departement": {
+      "code": "49",
+      "nom": "Maine-et-Loire"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.151595"
+  },
+  "49099": {
+    "code": "49099",
+    "nom": "Cholet",
+    "zone": "metro",
+    "population": 54074,
+    "surface": 8742.23,
+    "codesPostaux": [
+      "49300"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "49",
+    "siren": "214900995",
+    "codeEpci": "200071678",
+    "epci": {
+      "code": "200071678",
+      "nom": "CA Cholet Agglomération"
+    },
+    "departement": {
+      "code": "49",
+      "nom": "Maine-et-Loire"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.151631"
+  },
+  "50129": {
+    "code": "50129",
+    "nom": "Cherbourg-en-Cotentin",
+    "zone": "metro",
+    "population": 78028,
+    "surface": 6831.6,
+    "codesPostaux": [
+      "50100",
+      "50110",
+      "50120",
+      "50130",
+      "50460",
+      "50470"
+    ],
+    "codeRegion": "28",
+    "codeDepartement": "50",
+    "siren": "200056844",
+    "codeEpci": "200067205",
+    "epci": {
+      "code": "200067205",
+      "nom": "CA du Cotentin"
+    },
+    "departement": {
+      "code": "50",
+      "nom": "Manche"
+    },
+    "region": {
+      "code": "28",
+      "nom": "Normandie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.151800"
+  },
+  "51108": {
+    "code": "51108",
+    "nom": "Châlons-en-Champagne",
+    "zone": "metro",
+    "population": 43218,
+    "surface": 2601.67,
+    "codesPostaux": [
+      "51000"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "51",
+    "siren": "215101015",
+    "codeEpci": "200066876",
+    "epci": {
+      "code": "200066876",
+      "nom": "CA de Châlons-en-Champagne"
+    },
+    "departement": {
+      "code": "51",
+      "nom": "Marne"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.152161"
+  },
+  "51454": {
+    "code": "51454",
+    "nom": "Reims",
+    "zone": "metro",
+    "population": 178478,
+    "surface": 4681.76,
+    "codesPostaux": [
+      "51100"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "51",
+    "siren": "215104217",
+    "codeEpci": "200067213",
+    "epci": {
+      "code": "200067213",
+      "nom": "CU du Grand Reims"
+    },
+    "departement": {
+      "code": "51",
+      "nom": "Marne"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.152412"
+  },
+  "53130": {
+    "code": "53130",
+    "nom": "Laval",
+    "zone": "metro",
+    "population": 49474,
+    "surface": 3417.6,
+    "codesPostaux": [
+      "53000"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "53",
+    "siren": "215301300",
+    "codeEpci": "200083392",
+    "epci": {
+      "code": "200083392",
+      "nom": "CA Laval Agglomération"
+    },
+    "departement": {
+      "code": "53",
+      "nom": "Mayenne"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.153031"
+  },
+  "54395": {
+    "code": "54395",
+    "nom": "Nancy",
+    "zone": "metro",
+    "population": 104387,
+    "surface": 1494.16,
+    "codesPostaux": [
+      "54000",
+      "54100"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "54",
+    "siren": "215403957",
+    "codeEpci": "245400676",
+    "epci": {
+      "code": "245400676",
+      "nom": "Métropole du Grand Nancy"
+    },
+    "departement": {
+      "code": "54",
+      "nom": "Meurthe-et-Moselle"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.153472"
+  },
+  "56121": {
+    "code": "56121",
+    "nom": "Lorient",
+    "zone": "metro",
+    "population": 58202,
+    "surface": 1500.04,
+    "codesPostaux": [
+      "56100"
+    ],
+    "codeRegion": "53",
+    "codeDepartement": "56",
+    "siren": "215601212",
+    "codeEpci": "200042174",
+    "epci": {
+      "code": "200042174",
+      "nom": "CA Lorient Agglomération"
+    },
+    "departement": {
+      "code": "56",
+      "nom": "Morbihan"
+    },
+    "region": {
+      "code": "53",
+      "nom": "Bretagne"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.154099"
+  },
+  "56260": {
+    "code": "56260",
+    "nom": "Vannes",
+    "zone": "metro",
+    "population": 54955,
+    "surface": 3333.7,
+    "codesPostaux": [
+      "56000"
+    ],
+    "codeRegion": "53",
+    "codeDepartement": "56",
+    "siren": "215602608",
+    "codeEpci": "200067932",
+    "epci": {
+      "code": "200067932",
+      "nom": "CA Golfe du Morbihan - Vannes Agglomération"
+    },
+    "departement": {
+      "code": "56",
+      "nom": "Morbihan"
+    },
+    "region": {
+      "code": "53",
+      "nom": "Bretagne"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.154198"
+  },
+  "57463": {
+    "code": "57463",
+    "nom": "Metz",
+    "zone": "metro",
+    "population": 121695,
+    "surface": 4176.62,
+    "codesPostaux": [
+      "57000",
+      "57050",
+      "57070"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "57",
+    "siren": "215704636",
+    "codeEpci": "200039865",
+    "epci": {
+      "code": "200039865",
+      "nom": "Metz Métropole"
+    },
+    "departement": {
+      "code": "57",
+      "nom": "Moselle"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.154542"
+  },
+  "57672": {
+    "code": "57672",
+    "nom": "Thionville",
+    "zone": "metro",
+    "population": 42778,
+    "surface": 4979.4,
+    "codesPostaux": [
+      "57100"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "57",
+    "siren": "215706722",
+    "codeEpci": "245701362",
+    "epci": {
+      "code": "245701362",
+      "nom": "CA Portes de France-Thionville"
+    },
+    "departement": {
+      "code": "57",
+      "nom": "Moselle"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.154702"
+  },
+  "58194": {
+    "code": "58194",
+    "nom": "Nevers",
+    "zone": "metro",
+    "population": 33172,
+    "surface": 1740.69,
+    "codesPostaux": [
+      "58000"
+    ],
+    "codeRegion": "27",
+    "codeDepartement": "58",
+    "siren": "215801945",
+    "codeEpci": "245804406",
+    "epci": {
+      "code": "245804406",
+      "nom": "CA de Nevers"
+    },
+    "departement": {
+      "code": "58",
+      "nom": "Nièvre"
+    },
+    "region": {
+      "code": "27",
+      "nom": "Bourgogne-Franche-Comté"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.154924"
+  },
+  "59009": {
+    "code": "59009",
+    "nom": "Villeneuve-d'Ascq",
+    "zone": "metro",
+    "population": 62342,
+    "surface": 2744.68,
+    "codesPostaux": [
+      "59491",
+      "59493",
+      "59650"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215900093",
+    "codeEpci": "200093201",
+    "epci": {
+      "code": "200093201",
+      "nom": "Métropole Européenne de Lille"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155027"
+  },
+  "59122": {
+    "code": "59122",
+    "nom": "Cambrai",
+    "zone": "metro",
+    "population": 31568,
+    "surface": 1819.31,
+    "codesPostaux": [
+      "59400"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215901224",
+    "codeEpci": "200068500",
+    "epci": {
+      "code": "200068500",
+      "nom": "CA de Cambrai"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155289"
+  },
+  "59178": {
+    "code": "59178",
+    "nom": "Douai",
+    "zone": "metro",
+    "population": 39833,
+    "surface": 1686.15,
+    "codesPostaux": [
+      "59500"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215901786",
+    "codeEpci": "200044618",
+    "epci": {
+      "code": "200044618",
+      "nom": "CA Douaisis Agglo"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155322"
+  },
+  "59183": {
+    "code": "59183",
+    "nom": "Dunkerque",
+    "zone": "metro",
+    "population": 87013,
+    "surface": 4195.64,
+    "codesPostaux": [
+      "59140",
+      "59240",
+      "59279",
+      "59430",
+      "59640"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "200027159",
+    "codeEpci": "245900428",
+    "epci": {
+      "code": "245900428",
+      "nom": "CU de Dunkerque"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155325"
+  },
+  "59350": {
+    "code": "59350",
+    "nom": "Lille",
+    "zone": "metro",
+    "population": 238695,
+    "surface": 3474.89,
+    "codesPostaux": [
+      "59000",
+      "59160",
+      "59260",
+      "59777",
+      "59800"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215903501",
+    "codeEpci": "200093201",
+    "epci": {
+      "code": "200093201",
+      "nom": "Métropole Européenne de Lille"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155430"
+  },
+  "59378": {
+    "code": "59378",
+    "nom": "Marcq-en-Barœul",
+    "zone": "metro",
+    "population": 39943,
+    "surface": 1397.49,
+    "codesPostaux": [
+      "59700"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215903782",
+    "codeEpci": "200093201",
+    "epci": {
+      "code": "200093201",
+      "nom": "Métropole Européenne de Lille"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155445"
+  },
+  "59512": {
+    "code": "59512",
+    "nom": "Roubaix",
+    "zone": "metro",
+    "population": 99507,
+    "surface": 1311.77,
+    "codesPostaux": [
+      "59100"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215905126",
+    "codeEpci": "200093201",
+    "epci": {
+      "code": "200093201",
+      "nom": "Métropole Européenne de Lille"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155526"
+  },
+  "59599": {
+    "code": "59599",
+    "nom": "Tourcoing",
+    "zone": "metro",
+    "population": 99160,
+    "surface": 1512.84,
+    "codesPostaux": [
+      "59200"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215905993",
+    "codeEpci": "200093201",
+    "epci": {
+      "code": "200093201",
+      "nom": "Métropole Européenne de Lille"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155578"
+  },
+  "59606": {
+    "code": "59606",
+    "nom": "Valenciennes",
+    "zone": "metro",
+    "population": 42979,
+    "surface": 1382.29,
+    "codesPostaux": [
+      "59300"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215906066",
+    "codeEpci": "245901160",
+    "epci": {
+      "code": "245901160",
+      "nom": "CA Valenciennes Métropole"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155582"
+  },
+  "59650": {
+    "code": "59650",
+    "nom": "Wattrelos",
+    "zone": "metro",
+    "population": 40881,
+    "surface": 1365.94,
+    "codesPostaux": [
+      "59150"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "59",
+    "siren": "215906504",
+    "codeEpci": "200093201",
+    "epci": {
+      "code": "200093201",
+      "nom": "Métropole Européenne de Lille"
+    },
+    "departement": {
+      "code": "59",
+      "nom": "Nord"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155609"
+  },
+  "60057": {
+    "code": "60057",
+    "nom": "Beauvais",
+    "zone": "metro",
+    "population": 55906,
+    "surface": 3293.72,
+    "codesPostaux": [
+      "60000"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "60",
+    "siren": "216000562",
+    "codeEpci": "200067999",
+    "epci": {
+      "code": "200067999",
+      "nom": "CA du Beauvaisis"
+    },
+    "departement": {
+      "code": "60",
+      "nom": "Oise"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155657"
+  },
+  "60159": {
+    "code": "60159",
+    "nom": "Compiègne",
+    "zone": "metro",
+    "population": 40808,
+    "surface": 5309.24,
+    "codesPostaux": [
+      "60200"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "60",
+    "siren": "216001586",
+    "codeEpci": "200067965",
+    "epci": {
+      "code": "200067965",
+      "nom": "CA de la Région de Compiègne et de la Basse Automne"
+    },
+    "departement": {
+      "code": "60",
+      "nom": "Oise"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155718"
+  },
+  "60175": {
+    "code": "60175",
+    "nom": "Creil",
+    "zone": "metro",
+    "population": 36494,
+    "surface": 1106.52,
+    "codesPostaux": [
+      "60100"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "60",
+    "siren": "216001743",
+    "codeEpci": "200068047",
+    "epci": {
+      "code": "200068047",
+      "nom": "CA Creil Sud Oise"
+    },
+    "departement": {
+      "code": "60",
+      "nom": "Oise"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.155728"
+  },
+  "62041": {
+    "code": "62041",
+    "nom": "Arras",
+    "zone": "metro",
+    "population": 42621,
+    "surface": 1188.11,
+    "codesPostaux": [
+      "62000"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "62",
+    "siren": "216200410",
+    "codeEpci": "200033579",
+    "epci": {
+      "code": "200033579",
+      "nom": "CU d'Arras"
+    },
+    "departement": {
+      "code": "62",
+      "nom": "Pas-de-Calais"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.156320"
+  },
+  "62160": {
+    "code": "62160",
+    "nom": "Boulogne-sur-Mer",
+    "zone": "metro",
+    "population": 41039,
+    "surface": 778.79,
+    "codesPostaux": [
+      "62200"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "62",
+    "siren": "216201608",
+    "codeEpci": "246200729",
+    "epci": {
+      "code": "246200729",
+      "nom": "CA du Boulonnais"
+    },
+    "departement": {
+      "code": "62",
+      "nom": "Pas-de-Calais"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.156393"
+  },
+  "62193": {
+    "code": "62193",
+    "nom": "Calais",
+    "zone": "metro",
+    "population": 67585,
+    "surface": 3679.96,
+    "codesPostaux": [
+      "62100"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "62",
+    "siren": "216201939",
+    "codeEpci": "200090751",
+    "epci": {
+      "code": "200090751",
+      "nom": "CA Grand Calais Terres et Mers"
+    },
+    "departement": {
+      "code": "62",
+      "nom": "Pas-de-Calais"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.156413"
+  },
+  "62498": {
+    "code": "62498",
+    "nom": "Lens",
+    "zone": "metro",
+    "population": 32697,
+    "surface": 1165.46,
+    "codesPostaux": [
+      "62300"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "62",
+    "siren": "216204982",
+    "codeEpci": "246200364",
+    "epci": {
+      "code": "246200364",
+      "nom": "CA de Lens - Liévin"
+    },
+    "departement": {
+      "code": "62",
+      "nom": "Pas-de-Calais"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.156597"
+  },
+  "62510": {
+    "code": "62510",
+    "nom": "Liévin",
+    "zone": "metro",
+    "population": 30113,
+    "surface": 1283.22,
+    "codesPostaux": [
+      "62800"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "62",
+    "siren": "216205104",
+    "codeEpci": "246200364",
+    "epci": {
+      "code": "246200364",
+      "nom": "CA de Lens - Liévin"
+    },
+    "departement": {
+      "code": "62",
+      "nom": "Pas-de-Calais"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.156604"
+  },
+  "63113": {
+    "code": "63113",
+    "nom": "Clermont-Ferrand",
+    "zone": "metro",
+    "population": 147751,
+    "surface": 4311.46,
+    "codesPostaux": [
+      "63000",
+      "63100"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "63",
+    "siren": "216301135",
+    "codeEpci": "246300701",
+    "epci": {
+      "code": "246300701",
+      "nom": "Clermont Auvergne Métropole"
+    },
+    "departement": {
+      "code": "63",
+      "nom": "Puy-de-Dôme"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.156920"
+  },
+  "64024": {
+    "code": "64024",
+    "nom": "Anglet",
+    "zone": "metro",
+    "population": 42288,
+    "surface": 2700.37,
+    "codesPostaux": [
+      "64600"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "64",
+    "siren": "216400242",
+    "codeEpci": "200067106",
+    "epci": {
+      "code": "200067106",
+      "nom": "CA du Pays Basque"
+    },
+    "departement": {
+      "code": "64",
+      "nom": "Pyrénées-Atlantiques"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.157161"
+  },
+  "64102": {
+    "code": "64102",
+    "nom": "Bayonne",
+    "zone": "metro",
+    "population": 53312,
+    "surface": 2578.62,
+    "codesPostaux": [
+      "64100"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "64",
+    "siren": "216401026",
+    "codeEpci": "200067106",
+    "epci": {
+      "code": "200067106",
+      "nom": "CA du Pays Basque"
+    },
+    "departement": {
+      "code": "64",
+      "nom": "Pyrénées-Atlantiques"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.157207"
+  },
+  "64445": {
+    "code": "64445",
+    "nom": "Pau",
+    "zone": "metro",
+    "population": 78620,
+    "surface": 3149.75,
+    "codesPostaux": [
+      "64000"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "64",
+    "siren": "216404459",
+    "codeEpci": "200067254",
+    "epci": {
+      "code": "200067254",
+      "nom": "CA Pau Béarn Pyrénées"
+    },
+    "departement": {
+      "code": "64",
+      "nom": "Pyrénées-Atlantiques"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.157419"
+  },
+  "65440": {
+    "code": "65440",
+    "nom": "Tarbes",
+    "zone": "metro",
+    "population": 44529,
+    "surface": 1534.07,
+    "codesPostaux": [
+      "65000"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "65",
+    "siren": "216504407",
+    "codeEpci": "200069300",
+    "epci": {
+      "code": "200069300",
+      "nom": "CA Tarbes-Lourdes-Pyrénées"
+    },
+    "departement": {
+      "code": "65",
+      "nom": "Hautes-Pyrénées"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.157835"
+  },
+  "66136": {
+    "code": "66136",
+    "nom": "Perpignan",
+    "zone": "metro",
+    "population": 120996,
+    "surface": 6798.62,
+    "codesPostaux": [
+      "66000",
+      "66100"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "66",
+    "siren": "216601369",
+    "codeEpci": "200027183",
+    "epci": {
+      "code": "200027183",
+      "nom": "CU Perpignan Méditerranée Métropole"
+    },
+    "departement": {
+      "code": "66",
+      "nom": "Pyrénées-Orientales"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158009"
+  },
+  "67180": {
+    "code": "67180",
+    "nom": "Haguenau",
+    "zone": "metro",
+    "population": 36070,
+    "surface": 18349.48,
+    "codesPostaux": [
+      "67500"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "67",
+    "siren": "216701805",
+    "codeEpci": "200067874",
+    "epci": {
+      "code": "200067874",
+      "nom": "CA de Haguenau"
+    },
+    "departement": {
+      "code": "67",
+      "nom": "Bas-Rhin"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158189"
+  },
+  "67447": {
+    "code": "67447",
+    "nom": "Schiltigheim",
+    "zone": "metro",
+    "population": 34382,
+    "surface": 760.96,
+    "codesPostaux": [
+      "67300"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "67",
+    "siren": "216704478",
+    "codeEpci": "246700488",
+    "epci": {
+      "code": "246700488",
+      "nom": "Eurométropole de Strasbourg"
+    },
+    "departement": {
+      "code": "67",
+      "nom": "Bas-Rhin"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158347"
+  },
+  "67482": {
+    "code": "67482",
+    "nom": "Strasbourg",
+    "zone": "metro",
+    "population": 291709,
+    "surface": 7820.67,
+    "codesPostaux": [
+      "67000",
+      "67100",
+      "67200"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "67",
+    "siren": "216704825",
+    "codeEpci": "246700488",
+    "epci": {
+      "code": "246700488",
+      "nom": "Eurométropole de Strasbourg"
+    },
+    "departement": {
+      "code": "67",
+      "nom": "Bas-Rhin"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158369"
+  },
+  "68066": {
+    "code": "68066",
+    "nom": "Colmar",
+    "zone": "metro",
+    "population": 67360,
+    "surface": 6649.62,
+    "codesPostaux": [
+      "68000"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "68",
+    "siren": "216800664",
+    "codeEpci": "246800726",
+    "epci": {
+      "code": "246800726",
+      "nom": "CA Colmar Agglomération"
+    },
+    "departement": {
+      "code": "68",
+      "nom": "Haut-Rhin"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158454"
+  },
+  "68224": {
+    "code": "68224",
+    "nom": "Mulhouse",
+    "zone": "metro",
+    "population": 104924,
+    "surface": 2240.46,
+    "codesPostaux": [
+      "68100",
+      "68200"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "68",
+    "siren": "216802249",
+    "codeEpci": "200066009",
+    "epci": {
+      "code": "200066009",
+      "nom": "CA Mulhouse Alsace Agglomération"
+    },
+    "departement": {
+      "code": "68",
+      "nom": "Haut-Rhin"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158553"
+  },
+  "69029": {
+    "code": "69029",
+    "nom": "Bron",
+    "zone": "metro",
+    "population": 42850,
+    "surface": 1030.24,
+    "codesPostaux": [
+      "69500"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216900290",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158688"
+  },
+  "69034": {
+    "code": "69034",
+    "nom": "Caluire-et-Cuire",
+    "zone": "metro",
+    "population": 43479,
+    "surface": 1043.7,
+    "codesPostaux": [
+      "69300"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216900340",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158691"
+  },
+  "69123": {
+    "code": "69123",
+    "nom": "Lyon",
+    "zone": "metro",
+    "population": 520774,
+    "surface": 4797.43,
+    "codesPostaux": [
+      "69001",
+      "69002",
+      "69003",
+      "69004",
+      "69005",
+      "69006",
+      "69007",
+      "69008",
+      "69009"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216901231",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158760"
+  },
+  "69149": {
+    "code": "69149",
+    "nom": "Oullins-Pierre-Bénite",
+    "zone": "metro",
+    "population": 37928,
+    "surface": 884.69,
+    "codesPostaux": [
+      "69310",
+      "69600"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "200102747",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158778"
+  },
+  "69256": {
+    "code": "69256",
+    "nom": "Vaulx-en-Velin",
+    "zone": "metro",
+    "population": 52448,
+    "surface": 2103.72,
+    "codesPostaux": [
+      "69120"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216902569",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158840"
+  },
+  "69259": {
+    "code": "69259",
+    "nom": "Vénissieux",
+    "zone": "metro",
+    "population": 66701,
+    "surface": 1545.08,
+    "codesPostaux": [
+      "69200"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216902593",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158842"
+  },
+  "69264": {
+    "code": "69264",
+    "nom": "Villefranche-sur-Saône",
+    "zone": "metro",
+    "population": 36224,
+    "surface": 937.29,
+    "codesPostaux": [
+      "69400"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216902643",
+    "codeEpci": "200040590",
+    "epci": {
+      "code": "200040590",
+      "nom": "CA Villefranche Beaujolais Saône"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158844"
+  },
+  "69266": {
+    "code": "69266",
+    "nom": "Villeurbanne",
+    "zone": "metro",
+    "population": 162207,
+    "surface": 1490.12,
+    "codesPostaux": [
+      "69100"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216902668",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158845"
+  },
+  "69282": {
+    "code": "69282",
+    "nom": "Meyzieu",
+    "zone": "metro",
+    "population": 36437,
+    "surface": 2345.1,
+    "codesPostaux": [
+      "69330"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216902825",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158855"
+  },
+  "69286": {
+    "code": "69286",
+    "nom": "Rillieux-la-Pape",
+    "zone": "metro",
+    "population": 31479,
+    "surface": 1454.98,
+    "codesPostaux": [
+      "69140"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216902866",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158857"
+  },
+  "69290": {
+    "code": "69290",
+    "nom": "Saint-Priest",
+    "zone": "metro",
+    "population": 49193,
+    "surface": 2971.93,
+    "codesPostaux": [
+      "69800"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "69",
+    "siren": "216902908",
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": "Métropole de Lyon"
+    },
+    "departement": {
+      "code": "69",
+      "nom": "Rhône"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.158861"
+  },
+  "71076": {
+    "code": "71076",
+    "nom": "Chalon-sur-Saône",
+    "zone": "metro",
+    "population": 44592,
+    "surface": 1523.28,
+    "codesPostaux": [
+      "71100"
+    ],
+    "codeRegion": "27",
+    "codeDepartement": "71",
+    "siren": "217100767",
+    "codeEpci": "247100589",
+    "epci": {
+      "code": "247100589",
+      "nom": "CA Le Grand Chalon"
+    },
+    "departement": {
+      "code": "71",
+      "nom": "Saône-et-Loire"
+    },
+    "region": {
+      "code": "27",
+      "nom": "Bourgogne-Franche-Comté"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.159254"
+  },
+  "71270": {
+    "code": "71270",
+    "nom": "Mâcon",
+    "zone": "metro",
+    "population": 34759,
+    "surface": 2710.01,
+    "codesPostaux": [
+      "71000"
+    ],
+    "codeRegion": "27",
+    "codeDepartement": "71",
+    "siren": "217102706",
+    "codeEpci": "200070308",
+    "epci": {
+      "code": "200070308",
+      "nom": "CA Mâconnais Beaujolais Agglomération"
+    },
+    "departement": {
+      "code": "71",
+      "nom": "Saône-et-Loire"
+    },
+    "region": {
+      "code": "27",
+      "nom": "Bourgogne-Franche-Comté"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.159376"
+  },
+  "72181": {
+    "code": "72181",
+    "nom": "Le Mans",
+    "zone": "metro",
+    "population": 145182,
+    "surface": 5258.28,
+    "codesPostaux": [
+      "72000",
+      "72100"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "72",
+    "siren": "217201813",
+    "codeEpci": "247200132",
+    "epci": {
+      "code": "247200132",
+      "nom": "CU Le Mans Métropole"
+    },
+    "departement": {
+      "code": "72",
+      "nom": "Sarthe"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.159673"
+  },
+  "73008": {
+    "code": "73008",
+    "nom": "Aix-les-Bains",
+    "zone": "metro",
+    "population": 32175,
+    "surface": 1586.76,
+    "codesPostaux": [
+      "73100"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "73",
+    "siren": "217300086",
+    "codeEpci": "200068674",
+    "epci": {
+      "code": "200068674",
+      "nom": "CA Grand Lac"
+    },
+    "departement": {
+      "code": "73",
+      "nom": "Savoie"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.159797"
+  },
+  "73065": {
+    "code": "73065",
+    "nom": "Chambéry",
+    "zone": "metro",
+    "population": 60251,
+    "surface": 2119.38,
+    "codesPostaux": [
+      "73000"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "73",
+    "siren": "217300656",
+    "codeEpci": "200069110",
+    "epci": {
+      "code": "200069110",
+      "nom": "CA du Grand Chambéry"
+    },
+    "departement": {
+      "code": "73",
+      "nom": "Savoie"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.159826"
+  },
+  "74010": {
+    "code": "74010",
+    "nom": "Annecy",
+    "zone": "metro",
+    "population": 131272,
+    "surface": 6986.68,
+    "codesPostaux": [
+      "74000",
+      "74370",
+      "74600",
+      "74940",
+      "74960"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "74",
+    "siren": "200063402",
+    "codeEpci": "200066793",
+    "epci": {
+      "code": "200066793",
+      "nom": "CA du Grand Annecy"
+    },
+    "departement": {
+      "code": "74",
+      "nom": "Haute-Savoie"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160053"
+  },
+  "74012": {
+    "code": "74012",
+    "nom": "Annemasse",
+    "zone": "metro",
+    "population": 37595,
+    "surface": 496.88,
+    "codesPostaux": [
+      "74100"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "74",
+    "siren": "217400126",
+    "codeEpci": "200011773",
+    "epci": {
+      "code": "200011773",
+      "nom": "CA Annemasse-Les Voirons-Agglomération"
+    },
+    "departement": {
+      "code": "74",
+      "nom": "Haute-Savoie"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160054"
+  },
+  "74281": {
+    "code": "74281",
+    "nom": "Thonon-les-Bains",
+    "zone": "metro",
+    "population": 37689,
+    "surface": 1631.92,
+    "codesPostaux": [
+      "74200"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "74",
+    "siren": "217402817",
+    "codeEpci": "200067551",
+    "epci": {
+      "code": "200067551",
+      "nom": "CA Thonon Agglomération"
+    },
+    "departement": {
+      "code": "74",
+      "nom": "Haute-Savoie"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160231"
+  },
+  "75056": {
+    "code": "75056",
+    "nom": "Paris",
+    "zone": "metro",
+    "population": 2113705,
+    "surface": 10536.03,
+    "codesPostaux": [
+      "75001",
+      "75002",
+      "75003",
+      "75004",
+      "75005",
+      "75006",
+      "75007",
+      "75008",
+      "75009",
+      "75010",
+      "75011",
+      "75012",
+      "75013",
+      "75014",
+      "75015",
+      "75016",
+      "75017",
+      "75018",
+      "75019",
+      "75020",
+      "75116"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "75",
+    "siren": "217500016",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "75",
+      "nom": "Paris"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160252"
+  },
+  "76351": {
+    "code": "76351",
+    "nom": "Le Havre",
+    "zone": "metro",
+    "population": 166462,
+    "surface": 5308.05,
+    "codesPostaux": [
+      "76600",
+      "76610",
+      "76620"
+    ],
+    "codeRegion": "28",
+    "codeDepartement": "76",
+    "siren": "217603513",
+    "codeEpci": "200084952",
+    "epci": {
+      "code": "200084952",
+      "nom": "CU Le Havre Seine Métropole"
+    },
+    "departement": {
+      "code": "76",
+      "nom": "Seine-Maritime"
+    },
+    "region": {
+      "code": "28",
+      "nom": "Normandie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160460"
+  },
+  "76540": {
+    "code": "76540",
+    "nom": "Rouen",
+    "zone": "metro",
+    "population": 116331,
+    "surface": 2138.39,
+    "codesPostaux": [
+      "76000",
+      "76100"
+    ],
+    "codeRegion": "28",
+    "codeDepartement": "76",
+    "siren": "217605401",
+    "codeEpci": "200023414",
+    "epci": {
+      "code": "200023414",
+      "nom": "Métropole Rouen Normandie"
+    },
+    "departement": {
+      "code": "76",
+      "nom": "Seine-Maritime"
+    },
+    "region": {
+      "code": "28",
+      "nom": "Normandie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160576"
+  },
+  "77108": {
+    "code": "77108",
+    "nom": "Chelles",
+    "zone": "metro",
+    "population": 54372,
+    "surface": 1599.8,
+    "codesPostaux": [
+      "77500"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "77",
+    "siren": "217701085",
+    "codeEpci": "200057958",
+    "epci": {
+      "code": "200057958",
+      "nom": "CA Paris - Vallée de la Marne"
+    },
+    "departement": {
+      "code": "77",
+      "nom": "Seine-et-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160772"
+  },
+  "77284": {
+    "code": "77284",
+    "nom": "Meaux",
+    "zone": "metro",
+    "population": 56659,
+    "surface": 1537.46,
+    "codesPostaux": [
+      "77100"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "77",
+    "siren": "217702844",
+    "codeEpci": "200072130",
+    "epci": {
+      "code": "200072130",
+      "nom": "CA du Pays de Meaux"
+    },
+    "departement": {
+      "code": "77",
+      "nom": "Seine-et-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160880"
+  },
+  "77288": {
+    "code": "77288",
+    "nom": "Melun",
+    "zone": "metro",
+    "population": 43685,
+    "surface": 800.45,
+    "codesPostaux": [
+      "77000"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "77",
+    "siren": "217702885",
+    "codeEpci": "247700057",
+    "epci": {
+      "code": "247700057",
+      "nom": "CA Melun Val de Seine"
+    },
+    "departement": {
+      "code": "77",
+      "nom": "Seine-et-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160883"
+  },
+  "77373": {
+    "code": "77373",
+    "nom": "Pontault-Combault",
+    "zone": "metro",
+    "population": 38941,
+    "surface": 1357.49,
+    "codesPostaux": [
+      "77340"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "77",
+    "siren": "217703735",
+    "codeEpci": "200057958",
+    "epci": {
+      "code": "200057958",
+      "nom": "CA Paris - Vallée de la Marne"
+    },
+    "departement": {
+      "code": "77",
+      "nom": "Seine-et-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160932"
+  },
+  "77445": {
+    "code": "77445",
+    "nom": "Savigny-le-Temple",
+    "zone": "metro",
+    "population": 30630,
+    "surface": 1201.65,
+    "codesPostaux": [
+      "77176"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "77",
+    "siren": "217704451",
+    "codeEpci": "200059228",
+    "epci": {
+      "code": "200059228",
+      "nom": "CA Grand Paris Sud Seine Essonne Sénart"
+    },
+    "departement": {
+      "code": "77",
+      "nom": "Seine-et-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.160975"
+  },
+  "78146": {
+    "code": "78146",
+    "nom": "Chatou",
+    "zone": "metro",
+    "population": 30054,
+    "surface": 506.76,
+    "codesPostaux": [
+      "78400"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217801463",
+    "codeEpci": "200058519",
+    "epci": {
+      "code": "200058519",
+      "nom": "CA Saint Germain Boucles de Seine"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161063"
+  },
+  "78158": {
+    "code": "78158",
+    "nom": "Le Chesnay-Rocquencourt",
+    "zone": "metro",
+    "population": 31064,
+    "surface": 715.55,
+    "codesPostaux": [
+      "78150"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "200085470",
+    "codeEpci": "247800584",
+    "epci": {
+      "code": "247800584",
+      "nom": "CA Versailles Grand Parc (CAVGP)"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161065"
+  },
+  "78172": {
+    "code": "78172",
+    "nom": "Conflans-Sainte-Honorine",
+    "zone": "metro",
+    "population": 36306,
+    "surface": 987.63,
+    "codesPostaux": [
+      "78700"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217801729",
+    "codeEpci": "200059889",
+    "epci": {
+      "code": "200059889",
+      "nom": "CU Grand Paris Seine et Oise"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161070"
+  },
+  "78311": {
+    "code": "78311",
+    "nom": "Houilles",
+    "zone": "metro",
+    "population": 33617,
+    "surface": 447.58,
+    "codesPostaux": [
+      "78800"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217803113",
+    "codeEpci": "200058519",
+    "epci": {
+      "code": "200058519",
+      "nom": "CA Saint Germain Boucles de Seine"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161103"
+  },
+  "78361": {
+    "code": "78361",
+    "nom": "Mantes-la-Jolie",
+    "zone": "metro",
+    "population": 44246,
+    "surface": 943.48,
+    "codesPostaux": [
+      "78200"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217803618",
+    "codeEpci": "200059889",
+    "epci": {
+      "code": "200059889",
+      "nom": "CU Grand Paris Seine et Oise"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161118"
+  },
+  "78423": {
+    "code": "78423",
+    "nom": "Montigny-le-Bretonneux",
+    "zone": "metro",
+    "population": 32150,
+    "surface": 1070.01,
+    "codesPostaux": [
+      "78180"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217804236",
+    "codeEpci": "200058782",
+    "epci": {
+      "code": "200058782",
+      "nom": "CA de Saint Quentin en Yvelines"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161137"
+  },
+  "78440": {
+    "code": "78440",
+    "nom": "Les Mureaux",
+    "zone": "metro",
+    "population": 34151,
+    "surface": 1237.23,
+    "codesPostaux": [
+      "78130"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217804400",
+    "codeEpci": "200059889",
+    "epci": {
+      "code": "200059889",
+      "nom": "CU Grand Paris Seine et Oise"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161140"
+  },
+  "78490": {
+    "code": "78490",
+    "nom": "Plaisir",
+    "zone": "metro",
+    "population": 31971,
+    "surface": 1765.03,
+    "codesPostaux": [
+      "78370"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217804905",
+    "codeEpci": "200058782",
+    "epci": {
+      "code": "200058782",
+      "nom": "CA de Saint Quentin en Yvelines"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161151"
+  },
+  "78498": {
+    "code": "78498",
+    "nom": "Poissy",
+    "zone": "metro",
+    "population": 40792,
+    "surface": 1288.18,
+    "codesPostaux": [
+      "78300"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217804988",
+    "codeEpci": "200059889",
+    "epci": {
+      "code": "200059889",
+      "nom": "CU Grand Paris Seine et Oise"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161152"
+  },
+  "78551": {
+    "code": "78551",
+    "nom": "Saint-Germain-en-Laye",
+    "zone": "metro",
+    "population": 45286,
+    "surface": 5309.05,
+    "codesPostaux": [
+      "78100",
+      "78112"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "200086924",
+    "codeEpci": "200058519",
+    "epci": {
+      "code": "200058519",
+      "nom": "CA Saint Germain Boucles de Seine"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161165"
+  },
+  "78586": {
+    "code": "78586",
+    "nom": "Sartrouville",
+    "zone": "metro",
+    "population": 51570,
+    "surface": 847.03,
+    "codesPostaux": [
+      "78500"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217805860",
+    "codeEpci": "200058519",
+    "epci": {
+      "code": "200058519",
+      "nom": "CA Saint Germain Boucles de Seine"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161173"
+  },
+  "78621": {
+    "code": "78621",
+    "nom": "Trappes",
+    "zone": "metro",
+    "population": 34276,
+    "surface": 1369.24,
+    "codesPostaux": [
+      "78190"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217806215",
+    "codeEpci": "200058782",
+    "epci": {
+      "code": "200058782",
+      "nom": "CA de Saint Quentin en Yvelines"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161182"
+  },
+  "78646": {
+    "code": "78646",
+    "nom": "Versailles",
+    "zone": "metro",
+    "population": 83918,
+    "surface": 2615.05,
+    "codesPostaux": [
+      "78000"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "78",
+    "siren": "217806462",
+    "codeEpci": "247800584",
+    "epci": {
+      "code": "247800584",
+      "nom": "CA Versailles Grand Parc (CAVGP)"
+    },
+    "departement": {
+      "code": "78",
+      "nom": "Yvelines"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161188"
+  },
+  "79191": {
+    "code": "79191",
+    "nom": "Niort",
+    "zone": "metro",
+    "population": 60074,
+    "surface": 6837.99,
+    "codesPostaux": [
+      "79000"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "79",
+    "siren": "217901917",
+    "codeEpci": "200041317",
+    "epci": {
+      "code": "200041317",
+      "nom": "CA du Niortais"
+    },
+    "departement": {
+      "code": "79",
+      "nom": "Deux-Sèvres"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161284"
+  },
+  "80021": {
+    "code": "80021",
+    "nom": "Amiens",
+    "zone": "metro",
+    "population": 134780,
+    "surface": 5040.16,
+    "codesPostaux": [
+      "80000",
+      "80080",
+      "80090"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "80",
+    "siren": "218000198",
+    "codeEpci": "248000531",
+    "epci": {
+      "code": "248000531",
+      "nom": "CA Amiens Métropole"
+    },
+    "departement": {
+      "code": "80",
+      "nom": "Somme"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161367"
+  },
+  "81004": {
+    "code": "81004",
+    "nom": "Albi",
+    "zone": "metro",
+    "population": 50605,
+    "surface": 4495.38,
+    "codesPostaux": [
+      "81000"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "81",
+    "siren": "218100048",
+    "codeEpci": "248100737",
+    "epci": {
+      "code": "248100737",
+      "nom": "CA de l'Albigeois (C2A)"
+    },
+    "departement": {
+      "code": "81",
+      "nom": "Tarn"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161855"
+  },
+  "81065": {
+    "code": "81065",
+    "nom": "Castres",
+    "zone": "metro",
+    "population": 42700,
+    "surface": 9847.04,
+    "codesPostaux": [
+      "81100"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "81",
+    "siren": "218100659",
+    "codeEpci": "248100430",
+    "epci": {
+      "code": "248100430",
+      "nom": "CA de Castres Mazamet"
+    },
+    "departement": {
+      "code": "81",
+      "nom": "Tarn"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.161893"
+  },
+  "82121": {
+    "code": "82121",
+    "nom": "Montauban",
+    "zone": "metro",
+    "population": 62487,
+    "surface": 13592.48,
+    "codesPostaux": [
+      "82000"
+    ],
+    "codeRegion": "76",
+    "codeDepartement": "82",
+    "siren": "218201218",
+    "codeEpci": "248200099",
+    "epci": {
+      "code": "248200099",
+      "nom": "CA Grand Montauban"
+    },
+    "departement": {
+      "code": "82",
+      "nom": "Tarn-et-Garonne"
+    },
+    "region": {
+      "code": "76",
+      "nom": "Occitanie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162134"
+  },
+  "83050": {
+    "code": "83050",
+    "nom": "Draguignan",
+    "zone": "metro",
+    "population": 40789,
+    "surface": 5402.31,
+    "codesPostaux": [
+      "83300"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "83",
+    "siren": "218300507",
+    "codeEpci": "248300493",
+    "epci": {
+      "code": "248300493",
+      "nom": "CA Dracénie Provence Verdon Agglomération"
+    },
+    "departement": {
+      "code": "83",
+      "nom": "Var"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162213"
+  },
+  "83061": {
+    "code": "83061",
+    "nom": "Fréjus",
+    "zone": "metro",
+    "population": 58499,
+    "surface": 10478.47,
+    "codesPostaux": [
+      "83370",
+      "83600"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "83",
+    "siren": "218300614",
+    "codeEpci": "200035319",
+    "epci": {
+      "code": "200035319",
+      "nom": "CA Estérel Côte d'Azur Agglomération"
+    },
+    "departement": {
+      "code": "83",
+      "nom": "Var"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162221"
+  },
+  "83069": {
+    "code": "83069",
+    "nom": "Hyères",
+    "zone": "metro",
+    "population": 55384,
+    "surface": 13361.07,
+    "codesPostaux": [
+      "83400"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "83",
+    "siren": "218300697",
+    "codeEpci": "248300543",
+    "epci": {
+      "code": "248300543",
+      "nom": "Métropole Toulon-Provence-Méditerranée"
+    },
+    "departement": {
+      "code": "83",
+      "nom": "Var"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162227"
+  },
+  "83118": {
+    "code": "83118",
+    "nom": "Saint-Raphaël",
+    "zone": "metro",
+    "population": 36632,
+    "surface": 9075,
+    "codesPostaux": [
+      "83530",
+      "83700"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "83",
+    "siren": "218301182",
+    "codeEpci": "200035319",
+    "epci": {
+      "code": "200035319",
+      "nom": "CA Estérel Côte d'Azur Agglomération"
+    },
+    "departement": {
+      "code": "83",
+      "nom": "Var"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162258"
+  },
+  "83126": {
+    "code": "83126",
+    "nom": "La Seyne-sur-Mer",
+    "zone": "metro",
+    "population": 62905,
+    "surface": 2348.37,
+    "codesPostaux": [
+      "83500"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "83",
+    "siren": "218301265",
+    "codeEpci": "248300543",
+    "epci": {
+      "code": "248300543",
+      "nom": "Métropole Toulon-Provence-Méditerranée"
+    },
+    "departement": {
+      "code": "83",
+      "nom": "Var"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162264"
+  },
+  "83129": {
+    "code": "83129",
+    "nom": "Six-Fours-les-Plages",
+    "zone": "metro",
+    "population": 36843,
+    "surface": 2668.62,
+    "codesPostaux": [
+      "83140"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "83",
+    "siren": "218301299",
+    "codeEpci": "248300543",
+    "epci": {
+      "code": "248300543",
+      "nom": "Métropole Toulon-Provence-Méditerranée"
+    },
+    "departement": {
+      "code": "83",
+      "nom": "Var"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162265"
+  },
+  "83137": {
+    "code": "83137",
+    "nom": "Toulon",
+    "zone": "metro",
+    "population": 180834,
+    "surface": 4405.92,
+    "codesPostaux": [
+      "83000",
+      "83100",
+      "83200"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "83",
+    "siren": "218301372",
+    "codeEpci": "248300543",
+    "epci": {
+      "code": "248300543",
+      "nom": "Métropole Toulon-Provence-Méditerranée"
+    },
+    "departement": {
+      "code": "83",
+      "nom": "Var"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162270"
+  },
+  "84007": {
+    "code": "84007",
+    "nom": "Avignon",
+    "zone": "metro",
+    "population": 91760,
+    "surface": 6506.28,
+    "codesPostaux": [
+      "84000",
+      "84140"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "84",
+    "siren": "218400075",
+    "codeEpci": "248400251",
+    "epci": {
+      "code": "248400251",
+      "nom": "CA du Grand Avignon (COGA)"
+    },
+    "departement": {
+      "code": "84",
+      "nom": "Vaucluse"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162285"
+  },
+  "84031": {
+    "code": "84031",
+    "nom": "Carpentras",
+    "zone": "metro",
+    "population": 30854,
+    "surface": 3792.1,
+    "codesPostaux": [
+      "84200"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "84",
+    "siren": "218400315",
+    "codeEpci": "248400053",
+    "epci": {
+      "code": "248400053",
+      "nom": "CA Ventoux-Comtat-Venaissin (COVE)"
+    },
+    "departement": {
+      "code": "84",
+      "nom": "Vaucluse"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162302"
+  },
+  "85191": {
+    "code": "85191",
+    "nom": "La Roche-sur-Yon",
+    "zone": "metro",
+    "population": 54699,
+    "surface": 8798.97,
+    "codesPostaux": [
+      "85000"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "85",
+    "siren": "218501914",
+    "codeEpci": "248500589",
+    "epci": {
+      "code": "248500589",
+      "nom": "CA La Roche-sur-Yon - Agglomération"
+    },
+    "departement": {
+      "code": "85",
+      "nom": "Vendée"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162482"
+  },
+  "85194": {
+    "code": "85194",
+    "nom": "Les Sables-d'Olonne",
+    "zone": "metro",
+    "population": 48740,
+    "surface": 8589.15,
+    "codesPostaux": [
+      "85100",
+      "85180",
+      "85340"
+    ],
+    "codeRegion": "52",
+    "codeDepartement": "85",
+    "siren": "200082139",
+    "codeEpci": "200071165",
+    "epci": {
+      "code": "200071165",
+      "nom": "CA Les Sables d'Olonne Agglomération"
+    },
+    "departement": {
+      "code": "85",
+      "nom": "Vendée"
+    },
+    "region": {
+      "code": "52",
+      "nom": "Pays de la Loire"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162483"
+  },
+  "86066": {
+    "code": "86066",
+    "nom": "Châtellerault",
+    "zone": "metro",
+    "population": 31105,
+    "surface": 5202.19,
+    "codesPostaux": [
+      "86100"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "86",
+    "siren": "218600666",
+    "codeEpci": "248600413",
+    "epci": {
+      "code": "248600413",
+      "nom": "CA Grand Châtellerault"
+    },
+    "departement": {
+      "code": "86",
+      "nom": "Vienne"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162580"
+  },
+  "86194": {
+    "code": "86194",
+    "nom": "Poitiers",
+    "zone": "metro",
+    "population": 89472,
+    "surface": 4252.68,
+    "codesPostaux": [
+      "86000"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "86",
+    "siren": "218601946",
+    "codeEpci": "200069854",
+    "epci": {
+      "code": "200069854",
+      "nom": "CU du Grand Poitiers"
+    },
+    "departement": {
+      "code": "86",
+      "nom": "Vienne"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162656"
+  },
+  "87085": {
+    "code": "87085",
+    "nom": "Limoges",
+    "zone": "metro",
+    "population": 129754,
+    "surface": 7978.68,
+    "codesPostaux": [
+      "87000",
+      "87100",
+      "87280"
+    ],
+    "codeRegion": "75",
+    "codeDepartement": "87",
+    "siren": "218708501",
+    "codeEpci": "248719312",
+    "epci": {
+      "code": "248719312",
+      "nom": "CU Limoges Métropole"
+    },
+    "departement": {
+      "code": "87",
+      "nom": "Haute-Vienne"
+    },
+    "region": {
+      "code": "75",
+      "nom": "Nouvelle-Aquitaine"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162765"
+  },
+  "88160": {
+    "code": "88160",
+    "nom": "Épinal",
+    "zone": "metro",
+    "population": 32296,
+    "surface": 5933.63,
+    "codesPostaux": [
+      "88000"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "88",
+    "siren": "218801603",
+    "codeEpci": "200068757",
+    "epci": {
+      "code": "200068757",
+      "nom": "CA d'Epinal"
+    },
+    "departement": {
+      "code": "88",
+      "nom": "Vosges"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.162939"
+  },
+  "89024": {
+    "code": "89024",
+    "nom": "Auxerre",
+    "zone": "metro",
+    "population": 35236,
+    "surface": 4987.46,
+    "codesPostaux": [
+      "89000",
+      "89290"
+    ],
+    "codeRegion": "27",
+    "codeDepartement": "89",
+    "siren": "218900249",
+    "codeEpci": "200067114",
+    "epci": {
+      "code": "200067114",
+      "nom": "CA de l'Auxerrois"
+    },
+    "departement": {
+      "code": "89",
+      "nom": "Yonne"
+    },
+    "region": {
+      "code": "27",
+      "nom": "Bourgogne-Franche-Comté"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163184"
+  },
+  "90010": {
+    "code": "90010",
+    "nom": "Belfort",
+    "zone": "metro",
+    "population": 45646,
+    "surface": 1728.19,
+    "codesPostaux": [
+      "90000"
+    ],
+    "codeRegion": "27",
+    "codeDepartement": "90",
+    "siren": "219000106",
+    "codeEpci": "200069052",
+    "epci": {
+      "code": "200069052",
+      "nom": "CA Grand Belfort"
+    },
+    "departement": {
+      "code": "90",
+      "nom": "Territoire de Belfort"
+    },
+    "region": {
+      "code": "27",
+      "nom": "Bourgogne-Franche-Comté"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163452"
+  },
+  "91027": {
+    "code": "91027",
+    "nom": "Athis-Mons",
+    "zone": "metro",
+    "population": 36451,
+    "surface": 860.6,
+    "codesPostaux": [
+      "91200"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219100278",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163517"
+  },
+  "91174": {
+    "code": "91174",
+    "nom": "Corbeil-Essonnes",
+    "zone": "metro",
+    "population": 53712,
+    "surface": 1102.43,
+    "codesPostaux": [
+      "91100"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219101748",
+    "codeEpci": "200059228",
+    "epci": {
+      "code": "200059228",
+      "nom": "CA Grand Paris Sud Seine Essonne Sénart"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163547"
+  },
+  "91228": {
+    "code": "91228",
+    "nom": "Évry-Courcouronnes",
+    "zone": "metro",
+    "population": 66700,
+    "surface": 1309.47,
+    "codesPostaux": [
+      "91000",
+      "91080"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "200083525",
+    "codeEpci": "200059228",
+    "epci": {
+      "code": "200059228",
+      "nom": "CA Grand Paris Sud Seine Essonne Sénart"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163559"
+  },
+  "91377": {
+    "code": "91377",
+    "nom": "Massy",
+    "zone": "metro",
+    "population": 50597,
+    "surface": 939.87,
+    "codesPostaux": [
+      "91300"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219103777",
+    "codeEpci": "200056232",
+    "epci": {
+      "code": "200056232",
+      "nom": "CA Communauté Paris-Saclay"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163582"
+  },
+  "91477": {
+    "code": "91477",
+    "nom": "Palaiseau",
+    "zone": "metro",
+    "population": 36067,
+    "surface": 1166.44,
+    "codesPostaux": [
+      "91120"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219104775",
+    "codeEpci": "200056232",
+    "epci": {
+      "code": "200056232",
+      "nom": "CA Communauté Paris-Saclay"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163599"
+  },
+  "91521": {
+    "code": "91521",
+    "nom": "Ris-Orangis",
+    "zone": "metro",
+    "population": 30283,
+    "surface": 836.27,
+    "codesPostaux": [
+      "91130"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219105210",
+    "codeEpci": "200059228",
+    "epci": {
+      "code": "200059228",
+      "nom": "CA Grand Paris Sud Seine Essonne Sénart"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163605"
+  },
+  "91549": {
+    "code": "91549",
+    "nom": "Sainte-Geneviève-des-Bois",
+    "zone": "metro",
+    "population": 35714,
+    "surface": 938.34,
+    "codesPostaux": [
+      "91700"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219105491",
+    "codeEpci": "200057859",
+    "epci": {
+      "code": "200057859",
+      "nom": "CA Coeur d'Essonne Agglomération"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163612"
+  },
+  "91589": {
+    "code": "91589",
+    "nom": "Savigny-sur-Orge",
+    "zone": "metro",
+    "population": 37775,
+    "surface": 697.12,
+    "codesPostaux": [
+      "91600"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219105897",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163620"
+  },
+  "91657": {
+    "code": "91657",
+    "nom": "Vigneux-sur-Seine",
+    "zone": "metro",
+    "population": 31233,
+    "surface": 897.19,
+    "codesPostaux": [
+      "91270"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219106572",
+    "codeEpci": "200058477",
+    "epci": {
+      "code": "200058477",
+      "nom": "CA Val d'Yerres Val de Seine"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163632"
+  },
+  "91687": {
+    "code": "91687",
+    "nom": "Viry-Châtillon",
+    "zone": "metro",
+    "population": 31112,
+    "surface": 611.82,
+    "codesPostaux": [
+      "91170"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "91",
+    "siren": "219106879",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "91",
+      "nom": "Essonne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163639"
+  },
+  "92002": {
+    "code": "92002",
+    "nom": "Antony",
+    "zone": "metro",
+    "population": 64026,
+    "surface": 956.17,
+    "codesPostaux": [
+      "92160"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200029",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163642"
+  },
+  "92004": {
+    "code": "92004",
+    "nom": "Asnières-sur-Seine",
+    "zone": "metro",
+    "population": 91457,
+    "surface": 482.12,
+    "codesPostaux": [
+      "92600"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200045",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163642"
+  },
+  "92007": {
+    "code": "92007",
+    "nom": "Bagneux",
+    "zone": "metro",
+    "population": 43647,
+    "surface": 418.4,
+    "codesPostaux": [
+      "92220"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200078",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163643"
+  },
+  "92012": {
+    "code": "92012",
+    "nom": "Boulogne-Billancourt",
+    "zone": "metro",
+    "population": 120205,
+    "surface": 615.22,
+    "codesPostaux": [
+      "92100"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200128",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163644"
+  },
+  "92019": {
+    "code": "92019",
+    "nom": "Châtenay-Malabry",
+    "zone": "metro",
+    "population": 35490,
+    "surface": 636.5,
+    "codesPostaux": [
+      "92290"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200193",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163645"
+  },
+  "92020": {
+    "code": "92020",
+    "nom": "Châtillon",
+    "zone": "metro",
+    "population": 36224,
+    "surface": 292.37,
+    "codesPostaux": [
+      "92320"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200201",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163646"
+  },
+  "92023": {
+    "code": "92023",
+    "nom": "Clamart",
+    "zone": "metro",
+    "population": 56882,
+    "surface": 875.91,
+    "codesPostaux": [
+      "92140"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200235",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163647"
+  },
+  "92024": {
+    "code": "92024",
+    "nom": "Clichy",
+    "zone": "metro",
+    "population": 65102,
+    "surface": 307.94,
+    "codesPostaux": [
+      "92110"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200243",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163648"
+  },
+  "92025": {
+    "code": "92025",
+    "nom": "Colombes",
+    "zone": "metro",
+    "population": 90692,
+    "surface": 777.84,
+    "codesPostaux": [
+      "92700"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200250",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163649"
+  },
+  "92026": {
+    "code": "92026",
+    "nom": "Courbevoie",
+    "zone": "metro",
+    "population": 81945,
+    "surface": 416.04,
+    "codesPostaux": [
+      "92400"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200268",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163649"
+  },
+  "92036": {
+    "code": "92036",
+    "nom": "Gennevilliers",
+    "zone": "metro",
+    "population": 50874,
+    "surface": 1162.71,
+    "codesPostaux": [
+      "92230"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200367",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163652"
+  },
+  "92040": {
+    "code": "92040",
+    "nom": "Issy-les-Moulineaux",
+    "zone": "metro",
+    "population": 67695,
+    "surface": 424.49,
+    "codesPostaux": [
+      "92130"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200409",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163653"
+  },
+  "92044": {
+    "code": "92044",
+    "nom": "Levallois-Perret",
+    "zone": "metro",
+    "population": 68412,
+    "surface": 241.57,
+    "codesPostaux": [
+      "92300"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200441",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163653"
+  },
+  "92046": {
+    "code": "92046",
+    "nom": "Malakoff",
+    "zone": "metro",
+    "population": 30183,
+    "surface": 207.15,
+    "codesPostaux": [
+      "92240"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200466",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163654"
+  },
+  "92048": {
+    "code": "92048",
+    "nom": "Meudon",
+    "zone": "metro",
+    "population": 46722,
+    "surface": 994.19,
+    "codesPostaux": [
+      "92190",
+      "92360"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200482",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163655"
+  },
+  "92049": {
+    "code": "92049",
+    "nom": "Montrouge",
+    "zone": "metro",
+    "population": 46273,
+    "surface": 207.06,
+    "codesPostaux": [
+      "92120"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200490",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163656"
+  },
+  "92050": {
+    "code": "92050",
+    "nom": "Nanterre",
+    "zone": "metro",
+    "population": 98119,
+    "surface": 1222.48,
+    "codesPostaux": [
+      "92000"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200508",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163657"
+  },
+  "92051": {
+    "code": "92051",
+    "nom": "Neuilly-sur-Seine",
+    "zone": "metro",
+    "population": 59200,
+    "surface": 371.71,
+    "codesPostaux": [
+      "92200"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200516",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163657"
+  },
+  "92062": {
+    "code": "92062",
+    "nom": "Puteaux",
+    "zone": "metro",
+    "population": 44198,
+    "surface": 318.99,
+    "codesPostaux": [
+      "92800"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200623",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163659"
+  },
+  "92063": {
+    "code": "92063",
+    "nom": "Rueil-Malmaison",
+    "zone": "metro",
+    "population": 80842,
+    "surface": 1452.83,
+    "codesPostaux": [
+      "92500"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200631",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163659"
+  },
+  "92073": {
+    "code": "92073",
+    "nom": "Suresnes",
+    "zone": "metro",
+    "population": 48932,
+    "surface": 379.65,
+    "codesPostaux": [
+      "92150"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "92",
+    "siren": "219200730",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "92",
+      "nom": "Hauts-de-Seine"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163662"
+  },
+  "93001": {
+    "code": "93001",
+    "nom": "Aubervilliers",
+    "zone": "metro",
+    "population": 89489,
+    "surface": 576.7,
+    "codesPostaux": [
+      "93300"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300019",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163665"
+  },
+  "93005": {
+    "code": "93005",
+    "nom": "Aulnay-sous-Bois",
+    "zone": "metro",
+    "population": 86360,
+    "surface": 1615.42,
+    "codesPostaux": [
+      "93600"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300050",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163666"
+  },
+  "93006": {
+    "code": "93006",
+    "nom": "Bagnolet",
+    "zone": "metro",
+    "population": 41776,
+    "surface": 256.63,
+    "codesPostaux": [
+      "93170"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300068",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163666"
+  },
+  "93007": {
+    "code": "93007",
+    "nom": "Le Blanc-Mesnil",
+    "zone": "metro",
+    "population": 59912,
+    "surface": 807.79,
+    "codesPostaux": [
+      "93150"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300076",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163667"
+  },
+  "93008": {
+    "code": "93008",
+    "nom": "Bobigny",
+    "zone": "metro",
+    "population": 55270,
+    "surface": 677.82,
+    "codesPostaux": [
+      "93000"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300084",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163668"
+  },
+  "93010": {
+    "code": "93010",
+    "nom": "Bondy",
+    "zone": "metro",
+    "population": 51066,
+    "surface": 546.28,
+    "codesPostaux": [
+      "93140"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300100",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163668"
+  },
+  "93027": {
+    "code": "93027",
+    "nom": "La Courneuve",
+    "zone": "metro",
+    "population": 47086,
+    "surface": 751.63,
+    "codesPostaux": [
+      "93120"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300274",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163671"
+  },
+  "93029": {
+    "code": "93029",
+    "nom": "Drancy",
+    "zone": "metro",
+    "population": 71312,
+    "surface": 776.13,
+    "codesPostaux": [
+      "93700"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300290",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163672"
+  },
+  "93031": {
+    "code": "93031",
+    "nom": "Épinay-sur-Seine",
+    "zone": "metro",
+    "population": 53564,
+    "surface": 457.59,
+    "codesPostaux": [
+      "93800"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300316",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163673"
+  },
+  "93032": {
+    "code": "93032",
+    "nom": "Gagny",
+    "zone": "metro",
+    "population": 40790,
+    "surface": 696.5,
+    "codesPostaux": [
+      "93220"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300324",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163674"
+  },
+  "93046": {
+    "code": "93046",
+    "nom": "Livry-Gargan",
+    "zone": "metro",
+    "population": 46507,
+    "surface": 736.74,
+    "codesPostaux": [
+      "93190"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300464",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163676"
+  },
+  "93048": {
+    "code": "93048",
+    "nom": "Montreuil",
+    "zone": "metro",
+    "population": 110758,
+    "surface": 890.68,
+    "codesPostaux": [
+      "93100"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300480",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163677"
+  },
+  "93050": {
+    "code": "93050",
+    "nom": "Neuilly-sur-Marne",
+    "zone": "metro",
+    "population": 38799,
+    "surface": 695.34,
+    "codesPostaux": [
+      "93330"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300506",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163679"
+  },
+  "93051": {
+    "code": "93051",
+    "nom": "Noisy-le-Grand",
+    "zone": "metro",
+    "population": 71632,
+    "surface": 1312.94,
+    "codesPostaux": [
+      "93160"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300514",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163680"
+  },
+  "93053": {
+    "code": "93053",
+    "nom": "Noisy-le-Sec",
+    "zone": "metro",
+    "population": 45915,
+    "surface": 504.37,
+    "codesPostaux": [
+      "93130"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300530",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163680"
+  },
+  "93055": {
+    "code": "93055",
+    "nom": "Pantin",
+    "zone": "metro",
+    "population": 60954,
+    "surface": 500.44,
+    "codesPostaux": [
+      "93500"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300555",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163681"
+  },
+  "93063": {
+    "code": "93063",
+    "nom": "Romainville",
+    "zone": "metro",
+    "population": 35314,
+    "surface": 344.17,
+    "codesPostaux": [
+      "93230"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300639",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163683"
+  },
+  "93064": {
+    "code": "93064",
+    "nom": "Rosny-sous-Bois",
+    "zone": "metro",
+    "population": 45947,
+    "surface": 591.15,
+    "codesPostaux": [
+      "93110"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300647",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163684"
+  },
+  "93066": {
+    "code": "93066",
+    "nom": "Saint-Denis",
+    "zone": "metro",
+    "population": 115237,
+    "surface": 1577.25,
+    "codesPostaux": [
+      "93200",
+      "93210",
+      "93380"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "929939411",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163685"
+  },
+  "93070": {
+    "code": "93070",
+    "nom": "Saint-Ouen-sur-Seine",
+    "zone": "metro",
+    "population": 53041,
+    "surface": 430.25,
+    "codesPostaux": [
+      "93400"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300704",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163685"
+  },
+  "93071": {
+    "code": "93071",
+    "nom": "Sevran",
+    "zone": "metro",
+    "population": 51640,
+    "surface": 725.61,
+    "codesPostaux": [
+      "93270"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300712",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163686"
+  },
+  "93072": {
+    "code": "93072",
+    "nom": "Stains",
+    "zone": "metro",
+    "population": 40600,
+    "surface": 540.87,
+    "codesPostaux": [
+      "93240"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300720",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163686"
+  },
+  "93073": {
+    "code": "93073",
+    "nom": "Tremblay-en-France",
+    "zone": "metro",
+    "population": 38210,
+    "surface": 2266,
+    "codesPostaux": [
+      "93290"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300738",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163687"
+  },
+  "93078": {
+    "code": "93078",
+    "nom": "Villepinte",
+    "zone": "metro",
+    "population": 39647,
+    "surface": 1038.37,
+    "codesPostaux": [
+      "93420"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "93",
+    "siren": "219300787",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "93",
+      "nom": "Seine-Saint-Denis"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163689"
+  },
+  "94002": {
+    "code": "94002",
+    "nom": "Alfortville",
+    "zone": "metro",
+    "population": 45569,
+    "surface": 367.17,
+    "codesPostaux": [
+      "94140"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400025",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163691"
+  },
+  "94016": {
+    "code": "94016",
+    "nom": "Cachan",
+    "zone": "metro",
+    "population": 30526,
+    "surface": 278.72,
+    "codesPostaux": [
+      "94230"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400165",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163694"
+  },
+  "94017": {
+    "code": "94017",
+    "nom": "Champigny-sur-Marne",
+    "zone": "metro",
+    "population": 78367,
+    "surface": 1130.32,
+    "codesPostaux": [
+      "94500"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400173",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163695"
+  },
+  "94022": {
+    "code": "94022",
+    "nom": "Choisy-le-Roi",
+    "zone": "metro",
+    "population": 46122,
+    "surface": 542.14,
+    "codesPostaux": [
+      "94600"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400223",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163698"
+  },
+  "94028": {
+    "code": "94028",
+    "nom": "Créteil",
+    "zone": "metro",
+    "population": 92859,
+    "surface": 1141.93,
+    "codesPostaux": [
+      "94000"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400280",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163698"
+  },
+  "94033": {
+    "code": "94033",
+    "nom": "Fontenay-sous-Bois",
+    "zone": "metro",
+    "population": 52646,
+    "surface": 555.99,
+    "codesPostaux": [
+      "94120"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400330",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163699"
+  },
+  "94038": {
+    "code": "94038",
+    "nom": "L'Haÿ-les-Roses",
+    "zone": "metro",
+    "population": 31338,
+    "surface": 389.56,
+    "codesPostaux": [
+      "94240"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400389",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163701"
+  },
+  "94041": {
+    "code": "94041",
+    "nom": "Ivry-sur-Seine",
+    "zone": "metro",
+    "population": 64526,
+    "surface": 611.46,
+    "codesPostaux": [
+      "94200"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400413",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163701"
+  },
+  "94046": {
+    "code": "94046",
+    "nom": "Maisons-Alfort",
+    "zone": "metro",
+    "population": 57422,
+    "surface": 534.8,
+    "codesPostaux": [
+      "94700"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400462",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163704"
+  },
+  "94052": {
+    "code": "94052",
+    "nom": "Nogent-sur-Marne",
+    "zone": "metro",
+    "population": 32998,
+    "surface": 279.86,
+    "codesPostaux": [
+      "94130"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400520",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163706"
+  },
+  "94058": {
+    "code": "94058",
+    "nom": "Le Perreux-sur-Marne",
+    "zone": "metro",
+    "population": 34654,
+    "surface": 396.02,
+    "codesPostaux": [
+      "94170"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400587",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163709"
+  },
+  "94068": {
+    "code": "94068",
+    "nom": "Saint-Maur-des-Fossés",
+    "zone": "metro",
+    "population": 76010,
+    "surface": 1125.56,
+    "codesPostaux": [
+      "94100",
+      "94210"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400686",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163712"
+  },
+  "94073": {
+    "code": "94073",
+    "nom": "Thiais",
+    "zone": "metro",
+    "population": 32006,
+    "surface": 642.45,
+    "codesPostaux": [
+      "94320"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400736",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163715"
+  },
+  "94076": {
+    "code": "94076",
+    "nom": "Villejuif",
+    "zone": "metro",
+    "population": 58142,
+    "surface": 527.95,
+    "codesPostaux": [
+      "94800"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400769",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163717"
+  },
+  "94078": {
+    "code": "94078",
+    "nom": "Villeneuve-Saint-Georges",
+    "zone": "metro",
+    "population": 36170,
+    "surface": 807.3,
+    "codesPostaux": [
+      "94190"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400785",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163718"
+  },
+  "94079": {
+    "code": "94079",
+    "nom": "Villiers-sur-Marne",
+    "zone": "metro",
+    "population": 32547,
+    "surface": 431.66,
+    "codesPostaux": [
+      "94350"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400793",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163719"
+  },
+  "94080": {
+    "code": "94080",
+    "nom": "Vincennes",
+    "zone": "metro",
+    "population": 48368,
+    "surface": 190.34,
+    "codesPostaux": [
+      "94300"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400801",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163720"
+  },
+  "94081": {
+    "code": "94081",
+    "nom": "Vitry-sur-Seine",
+    "zone": "metro",
+    "population": 95282,
+    "surface": 1165.9,
+    "codesPostaux": [
+      "94400"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "94",
+    "siren": "219400819",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "94",
+      "nom": "Val-de-Marne"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163720"
+  },
+  "95018": {
+    "code": "95018",
+    "nom": "Argenteuil",
+    "zone": "metro",
+    "population": 107135,
+    "surface": 1738.98,
+    "codesPostaux": [
+      "95100"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219500188",
+    "codeEpci": "200054781",
+    "epci": {
+      "code": "200054781",
+      "nom": "Métropole du Grand Paris"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163724"
+  },
+  "95063": {
+    "code": "95063",
+    "nom": "Bezons",
+    "zone": "metro",
+    "population": 34314,
+    "surface": 418.6,
+    "codesPostaux": [
+      "95870"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219500634",
+    "codeEpci": "200058519",
+    "epci": {
+      "code": "200058519",
+      "nom": "CA Saint Germain Boucles de Seine"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163737"
+  },
+  "95127": {
+    "code": "95127",
+    "nom": "Cergy",
+    "zone": "metro",
+    "population": 69578,
+    "surface": 1455.24,
+    "codesPostaux": [
+      "95000",
+      "95800"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219501277",
+    "codeEpci": "249500109",
+    "epci": {
+      "code": "249500109",
+      "nom": "CA de Cergy-Pontoise"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163745"
+  },
+  "95252": {
+    "code": "95252",
+    "nom": "Franconville",
+    "zone": "metro",
+    "population": 38024,
+    "surface": 622.54,
+    "codesPostaux": [
+      "95130"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219502523",
+    "codeEpci": "200058485",
+    "epci": {
+      "code": "200058485",
+      "nom": "CA Val Parisis"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163767"
+  },
+  "95268": {
+    "code": "95268",
+    "nom": "Garges-lès-Gonesse",
+    "zone": "metro",
+    "population": 42388,
+    "surface": 546.37,
+    "codesPostaux": [
+      "95140"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219502689",
+    "codeEpci": "200055655",
+    "epci": {
+      "code": "200055655",
+      "nom": "CA Roissy Pays de France"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163771"
+  },
+  "95280": {
+    "code": "95280",
+    "nom": "Goussainville",
+    "zone": "metro",
+    "population": 30952,
+    "surface": 1141.9,
+    "codesPostaux": [
+      "95190"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219502804",
+    "codeEpci": "200055655",
+    "epci": {
+      "code": "200055655",
+      "nom": "CA Roissy Pays de France"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163774"
+  },
+  "95306": {
+    "code": "95306",
+    "nom": "Herblay-sur-Seine",
+    "zone": "metro",
+    "population": 31818,
+    "surface": 1258.64,
+    "codesPostaux": [
+      "95220"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219503067",
+    "codeEpci": "200058485",
+    "epci": {
+      "code": "200058485",
+      "nom": "CA Val Parisis"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163779"
+  },
+  "95500": {
+    "code": "95500",
+    "nom": "Pontoise",
+    "zone": "metro",
+    "population": 31623,
+    "surface": 716.3,
+    "codesPostaux": [
+      "95000",
+      "95300"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219505005",
+    "codeEpci": "249500109",
+    "epci": {
+      "code": "249500109",
+      "nom": "CA de Cergy-Pontoise"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163812"
+  },
+  "95585": {
+    "code": "95585",
+    "nom": "Sarcelles",
+    "zone": "metro",
+    "population": 58576,
+    "surface": 841.98,
+    "codesPostaux": [
+      "95200"
+    ],
+    "codeRegion": "11",
+    "codeDepartement": "95",
+    "siren": "219505856",
+    "codeEpci": "200055655",
+    "epci": {
+      "code": "200055655",
+      "nom": "CA Roissy Pays de France"
+    },
+    "departement": {
+      "code": "95",
+      "nom": "Val-d'Oise"
+    },
+    "region": {
+      "code": "11",
+      "nom": "Île-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163825"
+  },
+  "97101": {
+    "code": "97101",
+    "nom": "Les Abymes",
+    "zone": "drom",
+    "population": 51760,
+    "surface": 7042.83,
+    "codesPostaux": [
+      "97139",
+      "97142"
+    ],
+    "codeRegion": "01",
+    "codeDepartement": "971",
+    "siren": "219711017",
+    "codeEpci": "200018653",
+    "epci": {
+      "code": "200018653",
+      "nom": "CA CAP Excellence"
+    },
+    "departement": {
+      "code": "971",
+      "nom": "Guadeloupe"
+    },
+    "region": {
+      "code": "01",
+      "nom": "Guadeloupe"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163843"
+  },
+  "97103": {
+    "code": "97103",
+    "nom": "Baie-Mahault",
+    "zone": "drom",
+    "population": 30943,
+    "surface": 4673.72,
+    "codesPostaux": [
+      "97122"
+    ],
+    "codeRegion": "01",
+    "codeDepartement": "971",
+    "siren": "219711033",
+    "codeEpci": "200018653",
+    "epci": {
+      "code": "200018653",
+      "nom": "CA CAP Excellence"
+    },
+    "departement": {
+      "code": "971",
+      "nom": "Guadeloupe"
+    },
+    "region": {
+      "code": "01",
+      "nom": "Guadeloupe"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163844"
+  },
+  "97209": {
+    "code": "97209",
+    "nom": "Fort-de-France",
+    "zone": "drom",
+    "population": 75165,
+    "surface": 4403.76,
+    "codesPostaux": [
+      "97200",
+      "97234"
+    ],
+    "codeRegion": "02",
+    "codeDepartement": "972",
+    "siren": "219722097",
+    "codeEpci": "249720061",
+    "epci": {
+      "code": "249720061",
+      "nom": "CA du Centre de la Martinique"
+    },
+    "departement": {
+      "code": "972",
+      "nom": "Martinique"
+    },
+    "region": {
+      "code": "02",
+      "nom": "Martinique"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163869"
+  },
+  "97213": {
+    "code": "97213",
+    "nom": "Le Lamentin",
+    "zone": "drom",
+    "population": 39346,
+    "surface": 6273.15,
+    "codesPostaux": [
+      "97232"
+    ],
+    "codeRegion": "02",
+    "codeDepartement": "972",
+    "siren": "219722139",
+    "codeEpci": "249720061",
+    "epci": {
+      "code": "249720061",
+      "nom": "CA du Centre de la Martinique"
+    },
+    "departement": {
+      "code": "972",
+      "nom": "Martinique"
+    },
+    "region": {
+      "code": "02",
+      "nom": "Martinique"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163871"
+  },
+  "97302": {
+    "code": "97302",
+    "nom": "Cayenne",
+    "zone": "drom",
+    "population": 63956,
+    "surface": 2552.23,
+    "codesPostaux": [
+      "97300"
+    ],
+    "codeRegion": "03",
+    "codeDepartement": "973",
+    "siren": "219733029",
+    "codeEpci": "249730045",
+    "epci": {
+      "code": "249730045",
+      "nom": "CA du Centre Littoral"
+    },
+    "departement": {
+      "code": "973",
+      "nom": "Guyane"
+    },
+    "region": {
+      "code": "03",
+      "nom": "Guyane"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163886"
+  },
+  "97307": {
+    "code": "97307",
+    "nom": "Matoury",
+    "zone": "drom",
+    "population": 35551,
+    "surface": 14667.97,
+    "codesPostaux": [
+      "97351"
+    ],
+    "codeRegion": "03",
+    "codeDepartement": "973",
+    "siren": "219733078",
+    "codeEpci": "249730045",
+    "epci": {
+      "code": "249730045",
+      "nom": "CA du Centre Littoral"
+    },
+    "departement": {
+      "code": "973",
+      "nom": "Guyane"
+    },
+    "region": {
+      "code": "03",
+      "nom": "Guyane"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163889"
+  },
+  "97311": {
+    "code": "97311",
+    "nom": "Saint-Laurent-du-Maroni",
+    "zone": "drom",
+    "population": 51732,
+    "surface": 432077.02,
+    "codesPostaux": [
+      "97320"
+    ],
+    "codeRegion": "03",
+    "codeDepartement": "973",
+    "siren": "219733110",
+    "codeEpci": "249730037",
+    "epci": {
+      "code": "249730037",
+      "nom": "CC de l'Ouest Guyanais"
+    },
+    "departement": {
+      "code": "973",
+      "nom": "Guyane"
+    },
+    "region": {
+      "code": "03",
+      "nom": "Guyane"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163896"
+  },
+  "97407": {
+    "code": "97407",
+    "nom": "Le Port",
+    "zone": "drom",
+    "population": 33670,
+    "surface": 1618.02,
+    "codesPostaux": [
+      "97420"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740073",
+    "codeEpci": "249740101",
+    "epci": {
+      "code": "249740101",
+      "nom": "CA Territoire de la Côte Ouest (TCO)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163907"
+  },
+  "97408": {
+    "code": "97408",
+    "nom": "La Possession",
+    "zone": "drom",
+    "population": 36390,
+    "surface": 11939.04,
+    "codesPostaux": [
+      "97419"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740081",
+    "codeEpci": "249740101",
+    "epci": {
+      "code": "249740101",
+      "nom": "CA Territoire de la Côte Ouest (TCO)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163908"
+  },
+  "97409": {
+    "code": "97409",
+    "nom": "Saint-André",
+    "zone": "drom",
+    "population": 57546,
+    "surface": 5465.79,
+    "codesPostaux": [
+      "97440"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740099",
+    "codeEpci": "249740093",
+    "epci": {
+      "code": "249740093",
+      "nom": "CA Intercommunale de la Réunion Est (CIREST)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163909"
+  },
+  "97410": {
+    "code": "97410",
+    "nom": "Saint-Benoît",
+    "zone": "drom",
+    "population": 37585,
+    "surface": 23105.83,
+    "codesPostaux": [
+      "97437",
+      "97470"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740107",
+    "codeEpci": "249740093",
+    "epci": {
+      "code": "249740093",
+      "nom": "CA Intercommunale de la Réunion Est (CIREST)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163909"
+  },
+  "97411": {
+    "code": "97411",
+    "nom": "Saint-Denis",
+    "zone": "drom",
+    "population": 156149,
+    "surface": 14233.04,
+    "codesPostaux": [
+      "97400",
+      "97417",
+      "97490"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740115",
+    "codeEpci": "249740119",
+    "epci": {
+      "code": "249740119",
+      "nom": "CA Intercommunale du Nord de la Réunion (CINOR)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163910"
+  },
+  "97412": {
+    "code": "97412",
+    "nom": "Saint-Joseph",
+    "zone": "drom",
+    "population": 38992,
+    "surface": 17874.19,
+    "codesPostaux": [
+      "97480"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740123",
+    "codeEpci": "249740085",
+    "epci": {
+      "code": "249740085",
+      "nom": "CA du Sud"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163911"
+  },
+  "97413": {
+    "code": "97413",
+    "nom": "Saint-Leu",
+    "zone": "drom",
+    "population": 35597,
+    "surface": 11874.15,
+    "codesPostaux": [
+      "97416",
+      "97424",
+      "97436"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740131",
+    "codeEpci": "249740101",
+    "epci": {
+      "code": "249740101",
+      "nom": "CA Territoire de la Côte Ouest (TCO)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163911"
+  },
+  "97414": {
+    "code": "97414",
+    "nom": "Saint-Louis",
+    "zone": "drom",
+    "population": 54478,
+    "surface": 9932.67,
+    "codesPostaux": [
+      "97421",
+      "97450"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740149",
+    "codeEpci": "249740077",
+    "epci": {
+      "code": "249740077",
+      "nom": "CA CIVIS (Communauté Intercommunale des Villes Solidaires)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163912"
+  },
+  "97415": {
+    "code": "97415",
+    "nom": "Saint-Paul",
+    "zone": "drom",
+    "population": 106220,
+    "surface": 24164.14,
+    "codesPostaux": [
+      "97411",
+      "97422",
+      "97423",
+      "97434",
+      "97435",
+      "97460"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740156",
+    "codeEpci": "249740101",
+    "epci": {
+      "code": "249740101",
+      "nom": "CA Territoire de la Côte Ouest (TCO)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163913"
+  },
+  "97416": {
+    "code": "97416",
+    "nom": "Saint-Pierre",
+    "zone": "drom",
+    "population": 85254,
+    "surface": 9683.7,
+    "codesPostaux": [
+      "97410",
+      "97432"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740164",
+    "codeEpci": "249740077",
+    "epci": {
+      "code": "249740077",
+      "nom": "CA CIVIS (Communauté Intercommunale des Villes Solidaires)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163913"
+  },
+  "97418": {
+    "code": "97418",
+    "nom": "Sainte-Marie",
+    "zone": "drom",
+    "population": 35584,
+    "surface": 8900.28,
+    "codesPostaux": [
+      "97438"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740180",
+    "codeEpci": "249740119",
+    "epci": {
+      "code": "249740119",
+      "nom": "CA Intercommunale du Nord de la Réunion (CINOR)"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163915"
+  },
+  "97422": {
+    "code": "97422",
+    "nom": "Le Tampon",
+    "zone": "drom",
+    "population": 81964,
+    "surface": 18209.44,
+    "codesPostaux": [
+      "97418",
+      "97430"
+    ],
+    "codeRegion": "04",
+    "codeDepartement": "974",
+    "siren": "219740222",
+    "codeEpci": "249740085",
+    "epci": {
+      "code": "249740085",
+      "nom": "CA du Sud"
+    },
+    "departement": {
+      "code": "974",
+      "nom": "La Réunion"
+    },
+    "region": {
+      "code": "04",
+      "nom": "La Réunion"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163917"
+  },
+  "97610": {
+    "code": "97610",
+    "nom": "Koungou",
+    "zone": "drom",
+    "population": 32156,
+    "surface": 2811.67,
+    "codesPostaux": [
+      "97600"
+    ],
+    "codeRegion": "06",
+    "codeDepartement": "976",
+    "siren": "200008811",
+    "codeEpci": "200060465",
+    "epci": {
+      "code": "200060465",
+      "nom": "CA du Grand Nord de Mayotte"
+    },
+    "departement": {
+      "code": "976",
+      "nom": "Mayotte"
+    },
+    "region": {
+      "code": "06",
+      "nom": "Mayotte"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163925"
+  },
+  "97611": {
+    "code": "97611",
+    "nom": "Mamoudzou",
+    "zone": "drom",
+    "population": 71437,
+    "surface": 4211.81,
+    "codesPostaux": [
+      "97600",
+      "97605"
+    ],
+    "codeRegion": "06",
+    "codeDepartement": "976",
+    "siren": "200008837",
+    "codeEpci": "200060457",
+    "epci": {
+      "code": "200060457",
+      "nom": "CA de Dembeni / Mamoudzou"
+    },
+    "departement": {
+      "code": "976",
+      "nom": "Mayotte"
+    },
+    "region": {
+      "code": "06",
+      "nom": "Mayotte"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163925"
+  },
+  "97801": {
+    "code": "97801",
+    "nom": "Saint-Martin",
+    "zone": "com",
+    "population": 31951,
+    "surface": 4890.51,
+    "codesPostaux": [
+      "97150"
+    ],
+    "codeRegion": "978",
+    "codeDepartement": "978",
+    "departement": {
+      "code": "978",
+      "nom": "Saint-Martin"
+    },
+    "region": {
+      "code": "978",
+      "nom": "Saint-Martin"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163936"
+  },
+  "98805": {
+    "code": "98805",
+    "nom": "Dumbéa",
+    "zone": "com",
+    "population": 35873,
+    "surface": 25261.53,
+    "codesPostaux": [
+      "98835"
+    ],
+    "codeRegion": "988",
+    "codeDepartement": "988",
+    "departement": {
+      "code": "988",
+      "nom": "Nouvelle-Calédonie"
+    },
+    "region": {
+      "code": "988",
+      "nom": "Nouvelle-Calédonie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163983"
+  },
+  "98818": {
+    "code": "98818",
+    "nom": "Nouméa",
+    "zone": "com",
+    "population": 94285,
+    "surface": 4965.12,
+    "codesPostaux": [
+      "98800"
+    ],
+    "codeRegion": "988",
+    "codeDepartement": "988",
+    "departement": {
+      "code": "988",
+      "nom": "Nouvelle-Calédonie"
+    },
+    "region": {
+      "code": "988",
+      "nom": "Nouvelle-Calédonie"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.163996"
+  },
+  "06083": {
+    "code": "06083",
+    "nom": "Menton",
+    "zone": "metro",
+    "population": 30326,
+    "surface": 1422.35,
+    "codesPostaux": [
+      "06500"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "06",
+    "siren": "210600839",
+    "codeEpci": "240600551",
+    "epci": {
+      "code": "240600551",
+      "nom": "CA de la Riviera Française"
+    },
+    "departement": {
+      "code": "06",
+      "nom": "Alpes-Maritimes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141053"
+  },
+  "06123": {
+    "code": "06123",
+    "nom": "Saint-Laurent-du-Var",
+    "zone": "metro",
+    "population": 31645,
+    "surface": 948.57,
+    "codesPostaux": [
+      "06700"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "06",
+    "siren": "210601233",
+    "codeEpci": "200030195",
+    "epci": {
+      "code": "200030195",
+      "nom": "Métropole Nice Côte d'Azur"
+    },
+    "departement": {
+      "code": "06",
+      "nom": "Alpes-Maritimes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141079"
+  },
+  "03185": {
+    "code": "03185",
+    "nom": "Montluçon",
+    "zone": "metro",
+    "population": 33317,
+    "surface": 2068.16,
+    "codesPostaux": [
+      "03100"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "03",
+    "siren": "210301859",
+    "codeEpci": "200071082",
+    "epci": {
+      "code": "200071082",
+      "nom": "CA Montluçon Communauté"
+    },
+    "departement": {
+      "code": "03",
+      "nom": "Allier"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.140691"
+  },
+  "06030": {
+    "code": "06030",
+    "nom": "Le Cannet",
+    "zone": "metro",
+    "population": 40198,
+    "surface": 769.67,
+    "codesPostaux": [
+      "06110"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "06",
+    "siren": "210600300",
+    "codeEpci": "200039915",
+    "epci": {
+      "code": "200039915",
+      "nom": "CA Cannes Pays de Lérins"
+    },
+    "departement": {
+      "code": "06",
+      "nom": "Alpes-Maritimes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141020"
+  },
+  "05061": {
+    "code": "05061",
+    "nom": "Gap",
+    "zone": "metro",
+    "population": 40656,
+    "surface": 10877.94,
+    "codesPostaux": [
+      "05000"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "05",
+    "siren": "210500617",
+    "codeEpci": "200067825",
+    "epci": {
+      "code": "200067825",
+      "nom": "CA Gap-Tallard-Durance"
+    },
+    "departement": {
+      "code": "05",
+      "nom": "Hautes-Alpes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.140928"
+  },
+  "01053": {
+    "code": "01053",
+    "nom": "Bourg-en-Bresse",
+    "zone": "metro",
+    "population": 42065,
+    "surface": 2403.23,
+    "codesPostaux": [
+      "01000"
+    ],
+    "codeRegion": "84",
+    "codeDepartement": "01",
+    "siren": "210100533",
+    "codeEpci": "200071751",
+    "epci": {
+      "code": "200071751",
+      "nom": "CA du Bassin de Bourg-en-Bresse"
+    },
+    "departement": {
+      "code": "01",
+      "nom": "Ain"
+    },
+    "region": {
+      "code": "84",
+      "nom": "Auvergne-Rhône-Alpes"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.139841"
+  },
+  "08105": {
+    "code": "08105",
+    "nom": "Charleville-Mézières",
+    "zone": "metro",
+    "population": 45634,
+    "surface": 3165.66,
+    "codesPostaux": [
+      "08000"
+    ],
+    "codeRegion": "44",
+    "codeDepartement": "08",
+    "siren": "210800967",
+    "codeEpci": "200041630",
+    "epci": {
+      "code": "200041630",
+      "nom": "CA Ardenne Métropole"
+    },
+    "departement": {
+      "code": "08",
+      "nom": "Ardennes"
+    },
+    "region": {
+      "code": "44",
+      "nom": "Grand Est"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141397"
+  },
+  "2B033": {
+    "code": "2B033",
+    "nom": "Bastia",
+    "zone": "metro",
+    "population": 47459,
+    "surface": 1991.68,
+    "codesPostaux": [
+      "20200",
+      "20600"
+    ],
+    "codeRegion": "94",
+    "codeDepartement": "2B",
+    "siren": "212000335",
+    "codeEpci": "242000354",
+    "epci": {
+      "code": "242000354",
+      "nom": "CA de Bastia"
+    },
+    "departement": {
+      "code": "2B",
+      "nom": "Haute-Corse"
+    },
+    "region": {
+      "code": "94",
+      "nom": "Corse"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.146724"
+  },
+  "06069": {
+    "code": "06069",
+    "nom": "Grasse",
+    "zone": "metro",
+    "population": 48669,
+    "surface": 4423.35,
+    "codesPostaux": [
+      "06130",
+      "06520"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "06",
+    "siren": "210600698",
+    "codeEpci": "200039857",
+    "epci": {
+      "code": "200039857",
+      "nom": "CA du Pays de Grasse"
+    },
+    "departement": {
+      "code": "06",
+      "nom": "Alpes-Maritimes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141044"
+  },
+  "06027": {
+    "code": "06027",
+    "nom": "Cagnes-sur-Mer",
+    "zone": "metro",
+    "population": 52852,
+    "surface": 1814.36,
+    "codesPostaux": [
+      "06800"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "06",
+    "siren": "210600276",
+    "codeEpci": "200030195",
+    "epci": {
+      "code": "200030195",
+      "nom": "Métropole Nice Côte d'Azur"
+    },
+    "departement": {
+      "code": "06",
+      "nom": "Alpes-Maritimes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141018"
+  },
+  "02691": {
+    "code": "02691",
+    "nom": "Saint-Quentin",
+    "zone": "metro",
+    "population": 52995,
+    "surface": 2280.41,
+    "codesPostaux": [
+      "02100"
+    ],
+    "codeRegion": "32",
+    "codeDepartement": "02",
+    "siren": "210206660",
+    "codeEpci": "200071892",
+    "epci": {
+      "code": "200071892",
+      "nom": "CA du Saint-Quentinois"
+    },
+    "departement": {
+      "code": "02",
+      "nom": "Aisne"
+    },
+    "region": {
+      "code": "32",
+      "nom": "Hauts-de-France"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.140483"
+  },
+  "06029": {
+    "code": "06029",
+    "nom": "Cannes",
+    "zone": "metro",
+    "population": 74040,
+    "surface": 2077.08,
+    "codesPostaux": [
+      "06150",
+      "06400"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "06",
+    "siren": "210600292",
+    "codeEpci": "200039915",
+    "epci": {
+      "code": "200039915",
+      "nom": "CA Cannes Pays de Lérins"
+    },
+    "departement": {
+      "code": "06",
+      "nom": "Alpes-Maritimes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141019"
+  },
+  "2A004": {
+    "code": "2A004",
+    "nom": "Ajaccio",
+    "zone": "metro",
+    "population": 75343,
+    "surface": 8248.59,
+    "codesPostaux": [
+      "20000",
+      "20090",
+      "20167"
+    ],
+    "codeRegion": "94",
+    "codeDepartement": "2A",
+    "siren": "212000046",
+    "codeEpci": "242010056",
+    "epci": {
+      "code": "242010056",
+      "nom": "CA du Pays Ajaccien"
+    },
+    "departement": {
+      "code": "2A",
+      "nom": "Corse-du-Sud"
+    },
+    "region": {
+      "code": "94",
+      "nom": "Corse"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.146635"
+  },
+  "06004": {
+    "code": "06004",
+    "nom": "Antibes",
+    "zone": "metro",
+    "population": 76612,
+    "surface": 2676.39,
+    "codesPostaux": [
+      "06160",
+      "06600"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "06",
+    "siren": "210600045",
+    "codeEpci": "240600585",
+    "epci": {
+      "code": "240600585",
+      "nom": "CA de Sophia Antipolis"
+    },
+    "departement": {
+      "code": "06",
+      "nom": "Alpes-Maritimes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141004"
+  },
+  "06088": {
+    "code": "06088",
+    "nom": "Nice",
+    "zone": "metro",
+    "population": 353701,
+    "surface": 7380.49,
+    "codesPostaux": [
+      "06000",
+      "06100",
+      "06200",
+      "06300"
+    ],
+    "codeRegion": "93",
+    "codeDepartement": "06",
+    "siren": "210600888",
+    "codeEpci": "200030195",
+    "epci": {
+      "code": "200030195",
+      "nom": "Métropole Nice Côte d'Azur"
+    },
+    "departement": {
+      "code": "06",
+      "nom": "Alpes-Maritimes"
+    },
+    "region": {
+      "code": "93",
+      "nom": "Provence-Alpes-Côte d'Azur"
+    },
+    "_syncedAt": "2026-01-22T11:54:34.141056"
+  }
+}

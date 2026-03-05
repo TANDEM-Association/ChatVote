@@ -140,7 +140,7 @@ chat-vote-*-firebase-adminsdk*.json
 *firebase-adminsdk*.json
 
 # Generated data files (too large for git)
-firebase/firestore_data/dev/municipalities.json
+# municipalities.json is now filtered to 30k+ population (~287 docs, 162KB) — OK for git
 
 # Spyder project settings
 .spyderproject
