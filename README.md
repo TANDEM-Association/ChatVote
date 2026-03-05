@@ -53,20 +53,61 @@ Browser ◄──► Next.js (:3000) ◄──Socket.IO──► Backend (:8080)
 
 ## Make Targets
 
+### Development
+
 | Target | Description |
 |--------|-------------|
-| `make setup` | One-time setup: init submodules, create `.env` files, install deps |
-| `make dev` | Start **everything**: Docker, Firebase, backend, frontend |
-| `make dev-infra` | Start only Docker containers (Qdrant + Ollama) |
-| `make dev-emulators` | Start only Firebase emulators (background) |
+| `make setup` | One-time setup: create `.env` files, install deps, pull Ollama models |
+| `make dev` | Start **everything**: Docker infra, seed data, backend, frontend |
+| `make dev-infra` | Start only Docker containers (Qdrant, and Ollama/Firebase if not native) |
 | `make dev-backend` | Start backend in foreground (for debugging) |
 | `make dev-frontend` | Start frontend in foreground (for debugging) |
-| `make logs` | Tail all service logs |
 | `make seed` | Seed Firestore emulator + create Qdrant collections |
 | `make seed-vectors` | Same as seed + generate sample embeddings via Ollama |
 | `make check` | Health-check all services |
-| `make stop` | Stop Docker containers + Firebase emulators |
+| `make logs` | Tail all service logs |
+| `make stop` | Stop Docker containers + background processes |
 | `make clean` | Stop everything + remove Docker volumes |
+
+### Testing
+
+| Target | Description |
+|--------|-------------|
+| `make test-e2e` | Run full E2E suite (starts infra, seeds, runs Playwright, stops) |
+
+**Frontend E2E tests** (`CHATVOTE-FrontEnd/`):
+
+```bash
+npx playwright test                    # Run all E2E tests
+npx playwright test --project=mock     # Run mock tests only (no real backend)
+npx playwright test --ui               # Interactive UI mode
+```
+
+Tests use a **mock Socket.IO server** on a dynamic port — no real backend needed. The test framework auto-detects browser console errors (hydration mismatches, uncaught exceptions) and fails tests when unexpected errors appear.
+
+### RAG Evaluation
+
+| Target | Description |
+|--------|-------------|
+| `make eval` | Run all RAG evaluations (DeepEval) |
+| `make eval-static` | Static evaluations only (no live services needed) |
+| `make eval-e2e` | End-to-end RAG evaluations (needs Qdrant + Ollama) |
+| `make red-team` | Red-team adversarial tests |
+| `make generate-goldens` | Generate golden QA pairs for evaluation |
+| `make eval-report` | Generate HTML evaluation dashboard |
+
+### Embedding Providers
+
+The backend supports multiple embedding providers, configured via `EMBEDDING_PROVIDER` in `.env`:
+
+| Provider | Model | Dimensions | Config |
+|----------|-------|-----------|--------|
+| `ollama` (default) | nomic-embed-text | 768 | Local, no API key |
+| `scaleway` | qwen3-embedding-8b | 4096 | `SCALEWAY_EMBED_API_KEY` |
+| `google` | gemini-embedding-001 | 3072 | `GOOGLE_API_KEY` |
+| `openai` | text-embedding-3-large | 3072 | `OPENAI_API_KEY` |
+
+Auto-detection picks the first available provider if `EMBEDDING_PROVIDER` is unset. Ollama model names are configurable via `OLLAMA_MODEL` and `OLLAMA_EMBED_MODEL` in `.env`.
 
 ## Project Structure
 
@@ -89,6 +130,9 @@ ChatVote/
 │   │   ├── components/        #   React components (shadcn/ui)
 │   │   ├── lib/               #   Stores, socket client, utils
 │   │   └── i18n/              #   FR/EN translations
+│   ├── e2e/                   #   Playwright E2E tests
+│   │   ├── mock/              #   Test specs (mock Socket.IO)
+│   │   └── support/           #   Fixtures, helpers, base-test
 │   └── package.json
 ├── docker-compose.dev.yml     # Qdrant + Ollama for local dev
 ├── Makefile                   # Developer workflow commands
