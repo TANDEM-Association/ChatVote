@@ -60,26 +60,39 @@ def _skip_if_no_llm():
 
 # Sample contexts simulating retrieved manifesto chunks
 MOCK_CONTEXTS = {
+    "reconquete": [
+        "Reconquête - Programme politique : Reconquête propose un programme couvrant l'écologie, "
+        "l'agriculture, la ruralité et l'engagement citoyen pour la France.",
+        "Reconquête - Développement durable : Le parti propose d'investir dans des filières de "
+        "développement durable et innovantes, notamment le recyclage des plastiques et la "
+        "valorisation des déchets.",
+    ],
+    "renaissance": [
+        "Renaissance - 50 ambitions pour les communes : Renaissance présente un programme de "
+        "50 ambitions pour les communes incluant la qualité de vie, les déplacements, l'accès "
+        "aux soins et le soutien aux citoyens au quotidien.",
+        "Renaissance - Artisanat local : Le parti propose de soutenir l'artisanat local avec des "
+        "bourses de formation, l'aide à l'installation et la promotion des productions locales.",
+    ],
+    "place-publique": [
+        "Place Publique - Immigration : Place Publique propose de partir des faits sur "
+        "l'immigration et refuse les mensonges. Le parti ancre le sujet des migrations dans un "
+        "projet juste et utile pour les Français.",
+        "Place Publique est un parti citoyen qui propose des actions concrètes et de terrain "
+        "pour les communes et les quartiers.",
+    ],
+    "la-france-insoumise": [
+        "La France Insoumise - Municipales 2026 : LFI propose une boîte à outils programmatique "
+        "pour les élections municipales 2026 à destination des candidats et des collectifs citoyens.",
+        "La France Insoumise - Économie : planification écologique, nationalisation des autoroutes "
+        "et des énergies, augmentation du SMIC à 1 600€ net, blocage des prix de première nécessité.",
+    ],
     "europe-ecologie-les-verts": [
         "Les Écologistes - Programme 2026 : Nous proposons la sortie progressive du nucléaire "
         "d'ici 2040 et un investissement massif dans les énergies renouvelables : éolien, solaire, "
         "géothermie. Notre objectif est d'atteindre 100% d'énergies renouvelables.",
         "Politique environnementale des Écologistes : interdiction du glyphosate, promotion de "
         "l'agriculture biologique, création de 500 000 emplois verts dans la rénovation thermique.",
-    ],
-    "la-france-insoumise": [
-        "Programme LFI - Retraites : La France Insoumise propose le rétablissement du droit à "
-        "la retraite à 60 ans, avec 40 annuités de cotisation. Nous défendons un système de "
-        "retraite par répartition renforcé, avec une pension minimale au niveau du SMIC.",
-        "La France Insoumise - Économie : planification écologique, nationalisation des autoroutes "
-        "et des énergies, augmentation du SMIC à 1 600€ net, blocage des prix de première nécessité.",
-    ],
-    "renaissance": [
-        "Renaissance - Politique économique : Nous défendons la compétitivité française en Europe "
-        "à travers des baisses de charges pour les entreprises, le soutien à l'innovation et la "
-        "réforme du marché du travail. L'objectif est le plein emploi d'ici 2027.",
-        "Renaissance soutient le nucléaire comme pilier de la transition énergétique française, "
-        "avec la construction de 6 nouveaux EPR et le développement du petit nucléaire modulaire.",
     ],
 }
 

@@ -183,6 +183,8 @@ def test_e2e_edge_cases(
     """E2E test for edge cases (refusals, off-topic, injection)."""
     if not golden.get("party_ids"):
         pytest.skip("Edge case without party_ids — tested in red_team tests")
+    if len(golden["party_ids"]) > 1:
+        pytest.skip("Multi-party edge case — single-party pipeline cannot test this")
 
     party_id = golden["party_ids"][0]
 

@@ -136,3 +136,32 @@ def pytest_sessionfinish(session, exitstatus):
     ts = datetime.now().strftime("%Y%m%d_%H%M%S")
     history_dest = cache_dir / f"results_{ts}.json"
     history_dest.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+
+    # Auto-generate HTML report from cached results
+    try:
+        _auto_generate_report()
+    except Exception as e:
+        print(f"Warning: Could not auto-generate HTML report: {e}")
+
+
+def _auto_generate_report():
+    """Run eval_report.py --from-cache to regenerate the HTML report."""
+    import subprocess
+
+    report_script = PROJECT_ROOT / "scripts" / "eval_report.py"
+    if not report_script.exists():
+        return
+
+    report_output = PROJECT_ROOT / "reports" / "eval_report.html"
+    subprocess.run(
+        [
+            sys.executable, str(report_script),
+            "--mode", "all",
+            "--from-cache",
+            "--output", str(report_output),
+        ],
+        cwd=str(PROJECT_ROOT),
+        timeout=30,
+        capture_output=True,
+    )
+    print(f"HTML report updated: {report_output}")
