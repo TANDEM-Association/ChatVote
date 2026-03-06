@@ -19,6 +19,13 @@ export type Source = {
   source_document: string;
   document_publish_date: string;
   party_id?: string;
+  // Unified chunk metadata (optional for backward compat)
+  fiabilite?: number;
+  theme?: string;
+  sub_theme?: string;
+  source_type?: string;
+  candidate_name?: string;
+  municipality_name?: string;
 };
 
 export type CurrentStreamingMessages = {
