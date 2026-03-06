@@ -50,6 +50,28 @@ PARLIAMENTARY_QUESTIONS_INDEX_NAME = f"parliamentary_questions{env_suffix}"
 CANDIDATES_INDEX_NAME = f"candidates_websites{env_suffix}"
 
 
+def _ensure_payload_indexes(collection_name: str) -> None:
+    """Create payload indexes for unified metadata fields if they don't exist."""
+    from qdrant_client.models import PayloadSchemaType
+
+    indexes_to_create = [
+        ("metadata.party_ids", PayloadSchemaType.KEYWORD),
+        ("metadata.candidate_ids", PayloadSchemaType.KEYWORD),
+        ("metadata.fiabilite", PayloadSchemaType.INTEGER),
+        ("metadata.theme", PayloadSchemaType.KEYWORD),
+    ]
+
+    for field_name, schema_type in indexes_to_create:
+        try:
+            qdrant_client.create_payload_index(
+                collection_name=collection_name,
+                field_name=field_name,
+                field_schema=schema_type,
+            )
+        except Exception:
+            pass  # Index may already exist
+
+
 def _get_embeddings() -> tuple[Embeddings, int]:
     """
     Get the embeddings model based on available API keys.
@@ -239,6 +261,7 @@ def _get_vector_store(
             logger.warning(f"Error deleting collection {collection_name}: {e}")
 
     _ensure_collection_exists(collection_name)
+    _ensure_payload_indexes(collection_name)
     return QdrantVectorStore(
         client=qdrant_client,
         collection_name=collection_name,
