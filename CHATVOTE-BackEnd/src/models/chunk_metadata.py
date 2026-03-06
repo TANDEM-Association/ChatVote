@@ -8,7 +8,7 @@ This is the single source of truth for chunk metadata shape.
 from enum import IntEnum
 from typing import Optional
 
-from pydantic import BaseModel, Field, model_validator
+from pydantic import BaseModel, Field, field_validator, model_validator
 
 
 class Fiabilite(IntEnum):
@@ -97,6 +97,13 @@ class ChunkMetadata(BaseModel):
     fiabilite: Fiabilite = Field(default=Fiabilite.PRESS)
     theme: Optional[str] = None
     sub_theme: Optional[str] = None
+
+    @field_validator("theme")
+    @classmethod
+    def _validate_theme(cls, v: Optional[str]) -> Optional[str]:
+        if v is not None and v not in THEME_TAXONOMY:
+            return None
+        return v
 
     @model_validator(mode="before")
     @classmethod

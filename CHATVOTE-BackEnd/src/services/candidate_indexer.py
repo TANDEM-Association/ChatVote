@@ -164,7 +164,7 @@ def create_documents_from_scraped_website(
                 url=page.url,
                 page_title=page.title,
                 page_type=page.page_type,
-                page=chunk_index + 1,
+                page=0,  # No real page number for scraped websites
                 chunk_index=chunk_index,
                 total_chunks=0,
             )

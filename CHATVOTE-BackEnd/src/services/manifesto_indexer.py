@@ -199,7 +199,7 @@ async def index_party_manifesto(party: Party) -> int:
     try:
         chunk_texts = [doc.page_content for doc in documents]
         classifications = await classify_chunks_themes(chunk_texts)
-        for doc, cls in zip(documents, classifications):
+        for doc, cls in zip(documents, classifications, strict=True):
             if cls.theme:
                 doc.metadata["theme"] = cls.theme
             if cls.sub_theme:

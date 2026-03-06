@@ -70,8 +70,13 @@ def _ensure_payload_indexes(collection_name: str) -> None:
                 field_name=field_name,
                 field_schema=schema_type,
             )
-        except Exception:
-            pass  # Index may already exist
+        except Exception as e:
+            # Qdrant returns an error when the index already exists — that's fine.
+            # Log anything else so infra failures aren't invisible.
+            if "already exists" in str(e).lower():
+                logger.debug(f"Payload index {field_name} already exists on {collection_name}")
+            else:
+                logger.warning(f"Failed to create payload index {field_name} on {collection_name}: {e}")
 
 
 def _build_party_filter(party_ids: list[str]) -> Filter:
@@ -544,6 +549,7 @@ async def _identify_relevant_candidate_documents(
     candidate_id: Optional[str] = None,
     n_docs: int = 10,
     score_threshold: float = 0.65,
+    max_fiabilite: int = 3,
 ) -> list[Document]:
     """
     Identify relevant candidate documents based on the provided query.
@@ -582,9 +588,8 @@ async def _identify_relevant_candidate_documents(
         )
 
     # Create filter if we have conditions
-    filter_condition = None
-    if filter_conditions:
-        filter_condition = Filter(must=filter_conditions)
+    entity_filter = Filter(must=filter_conditions) if filter_conditions else None
+    filter_condition = _combine_filters(entity_filter, _build_fiabilite_filter(max_fiabilite))
 
     # Search using async client to avoid blocking the event loop
     search_result = await async_qdrant_client.search(
@@ -853,7 +858,8 @@ def _collection_exists(collection_name: str) -> bool:
         if exists:
             _known_collections.add(collection_name)
         return exists
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Error checking collection {collection_name}: {e}")
         return False
 
 

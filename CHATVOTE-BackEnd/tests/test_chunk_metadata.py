@@ -139,6 +139,25 @@ def test_fiabilite_int_values():
     assert int(Fiabilite.SOCIAL_MEDIA) == 4
 
 
+def test_invalid_theme_normalized_to_none():
+    """Off-taxonomy theme should be silently set to None."""
+    cm = ChunkMetadata(
+        namespace="ps",
+        source_document="election_manifesto",
+        theme="pizza",
+    )
+    assert cm.theme is None
+
+
+def test_valid_theme_accepted():
+    cm = ChunkMetadata(
+        namespace="ps",
+        source_document="election_manifesto",
+        theme="economie",
+    )
+    assert cm.theme == "economie"
+
+
 def test_theme_taxonomy_exists():
     from src.models.chunk_metadata import THEME_TAXONOMY
     assert len(THEME_TAXONOMY) == 14
