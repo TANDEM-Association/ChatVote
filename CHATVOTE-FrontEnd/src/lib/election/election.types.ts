@@ -69,6 +69,25 @@ export type MunicipalitiesDocument = {
   [code: string]: Municipality;
 };
 
+// Electoral list types (from official candidatures CSV)
+
+export type ElectoralList = {
+  panel_number: number;
+  list_label: string;
+  list_short_label: string;
+  nuance_code: string | null;
+  nuance_label: string | null;
+  head_first_name: string;
+  head_last_name: string;
+};
+
+export type ElectoralListsByCommune = {
+  commune_code: string;
+  commune_name: string;
+  list_count: number;
+  lists: ElectoralList[];
+};
+
 // Helper to check if a candidate is in a coalition
 export function isCoalitionCandidate(candidate: Candidate): boolean {
   return candidate.party_ids.length >= 2;
