@@ -108,6 +108,29 @@ def test_from_qdrant_payload_roundtrip():
     assert restored.fiabilite == original.fiabilite
 
 
+def test_explicit_fiabilite_preserved():
+    """Explicit fiabilité should NOT be overwritten by auto-inference."""
+    cm = ChunkMetadata(
+        namespace="x",
+        source_document="candidate_website_blog",  # would infer PRESS (3)
+        fiabilite=Fiabilite.GOVERNMENT,             # explicit override
+    )
+    assert cm.fiabilite == Fiabilite.GOVERNMENT
+
+
+def test_from_qdrant_payload_preserves_fiabilite():
+    """Roundtrip via payload preserves the stored fiabilité value."""
+    original = ChunkMetadata(
+        namespace="x",
+        source_document="candidate_website_blog",
+    )
+    payload = original.to_qdrant_payload()
+    # Simulate a mapping change: manually set a different fiabilite in payload
+    payload["fiabilite"] = int(Fiabilite.GOVERNMENT)
+    restored = ChunkMetadata.from_qdrant_payload(payload)
+    assert restored.fiabilite == Fiabilite.GOVERNMENT
+
+
 def test_fiabilite_int_values():
     """Verify IntEnum values match expected levels."""
     assert int(Fiabilite.GOVERNMENT) == 1

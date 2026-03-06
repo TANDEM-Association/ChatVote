@@ -109,6 +109,11 @@ def _ensure_candidates_collection_exists() -> None:
                 field_name="metadata.fiabilite",
                 field_schema=PayloadSchemaType.INTEGER,
             )
+            qdrant_client.create_payload_index(
+                collection_name=CANDIDATES_INDEX_NAME,
+                field_name="metadata.theme",
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
 
             logger.info(f"Collection {CANDIDATES_INDEX_NAME} created with indexes")
         else:

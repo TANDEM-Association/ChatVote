@@ -865,7 +865,6 @@ async def _search_candidate_docs_by_party(
     max_fiabilite: int = 3,
 ) -> list[Document]:
     """Search candidate documents filtered by party affiliation using Qdrant MatchAny."""
-    global embed, qdrant_client
 
     if not _collection_exists(CANDIDATES_INDEX_NAME):
         return []
@@ -911,7 +910,6 @@ async def _search_candidate_docs_by_party_and_municipality(
     max_fiabilite: int = 3,
 ) -> list[Document]:
     """Search candidate docs filtered by party + municipality using Qdrant filters."""
-    global embed, qdrant_client
 
     if not _collection_exists(CANDIDATES_INDEX_NAME):
         return []
@@ -968,7 +966,6 @@ async def _identify_relevant_manifesto_documents(
     """
     Search for relevant manifesto documents in the party index.
     """
-    global embed, qdrant_client
 
     # Get query embedding
     query_vector = await embed.aembed_query(rag_query)
