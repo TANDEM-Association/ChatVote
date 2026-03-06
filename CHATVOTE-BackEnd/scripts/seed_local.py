@@ -263,10 +263,11 @@ def seed_crawled_vectors():
     def _embed_and_collect(
         md_files: list[Path],
         namespace: str,
-        metadata_base: dict,
+        chunk_metadata_factory,  # callable(chunk_index, source_url, page_title) -> ChunkMetadata
     ) -> list[PointStruct]:
         """Read markdown files, chunk, embed, and return Qdrant points."""
         points = []
+        chunk_index = 0
         for md_file in md_files:
             content = md_file.read_text(encoding="utf-8")
             if len(content.strip()) < 50:
@@ -277,16 +278,9 @@ def seed_crawled_vectors():
 
             for i, chunk in enumerate(chunks):
                 vector = embeddings.embed_query(chunk)
-                metadata = {
-                    **metadata_base,
-                    "namespace": namespace,
-                    "url": source_url,
-                    "page_title": md_file.stem,
-                    "page": i + 1,
-                    "chunk_index": i,
-                    "total_chunks": len(chunks),
-                    "document_publish_date": None,
-                }
+                cm = chunk_metadata_factory(chunk_index, source_url, md_file.stem)
+                metadata = cm.to_qdrant_payload()
+                metadata["total_chunks"] = len(chunks)
                 points.append(
                     PointStruct(
                         id=str(uuid.uuid4()),
@@ -297,6 +291,7 @@ def seed_crawled_vectors():
                         },
                     )
                 )
+                chunk_index += 1
         return points
 
     # --- Seed party crawled content ---
@@ -314,15 +309,25 @@ def seed_crawled_vectors():
                 continue
 
             logger.info(f"  Indexing {len(md_files)} pages for party '{party_name}'...")
+            from src.models.chunk_metadata import ChunkMetadata
+
+            def party_metadata_factory(idx, url, title):
+                return ChunkMetadata(
+                    namespace=party_id,
+                    source_document="party_website",
+                    party_ids=[party_id],
+                    party_name=party_name,
+                    document_name=f"{party_name} - Site web",
+                    url=url,
+                    page_title=title,
+                    page=idx + 1,
+                    chunk_index=idx,
+                )
+
             points = _embed_and_collect(
                 md_files,
                 namespace=party_id,
-                metadata_base={
-                    "party_id": party_id,
-                    "party_name": party_name,
-                    "document_name": f"{party_name} - Site web",
-                    "source_document": "party_website",
-                },
+                chunk_metadata_factory=party_metadata_factory,
             )
             if points:
                 # Upsert in batches of 50
@@ -354,18 +359,27 @@ def seed_crawled_vectors():
                 continue
 
             logger.info(f"  Indexing {len(md_files)} pages for candidate '{cand_name}'...")
+
+            def candidate_metadata_factory(idx, url, title):
+                return ChunkMetadata(
+                    namespace=candidate_id,
+                    source_document="candidate_website",
+                    party_ids=party_ids if isinstance(party_ids, list) else [],
+                    candidate_ids=[candidate_id],
+                    candidate_name=cand_name,
+                    municipality_code=municipality_code,
+                    municipality_name=municipality_name,
+                    document_name=f"{cand_name} - Site web",
+                    url=url,
+                    page_title=title,
+                    page=idx + 1,
+                    chunk_index=idx,
+                )
+
             points = _embed_and_collect(
                 md_files,
                 namespace=candidate_id,
-                metadata_base={
-                    "candidate_id": candidate_id,
-                    "candidate_name": cand_name,
-                    "municipality_code": municipality_code,
-                    "municipality_name": municipality_name,
-                    "party_ids": party_ids_str,
-                    "document_name": f"{cand_name} - Site web",
-                    "source_document": "candidate_website",
-                },
+                chunk_metadata_factory=candidate_metadata_factory,
             )
             if points:
                 for i in range(0, len(points), 50):
