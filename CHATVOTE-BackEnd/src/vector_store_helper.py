@@ -92,12 +92,16 @@ def _build_party_filter(party_ids: list[str]) -> Filter:
 
 
 def _build_fiabilite_filter(max_fiabilite: int = 3) -> Filter:
-    """Build a Qdrant Range filter excluding sources above max_fiabilite."""
+    """Build a Qdrant filter excluding sources above max_fiabilite.
+
+    Uses must_not with gt so that points WITHOUT the fiabilite field
+    are still included (backward-compatible with pre-fiabilite data).
+    """
     return Filter(
-        must=[
+        must_not=[
             FieldCondition(
                 key="metadata.fiabilite",
-                range=Range(lte=max_fiabilite),
+                range=Range(gt=max_fiabilite),
             )
         ]
     )
