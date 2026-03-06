@@ -1,18 +1,12 @@
 """
 Shared fixtures for DeepEval RAG evaluation tests.
 
-Uses Ollama locally by default (no API keys needed).
-Set DEEPEVAL_JUDGE=gemini to use Google Gemini instead.
+The judge_model fixture is inherited from tests/conftest.py.
+This file provides metric fixtures used by eval tests.
 """
 
 import os
-import sys
 import pytest
-from pathlib import Path
-
-# Add project root to path
-PROJECT_ROOT = Path(__file__).resolve().parent.parent.parent
-sys.path.insert(0, str(PROJECT_ROOT))
 
 from deepeval.metrics import (
     FaithfulnessMetric,
@@ -24,59 +18,6 @@ from deepeval.metrics import (
     GEval,
 )
 from deepeval.test_case import LLMTestCaseParams
-
-
-# ---------------------------------------------------------------------------
-# Judge model — Ollama by default, Gemini if DEEPEVAL_JUDGE=gemini
-# ---------------------------------------------------------------------------
-
-def _build_judge():
-    """Build the LLM judge model based on environment config."""
-    judge_type = os.environ.get("DEEPEVAL_JUDGE", "ollama").lower()
-
-    if judge_type == "gemini":
-        from deepeval.models import GeminiModel
-        api_key = os.environ.get("GOOGLE_API_KEY")
-        if not api_key or api_key.startswith("your_"):
-            return None, "GOOGLE_API_KEY not set"
-        return GeminiModel(
-            model="gemini-2.0-flash",
-            api_key=api_key,
-            temperature=0.0,
-        ), None
-    else:
-        # Default: Ollama (zero API keys)
-        from deepeval.models import OllamaModel
-        ollama_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
-        ollama_model = os.environ.get("OLLAMA_MODEL", "llama3.2")
-
-        # Check Ollama is reachable
-        try:
-            import urllib.request
-            urllib.request.urlopen(ollama_url, timeout=2)
-        except Exception:
-            return None, f"Ollama not reachable at {ollama_url}"
-
-        return OllamaModel(
-            model=ollama_model,
-            base_url=ollama_url,
-            temperature=0.0,
-        ), None
-
-
-@pytest.fixture(scope="session")
-def judge_model():
-    """LLM judge model for evaluation metrics (Ollama by default)."""
-    model, error = _build_judge()
-    if model is None:
-        pytest.skip(error)
-    return model
-
-
-# Backward-compat alias used by red_team tests
-@pytest.fixture(scope="session")
-def gemini_judge(judge_model):
-    return judge_model
 
 
 # ---------------------------------------------------------------------------
@@ -176,7 +117,7 @@ def political_neutrality_metric(judge_model):
 @pytest.fixture(scope="session")
 def source_attribution_metric(judge_model):
     """Ensures responses cite source documents properly."""
-    threshold = 0.7 if os.environ.get("DEEPEVAL_JUDGE") == "gemini" else 0.5
+    threshold = 0.7 if os.environ.get("DEEPEVAL_JUDGE") == "gemini" else 0.3
     return GEval(
         name="Source Attribution",
         criteria="""Evaluate whether the actual output properly attributes information

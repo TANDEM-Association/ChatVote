@@ -83,16 +83,14 @@ def test_retriever_single_party(
     party_id = golden["party_ids"][0]
 
     import asyncio
-    loop = asyncio.get_event_loop()
-    if loop.is_closed():
-        loop = asyncio.new_event_loop()
 
-    # Create a mock party with just the ID
     party = Party(party_id=party_id, name=party_id, long_name=party_id)
 
+    loop = asyncio.new_event_loop()
     docs = loop.run_until_complete(
         identify_relevant_docs(party=party, rag_query=golden["input"], n_docs=5)
     )
+    loop.close()
     retrieval_context = [doc.page_content for doc in docs]
 
     test_case = LLMTestCase(
@@ -119,10 +117,8 @@ def test_retriever_multi_party(
     identify_relevant_docs, Party = qdrant_retriever
 
     import asyncio
-    loop = asyncio.get_event_loop()
-    if loop.is_closed():
-        loop = asyncio.new_event_loop()
 
+    loop = asyncio.new_event_loop()
     all_context = []
     for party_id in golden["party_ids"]:
         party = Party(party_id=party_id, name=party_id, long_name=party_id)
@@ -130,6 +126,7 @@ def test_retriever_multi_party(
             identify_relevant_docs(party=party, rag_query=golden["input"], n_docs=3)
         )
         all_context.extend([doc.page_content for doc in docs])
+    loop.close()
 
     test_case = LLMTestCase(
         input=golden["input"],

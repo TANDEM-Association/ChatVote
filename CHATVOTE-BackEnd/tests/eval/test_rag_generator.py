@@ -31,7 +31,7 @@ def _load_golden(category: str) -> list[dict]:
 def _skip_if_no_llm():
     """Skip if no LLM API key is available."""
     if not any(
-        os.environ.get(k) for k in ["GOOGLE_API_KEY", "OPENAI_API_KEY", "AZURE_API_KEY"]
+        os.environ.get(k) for k in ["GOOGLE_API_KEY", "OPENAI_API_KEY", "AZURE_OPENAI_API_KEY"]
     ):
         pytest.skip("No LLM API key set — cannot run generator tests")
 
