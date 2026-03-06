@@ -99,3 +99,41 @@ def test_legacy_extract_text_still_works():
 
     result = extract_text_from_pdf(buf.getvalue())
     assert isinstance(result, str)
+
+
+@pytest.mark.asyncio
+async def test_index_party_manifesto_classifies_themes(monkeypatch):
+    """Theme classification is called during indexing and results stored in metadata."""
+    from unittest.mock import AsyncMock, MagicMock
+    from src.services import manifesto_indexer
+    from src.services.chunk_classifier import ChunkThemeClassification
+
+    # Mock PDF fetch
+    monkeypatch.setattr(manifesto_indexer, "fetch_pdf_content", AsyncMock(return_value=b"fake"))
+    # Mock page extraction
+    monkeypatch.setattr(
+        manifesto_indexer, "extract_pages_from_pdf",
+        lambda _: [(1, "Economy content about budget policy and taxes. " * 30)],
+    )
+    # Mock vector store
+    mock_vs = MagicMock()
+    mock_vs.aadd_documents = AsyncMock()
+    monkeypatch.setattr(manifesto_indexer, "get_qdrant_vector_store", lambda: mock_vs)
+    # Mock delete
+    monkeypatch.setattr(manifesto_indexer, "delete_party_documents", AsyncMock(return_value=1))
+    # Mock theme classification
+    mock_classify = AsyncMock(return_value=[
+        ChunkThemeClassification(theme="economie", sub_theme="budget")
+    ])
+    monkeypatch.setattr(
+        manifesto_indexer, "classify_chunks_themes", mock_classify
+    )
+
+    party = _make_party()
+    count = await manifesto_indexer.index_party_manifesto(party)
+
+    assert count > 0
+    mock_classify.assert_called_once()
+    # Check that the documents passed to vector store have theme in metadata
+    added_docs = mock_vs.aadd_documents.call_args_list[0][0][0]
+    assert added_docs[0].metadata.get("theme") == "economie"

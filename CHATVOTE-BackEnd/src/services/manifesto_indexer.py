@@ -25,6 +25,7 @@ from pypdf import PdfReader
 
 from src.models.party import Party
 from src.firebase_service import aget_parties, aget_party_by_id
+from src.services.chunk_classifier import classify_chunks_themes
 from src.vector_store_helper import (
     get_qdrant_vector_store,
     qdrant_client,
@@ -194,10 +195,23 @@ async def index_party_manifesto(party: Party) -> int:
 
     logger.info(f"Created {len(documents)} chunks for {party.party_id}")
 
-    # Step 4: Delete existing documents for this party
+    # Step 4: Classify themes (optional — degrades gracefully)
+    try:
+        chunk_texts = [doc.page_content for doc in documents]
+        classifications = await classify_chunks_themes(chunk_texts)
+        for doc, cls in zip(documents, classifications):
+            if cls.theme:
+                doc.metadata["theme"] = cls.theme
+            if cls.sub_theme:
+                doc.metadata["sub_theme"] = cls.sub_theme
+        logger.info(f"Theme classification complete for {party.party_id}")
+    except Exception as e:
+        logger.warning(f"Theme classification skipped for {party.party_id}: {e}")
+
+    # Step 5: Delete existing documents for this party
     await delete_party_documents(party.party_id)
 
-    # Step 5: Index into Qdrant
+    # Step 6: Index into Qdrant
     vector_store = get_qdrant_vector_store()
 
     # Add documents in batches to avoid memory issues
