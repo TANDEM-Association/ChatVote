@@ -63,6 +63,25 @@ def _skip_if_no_infra():
         pytest.skip("No LLM API key set")
 
 
+def _assert_sources_in_context(actual_output: str, retrieval_context: list[str], golden: dict):
+    """Programmatic check: party names and source keywords from golden must appear
+    in either the output or the retrieval context."""
+    output_lower = actual_output.lower()
+    context_joined = " ".join(retrieval_context).lower()
+
+    # Check expected parties are mentioned in the output
+    for party in golden.get("expected_parties", []):
+        assert party.lower() in output_lower, (
+            f"Expected party '{party}' not found in output: {actual_output[:200]}..."
+        )
+
+    # Check expected source keywords appear in retrieval context
+    for keyword in golden.get("expected_source_keywords", []):
+        assert keyword.lower() in context_joined, (
+            f"Expected source keyword '{keyword}' not found in retrieval context"
+        )
+
+
 @pytest.fixture(scope="module")
 def rag_pipeline():
     """Set up the full RAG pipeline components."""
@@ -137,6 +156,67 @@ async def _run_single_party_pipeline(pipeline, question: str, party_id: str) -> 
     return "".join(chunks), retrieval_context
 
 
+async def _run_multi_party_pipeline(pipeline, question: str, party_ids: list[str]) -> tuple:
+    """Run the full multi-party RAG pipeline, return (output, retrieval_context)."""
+    Party = pipeline["Party"]
+    LLMSize = pipeline["LLMSize"]
+
+    parties = [
+        Party(
+            party_id=pid, name=pid, long_name=pid,
+            description="", website_url="", candidate="", election_manifesto_url="",
+        )
+        for pid in party_ids
+    ]
+
+    all_docs = []
+    for party in parties:
+        improved_query = await pipeline["improve_query"](
+            responder=party,
+            conversation_history="",
+            last_user_message=question,
+        )
+        docs = await pipeline["retrieve_and_rerank"](
+            responder=party,
+            rag_query=improved_query,
+            chat_history="",
+            user_message=question,
+            n_docs=10,
+        )
+        all_docs.extend(docs)
+
+    retrieval_context = [doc.page_content for doc in all_docs]
+
+    # Group docs by party for the comparing pipeline
+    # Qdrant stores party identifier in metadata.namespace
+    docs_per_party = {}
+    for p in parties:
+        docs_per_party[p.party_id] = [
+            d for d in all_docs
+            if d.metadata.get("namespace") == p.party_id
+            or d.metadata.get("party_id") == p.party_id
+        ]
+
+    stream = await pipeline["generate_comparing"](
+        conversation_history="",
+        user_message=question,
+        relevant_docs=docs_per_party,
+        relevant_parties=parties,
+        chat_response_llm_size=LLMSize.SMALL,
+    )
+
+    chunks = []
+    async for chunk in stream:
+        content = chunk.content if hasattr(chunk, "content") else str(chunk)
+        chunks.append(content)
+
+    return "".join(chunks), retrieval_context
+
+
+# ---------------------------------------------------------------------------
+# Single-party E2E tests
+# ---------------------------------------------------------------------------
+
 @pytest.mark.parametrize(
     "golden",
     _load_golden("single_party"),
@@ -148,14 +228,18 @@ def test_e2e_single_party(
     faithfulness_metric,
     answer_relevancy_metric,
     contextual_recall_metric,
+    source_attribution_metric,
 ):
-    """Full E2E test for single-party questions."""
+    """Full E2E test for single-party questions with source attribution."""
     party_id = golden["party_ids"][0]
 
     loop = _get_loop()
     actual_output, retrieval_context = loop.run_until_complete(
         _run_single_party_pipeline(rag_pipeline, golden["input"], party_id)
     )
+
+    # Programmatic source verification
+    _assert_sources_in_context(actual_output, retrieval_context, golden)
 
     test_case = LLMTestCase(
         input=golden["input"],
@@ -166,9 +250,54 @@ def test_e2e_single_party(
 
     assert_test(
         test_case,
-        [faithfulness_metric, answer_relevancy_metric, contextual_recall_metric],
+        [faithfulness_metric, answer_relevancy_metric, contextual_recall_metric,
+         source_attribution_metric],
     )
 
+
+# ---------------------------------------------------------------------------
+# Multi-party E2E tests
+# ---------------------------------------------------------------------------
+
+@pytest.mark.parametrize(
+    "golden",
+    _load_golden("multi_party_comparison"),
+    ids=lambda g: g.get("category", "unknown"),
+)
+def test_e2e_multi_party(
+    golden,
+    rag_pipeline,
+    faithfulness_metric,
+    answer_relevancy_metric,
+    multiparty_completeness_metric,
+    source_attribution_metric,
+):
+    """Full E2E test for multi-party comparison questions."""
+    loop = _get_loop()
+    actual_output, retrieval_context = loop.run_until_complete(
+        _run_multi_party_pipeline(rag_pipeline, golden["input"], golden["party_ids"])
+    )
+
+    # Programmatic: check all expected parties are mentioned
+    _assert_sources_in_context(actual_output, retrieval_context, golden)
+
+    test_case = LLMTestCase(
+        input=golden["input"],
+        actual_output=actual_output,
+        expected_output=golden["expected_output"],
+        retrieval_context=retrieval_context,
+    )
+
+    assert_test(
+        test_case,
+        [faithfulness_metric, answer_relevancy_metric,
+         multiparty_completeness_metric, source_attribution_metric],
+    )
+
+
+# ---------------------------------------------------------------------------
+# Edge cases
+# ---------------------------------------------------------------------------
 
 @pytest.mark.parametrize(
     "golden",

@@ -55,10 +55,9 @@ def _skip_if_no_llm():
 
 
 # ---------------------------------------------------------------------------
-# Generator test with mock context (no Qdrant needed)
+# Static mock contexts (fallback when Qdrant is unavailable)
 # ---------------------------------------------------------------------------
 
-# Sample contexts simulating retrieved manifesto chunks
 MOCK_CONTEXTS = {
     "reconquete": [
         "Reconquête - Programme politique : Reconquête propose un programme couvrant l'écologie, "
@@ -97,6 +96,37 @@ MOCK_CONTEXTS = {
 }
 
 
+def _try_snapshot_from_qdrant(party_id: str) -> list[str] | None:
+    """Try to get real context from Qdrant if available, for more realistic tests."""
+    qdrant_url = os.environ.get("QDRANT_URL", "http://localhost:6333")
+    try:
+        import urllib.request
+        urllib.request.urlopen(qdrant_url, timeout=1)
+    except Exception:
+        return None
+
+    try:
+        os.environ.setdefault("ENV", "dev")
+        from src.vector_store_helper import identify_relevant_docs
+        from src.models.party import Party
+
+        party = Party(
+            party_id=party_id, name=party_id, long_name=party_id,
+            description="", website_url="", candidate="", election_manifesto_url="",
+        )
+
+        loop = _get_loop()
+        docs = loop.run_until_complete(
+            identify_relevant_docs(party=party, rag_query="programme politique", n_docs=3)
+        )
+        if docs:
+            return [doc.page_content for doc in docs]
+    except Exception:
+        pass
+
+    return None
+
+
 @pytest.fixture(scope="module")
 def llm_generator():
     """Import the chatbot generator (requires LLM API key)."""
@@ -113,9 +143,21 @@ def llm_generator():
 
 
 def _build_docs(party_id: str) -> list:
-    """Build LangChain Documents from mock contexts."""
+    """Build LangChain Documents from real Qdrant data or fallback to mock contexts."""
     from langchain_core.documents import Document
 
+    # Try real data first
+    real_contexts = _try_snapshot_from_qdrant(party_id)
+    if real_contexts:
+        return [
+            Document(
+                page_content=ctx,
+                metadata={"party_id": party_id, "source_document": "qdrant_snapshot"},
+            )
+            for ctx in real_contexts
+        ]
+
+    # Fallback to static mocks
     contexts = MOCK_CONTEXTS.get(party_id, [])
     return [
         Document(
@@ -136,8 +178,9 @@ def test_generator_faithfulness(
     llm_generator,
     faithfulness_metric,
     answer_relevancy_metric,
+    source_attribution_metric,
 ):
-    """Test that generated responses are faithful to retrieved context."""
+    """Test that generated responses are faithful to retrieved context and cite sources."""
     generate_fn, Party, LLMSize, Document = llm_generator
 
     party_id = golden["party_ids"][0]
@@ -176,7 +219,8 @@ def test_generator_faithfulness(
         retrieval_context=retrieval_context,
     )
 
-    assert_test(test_case, [faithfulness_metric, answer_relevancy_metric])
+    assert_test(test_case, [faithfulness_metric, answer_relevancy_metric,
+                            source_attribution_metric])
 
 
 # ---------------------------------------------------------------------------

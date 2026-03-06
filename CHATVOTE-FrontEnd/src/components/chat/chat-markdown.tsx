@@ -68,7 +68,11 @@ function ChatMarkdown({ message }: Props) {
     return `${number + 1}`;
   };
 
-  const normalizedContent = unescapeString(message.content ?? "");
+  const normalizedContent = unescapeString(message.content ?? "")
+    // Remove malformed reference patterns like [, 123] or [   ,  123]
+    .replace(/\[\s*,\s*\d+\s*\]/g, "")
+    // Remove redundant "Références" section (sources are shown via Sources button)
+    .replace(/#{1,6}\s*Références\s*\n[\s\S]*?(?=#{1,6}\s|\s*$)/, "");
 
   return (
     <Markdown
