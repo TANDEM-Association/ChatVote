@@ -27,6 +27,12 @@ logging.basicConfig(
 )
 logger = logging.getLogger(__name__)
 
+# Load .env first so its values take priority over defaults below
+from dotenv import load_dotenv
+_env_path = PROJECT_ROOT / ".env"
+if _env_path.exists():
+    load_dotenv(_env_path, override=False)
+
 # Force local environment before importing any src modules
 os.environ.setdefault("ENV", "local")
 os.environ.setdefault("API_NAME", "chatvote-api")

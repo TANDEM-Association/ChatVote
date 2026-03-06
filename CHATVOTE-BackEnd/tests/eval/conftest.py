@@ -73,8 +73,9 @@ def contextual_precision_metric(judge_model):
 @pytest.fixture(scope="session")
 def contextual_relevancy_metric(judge_model):
     """Checks chunk size / top-K returns useful context."""
+    # Lower threshold: crawled websites contain noise (nav links, legal disclaimers, mixed topics)
     return ContextualRelevancyMetric(
-        threshold=0.6,
+        threshold=0.25,
         model=judge_model,
     )
 

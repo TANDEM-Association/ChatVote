@@ -4212,6 +4212,55 @@ renderGoldens();
     return html
 
 
+def _read_cached_results() -> dict | None:
+    """Read eval results from pytest session cache (reports/cache/) without re-running tests."""
+    cache_dir = PROJECT_ROOT / "reports" / "cache"
+    latest = cache_dir / "latest_results.json"
+    if not latest.exists():
+        return None
+
+    try:
+        data = json.loads(latest.read_text())
+    except Exception as e:
+        print(f"Warning: Could not read {latest}: {e}")
+        return None
+
+    results = {
+        "timestamp": data.get("timestamp", datetime.now().isoformat()),
+        "scope": "cached",
+        "test_cases": [],
+        "summary": {
+            "total": data.get("total", 0),
+            "passed": data.get("passed", 0),
+            "failed": data.get("failed", 0),
+            "skipped": 0,
+        },
+        "judge_model": "gemini-2.0-flash",
+    }
+
+    for r in data.get("results", []):
+        tc = {
+            "name": r.get("name", "unknown"),
+            "input": r.get("nodeid", ""),
+            "actual_output": "",
+            "metrics": [],
+            "passed": r.get("passed", False),
+        }
+        # If there's error info, add it as a pseudo-metric
+        if r.get("error"):
+            tc["metrics"].append({
+                "name": "assertion",
+                "score": 1.0 if r["passed"] else 0.0,
+                "threshold": 0.5,
+                "passed": r["passed"],
+                "reason": r.get("error", ""),
+                "time": r.get("duration", 0),
+            })
+        results["test_cases"].append(tc)
+
+    return results if results["summary"]["total"] > 0 else None
+
+
 def main():
     parser = argparse.ArgumentParser(description="Generate HTML evaluation report / unified dashboard")
     parser.add_argument(
@@ -4233,6 +4282,11 @@ def main():
             "'all' shows unified dashboard with all available data"
         ),
     )
+    parser.add_argument(
+        "--from-cache",
+        action="store_true",
+        help="Read results from pytest session cache instead of re-running tests",
+    )
     args = parser.parse_args()
 
     output_path = Path(args.output)
@@ -4242,8 +4296,15 @@ def main():
 
     if mode == "eval":
         # Original single-tab behavior via _generate_html
-        print(f"Running {args.tests} evaluation suite...")
-        results = _run_deepeval_tests(args.tests)
+        if args.from_cache:
+            print("Reading cached evaluation results...")
+            results = _read_cached_results()
+            if results is None:
+                print("ERROR: No cached results found. Run pytest first, then use --from-cache.")
+                sys.exit(1)
+        else:
+            print(f"Running {args.tests} evaluation suite...")
+            results = _run_deepeval_tests(args.tests)
         _save_run_history(results)
         html = _generate_html(results)
         output_path.write_text(html, encoding="utf-8")
@@ -4291,9 +4352,16 @@ def main():
         optimize_data = _read_optimize_data()
         history_data = _read_history()
 
-        print(f"Running {args.tests} evaluation suite...")
-        eval_results = _run_deepeval_tests(args.tests)
-        _save_run_history(eval_results)
+        if args.from_cache:
+            print("Reading cached evaluation results...")
+            eval_results = _read_cached_results()
+            if eval_results is None:
+                print("WARNING: No cached results found. Run pytest first. Showing dashboard without eval data.")
+        else:
+            print(f"Running {args.tests} evaluation suite...")
+            eval_results = _run_deepeval_tests(args.tests)
+        if eval_results:
+            _save_run_history(eval_results)
         # Re-read history to include the run we just saved
         history_data = _read_history()
 

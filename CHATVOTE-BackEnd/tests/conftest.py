@@ -72,3 +72,67 @@ def judge_model():
 @pytest.fixture(scope="session")
 def gemini_judge(judge_model):
     return judge_model
+
+
+# ---------------------------------------------------------------------------
+# Auto-save eval results after each test session for report generation
+# ---------------------------------------------------------------------------
+
+_eval_results = []
+
+
+@pytest.hookimpl(tryfirst=True)
+def pytest_runtest_logreport(report):
+    """Capture test results including DeepEval metric data."""
+    if report.when != "call":
+        return
+
+    result = {
+        "name": report.nodeid.split("::")[-1],
+        "nodeid": report.nodeid,
+        "passed": report.passed,
+        "duration": report.duration,
+    }
+
+    # Extract DeepEval assertion details from the failure message
+    if report.failed and report.longreprtext:
+        result["error"] = report.longreprtext[:500]
+
+    _eval_results.append(result)
+
+
+def pytest_sessionfinish(session, exitstatus):
+    """Save collected test results to reports/cache/ for report generation without re-running."""
+    import json
+    from datetime import datetime
+
+    if not _eval_results:
+        return
+
+    cache_dir = PROJECT_ROOT / "reports" / "cache"
+    cache_dir.mkdir(parents=True, exist_ok=True)
+
+    # Determine test file(s) involved
+    test_files = set()
+    for r in _eval_results:
+        parts = r["nodeid"].split("::")
+        if parts:
+            test_files.add(parts[0])
+
+    data = {
+        "timestamp": datetime.now().isoformat(),
+        "test_files": list(test_files),
+        "total": len(_eval_results),
+        "passed": sum(1 for r in _eval_results if r["passed"]),
+        "failed": sum(1 for r in _eval_results if not r["passed"]),
+        "results": _eval_results,
+    }
+
+    # Save as latest results (overwritten each run)
+    dest = cache_dir / "latest_results.json"
+    dest.write_text(json.dumps(data, indent=2, ensure_ascii=False))
+
+    # Also save timestamped copy
+    ts = datetime.now().strftime("%Y%m%d_%H%M%S")
+    history_dest = cache_dir / f"results_{ts}.json"
+    history_dest.write_text(json.dumps(data, indent=2, ensure_ascii=False))
