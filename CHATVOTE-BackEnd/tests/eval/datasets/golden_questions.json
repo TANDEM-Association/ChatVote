@@ -6,36 +6,48 @@
       "input": "Que propose Reconquête comme programme politique ?",
       "expected_output": "Reconquête propose un programme couvrant l'écologie, l'agriculture, la ruralité et l'engagement citoyen.",
       "party_ids": ["reconquete"],
+      "expected_parties": ["Reconquête"],
+      "expected_source_keywords": ["programme", "écologie", "agriculture"],
       "category": "reconquete_programme"
     },
     {
       "input": "Quelles sont les propositions de Reconquête sur le développement durable et le recyclage ?",
       "expected_output": "Reconquête propose d'investir dans des filières de développement durable et innovantes, notamment le recyclage des plastiques.",
       "party_ids": ["reconquete"],
+      "expected_parties": ["Reconquête"],
+      "expected_source_keywords": ["développement durable", "recyclage", "plastiques"],
       "category": "reconquete_recycling"
     },
     {
       "input": "Quelles sont les ambitions de Renaissance pour les communes ?",
       "expected_output": "Renaissance présente 50 ambitions pour les communes incluant la qualité de vie, les déplacements, l'accès aux soins et le soutien aux citoyens.",
       "party_ids": ["renaissance"],
+      "expected_parties": ["Renaissance"],
+      "expected_source_keywords": ["communes", "ambitions", "qualité de vie"],
       "category": "renaissance_communes"
     },
     {
       "input": "Que propose Renaissance pour soutenir l'artisanat local ?",
       "expected_output": "Renaissance propose de soutenir l'artisanat local avec des bourses de formation, l'aide à l'installation et la promotion des productions locales.",
       "party_ids": ["renaissance"],
+      "expected_parties": ["Renaissance"],
+      "expected_source_keywords": ["artisanat", "formation", "productions locales"],
       "category": "renaissance_artisanat"
     },
     {
       "input": "Quelle est la position de Place Publique sur l'immigration ?",
       "expected_output": "Place Publique propose de partir des faits sur l'immigration et refuse les mensonges, en ancrant le sujet des migrations dans un projet juste et utile pour les Français.",
       "party_ids": ["place-publique"],
+      "expected_parties": ["Place Publique"],
+      "expected_source_keywords": ["immigration", "migrations", "faits"],
       "category": "place_publique_immigration"
     },
     {
       "input": "Que propose La France Insoumise pour les élections municipales 2026 ?",
       "expected_output": "La France Insoumise propose une boîte à outils programmatique pour les élections municipales 2026 à destination des candidats.",
       "party_ids": ["la-france-insoumise"],
+      "expected_parties": ["France Insoumise", "LFI"],
+      "expected_source_keywords": ["municipales", "2026", "candidats"],
       "category": "lfi_municipales"
     }
   ],
@@ -45,18 +57,24 @@
       "input": "Comparez les programmes de Reconquête et Renaissance pour les citoyens.",
       "expected_output": "Reconquête propose un programme national couvrant l'écologie et l'agriculture, tandis que Renaissance présente des ambitions concrètes pour les communes et le quotidien des citoyens.",
       "party_ids": ["reconquete", "renaissance"],
+      "expected_parties": ["Reconquête", "Renaissance"],
+      "expected_source_keywords": ["programme", "communes", "citoyens"],
       "category": "reconquete_renaissance_comparison"
     },
     {
       "input": "Quelles sont les différences entre Place Publique et La France Insoumise sur la politique municipale ?",
       "expected_output": "Place Publique est un parti citoyen qui propose des actions concrètes et de terrain, tandis que LFI propose une boîte à outils programmatique pour les élections municipales.",
       "party_ids": ["place-publique", "la-france-insoumise"],
+      "expected_parties": ["Place Publique", "France Insoumise"],
+      "expected_source_keywords": ["municipale", "actions", "terrain"],
       "category": "municipal_comparison"
     },
     {
       "input": "Que proposent les différents partis pour les communes et le quotidien des citoyens ?",
       "expected_output": "Renaissance propose des ambitions pour les communes. Reconquête propose un programme national. LFI propose des outils pour les municipales.",
       "party_ids": ["renaissance", "reconquete", "la-france-insoumise"],
+      "expected_parties": ["Renaissance", "Reconquête", "France Insoumise"],
+      "expected_source_keywords": ["communes", "programme", "municipales"],
       "category": "local_policy_comparison"
     }
   ],

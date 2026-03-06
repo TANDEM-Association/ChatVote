@@ -94,6 +94,26 @@ def _make_party(Party, party_id: str):
     )
 
 
+def _assert_doc_metadata(docs, expected_party_id: str):
+    """Validate that retrieved documents have proper metadata for downstream use."""
+    assert len(docs) > 0, "No documents retrieved"
+    for doc in docs:
+        meta = doc.metadata
+        # Every doc must have a source identifier
+        assert meta, f"Document has no metadata: {doc.page_content[:100]}"
+        # namespace, party_id, or candidate_id should be present
+        owner = meta.get("namespace") or meta.get("party_id") or meta.get("candidate_id")
+        assert owner, (
+            f"Document missing namespace/party_id/candidate_id in metadata: {meta}"
+        )
+        # When searching for a specific party, docs should belong to that party
+        if expected_party_id and meta.get("namespace"):
+            assert meta["namespace"] == expected_party_id, (
+                f"Document namespace '{meta['namespace']}' doesn't match "
+                f"expected party '{expected_party_id}'"
+            )
+
+
 @pytest.mark.parametrize(
     "golden",
     _load_golden("single_party"),
@@ -115,7 +135,18 @@ def test_retriever_single_party(
     docs = loop.run_until_complete(
         identify_relevant_docs(party=party, rag_query=golden["input"], n_docs=5)
     )
+
+    # Validate metadata on retrieved documents
+    _assert_doc_metadata(docs, party_id)
+
     retrieval_context = [doc.page_content for doc in docs]
+
+    # Check expected source keywords appear in context
+    context_joined = " ".join(retrieval_context).lower()
+    for keyword in golden.get("expected_source_keywords", []):
+        assert keyword.lower() in context_joined, (
+            f"Expected keyword '{keyword}' not found in retrieval context for {party_id}"
+        )
 
     test_case = LLMTestCase(
         input=golden["input"],
@@ -147,6 +178,8 @@ def test_retriever_multi_party(
         docs = loop.run_until_complete(
             identify_relevant_docs(party=party, rag_query=golden["input"], n_docs=3)
         )
+        # Validate metadata per party
+        _assert_doc_metadata(docs, party_id)
         all_context.extend([doc.page_content for doc in docs])
 
     test_case = LLMTestCase(

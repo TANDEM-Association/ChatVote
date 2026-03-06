@@ -48,7 +48,7 @@ const ChatEmptyView = ({
 
   return (
     <div className="flex grow flex-col items-center justify-center gap-4 px-8">
-      <div className="relative flex size-28 items-center justify-center rounded-md border-2 border-border-strong md:size-36">
+      <div className="relative flex size-28 items-center justify-center rounded-md border-2 border-border-strong bg-white md:size-36">
         {party ? (
           <Image
             alt={party.name}
@@ -80,16 +80,18 @@ const ChatEmptyView = ({
           )}
         </div>
       ) : null}
-      <div className="flex max-w-xl flex-wrap justify-center gap-2">
-        {proposedQuestions?.map((question) => (
-          <InitialSuggestionBubble
-            key={question.id}
-            onClick={() => handleSuggestionClick(question.content)}
-          >
-            {question.content}
-          </InitialSuggestionBubble>
-        ))}
-      </div>
+      {!!municipalityCode && (
+        <div className="flex max-w-xl flex-wrap justify-center gap-2">
+          {proposedQuestions?.map((question) => (
+            <InitialSuggestionBubble
+              key={question.id}
+              onClick={() => handleSuggestionClick(question.content)}
+            >
+              {question.content}
+            </InitialSuggestionBubble>
+          ))}
+        </div>
+      )}
     </div>
   );
 };

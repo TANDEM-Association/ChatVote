@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-vectors test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
+.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-firestore test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
 
 # ---------------------------------------------------------------------------
 # Setup — run once after cloning
@@ -136,10 +136,10 @@ dev-frontend:
 # ---------------------------------------------------------------------------
 
 seed:
-	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py
-
-seed-vectors:
 	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py --with-vectors
+
+seed-firestore:
+	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py
 
 test-e2e:
 	@echo "Starting infrastructure..."
