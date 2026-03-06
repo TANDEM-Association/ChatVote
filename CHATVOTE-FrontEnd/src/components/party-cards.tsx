@@ -86,45 +86,49 @@ function PartyCards({
           selectable={selectable}
         />
       ))}
-      <Button
-        variant="secondary"
-        className={cn(
-          "flex aspect-square items-center justify-center",
-          "border-muted-foreground/20 h-fit w-full overflow-hidden border md:hover:bg-zinc-200 dark:md:hover:bg-zinc-700",
-          "text-muted-foreground flex flex-col items-center justify-center text-center whitespace-normal",
-          "gap-1 text-xs md:gap-2 md:text-sm",
-        )}
-        onClick={() => setShowMore((prev) => !prev)}
-        aria-expanded={showMore}
-      >
-        {showMore ? (
-          <CircleXIcon className="size-4" />
-        ) : (
-          <EllipsisIcon className="size-4" />
-        )}
-        {gridColumns >= 4 &&
-          (showMore ? t("lessParties") : t("moreParties"))}
-      </Button>
+      {smallParties?.length > 0 && (
+        <>
+          <Button
+            variant="secondary"
+            className={cn(
+              "flex aspect-square items-center justify-center",
+              "border-muted-foreground/20 h-fit w-full overflow-hidden border md:hover:bg-zinc-200 dark:md:hover:bg-zinc-700",
+              "text-muted-foreground flex flex-col items-center justify-center text-center whitespace-normal",
+              "gap-1 text-xs md:gap-2 md:text-sm",
+            )}
+            onClick={() => setShowMore((prev) => !prev)}
+            aria-expanded={showMore}
+          >
+            {showMore ? (
+              <CircleXIcon className="size-4" />
+            ) : (
+              <EllipsisIcon className="size-4" />
+            )}
+            {gridColumns >= 4 &&
+              (showMore ? t("lessParties") : t("moreParties"))}
+          </Button>
 
-      {showMore && (
-        <div
-          className="col-span-4 grid gap-2"
-          style={{
-            gridColumn: `span ${gridColumns} / span ${gridColumns}`,
-            gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))`,
-          }}
-        >
-          {smallParties?.map((party) => (
-            <PartyCard
-              id={party.party_id}
-              key={party.party_id}
-              party={party}
-              isSelected={selectedPartyIds?.includes(party.party_id)}
-              onSelectParty={onSelectParty}
-              selectable={selectable}
-            />
-          ))}
-        </div>
+          {showMore && (
+            <div
+              className="col-span-4 grid gap-2"
+              style={{
+                gridColumn: `span ${gridColumns} / span ${gridColumns}`,
+                gridTemplateColumns: `repeat(${gridColumns}, minmax(0, 1fr))`,
+              }}
+            >
+              {smallParties?.map((party) => (
+                <PartyCard
+                  id={party.party_id}
+                  key={party.party_id}
+                  party={party}
+                  isSelected={selectedPartyIds?.includes(party.party_id)}
+                  onSelectParty={onSelectParty}
+                  selectable={selectable}
+                />
+              ))}
+            </div>
+          )}
+        </>
       )}
     </section>
   );

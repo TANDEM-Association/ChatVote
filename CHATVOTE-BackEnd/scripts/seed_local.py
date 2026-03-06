@@ -53,6 +53,7 @@ FIRESTORE_COLLECTIONS = {
     "election_types": "election_types.json",
     "proposed_questions": "proposed_questions.json",
     "municipalities": "municipalities.json",
+    "electoral_lists": "electoral_lists.json",
     "system_status": "system_status.json",
 }
 
@@ -392,6 +393,25 @@ def seed_crawled_vectors():
     logger.info("Crawled content vector seeding complete.")
 
 
+def _qdrant_collections_have_data() -> bool:
+    """Return True if any Qdrant dev collection already has vectors."""
+    try:
+        from qdrant_client import QdrantClient
+
+        client = QdrantClient(url=os.environ["QDRANT_URL"], check_compatibility=False)
+        for name in ["all_parties_dev", "candidates_websites_dev"]:
+            try:
+                info = client.get_collection(name)
+                if info.points_count and info.points_count > 0:
+                    logger.info(f"  Collection '{name}' has {info.points_count} points")
+                    return True
+            except Exception:
+                continue
+    except Exception:
+        pass
+    return False
+
+
 def main():
     parser = argparse.ArgumentParser(description="Seed local dev environment")
     parser.add_argument(
@@ -415,8 +435,13 @@ def main():
 
     # Step 3 (optional): Seed vectors from crawled content
     if args.with_vectors:
-        logger.info("\n--- Seeding Crawled Content Vectors ---")
-        seed_crawled_vectors()
+        # Skip if collections already have data (avoids slow re-embedding)
+        if _qdrant_collections_have_data():
+            logger.info("\n--- Qdrant collections already have vectors — skipping embedding ---")
+            logger.info("    (Run 'make clean' first to force re-embedding)")
+        else:
+            logger.info("\n--- Seeding Crawled Content Vectors ---")
+            seed_crawled_vectors()
 
     logger.info("\n=== Seeding complete! ===")
 

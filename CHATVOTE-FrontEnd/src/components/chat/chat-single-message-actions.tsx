@@ -38,17 +38,16 @@ function ChatSingleMessageActions({
 
   const isAssistantMessage = partyId === ASSISTANT_ID;
 
-  const showProConButton =
-    (partyId || candidateId) &&
-    !message.pro_con_perspective &&
-    !isLoadingProConPerspective &&
-    !isAssistantMessage;
+  // TODO: Re-enable when pro/con evaluation feature is ready
+  // const showProConButton =
+  //   (partyId || candidateId) &&
+  //   !message.pro_con_perspective &&
+  //   !isLoadingProConPerspective &&
+  //   !isAssistantMessage;
+  const showProConButton = false;
 
-  const showVotingBehaviorSummaryButton =
-    partyId &&
-    !message.voting_behavior &&
-    !isLoadingVotingBehaviorSummary &&
-    !isAssistantMessage;
+  // TODO: Re-enable when voting behavior summary feature is ready
+  const showVotingBehaviorSummaryButton = false;
 
   const showSeparator = showProConButton || showVotingBehaviorSummaryButton;
 
@@ -69,7 +68,7 @@ function ChatSingleMessageActions({
 
       {showVotingBehaviorSummaryButton && (
         <ChatVotingBehaviorSummaryButton
-          partyId={partyId}
+          partyId={partyId!}
           message={message}
           isLastMessage={isLastMessage}
         />
