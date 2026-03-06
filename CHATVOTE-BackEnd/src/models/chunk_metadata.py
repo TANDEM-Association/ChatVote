@@ -98,10 +98,14 @@ class ChunkMetadata(BaseModel):
     theme: Optional[str] = None
     sub_theme: Optional[str] = None
 
-    @model_validator(mode="after")
-    def _auto_fiabilite(self) -> "ChunkMetadata":
-        self.fiabilite = _infer_fiabilite(self.source_document)
-        return self
+    @model_validator(mode="before")
+    @classmethod
+    def _auto_fiabilite(cls, data: dict) -> dict:
+        """Auto-assign fiabilité only when not explicitly provided."""
+        if isinstance(data, dict) and "fiabilite" not in data:
+            sd = data.get("source_document", "")
+            data["fiabilite"] = _infer_fiabilite(sd)
+        return data
 
     def to_qdrant_payload(self) -> dict:
         d = self.model_dump(exclude_none=True)
