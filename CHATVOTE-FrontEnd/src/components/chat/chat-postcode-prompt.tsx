@@ -15,12 +15,9 @@ const ChatPostcodePrompt = () => {
   const [selectedMunicipality, setSelectedMunicipality] =
     useState<Municipality | null>(null);
 
-  const initialSelected = useMemo(() => {
-    const code = searchParams.get("municipality_code");
-    return code ? ({ code } as unknown as Municipality) : null;
+  const municipalityCode = useMemo(() => {
+    return searchParams.get("municipality_code") || undefined;
   }, [searchParams]);
-
-  const effectiveSelectedMunicipality = selectedMunicipality ?? initialSelected;
 
   const handleSelectMunicipality = useCallback(
     (municipality: Municipality) => {
@@ -58,8 +55,9 @@ const ChatPostcodePrompt = () => {
   return (
     <div className="flex flex-col items-center gap-6">
       <MunicipalitySearch
-        selectedMunicipality={effectiveSelectedMunicipality ?? undefined}
+        selectedMunicipality={selectedMunicipality}
         onSelectMunicipality={handleSelectMunicipality}
+        municipalityCode={municipalityCode}
       />
     </div>
   );

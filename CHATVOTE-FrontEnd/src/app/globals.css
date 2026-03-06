@@ -57,6 +57,8 @@
 @theme inline {
   --color-primary: #381AF3;
 
+  --color-secondary: #F3451A;
+
   --color-purple-50: #F2E9FF;
   --color-purple-100: #D9BFFF;
   --color-purple-200: #A097D7;

@@ -30,7 +30,7 @@ function PartyCard({
 
   return (
     <Button
-      className="relative flex aspect-square h-fit w-full items-center justify-center overflow-hidden border bg-neutral-100 transition-all duration-300 ease-in-out hover:opacity-80"
+      className="relative flex aspect-square h-fit w-full items-center justify-center overflow-hidden border bg-neutral-100 transition-all duration-300 ease-in-out hover:bg-purple-100"
       onClick={
         selectable === true
           ? () => {

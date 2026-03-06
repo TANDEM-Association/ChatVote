@@ -3,11 +3,11 @@ import { cookies } from "next/headers";
 import { COOKIE_NAME } from "@actions/i18n/constants";
 import { getRequestConfig } from "next-intl/server";
 
-import { type Locale } from "./config";
+import { defaultLocale, type Locale } from "./config";
 
 export default getRequestConfig(async () => {
   const store = await cookies();
-  const locale = (store.get(COOKIE_NAME)?.value || "en") as Locale;
+  const locale = (store.get(COOKIE_NAME)?.value || defaultLocale) as Locale;
 
   return {
     locale,

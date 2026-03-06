@@ -10,7 +10,7 @@ import ChatSidebarGroupSelect from "@components/chat/sidebar/chat-sidebar-group-
 import DonationDialog from "@components/donation-dialog";
 import FeedbackDialog from "@components/feedback-dialog";
 import { Button } from "@components/ui/button";
-import { SidebarTrigger, useSidebar } from "@components/ui/sidebar";
+import { SidebarTrigger } from "@components/ui/sidebar";
 import { type Auth } from "@lib/types/auth";
 import { cn } from "@lib/utils";
 import { Heart, MessageSquareWarning, User, UserCheck } from "lucide-react";
@@ -20,7 +20,6 @@ type Props = {
 };
 
 const ChatSidebarDesktop = ({ auth }: Props) => {
-  const { toggleSidebar } = useSidebar();
   const isAuthenticated = auth.session !== null && !auth.session.isAnonymous;
 
   return (
@@ -67,7 +66,7 @@ const ChatSidebarDesktop = ({ auth }: Props) => {
         <DonationDialog>
           <Button
             data-sidebar="donation"
-            variant="ghost"
+            variant="secondary"
             size="icon"
             className={cn("size-10")}
           >

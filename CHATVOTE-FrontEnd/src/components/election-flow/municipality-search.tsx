@@ -72,12 +72,14 @@ async function fetchMunicipalities(
 
 type Props = {
   selectedMunicipality?: Municipality | null;
+  municipalityCode?: string;
   onSelectMunicipality: (municipality: Municipality) => void;
 };
 
 const MunicipalitySearch = ({
   selectedMunicipality,
   onSelectMunicipality,
+  municipalityCode,
 }: Props) => {
   const t = useTranslations("electionFlow");
   const [searchTerm, setSearchTerm] = useState("");
@@ -97,6 +99,7 @@ const MunicipalitySearch = ({
   useEffect(() => {
     // Skip if already cached (state is already initialized from cache)
     if (municipalitiesClientCache !== null) {
+      handleSelectMunicipalityFromCodeProp(municipalitiesClientCache);
       return;
     }
 
@@ -107,6 +110,7 @@ const MunicipalitySearch = ({
         if (!abortController.signal.aborted) {
           setMunicipalities(data);
           setIsLoadingData(false);
+          handleSelectMunicipalityFromCodeProp(data);
         }
       })
       .catch((error) => {
@@ -161,6 +165,23 @@ const MunicipalitySearch = ({
     },
     [onSelectMunicipality],
   );
+
+  const handleSelectMunicipalityFromCodeProp = (
+    localMunicipalities: Municipality[],
+  ) => {
+    if (
+      !municipalityCode ||
+      localMunicipalities.length === 0 ||
+      selectedMunicipality?.code === municipalityCode
+    ) {
+      return;
+    }
+
+    const match = localMunicipalities.find((m) => m.code === municipalityCode);
+    if (match) {
+      onSelectMunicipality(match);
+    }
+  };
 
   // Close suggestions when clicking outside
   useEffect(() => {
@@ -220,7 +241,7 @@ const MunicipalitySearch = ({
           {showSuggestions && visibleSuggestions.length > 0 ? (
             <div
               ref={suggestionsRef}
-              className="absolute top-24 z-50 w-full overflow-hidden rounded-3xl border border-border-strong bg-surface-input p-2 shadow-lg"
+              className="absolute top-28 z-50 w-full overflow-hidden rounded-3xl border border-border-strong bg-surface-input p-2 shadow-lg md:top-24"
             >
               <ul className="max-h-80 space-y-1 overflow-auto">
                 {visibleSuggestions.map((municipality) => (
