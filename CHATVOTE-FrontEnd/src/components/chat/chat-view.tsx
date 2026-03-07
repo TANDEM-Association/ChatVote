@@ -33,7 +33,6 @@ async function ChatView({
     <div className="relative flex size-full h-full items-stretch overflow-hidden">
       {/* Sidebar - full panel on desktop, overlay on mobile */}
       <ChatSidebar />
-      <ChatSidebarDesktop auth={auth} />
       <DevMetadataSidebar />
       <div className="flex w-full flex-col overflow-hidden">
         <ChatHeader />
