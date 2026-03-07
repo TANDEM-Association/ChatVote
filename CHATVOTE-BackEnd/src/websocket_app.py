@@ -589,6 +589,10 @@ async def fetch_and_emit_response(
                     ),
                     "url": source_doc.metadata.get("url"),
                     "source_document": source_doc.metadata.get("source_document"),
+                    # Unified metadata
+                    "fiabilite": source_doc.metadata.get("fiabilite"),
+                    "theme": source_doc.metadata.get("theme"),
+                    "sub_theme": source_doc.metadata.get("sub_theme"),
                 }
                 sources.append(source)
 
@@ -639,6 +643,10 @@ async def fetch_and_emit_response(
                                 "source_document"
                             ),
                             "party_id": rel_party.party_id,
+                            # Unified metadata
+                            "fiabilite": source_doc.metadata.get("fiabilite"),
+                            "theme": source_doc.metadata.get("theme"),
+                            "sub_theme": source_doc.metadata.get("sub_theme"),
                         }
                         sources.append(source)
 
@@ -976,6 +984,10 @@ async def handle_combined_answer_request(
             "url": source_doc.metadata.get("url"),
             "source_type": "manifesto",
             "party_id": source_doc.metadata.get("namespace"),
+            # Unified metadata
+            "fiabilite": source_doc.metadata.get("fiabilite"),
+            "theme": source_doc.metadata.get("theme"),
+            "sub_theme": source_doc.metadata.get("sub_theme"),
         }
         sources.append(source)
 
@@ -996,6 +1008,10 @@ async def handle_combined_answer_request(
             "source_type": "candidate",
             "candidate_name": source_doc.metadata.get("candidate_name"),
             "municipality_name": source_doc.metadata.get("municipality_name"),
+            # Unified metadata
+            "fiabilite": source_doc.metadata.get("fiabilite"),
+            "theme": source_doc.metadata.get("theme"),
+            "sub_theme": source_doc.metadata.get("sub_theme"),
         }
         sources.append(source)
 

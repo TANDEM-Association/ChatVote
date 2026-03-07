@@ -72,8 +72,10 @@ def test_political_neutrality(case, political_neutrality_metric):
     if case.get("should_fail"):
         if _is_small_ollama_judge():
             pytest.skip("Small Ollama models can't reliably discriminate quality")
-        with pytest.raises(AssertionError):
-            assert_test(test_case, [political_neutrality_metric])
+        political_neutrality_metric.measure(test_case)
+        assert political_neutrality_metric.score < political_neutrality_metric.threshold, (
+            f"Expected low score for biased output, got {political_neutrality_metric.score}"
+        )
     else:
         assert_test(test_case, [political_neutrality_metric])
 
@@ -125,8 +127,10 @@ def test_source_attribution(case, source_attribution_metric):
     if case.get("should_fail"):
         if _is_small_ollama_judge():
             pytest.skip("Small Ollama models can't reliably discriminate quality")
-        with pytest.raises(AssertionError):
-            assert_test(test_case, [source_attribution_metric])
+        source_attribution_metric.measure(test_case)
+        assert source_attribution_metric.score < source_attribution_metric.threshold, (
+            f"Expected low score for missing attribution, got {source_attribution_metric.score}"
+        )
     else:
         assert_test(test_case, [source_attribution_metric])
 
@@ -183,8 +187,10 @@ def test_multiparty_completeness(case, multiparty_completeness_metric):
     if case.get("should_fail"):
         if _is_small_ollama_judge():
             pytest.skip("Small Ollama models can't reliably discriminate quality")
-        with pytest.raises(AssertionError):
-            assert_test(test_case, [multiparty_completeness_metric])
+        multiparty_completeness_metric.measure(test_case)
+        assert multiparty_completeness_metric.score < multiparty_completeness_metric.threshold, (
+            f"Expected low score for missing party, got {multiparty_completeness_metric.score}"
+        )
     else:
         assert_test(test_case, [multiparty_completeness_metric])
 
@@ -228,7 +234,9 @@ def test_french_quality(case, french_quality_metric):
     if case.get("should_fail"):
         if _is_small_ollama_judge():
             pytest.skip("Small Ollama models can't reliably discriminate quality")
-        with pytest.raises(AssertionError):
-            assert_test(test_case, [french_quality_metric])
+        french_quality_metric.measure(test_case)
+        assert french_quality_metric.score < french_quality_metric.threshold, (
+            f"Expected low score for poor French, got {french_quality_metric.score}"
+        )
     else:
         assert_test(test_case, [french_quality_metric])

@@ -93,6 +93,27 @@ def _ensure_candidates_collection_exists() -> None:
                 field_name="metadata.candidate_id",
                 field_schema=PayloadSchemaType.KEYWORD,
             )
+            # New indexes for unified metadata
+            qdrant_client.create_payload_index(
+                collection_name=CANDIDATES_INDEX_NAME,
+                field_name="metadata.party_ids",
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
+            qdrant_client.create_payload_index(
+                collection_name=CANDIDATES_INDEX_NAME,
+                field_name="metadata.candidate_ids",
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
+            qdrant_client.create_payload_index(
+                collection_name=CANDIDATES_INDEX_NAME,
+                field_name="metadata.fiabilite",
+                field_schema=PayloadSchemaType.INTEGER,
+            )
+            qdrant_client.create_payload_index(
+                collection_name=CANDIDATES_INDEX_NAME,
+                field_name="metadata.theme",
+                field_schema=PayloadSchemaType.KEYWORD,
+            )
 
             logger.info(f"Collection {CANDIDATES_INDEX_NAME} created with indexes")
         else:
@@ -120,47 +141,41 @@ def create_documents_from_scraped_website(
     candidate: Candidate,
     scraped_website: ScrapedWebsite,
 ) -> List[Document]:
-    """
-    Create LangChain documents from scraped website content.
+    """Create LangChain documents from scraped website content using ChunkMetadata."""
+    from src.models.chunk_metadata import ChunkMetadata
 
-    Each page is split into chunks and enriched with metadata for filtering.
-    """
     documents = []
+    chunk_index = 0
 
     for page in scraped_website.pages:
-        # Split page content into chunks
         chunks = text_splitter.split_text(page.content)
 
-        for i, chunk in enumerate(chunks):
-            # Join party_ids into a comma-separated string for metadata
-            party_ids_str = ",".join(candidate.party_ids) if candidate.party_ids else ""
-
-            doc = Document(
-                page_content=chunk,
-                metadata={
-                    # Core identifiers for filtering
-                    "namespace": candidate.candidate_id,
-                    "candidate_id": candidate.candidate_id,
-                    "municipality_code": candidate.municipality_code or "",
-                    "municipality_name": candidate.municipality_name or "",
-                    # Candidate info
-                    "candidate_name": candidate.full_name,
-                    "party_ids": party_ids_str,
-                    "election_type_id": candidate.election_type_id,
-                    # Source info
-                    "document_name": f"{candidate.full_name} - {page.page_type.capitalize()}",
-                    "url": page.url,
-                    "source_document": f"candidate_website_{page.page_type}",
-                    "page_title": page.title,
-                    "page_type": page.page_type,
-                    # Chunk info
-                    "page": i + 1,  # 1-indexed
-                    "chunk_index": i,
-                    "total_chunks": len(chunks),
-                    "document_publish_date": None,
-                },
+        for chunk in chunks:
+            cm = ChunkMetadata(
+                namespace=candidate.candidate_id,
+                source_document=f"candidate_website_{page.page_type}",
+                party_ids=candidate.party_ids or [],
+                candidate_ids=[candidate.candidate_id],
+                candidate_name=candidate.full_name,
+                municipality_code=candidate.municipality_code or "",
+                municipality_name=candidate.municipality_name or "",
+                election_type_id=candidate.election_type_id,
+                is_incumbent=candidate.is_incumbent or None,
+                is_tete_de_liste=(candidate.position == "Tête de liste") or None,
+                document_name=f"{candidate.full_name} - {page.page_type.capitalize()}",
+                url=page.url,
+                page_title=page.title,
+                page_type=page.page_type,
+                page=0,  # No real page number for scraped websites
+                chunk_index=chunk_index,
+                total_chunks=0,
             )
+            doc = Document(page_content=chunk, metadata=cm.to_qdrant_payload())
             documents.append(doc)
+            chunk_index += 1
+
+    for doc in documents:
+        doc.metadata["total_chunks"] = len(documents)
 
     return documents
 

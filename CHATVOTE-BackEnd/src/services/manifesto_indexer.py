@@ -25,6 +25,7 @@ from pypdf import PdfReader
 
 from src.models.party import Party
 from src.firebase_service import aget_parties, aget_party_by_id
+from src.services.chunk_classifier import classify_chunks_themes
 from src.vector_store_helper import (
     get_qdrant_vector_store,
     qdrant_client,
@@ -59,22 +60,61 @@ async def fetch_pdf_content(url: str) -> Optional[bytes]:
         return None
 
 
-def extract_text_from_pdf(pdf_content: bytes) -> str:
-    """Extract text from PDF bytes."""
+def extract_pages_from_pdf(pdf_content: bytes) -> list[tuple[int, str]]:
+    """Extract text from PDF bytes, returning [(1-indexed page_num, text), ...]."""
     try:
         pdf_file = io.BytesIO(pdf_content)
         reader = PdfReader(pdf_file)
-
-        text_parts = []
-        for page_num, page in enumerate(reader.pages):
+        pages = []
+        for page_num, page in enumerate(reader.pages, start=1):
             page_text = page.extract_text()
-            if page_text:
-                text_parts.append(page_text)
-
-        return "\n\n".join(text_parts)
+            if page_text and page_text.strip():
+                pages.append((page_num, page_text))
+        return pages
     except Exception as e:
         logger.error(f"Error extracting text from PDF: {e}")
-        return ""
+        return []
+
+
+def extract_text_from_pdf(pdf_content: bytes) -> str:
+    """Legacy wrapper — use extract_pages_from_pdf for page-aware chunking."""
+    pages = extract_pages_from_pdf(pdf_content)
+    return "\n\n".join(text for _, text in pages)
+
+
+def create_documents_from_pages(
+    pages: list[tuple[int, str]],
+    party: Party,
+    source_url: str,
+) -> list[Document]:
+    """Split pages into chunks preserving real PDF page numbers."""
+    from src.models.chunk_metadata import ChunkMetadata
+
+    documents = []
+    chunk_index = 0
+
+    for page_num, page_text in pages:
+        chunks = text_splitter.split_text(page_text)
+        for chunk in chunks:
+            cm = ChunkMetadata(
+                namespace=party.party_id,
+                source_document="election_manifesto",
+                party_ids=[party.party_id],
+                party_name=party.name,
+                document_name=f"{party.name} - Programme électoral",
+                url=source_url,
+                page=page_num,
+                chunk_index=chunk_index,
+                total_chunks=0,
+            )
+            doc = Document(page_content=chunk, metadata=cm.to_qdrant_payload())
+            documents.append(doc)
+            chunk_index += 1
+
+    for doc in documents:
+        doc.metadata["total_chunks"] = len(documents)
+
+    return documents
 
 
 def create_documents_from_text(
@@ -82,32 +122,9 @@ def create_documents_from_text(
     party: Party,
     source_url: str,
 ) -> list[Document]:
-    """Split text into chunks and create LangChain documents."""
-    chunks = text_splitter.split_text(text)
-
-    documents = []
-    for i, chunk in enumerate(chunks):
-        doc = Document(
-            page_content=chunk,
-            metadata={
-                # Core identifiers
-                "namespace": party.party_id,
-                "party_id": party.party_id,
-                "party_name": party.name,
-                # Source info (keys expected by websocket_app.py)
-                "document_name": f"{party.name} - Programme électoral",
-                "url": source_url,
-                "source_document": "election_manifesto",
-                "page": i + 1,  # 1-indexed page/chunk number
-                "document_publish_date": None,  # Could be set if available
-                # Additional metadata
-                "chunk_index": i,
-                "total_chunks": len(chunks),
-            },
-        )
-        documents.append(doc)
-
-    return documents
+    """Legacy wrapper — use create_documents_from_pages for page-aware chunking."""
+    pages = [(1, text)] if text else []
+    return create_documents_from_pages(pages, party, source_url)
 
 
 async def delete_party_documents(party_id: str) -> int:
@@ -156,17 +173,18 @@ async def index_party_manifesto(party: Party) -> int:
 
     logger.info(f"Fetched PDF ({len(pdf_content)} bytes) for {party.party_id}")
 
-    # Step 2: Extract text
-    text = extract_text_from_pdf(pdf_content)
-    if not text:
+    # Step 2: Extract pages
+    pages = extract_pages_from_pdf(pdf_content)
+    if not pages:
         logger.error(f"Could not extract text from PDF for party {party.party_id}")
         return 0
 
-    logger.info(f"Extracted {len(text)} characters from PDF for {party.party_id}")
+    total_chars = sum(len(t) for _, t in pages)
+    logger.info(f"Extracted {total_chars} chars from {len(pages)} pages for {party.party_id}")
 
-    # Step 3: Create documents (chunks)
-    documents = create_documents_from_text(
-        text=text,
+    # Step 3: Create documents (chunks with real page numbers)
+    documents = create_documents_from_pages(
+        pages=pages,
         party=party,
         source_url=party.election_manifesto_url,
     )
@@ -177,10 +195,23 @@ async def index_party_manifesto(party: Party) -> int:
 
     logger.info(f"Created {len(documents)} chunks for {party.party_id}")
 
-    # Step 4: Delete existing documents for this party
+    # Step 4: Classify themes (optional — degrades gracefully)
+    try:
+        chunk_texts = [doc.page_content for doc in documents]
+        classifications = await classify_chunks_themes(chunk_texts)
+        for doc, cls in zip(documents, classifications, strict=True):
+            if cls.theme:
+                doc.metadata["theme"] = cls.theme
+            if cls.sub_theme:
+                doc.metadata["sub_theme"] = cls.sub_theme
+        logger.info(f"Theme classification complete for {party.party_id}")
+    except Exception as e:
+        logger.warning(f"Theme classification skipped for {party.party_id}: {e}")
+
+    # Step 5: Delete existing documents for this party
     await delete_party_documents(party.party_id)
 
-    # Step 5: Index into Qdrant
+    # Step 6: Index into Qdrant
     vector_store = get_qdrant_vector_store()
 
     # Add documents in batches to avoid memory issues

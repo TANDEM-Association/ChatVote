@@ -2,6 +2,8 @@
 #
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
+from typing import Optional
+
 from pydantic import BaseModel, Field
 
 
@@ -92,4 +94,27 @@ class EntityDetector(BaseModel):
     )
     reformulated_question: str = Field(
         description="The user's question reformulated in a general way, as if addressed to a party/candidate."
+    )
+
+
+class ChunkThemeClassification(BaseModel):
+    """LLM classification of a chunk's political theme."""
+
+    theme: Optional[str] = Field(
+        default=None,
+        description=(
+            "The primary political theme of this text. Must be one of: "
+            "economie, education, environnement, sante, securite, immigration, "
+            "culture, logement, transport, numerique, agriculture, justice, "
+            "international, institutions. "
+            "Use null if the text does not clearly fit any theme."
+        ),
+    )
+    sub_theme: Optional[str] = Field(
+        default=None,
+        description=(
+            "A more specific sub-theme in 2-4 words (e.g., 'pouvoir d'achat', "
+            "'transports en commun', 'logement social'). "
+            "Use null if no specific sub-theme applies."
+        ),
     )

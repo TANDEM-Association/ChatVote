@@ -12,7 +12,9 @@ from qdrant_client import AsyncQdrantClient, QdrantClient
 from qdrant_client.models import (
     Filter,
     FieldCondition,
+    MatchAny,
     MatchValue,
+    Range,
     VectorParams,
     Distance,
 )
@@ -48,6 +50,72 @@ PARTY_INDEX_NAME = f"all_parties{env_suffix}"
 VOTING_BEHAVIOR_INDEX_NAME = f"justified_voting_behavior{env_suffix}"
 PARLIAMENTARY_QUESTIONS_INDEX_NAME = f"parliamentary_questions{env_suffix}"
 CANDIDATES_INDEX_NAME = f"candidates_websites{env_suffix}"
+
+
+def _ensure_payload_indexes(collection_name: str) -> None:
+    """Create payload indexes for unified metadata fields if they don't exist."""
+    from qdrant_client.models import PayloadSchemaType
+
+    indexes_to_create = [
+        ("metadata.party_ids", PayloadSchemaType.KEYWORD),
+        ("metadata.candidate_ids", PayloadSchemaType.KEYWORD),
+        ("metadata.fiabilite", PayloadSchemaType.INTEGER),
+        ("metadata.theme", PayloadSchemaType.KEYWORD),
+    ]
+
+    for field_name, schema_type in indexes_to_create:
+        try:
+            qdrant_client.create_payload_index(
+                collection_name=collection_name,
+                field_name=field_name,
+                field_schema=schema_type,
+            )
+        except Exception as e:
+            # Qdrant returns an error when the index already exists — that's fine.
+            # Log anything else so infra failures aren't invisible.
+            if "already exists" in str(e).lower():
+                logger.debug(f"Payload index {field_name} already exists on {collection_name}")
+            else:
+                logger.warning(f"Failed to create payload index {field_name} on {collection_name}: {e}")
+
+
+def _build_party_filter(party_ids: list[str]) -> Filter:
+    """Build a Qdrant filter for matching any of the given party_ids."""
+    return Filter(
+        must=[
+            FieldCondition(
+                key="metadata.party_ids",
+                match=MatchAny(any=party_ids),
+            )
+        ]
+    )
+
+
+def _build_fiabilite_filter(max_fiabilite: int = 3) -> Filter:
+    """Build a Qdrant filter excluding sources above max_fiabilite.
+
+    Uses must_not with gt so that points WITHOUT the fiabilite field
+    are still included (backward-compatible with pre-fiabilite data).
+    """
+    return Filter(
+        must_not=[
+            FieldCondition(
+                key="metadata.fiabilite",
+                range=Range(gt=max_fiabilite),
+            )
+        ]
+    )
+
+
+def _combine_filters(*filters: "Filter | None") -> "Filter | None":
+    """Merge multiple Filters into one by combining all must conditions."""
+    all_must = []
+    for f in filters:
+        if f is not None and f.must:
+            all_must.extend(f.must)
+    if not all_must:
+        return None
+    return Filter(must=all_must)
 
 
 def _get_embeddings() -> tuple[Embeddings, int]:
@@ -239,6 +307,7 @@ def _get_vector_store(
             logger.warning(f"Error deleting collection {collection_name}: {e}")
 
     _ensure_collection_exists(collection_name)
+    _ensure_payload_indexes(collection_name)
     return QdrantVectorStore(
         client=qdrant_client,
         collection_name=collection_name,
@@ -291,6 +360,7 @@ async def _identify_relevant_documents(
     rag_query: str,
     n_docs: int = 5,
     score_threshold: float = 0.65,
+    max_fiabilite: int = 3,
 ) -> list[Document]:
     """
     Identify relevant documents based on the provided query and namespace.
@@ -303,15 +373,17 @@ async def _identify_relevant_documents(
 
     # Create filter for the namespace (if provided)
     # Note: LangChain stores metadata under "metadata.*" in Qdrant
-    filter_condition = None
+    namespace_filter = None
     if namespace is not None:
-        filter_condition = Filter(
+        namespace_filter = Filter(
             must=[
                 FieldCondition(
                     key="metadata.namespace", match=MatchValue(value=namespace)
                 )
             ]
         )
+
+    filter_condition = _combine_filters(namespace_filter, _build_fiabilite_filter(max_fiabilite))
 
     # Search using async client to avoid blocking the event loop
     search_result = await async_qdrant_client.search(
@@ -481,6 +553,7 @@ async def _identify_relevant_candidate_documents(
     candidate_id: Optional[str] = None,
     n_docs: int = 10,
     score_threshold: float = 0.65,
+    max_fiabilite: int = 3,
 ) -> list[Document]:
     """
     Identify relevant candidate documents based on the provided query.
@@ -519,9 +592,8 @@ async def _identify_relevant_candidate_documents(
         )
 
     # Create filter if we have conditions
-    filter_condition = None
-    if filter_conditions:
-        filter_condition = Filter(must=filter_conditions)
+    entity_filter = Filter(must=filter_conditions) if filter_conditions else None
+    filter_condition = _combine_filters(entity_filter, _build_fiabilite_filter(max_fiabilite))
 
     # Search using async client to avoid blocking the event loop
     search_result = await async_qdrant_client.search(
@@ -790,7 +862,8 @@ def _collection_exists(collection_name: str) -> bool:
         if exists:
             _known_collections.add(collection_name)
         return exists
-    except Exception:
+    except Exception as e:
+        logger.warning(f"Error checking collection {collection_name}: {e}")
         return False
 
 
@@ -799,56 +872,41 @@ async def _search_candidate_docs_by_party(
     party_ids: list[str],
     n_docs: int = 10,
     score_threshold: float = 0.65,
+    max_fiabilite: int = 3,
 ) -> list[Document]:
-    """
-    Search candidate documents filtered by party affiliation (national scope).
-    """
-    global embed, qdrant_client
+    """Search candidate documents filtered by party affiliation using Qdrant MatchAny."""
 
-    # Check if candidates collection exists
     if not _collection_exists(CANDIDATES_INDEX_NAME):
-        logger.debug(
-            f"Collection {CANDIDATES_INDEX_NAME} does not exist, skipping candidate search"
-        )
         return []
 
-    # Get query embedding
     query_vector = await embed.aembed_query(rag_query)
 
-    # Build filter: any of the party_ids should be in the candidate's party_ids
-    # Since Qdrant doesn't support array contains directly, we search without party filter
-    # and then filter results in Python
+    query_filter = _combine_filters(
+        _build_party_filter(party_ids),
+        _build_fiabilite_filter(max_fiabilite),
+    )
+
     try:
         search_result = await async_qdrant_client.search(
             collection_name=CANDIDATES_INDEX_NAME,
             query_vector=("dense", query_vector),
-            limit=n_docs * 3,  # Get more to filter
+            limit=n_docs,
             with_payload=True,
+            query_filter=query_filter,
             score_threshold=score_threshold,
         )
     except Exception as e:
         logger.warning(f"Error searching candidates collection: {e}")
         return []
 
-    # Filter results by party_ids
     documents = []
     for point in search_result:
         if point.payload is None:
             continue
-
         metadata = point.payload.get("metadata", {})
-        # party_ids is stored as comma-separated string in metadata
-        party_ids_str = metadata.get("party_ids", "")
-        candidate_party_ids = [p.strip() for p in party_ids_str.split(",") if p.strip()]
-
-        # Check if any of the candidate's parties match our search
-        if any(pid in party_ids for pid in candidate_party_ids):
-            content = point.payload.get("page_content", "")
-            doc = Document(page_content=content, metadata=metadata)
-            documents.append(doc)
-
-            if len(documents) >= n_docs:
-                break
+        content = point.payload.get("page_content", "")
+        doc = Document(page_content=content, metadata=metadata)
+        documents.append(doc)
 
     return documents
 
@@ -859,24 +917,16 @@ async def _search_candidate_docs_by_party_and_municipality(
     municipality_code: str,
     n_docs: int = 10,
     score_threshold: float = 0.65,
+    max_fiabilite: int = 3,
 ) -> list[Document]:
-    """
-    Search candidate documents filtered by party affiliation AND municipality (local scope).
-    """
-    global embed, qdrant_client
+    """Search candidate docs filtered by party + municipality using Qdrant filters."""
 
-    # Check if candidates collection exists
     if not _collection_exists(CANDIDATES_INDEX_NAME):
-        logger.debug(
-            f"Collection {CANDIDATES_INDEX_NAME} does not exist, skipping candidate search"
-        )
         return []
 
-    # Get query embedding
     query_vector = await embed.aembed_query(rag_query)
 
-    # Filter by municipality_code
-    filter_condition = Filter(
+    municipality_filter = Filter(
         must=[
             FieldCondition(
                 key="metadata.municipality_code",
@@ -885,38 +935,33 @@ async def _search_candidate_docs_by_party_and_municipality(
         ]
     )
 
+    query_filter = _combine_filters(
+        _build_party_filter(party_ids),
+        municipality_filter,
+        _build_fiabilite_filter(max_fiabilite),
+    )
+
     try:
         search_result = await async_qdrant_client.search(
             collection_name=CANDIDATES_INDEX_NAME,
             query_vector=("dense", query_vector),
-            limit=n_docs * 3,  # Get more to filter by party
+            limit=n_docs,
             with_payload=True,
-            query_filter=filter_condition,
+            query_filter=query_filter,
             score_threshold=score_threshold,
         )
     except Exception as e:
         logger.warning(f"Error searching candidates collection: {e}")
         return []
 
-    # Filter results by party_ids
     documents = []
     for point in search_result:
         if point.payload is None:
             continue
-
         metadata = point.payload.get("metadata", {})
-        # party_ids is stored as comma-separated string in metadata
-        party_ids_str = metadata.get("party_ids", "")
-        candidate_party_ids = [p.strip() for p in party_ids_str.split(",") if p.strip()]
-
-        # Check if any of the candidate's parties match our search
-        if any(pid in party_ids for pid in candidate_party_ids):
-            content = point.payload.get("page_content", "")
-            doc = Document(page_content=content, metadata=metadata)
-            documents.append(doc)
-
-            if len(documents) >= n_docs:
-                break
+        content = point.payload.get("page_content", "")
+        doc = Document(page_content=content, metadata=metadata)
+        documents.append(doc)
 
     return documents
 
@@ -926,23 +971,26 @@ async def _identify_relevant_manifesto_documents(
     namespace: str,
     n_docs: int = 10,
     score_threshold: float = 0.65,
+    max_fiabilite: int = 3,
 ) -> list[Document]:
     """
     Search for relevant manifesto documents in the party index.
     """
-    global embed, qdrant_client
 
     # Get query embedding
     query_vector = await embed.aembed_query(rag_query)
 
-    # Filter by namespace (party_id)
-    filter_condition = Filter(
-        must=[
-            FieldCondition(
-                key="metadata.namespace",
-                match=MatchValue(value=namespace),
-            )
-        ]
+    # Filter by namespace (party_id) + fiabilité
+    filter_condition = _combine_filters(
+        Filter(
+            must=[
+                FieldCondition(
+                    key="metadata.namespace",
+                    match=MatchValue(value=namespace),
+                )
+            ]
+        ),
+        _build_fiabilite_filter(max_fiabilite),
     )
 
     search_result = await async_qdrant_client.search(

@@ -177,6 +177,52 @@ def french_quality_metric(judge_model):
 
 
 # ---------------------------------------------------------------------------
+# Tier 4 — Metadata quality metrics
+# ---------------------------------------------------------------------------
+
+@pytest.fixture(scope="session")
+def metadata_source_traceability_metric(judge_model):
+    """Ensures retrieval context chunks carry enough metadata for source tracing."""
+    return GEval(
+        name="Metadata Source Traceability",
+        criteria="""Evaluate whether the retrieval context contains rich metadata
+        that enables source tracing. Each retrieved chunk should ideally include:
+        1. Party or candidate name identifying the author of the content
+        2. Document name or type (manifesto, website, parliamentary record)
+        3. A URL or page reference allowing the user to verify the claim
+        4. Reliability indicator (fiabilite level) distinguishing official vs informal sources
+        5. Geographic context (municipality, commune) when relevant to local elections
+        Score higher when chunks carry more of these metadata fields.""",
+        evaluation_params=[
+            LLMTestCaseParams.RETRIEVAL_CONTEXT,
+        ],
+        threshold=0.5,
+        model=judge_model,
+    )
+
+
+@pytest.fixture(scope="session")
+def metadata_geographic_relevance_metric(judge_model):
+    """Ensures retrieval filters by geographic context when the question mentions a location."""
+    return GEval(
+        name="Geographic Relevance",
+        criteria="""Evaluate whether the retrieval context is geographically relevant
+        to the user's question. When a user asks about a specific commune or region:
+        1. Retrieved chunks should reference that commune or nearby areas
+        2. National-level content should only appear if no local content exists
+        3. Content from unrelated municipalities should not be present
+        4. Geographic metadata (commune name, postal code, EPCI) should match the query
+        Score lower if chunks from unrelated geographic areas dominate the context.""",
+        evaluation_params=[
+            LLMTestCaseParams.INPUT,
+            LLMTestCaseParams.RETRIEVAL_CONTEXT,
+        ],
+        threshold=0.5,
+        model=judge_model,
+    )
+
+
+# ---------------------------------------------------------------------------
 # Bundled metric sets
 # ---------------------------------------------------------------------------
 
@@ -221,4 +267,16 @@ def political_metrics(
         source_attribution_metric,
         multiparty_completeness_metric,
         french_quality_metric,
+    ]
+
+
+@pytest.fixture(scope="session")
+def metadata_metrics(
+    metadata_source_traceability_metric,
+    metadata_geographic_relevance_metric,
+):
+    """All metadata quality metrics."""
+    return [
+        metadata_source_traceability_metric,
+        metadata_geographic_relevance_metric,
     ]

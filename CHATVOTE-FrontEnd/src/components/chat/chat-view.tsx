@@ -6,6 +6,7 @@ import { getAuth, getSystemStatus } from "@lib/firebase/firebase-server";
 import { cn } from "@lib/utils";
 
 import ChatSidebar from "./sidebar/chat-sidebar";
+import DevMetadataSidebar from "./dev-metadata-sidebar";
 import ChatDynamicChatInput from "./chat-dynamic-chat-input";
 import ChatHeader from "./chat-header";
 import ChatMainContent from "./chat-main-content";
@@ -32,6 +33,7 @@ async function ChatView({
     <div className="relative flex size-full h-full items-stretch overflow-hidden">
       {/* Sidebar - full panel on desktop, overlay on mobile */}
       <ChatSidebar />
+      <DevMetadataSidebar />
       <div className="flex w-full flex-col overflow-hidden">
         <ChatHeader />
         {/* Main content - adds padding when sidebar is expanded */}
