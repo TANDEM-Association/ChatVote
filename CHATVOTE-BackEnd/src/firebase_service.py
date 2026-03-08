@@ -1,8 +1,8 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
+import base64
 import json
 import os
-import tempfile
 import time
 from typing import Any, List, Optional
 import firebase_admin
@@ -32,9 +32,9 @@ else:
     cred = None
     if Path(credentials_path).exists():
         cred = credentials.Certificate(credentials_path)
-    elif os.getenv("FIREBASE_CREDENTIALS_JSON"):
-        # Support credentials via env var (for CI/CD containerized deploys)
-        cred_data = json.loads(os.environ["FIREBASE_CREDENTIALS_JSON"])
+    elif os.getenv("FIREBASE_CREDENTIALS_BASE64"):
+        # Support credentials via base64-encoded env var (for CI/CD containerized deploys)
+        cred_data = json.loads(base64.b64decode(os.environ["FIREBASE_CREDENTIALS_BASE64"]))
         cred = credentials.Certificate(cred_data)
 
     if cred:
