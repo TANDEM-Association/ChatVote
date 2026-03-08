@@ -240,7 +240,6 @@ function ThermometerBar({
   useEffect(() => {
     const el = barRef.current;
     if (!el) return;
-    // Start at 0, animate to target width
     el.style.width = "0%";
     const raf = requestAnimationFrame(() => {
       requestAnimationFrame(() => {
@@ -258,23 +257,22 @@ function ThermometerBar({
       <span className="w-40 text-sm text-foreground truncate shrink-0">
         {label}
       </span>
-      <div className="flex-1 h-6 bg-border-subtle/40 rounded-full overflow-hidden relative">
+      <div className="flex-1 h-5 bg-border-subtle/40 rounded-full overflow-hidden">
         <div
           ref={barRef}
-          className="h-full rounded-full flex items-center justify-end pr-2 transition-[width] duration-700 ease-out"
+          className="h-full rounded-full transition-[width] duration-700 ease-out"
           style={{
             width: "0%",
             background: isTop3
               ? "linear-gradient(90deg, #381AF3, #8B5CF6)"
               : "#381AF3",
           }}
-        >
-          <span className="text-[10px] text-white font-semibold whitespace-nowrap">
-            {count} extraits
-          </span>
-        </div>
+        />
       </div>
-      <span className="w-10 text-right text-sm font-semibold text-foreground shrink-0">
+      <span className="w-20 text-right text-xs text-muted-foreground shrink-0">
+        {count} extraits
+      </span>
+      <span className="w-12 text-right text-sm font-semibold text-foreground shrink-0">
         {percentage.toFixed(1)}%
       </span>
     </div>
@@ -419,7 +417,7 @@ function CombinedRadarSection({
 
   return (
     <section>
-      <SectionLabel>🗺️ Vue d&apos;ensemble — Couverture thématique comparée</SectionLabel>
+      <SectionLabel>Vue d&apos;ensemble — Couverture thématique comparée</SectionLabel>
       <div className="bg-surface border border-border-subtle rounded-xl p-6">
         <div className="max-w-2xl mx-auto aspect-square">
           <ResponsiveContainer width="100%" height="100%">
@@ -530,7 +528,7 @@ export default function CommuneDashboardPage() {
       {/* ------------------------------------------------------------------ */}
       {/* Commune header                                                       */}
       {/* ------------------------------------------------------------------ */}
-      <div className="bg-purple-900 bg-gradient-to-r from-purple-900 to-purple-800 border-b border-border-subtle">
+      <div className="bg-surface border-b border-border-subtle">
         <div className="max-w-7xl mx-auto px-4 sm:px-6 py-5 flex flex-col sm:flex-row sm:items-center sm:justify-between gap-3">
           <div className="flex items-center gap-3">
             <Badge className="bg-primary/20 text-primary border border-primary/30 text-[10px] font-bold uppercase tracking-widest px-2 py-0.5">
@@ -540,18 +538,18 @@ export default function CommuneDashboardPage() {
               {commune.name}
             </h1>
           </div>
-          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-purple-200">
+          <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-muted-foreground">
             {commune.postal_code && (
               <span>CP {commune.postal_code}</span>
             )}
             <span>INSEE {commune.code}</span>
             {commune.epci_nom && (
               <>
-                <Separator orientation="vertical" className="h-3 bg-purple-600 hidden sm:block" />
+                <Separator orientation="vertical" className="h-3 bg-border-subtle hidden sm:block" />
                 <span className="truncate max-w-[18rem]">{commune.epci_nom}</span>
               </>
             )}
-            <Separator orientation="vertical" className="h-3 bg-purple-600 hidden sm:block" />
+            <Separator orientation="vertical" className="h-3 bg-border-subtle hidden sm:block" />
             <span>
               {commune.list_count} liste{commune.list_count !== 1 ? "s" : ""}
             </span>
@@ -601,7 +599,7 @@ export default function CommuneDashboardPage() {
         {/* Thermometre citoyen                                               */}
         {/* ---------------------------------------------------------------- */}
         <section>
-          <SectionLabel>🌡️ Couverture thématique — Répartition des programmes</SectionLabel>
+          <SectionLabel>Couverture thématique — Répartition des programmes</SectionLabel>
 
           {taxonomy.themes.length === 0 ? (
             <div className="bg-surface border border-border-subtle rounded-xl p-6 text-center text-muted-foreground text-sm">
@@ -657,7 +655,7 @@ export default function CommuneDashboardPage() {
         {taxonomy.themes.length > 0 && commune.lists.length > 0 && (
           <section>
             <SectionLabel>
-              📊 Alignement programme ↔ préoccupations
+              Alignement programme ↔ préoccupations
             </SectionLabel>
             <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4">
               {commune.lists.map((list, i) => (
