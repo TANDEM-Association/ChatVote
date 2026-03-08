@@ -31,8 +31,8 @@ RUN apt-get update && apt-get install -y \
 # Upgrade pip
 RUN pip install --upgrade pip setuptools wheel
 
-# Install Poetry
-RUN pip install poetry
+# Install Poetry + export plugin
+RUN pip install poetry && poetry self add poetry-plugin-export
 
 # Copy only the necessary files for Poetry (to leverage Docker layer caching)
 COPY pyproject.toml poetry.lock /app/
@@ -42,10 +42,9 @@ WORKDIR /app
 # Configure poetry to not create virtual env (use system python)
 RUN poetry config virtualenvs.create false
 
-# Install dependencies (production only)
-# Use pip installer backend to avoid nvidia namespace __init__.py conflicts
-RUN poetry config installer.modern-installation false && \
-    poetry install --no-root --only main
+# Export requirements and install with pip (avoids poetry's nvidia namespace conflicts)
+RUN poetry export --only main --without-hashes -f requirements.txt -o requirements.txt && \
+    pip install -r requirements.txt
 
 # Replace PyTorch with CPU-only build if no CUDA available (~200MB vs ~2GB)
 # Override with: docker build --build-arg TORCH_VARIANT=gpu .
