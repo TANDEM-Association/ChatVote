@@ -1,19 +1,11 @@
-.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-firestore test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
+.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-gemini seed-firestore test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
 
 # ---------------------------------------------------------------------------
 # Setup — run once after cloning
 # ---------------------------------------------------------------------------
 
 setup:
-	@echo "==> Creating .env files from templates (skipping if already present)..."
-	@test -f CHATVOTE-BackEnd/.env \
-		&& echo "     CHATVOTE-BackEnd/.env already exists — skipped" \
-		|| (cp CHATVOTE-BackEnd/.env.local.template CHATVOTE-BackEnd/.env \
-		    && echo "     Created CHATVOTE-BackEnd/.env")
-	@test -f CHATVOTE-FrontEnd/.env.local \
-		&& echo "     CHATVOTE-FrontEnd/.env.local already exists — skipped" \
-		|| (cp CHATVOTE-FrontEnd/.env.local.template CHATVOTE-FrontEnd/.env.local \
-		    && echo "     Created CHATVOTE-FrontEnd/.env.local")
+	@bash scripts/setup.sh
 	@echo ""
 	@echo "==> Installing backend dependencies (Poetry)..."
 	cd CHATVOTE-BackEnd && poetry install --with dev
@@ -25,11 +17,18 @@ setup:
 	cd CHATVOTE-BackEnd/firebase && npm install
 	@echo ""
 	@echo "==> Setting up Ollama (LLM engine)..."
-	@CHAT_MODEL=$$(grep -E '^OLLAMA_MODEL=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
+	@PROVIDER=$$(grep -E '^EMBEDDING_PROVIDER=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
+	CHAT_MODEL=$$(grep -E '^OLLAMA_MODEL=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
 	EMBED_MODEL=$$(grep -E '^OLLAMA_EMBED_MODEL=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
 	CHAT_MODEL=$${CHAT_MODEL:-llama3.2}; \
 	EMBED_MODEL=$${EMBED_MODEL:-nomic-embed-text}; \
-	if command -v ollama > /dev/null 2>&1; then \
+	if [ "$$PROVIDER" = "google" ]; then \
+		echo "     Using Gemini for chat + embeddings (cloud mode)."; \
+		echo "     Ollama models will NOT be pulled (not needed)."; \
+		if command -v ollama > /dev/null 2>&1; then \
+			echo "     (Ollama is available as fallback if needed)"; \
+		fi; \
+	elif command -v ollama > /dev/null 2>&1; then \
 		echo "     Ollama is installed natively (GPU accelerated)."; \
 		echo "     Pulling models (this may take a few minutes on first run)..."; \
 		echo "     Chat: $$CHAT_MODEL, Embed: $$EMBED_MODEL"; \
@@ -137,6 +136,17 @@ dev-frontend:
 
 seed:
 	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py --with-vectors
+
+seed-local:
+	cd CHATVOTE-BackEnd && EMBEDDING_PROVIDER=ollama poetry run python scripts/seed_local.py --with-vectors
+
+seed-gemini:
+	@if [ -z "$$(grep -E '^GOOGLE_API_KEY=' CHATVOTE-BackEnd/.env 2>/dev/null | cut -d= -f2)" ]; then \
+		echo "Error: GOOGLE_API_KEY not set in CHATVOTE-BackEnd/.env"; \
+		echo "Run 'make setup' and choose Gemini, or add the key manually."; \
+		exit 1; \
+	fi
+	cd CHATVOTE-BackEnd && EMBEDDING_PROVIDER=google poetry run python scripts/seed_local.py --with-vectors
 
 seed-firestore:
 	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py
