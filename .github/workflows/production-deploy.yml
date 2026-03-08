@@ -1,6 +1,7 @@
 name: Production Deploy
 
 on:
+  workflow_dispatch:
   push:
     branches: [main]
 
@@ -78,8 +79,8 @@ jobs:
             echo "Updating existing production container..."
             scw container container update $EXISTING \
               registry-image=${{ env.SCW_REGISTRY }}/backend:${{ github.sha }} \
-              memory-limit=1024 \
-              cpu-limit=560 \
+              memory-limit=2048 \
+              cpu-limit=1120 \
               environment-variables.ENV=prod \
               environment-variables.EMBEDDING_PROVIDER=google \
               environment-variables.QDRANT_URL=${{ secrets.QDRANT_URL }} \
@@ -97,8 +98,8 @@ jobs:
               port=8080 \
               min-scale=1 \
               max-scale=3 \
-              memory-limit=1024 \
-              cpu-limit=560 \
+              memory-limit=2048 \
+              cpu-limit=1120 \
               privacy=public \
               deploy=true \
               region=$SCW_REGION \
@@ -112,7 +113,7 @@ jobs:
           fi
 
           echo "Waiting for backend-prod to be ready..."
-          for i in $(seq 1 60); do
+          for i in $(seq 1 120); do
             STATUS=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.status')
             if [ "$STATUS" = "error" ]; then
               MSG=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.error_message')
