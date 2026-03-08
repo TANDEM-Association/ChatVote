@@ -9,7 +9,8 @@ import React, {
 } from "react";
 
 import { type Municipality } from "@lib/election/election.types";
-import { ChevronDownIcon } from "lucide-react";
+import { BarChart3, ChevronDownIcon } from "lucide-react";
+import Link from "next/link";
 import { useTranslations } from "next-intl";
 
 import { Button } from "../ui/button";
@@ -214,6 +215,13 @@ const MunicipalitySearch = ({
             {selectedMunicipality.departement?.nom} •{" "}
             {selectedMunicipality.region?.nom}
           </div>
+          <Link
+            href={`/commune/${selectedMunicipality.code}`}
+            className="inline-flex items-center gap-1.5 rounded-full bg-primary/10 px-3 py-1.5 text-sm text-primary transition hover:bg-primary/20"
+          >
+            <BarChart3 className="size-3.5" />
+            Voir le tableau de bord
+          </Link>
         </div>
       ) : (
         <>

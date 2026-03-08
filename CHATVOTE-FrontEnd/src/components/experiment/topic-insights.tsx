@@ -27,7 +27,11 @@ type ThemeStat = {
   by_party: Record<string, number>;
   by_source: Record<string, number>;
   by_fiabilite: Record<string, number>;
-  sub_themes: string[];
+  sub_themes: Array<{
+    name: string;
+    count: number;
+    by_party: Record<string, number>;
+  }>;
 };
 
 type TopicStatsResponse = {
@@ -668,12 +672,41 @@ function ThemeCard({ theme }: { theme: ThemeStat }) {
               <p className="text-muted-foreground mb-1.5 text-[10px] font-semibold uppercase tracking-wider">
                 Sub-themes
               </p>
-              <div className="flex flex-wrap gap-1">
-                {theme.sub_themes.map((st) => (
-                  <Badge key={st} variant="outline" className="text-[10px]">
-                    {st}
-                  </Badge>
-                ))}
+              <div className="flex flex-col gap-1.5">
+                {theme.sub_themes.map((st) => {
+                  const maxSt = theme.sub_themes[0]?.count ?? 1;
+                  const partyPairs = Object.entries(st.by_party).sort(([, a], [, b]) => b - a);
+                  return (
+                    <div key={st.name} className="flex flex-col gap-0.5">
+                      <div className="flex items-center gap-2">
+                        <span className="w-36 shrink-0 truncate text-right text-xs">
+                          {st.name}
+                        </span>
+                        <div className="relative h-4 flex-1 overflow-hidden rounded bg-neutral-100 dark:bg-neutral-800">
+                          <div
+                            className="absolute inset-y-0 left-0 rounded bg-indigo-400/70 dark:bg-indigo-500/60"
+                            style={{ width: `${(st.count / maxSt) * 100}%` }}
+                          />
+                          <span className="relative z-10 flex h-full items-center px-1.5 text-[10px] font-medium">
+                            {st.count}
+                          </span>
+                        </div>
+                      </div>
+                      {partyPairs.length > 0 && (
+                        <div className="ml-[9.5rem] flex flex-wrap gap-1">
+                          {partyPairs.map(([party, count]) => (
+                            <span
+                              key={party}
+                              className="inline-flex items-center gap-0.5 rounded border px-1 py-0 text-[9px] text-muted-foreground"
+                            >
+                              {party} <span className="font-semibold">{count}</span>
+                            </span>
+                          ))}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
               </div>
             </div>
           )}

@@ -17,6 +17,9 @@
 # OS
 .DS_Store
 
+# Qdrant snapshots (too large for git)
+*.snapshot
+
 # Visual QA screenshots
 *.png
 .vercel

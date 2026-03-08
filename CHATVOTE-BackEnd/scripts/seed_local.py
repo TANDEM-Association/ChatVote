@@ -394,6 +394,66 @@ def seed_crawled_vectors():
     logger.info("Crawled content vector seeding complete.")
 
 
+def restore_qdrant_snapshots():
+    """Restore Qdrant collections from snapshot files if available."""
+    import requests
+
+    snapshots_dir = FIREBASE_DATA_DIR / "qdrant_snapshots"
+    if not snapshots_dir.exists():
+        logger.info("No qdrant_snapshots/ directory found, skipping snapshot restore")
+        return
+
+    qdrant_url = os.environ.get("QDRANT_URL", "http://localhost:6333")
+
+    # Map snapshot filenames to collection names
+    snapshot_files = list(snapshots_dir.glob("*.snapshot"))
+    if not snapshot_files:
+        logger.info("No .snapshot files found in qdrant_snapshots/")
+        return
+
+    for snapshot_file in snapshot_files:
+        # Derive collection name from filename (e.g. candidates_websites_dev.snapshot)
+        collection_name = snapshot_file.stem
+        logger.info(f"Restoring snapshot for '{collection_name}' ({snapshot_file.stat().st_size / 1024 / 1024:.0f} MB)...")
+
+        # Check if collection already has data
+        try:
+            resp = requests.get(f"{qdrant_url}/collections/{collection_name}")
+            if resp.ok:
+                info = resp.json().get("result", {})
+                points = info.get("points_count", 0)
+                if points and points > 0:
+                    logger.info(f"  Collection '{collection_name}' already has {points} points — skipping restore")
+                    continue
+        except Exception:
+            pass
+
+        # Delete collection if it exists (snapshot restore needs a clean slate)
+        try:
+            requests.delete(f"{qdrant_url}/collections/{collection_name}")
+        except Exception:
+            pass
+
+        # Upload snapshot to restore
+        try:
+            with open(snapshot_file, "rb") as f:
+                resp = requests.post(
+                    f"{qdrant_url}/collections/{collection_name}/snapshots/upload",
+                    files={"snapshot": (snapshot_file.name, f)},
+                    params={"priority": "snapshot"},
+                    timeout=300,
+                )
+            if resp.ok:
+                # Verify restoration
+                resp2 = requests.get(f"{qdrant_url}/collections/{collection_name}")
+                points = resp2.json().get("result", {}).get("points_count", 0) if resp2.ok else "?"
+                logger.info(f"  Restored '{collection_name}' — {points} points")
+            else:
+                logger.error(f"  Failed to restore '{collection_name}': {resp.status_code} {resp.text[:200]}")
+        except Exception as e:
+            logger.error(f"  Error restoring '{collection_name}': {e}")
+
+
 def _qdrant_collections_have_data() -> bool:
     """Return True if any Qdrant dev collection already has vectors."""
     try:
@@ -420,6 +480,11 @@ def main():
         action="store_true",
         help="Also generate sample embeddings via Ollama",
     )
+    parser.add_argument(
+        "--restore-snapshots",
+        action="store_true",
+        help="Restore Qdrant collections from snapshot files in qdrant_snapshots/",
+    )
     args = parser.parse_args()
 
     logger.info("=== ChatVote Local Dev Seeder ===")
@@ -434,7 +499,12 @@ def main():
     logger.info("\n--- Creating Qdrant Collections ---")
     create_qdrant_collections()
 
-    # Step 3 (optional): Seed vectors from crawled content
+    # Step 3a (optional): Restore Qdrant snapshots (fast, no embedding needed)
+    if args.restore_snapshots:
+        logger.info("\n--- Restoring Qdrant Snapshots ---")
+        restore_qdrant_snapshots()
+
+    # Step 3b (optional): Seed vectors from crawled content
     if args.with_vectors:
         # Skip if collections already have data (avoids slow re-embedding)
         if _qdrant_collections_have_data():

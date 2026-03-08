@@ -6,7 +6,7 @@ export const metadata = {
 
 export default function TopicInsightsPage() {
   return (
-    <main className="bg-background text-foreground min-h-screen">
+    <main className="bg-background text-foreground h-screen overflow-y-auto">
       <TopicInsights />
     </main>
   );

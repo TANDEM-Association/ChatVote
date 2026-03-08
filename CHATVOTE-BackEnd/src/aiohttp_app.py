@@ -649,7 +649,7 @@ async def experiment_topic_stats(request):
                             "by_party": defaultdict(int),
                             "by_source": defaultdict(int),
                             "by_fiabilite": defaultdict(int),
-                            "sub_themes": set(),
+                            "sub_themes": {},
                         }
                     td = theme_data[theme]
                     td["count"] += 1
@@ -664,7 +664,11 @@ async def experiment_topic_stats(request):
                         td["by_fiabilite"][str(int(fiab))] += 1
                     sub = meta.get("sub_theme")
                     if sub:
-                        td["sub_themes"].add(sub)
+                        if sub not in td["sub_themes"]:
+                            td["sub_themes"][sub] = {"count": 0, "by_party": defaultdict(int)}
+                        td["sub_themes"][sub]["count"] += 1
+                        if party:
+                            td["sub_themes"][sub]["by_party"][party] += 1
 
                 if next_offset is None:
                     break
@@ -681,11 +685,14 @@ async def experiment_topic_stats(request):
         themes_list.append({
             "theme": td["theme"],
             "count": td["count"],
-            "percentage": round(td["count"] / total_chunks * 100, 1) if total_chunks else 0,
+            "percentage": round(td["count"] / classified_chunks * 100, 1) if classified_chunks else 0,
             "by_party": dict(td["by_party"]),
             "by_source": dict(td["by_source"]),
             "by_fiabilite": dict(td["by_fiabilite"]),
-            "sub_themes": sorted(td["sub_themes"]),
+            "sub_themes": [
+                {"name": st, "count": data["count"], "by_party": dict(data["by_party"])}
+                for st, data in sorted(td["sub_themes"].items(), key=lambda x: -x[1]["count"])
+            ],
         })
 
     return web.json_response({
@@ -796,7 +803,7 @@ async def _run_bertopic_analysis(
                 min_topic_size=max(2, len(texts) // 20),
                 nr_topics="auto",
                 vectorizer_model=CountVectorizer(
-                    stop_words="english", ngram_range=(1, 2)
+                    stop_words="french", ngram_range=(1, 2)
                 ),
                 calculate_probabilities=False,
             )
@@ -977,12 +984,13 @@ async def commune_dashboard(request):
         except Exception as e:
             logger.error(f"Error scrolling {col_name} for commune {commune_code}: {e}", exc_info=True)
 
+    classified_chunks = sum(td["total_count"] for td in theme_data.values())
     taxonomy_themes = []
     for td in sorted(theme_data.values(), key=lambda x: x["total_count"], reverse=True):
         taxonomy_themes.append({
             "theme": td["theme"],
             "total_count": td["total_count"],
-            "percentage": round(td["total_count"] / total_chunks * 100, 1) if total_chunks else 0,
+            "percentage": round(td["total_count"] / classified_chunks * 100, 1) if classified_chunks else 0,
             "by_list": dict(td["by_list"]),
         })
 

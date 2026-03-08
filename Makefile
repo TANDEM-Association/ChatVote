@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-gemini seed-firestore test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
+.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-gemini seed-snapshots seed-firestore test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
 
 # ---------------------------------------------------------------------------
 # Setup — run once after cloning
@@ -148,6 +148,9 @@ seed-gemini:
 		exit 1; \
 	fi
 	cd CHATVOTE-BackEnd && EMBEDDING_PROVIDER=google poetry run python scripts/seed_local.py --with-vectors
+
+seed-snapshots:
+	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py --restore-snapshots
 
 seed-firestore:
 	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py

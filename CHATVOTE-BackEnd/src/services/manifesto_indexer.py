@@ -96,6 +96,8 @@ def create_documents_from_pages(
     for page_num, page_text in pages:
         chunks = text_splitter.split_text(page_text)
         for chunk in chunks:
+            if len(chunk.strip()) < 30:
+                continue
             cm = ChunkMetadata(
                 namespace=party.party_id,
                 source_document="election_manifesto",

@@ -2,7 +2,10 @@
 
 import { useEffect, useRef, useState } from "react";
 
+import Link from "next/link";
 import { useParams } from "next/navigation";
+
+import { MessageCircle } from "lucide-react";
 
 import {
   PolarAngleAxis,
@@ -83,12 +86,15 @@ type DashboardData = {
 // ---------------------------------------------------------------------------
 
 const LIST_COLORS = [
-  "#381AF3",
-  "#F3451A",
-  "#16A34A",
-  "#D97706",
-  "#8B5CF6",
-  "#06B6D4",
+  "#7C3AED", // violet-600
+  "#6D28D9", // violet-700
+  "#A78BFA", // violet-400
+  "#C084FC", // purple-400
+  "#818CF8", // indigo-400
+  "#67E8F9", // cyan-300
+  "#94A3B8", // slate-400
+  "#CBD5E1", // slate-300
+  "#E879F9", // fuchsia-400
 ];
 
 function listColor(index: number): string {
@@ -125,6 +131,26 @@ function buildRadarData(
     citizen: citizenNorm[i],
     program: programNorm[i],
   }));
+}
+
+function buildCombinedRadarData(
+  themes: TaxonomyTheme[],
+  lists: ListInfo[],
+): Array<Record<string, string | number>> {
+  return themes.map((t) => {
+    const entry: Record<string, string | number> = {
+      theme: t.theme.length > 14 ? t.theme.slice(0, 13) + "…" : t.theme,
+    };
+    // Normalize each list's values relative to the max across all lists for this theme
+    const values = lists.map((l) => t.by_list[l.list_label] ?? 0);
+    const max = Math.max(...values, 1);
+    lists.forEach((l) => {
+      entry[l.list_short_label || l.list_label] = Math.round(
+        ((t.by_list[l.list_label] ?? 0) / max) * 100,
+      );
+    });
+    return entry;
+  });
 }
 
 function alignmentScore(data: RadarEntry[]): number {
@@ -243,11 +269,9 @@ function ThermometerBar({
               : "#381AF3",
           }}
         >
-          {percentage > 15 && (
-            <span className="text-[10px] text-white font-semibold whitespace-nowrap">
-              {count} questions
-            </span>
-          )}
+          <span className="text-[10px] text-white font-semibold whitespace-nowrap">
+            {count} extraits
+          </span>
         </div>
       </div>
       <span className="w-10 text-right text-sm font-semibold text-foreground shrink-0">
@@ -384,6 +408,52 @@ function RadarCard({
   );
 }
 
+function CombinedRadarSection({
+  themes,
+  lists,
+}: {
+  themes: TaxonomyTheme[];
+  lists: ListInfo[];
+}) {
+  const data = buildCombinedRadarData(themes, lists);
+
+  return (
+    <section>
+      <SectionLabel>🗺️ Vue d&apos;ensemble — Couverture thématique comparée</SectionLabel>
+      <div className="bg-surface border border-border-subtle rounded-xl p-6">
+        <div className="max-w-2xl mx-auto aspect-square">
+          <ResponsiveContainer width="100%" height="100%">
+            <RadarChart data={data} margin={{ top: 20, right: 40, bottom: 20, left: 40 }}>
+              <PolarGrid stroke="#2E275A" />
+              <PolarAngleAxis
+                dataKey="theme"
+                tick={{ fill: "#a1a1aa", fontSize: 11 }}
+              />
+              <PolarRadiusAxis
+                angle={30}
+                domain={[0, 100]}
+                tick={false}
+                axisLine={false}
+              />
+              {lists.map((list, i) => (
+                <Radar
+                  key={list.panel_number}
+                  name={list.list_short_label || list.list_label}
+                  dataKey={list.list_short_label || list.list_label}
+                  stroke={listColor(i)}
+                  fill={listColor(i)}
+                  fillOpacity={0.05}
+                  strokeWidth={2}
+                />
+              ))}
+            </RadarChart>
+          </ResponsiveContainer>
+        </div>
+      </div>
+    </section>
+  );
+}
+
 // ---------------------------------------------------------------------------
 // Main page
 // ---------------------------------------------------------------------------
@@ -453,9 +523,7 @@ export default function CommuneDashboardPage() {
     );
   }
 
-  const { commune, stats, taxonomy, bertopic } = data;
-  const hasBertopic =
-    bertopic.status === "success" && bertopic.topics.length > 0;
+  const { commune, stats, taxonomy } = data;
 
   return (
     <div className="overflow-y-auto h-screen bg-background text-foreground">
@@ -492,6 +560,13 @@ export default function CommuneDashboardPage() {
               {stats.total_questions} question{stats.total_questions !== 1 ? "s" : ""}
             </span>
           </div>
+          <Link
+            href={`/chat?municipality_code=${commune.code}`}
+            className="inline-flex items-center gap-2 rounded-lg bg-white/10 px-4 py-2 text-sm font-medium text-white transition hover:bg-white/20"
+          >
+            <MessageCircle className="size-4" />
+            Poser une question
+          </Link>
         </div>
       </div>
 
@@ -503,22 +578,22 @@ export default function CommuneDashboardPage() {
           <StatCard
             value={stats.total_questions}
             label="Questions citoyennes"
-            accentColor="#381AF3"
+            accentColor="#7C3AED"
           />
           <StatCard
             value={stats.total_lists}
             label="Listes en compétition"
-            accentColor="#F3451A"
+            accentColor="#A78BFA"
           />
           <StatCard
             value={stats.themes_detected}
             label="Thèmes détectés"
-            accentColor="#16A34A"
+            accentColor="#818CF8"
           />
           <StatCard
             value={stats.total_chunks}
             label="Extraits de programme"
-            accentColor="#D97706"
+            accentColor="#94A3B8"
           />
         </div>
 
@@ -526,33 +601,32 @@ export default function CommuneDashboardPage() {
         {/* Thermometre citoyen                                               */}
         {/* ---------------------------------------------------------------- */}
         <section>
-          <SectionLabel>🌡️ Thermomètre citoyen — Top préoccupations</SectionLabel>
+          <SectionLabel>🌡️ Couverture thématique — Répartition des programmes</SectionLabel>
 
-          {!hasBertopic ? (
+          {taxonomy.themes.length === 0 ? (
             <div className="bg-surface border border-border-subtle rounded-xl p-6 text-center text-muted-foreground text-sm">
-              {bertopic.message ??
-                "Pas assez de questions pour l'analyse BERTopic"}
+              Pas assez de données pour l&apos;analyse thématique
             </div>
           ) : (
             <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden">
               <div className="px-5 pt-4 pb-2 border-b border-border-subtle flex items-start justify-between gap-2">
                 <div>
                   <p className="font-semibold text-foreground text-sm">
-                    Sujets les plus demandés par les citoyens
+                    Thèmes les plus couverts dans les programmes
                   </p>
                   <p className="text-xs text-muted-foreground mt-0.5">
-                    Labels BERTopic auto-générés · {bertopic.total_messages} messages analysés · {bertopic.num_topics} topics
+                    Classification fixe · {stats.total_chunks} extraits analysés · {taxonomy.themes.length} thèmes
                   </p>
                 </div>
               </div>
               <div className="px-5 py-4 space-y-1">
-                {bertopic.topics.map((topic, i) => (
+                {taxonomy.themes.map((theme, i) => (
                   <ThermometerBar
-                    key={topic.topic_id}
+                    key={theme.theme}
                     rank={i + 1}
-                    label={topic.label}
-                    count={topic.count}
-                    percentage={topic.percentage}
+                    label={theme.theme}
+                    count={theme.total_count}
+                    percentage={theme.percentage}
                     isTop3={i < 3}
                   />
                 ))}
@@ -568,6 +642,13 @@ export default function CommuneDashboardPage() {
           <div className="bg-surface border border-border-subtle rounded-xl px-5 py-3">
             <LegendBar lists={commune.lists} />
           </div>
+        )}
+
+        {/* ---------------------------------------------------------------- */}
+        {/* Combined radar                                                    */}
+        {/* ---------------------------------------------------------------- */}
+        {taxonomy.themes.length > 0 && commune.lists.length > 0 && (
+          <CombinedRadarSection themes={taxonomy.themes} lists={commune.lists} />
         )}
 
         {/* ---------------------------------------------------------------- */}

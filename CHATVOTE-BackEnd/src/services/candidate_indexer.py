@@ -151,6 +151,8 @@ def create_documents_from_scraped_website(
         chunks = text_splitter.split_text(page.content)
 
         for chunk in chunks:
+            if len(chunk.strip()) < 30:
+                continue
             cm = ChunkMetadata(
                 namespace=candidate.candidate_id,
                 source_document=f"candidate_website_{page.page_type}",
