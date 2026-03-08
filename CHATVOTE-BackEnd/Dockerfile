@@ -6,6 +6,8 @@ FROM python:3.11.3-slim
 
 # Install system dependencies for Playwright browsers
 RUN apt-get update && apt-get install -y \
+    # Build tools (needed by hdbscan, numpy C extensions)
+    build-essential \
     # Playwright dependencies
     libnss3 \
     libnspr4 \
@@ -41,7 +43,9 @@ WORKDIR /app
 RUN poetry config virtualenvs.create false
 
 # Install dependencies (production only)
-RUN poetry install --no-root --only main
+# Use pip installer backend to avoid nvidia namespace __init__.py conflicts
+RUN poetry config installer.modern-installation false && \
+    poetry install --no-root --only main
 
 # Replace PyTorch with CPU-only build if no CUDA available (~200MB vs ~2GB)
 # Override with: docker build --build-arg TORCH_VARIANT=gpu .
