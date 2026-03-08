@@ -5,3 +5,10 @@
 data/chatvote-programme/
 firebase/
 .venv/
+.env*
+__pycache__/
+*.pyc
+.git/
+.ruff_cache/
+.mypy_cache/
+tests/
