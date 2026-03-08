@@ -1,0 +1,37 @@
+name: Preview Cleanup
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [closed]
+
+env:
+  SCW_REGION: fr-par
+  SCW_NS_ID: ${{ secrets.SCW_CONTAINER_NAMESPACE_ID }}
+
+jobs:
+  cleanup:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Install Scaleway CLI
+        run: |
+          curl -fsSL https://github.com/scaleway/scaleway-cli/releases/latest/download/scaleway-cli_linux_amd64 -o /usr/local/bin/scw
+          chmod +x /usr/local/bin/scw
+          scw init access-key=${{ secrets.SCW_ACCESS_KEY }} secret-key=${{ secrets.SCW_SECRET_KEY }} \
+            organization-id=${{ secrets.SCW_PROJECT_ID }} project-id=${{ secrets.SCW_PROJECT_ID }} \
+            send-telemetry=false install-autocomplete=false with-ssh-key=false
+
+      - name: Delete preview containers
+        env:
+          PR_NUM: ${{ github.event.number }}
+        run: |
+          for NAME in backend-pr-$PR_NUM qdrant-pr-$PR_NUM firestore-pr-$PR_NUM auth-pr-$PR_NUM; do
+            ID=$(scw container container list namespace-id=$SCW_NS_ID name=$NAME region=$SCW_REGION -o json | jq -r '.[0].id // empty')
+            if [ -n "$ID" ]; then
+              echo "Deleting $NAME ($ID)..."
+              scw container container delete $ID region=$SCW_REGION
+            else
+              echo "$NAME not found, skipping."
+            fi
+          done
+          echo "Preview cleanup complete for PR #$PR_NUM."

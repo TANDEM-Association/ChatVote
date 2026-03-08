@@ -1,0 +1,369 @@
+name: Preview Deploy
+
+on:
+  pull_request:
+    branches: [main, develop]
+    types: [opened, synchronize, reopened]
+
+env:
+  SCW_REGION: fr-par
+  SCW_REGISTRY: rg.fr-par.scw.cloud/chatvote
+  SCW_NS_ID: ${{ secrets.SCW_CONTAINER_NAMESPACE_ID }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ── Step 1: Detect what changed ─────────────────────────────────────────
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: read
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'CHATVOTE-BackEnd/**'
+              - 'docker-compose*.yml'
+              - 'Makefile'
+            frontend:
+              - 'CHATVOTE-FrontEnd/**'
+
+  # ── Step 2: Build and push backend Docker image ─────────────────────────
+  build-backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      image_url: ${{ steps.meta.outputs.image_url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Scaleway Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: rg.fr-par.scw.cloud
+          username: nologin
+          password: ${{ secrets.SCW_SECRET_KEY }}
+
+      - name: Set image metadata
+        id: meta
+        run: |
+          IMAGE="${{ env.SCW_REGISTRY }}/backend:pr-${{ github.event.number }}"
+          echo "image_url=$IMAGE" >> "$GITHUB_OUTPUT"
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./CHATVOTE-BackEnd
+          push: true
+          tags: ${{ steps.meta.outputs.image_url }}
+
+  # ── Step 3: Deploy preview infra on Scaleway ────────────────────────────
+  deploy-preview-infra:
+    needs: [changes, build-backend]
+    if: always() && needs.changes.outputs.backend == 'true' && needs.build-backend.result == 'success'
+    runs-on: ubuntu-latest
+    outputs:
+      backend_url: ${{ steps.deploy-backend.outputs.url }}
+      qdrant_url: ${{ steps.deploy-qdrant.outputs.url }}
+      firestore_url: ${{ steps.deploy-firestore.outputs.url }}
+      auth_url: ${{ steps.deploy-auth.outputs.url }}
+    env:
+      PR_NUM: ${{ github.event.number }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Scaleway CLI
+        run: |
+          curl -fsSL https://github.com/scaleway/scaleway-cli/releases/latest/download/scaleway-cli_linux_amd64 -o /usr/local/bin/scw
+          chmod +x /usr/local/bin/scw
+          scw init access-key=${{ secrets.SCW_ACCESS_KEY }} secret-key=${{ secrets.SCW_SECRET_KEY }} \
+            organization-id=${{ secrets.SCW_PROJECT_ID }} project-id=${{ secrets.SCW_PROJECT_ID }} \
+            send-telemetry=false install-autocomplete=false with-ssh-key=false
+
+      # ── Build and push Firebase emulator image (if not cached) ──────────
+      - name: Log in to Scaleway Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: rg.fr-par.scw.cloud
+          username: nologin
+          password: ${{ secrets.SCW_SECRET_KEY }}
+
+      - name: Build and push Firebase emulator image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./CHATVOTE-BackEnd/firebase
+          push: true
+          tags: ${{ env.SCW_REGISTRY }}/firebase-emulator:latest
+
+      # ── Deploy Qdrant ───────────────────────────────────────────────────
+      - name: Deploy Qdrant container
+        id: deploy-qdrant
+        run: |
+          # Delete existing container if any (idempotent)
+          EXISTING=$(scw container container list namespace-id=$SCW_NS_ID name=qdrant-pr-$PR_NUM region=$SCW_REGION -o json | jq -r '.[0].id // empty')
+          if [ -n "$EXISTING" ]; then
+            scw container container delete $EXISTING region=$SCW_REGION
+            sleep 5
+          fi
+
+          RESULT=$(scw container container create \
+            namespace-id=$SCW_NS_ID \
+            name=qdrant-pr-$PR_NUM \
+            registry-image=qdrant/qdrant:latest \
+            port=6333 \
+            min-scale=0 \
+            max-scale=1 \
+            memory-limit=256 \
+            cpu-limit=140 \
+            privacy=public \
+            deploy=true \
+            region=$SCW_REGION \
+            -o json)
+
+          ID=$(echo "$RESULT" | jq -r '.id')
+          echo "Waiting for qdrant-pr-$PR_NUM to be ready..."
+          for i in $(seq 1 60); do
+            STATUS=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.status')
+            if [ "$STATUS" = "ready" ]; then
+              URL=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.domain_name')
+              echo "url=https://$URL" >> "$GITHUB_OUTPUT"
+              echo "Qdrant ready at https://$URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ERROR: Qdrant container failed to become ready"
+          exit 1
+
+      # ── Deploy Firestore emulator ──────────────────────────────────────
+      - name: Deploy Firestore emulator
+        id: deploy-firestore
+        run: |
+          EXISTING=$(scw container container list namespace-id=$SCW_NS_ID name=firestore-pr-$PR_NUM region=$SCW_REGION -o json | jq -r '.[0].id // empty')
+          if [ -n "$EXISTING" ]; then
+            scw container container delete $EXISTING region=$SCW_REGION
+            sleep 5
+          fi
+
+          RESULT=$(scw container container create \
+            namespace-id=$SCW_NS_ID \
+            name=firestore-pr-$PR_NUM \
+            registry-image=${{ env.SCW_REGISTRY }}/firebase-emulator:latest \
+            port=8081 \
+            min-scale=0 \
+            max-scale=1 \
+            memory-limit=512 \
+            cpu-limit=280 \
+            privacy=public \
+            deploy=true \
+            region=$SCW_REGION \
+            command.0=sh \
+            command.1=-c \
+            command.2="cd /firebase && npm install && npx firebase emulators:start --project chat-vote-dev --only firestore" \
+            -o json)
+
+          ID=$(echo "$RESULT" | jq -r '.id')
+          echo "Waiting for firestore-pr-$PR_NUM to be ready..."
+          for i in $(seq 1 60); do
+            STATUS=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.status')
+            if [ "$STATUS" = "ready" ]; then
+              URL=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.domain_name')
+              echo "url=https://$URL" >> "$GITHUB_OUTPUT"
+              echo "Firestore ready at https://$URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ERROR: Firestore container failed to become ready"
+          exit 1
+
+      # ── Deploy Auth emulator ───────────────────────────────────────────
+      - name: Deploy Auth emulator
+        id: deploy-auth
+        run: |
+          EXISTING=$(scw container container list namespace-id=$SCW_NS_ID name=auth-pr-$PR_NUM region=$SCW_REGION -o json | jq -r '.[0].id // empty')
+          if [ -n "$EXISTING" ]; then
+            scw container container delete $EXISTING region=$SCW_REGION
+            sleep 5
+          fi
+
+          RESULT=$(scw container container create \
+            namespace-id=$SCW_NS_ID \
+            name=auth-pr-$PR_NUM \
+            registry-image=${{ env.SCW_REGISTRY }}/firebase-emulator:latest \
+            port=9099 \
+            min-scale=0 \
+            max-scale=1 \
+            memory-limit=512 \
+            cpu-limit=280 \
+            privacy=public \
+            deploy=true \
+            region=$SCW_REGION \
+            command.0=sh \
+            command.1=-c \
+            command.2="cd /firebase && npm install && npx firebase emulators:start --project chat-vote-dev --only auth" \
+            -o json)
+
+          ID=$(echo "$RESULT" | jq -r '.id')
+          echo "Waiting for auth-pr-$PR_NUM to be ready..."
+          for i in $(seq 1 60); do
+            STATUS=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.status')
+            if [ "$STATUS" = "ready" ]; then
+              URL=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.domain_name')
+              echo "url=https://$URL" >> "$GITHUB_OUTPUT"
+              echo "Auth ready at https://$URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ERROR: Auth container failed to become ready"
+          exit 1
+
+      # ── Deploy Backend ─────────────────────────────────────────────────
+      - name: Deploy Backend container
+        id: deploy-backend
+        run: |
+          EXISTING=$(scw container container list namespace-id=$SCW_NS_ID name=backend-pr-$PR_NUM region=$SCW_REGION -o json | jq -r '.[0].id // empty')
+          if [ -n "$EXISTING" ]; then
+            scw container container delete $EXISTING region=$SCW_REGION
+            sleep 5
+          fi
+
+          RESULT=$(scw container container create \
+            namespace-id=$SCW_NS_ID \
+            name=backend-pr-$PR_NUM \
+            registry-image=${{ env.SCW_REGISTRY }}/backend:pr-$PR_NUM \
+            port=8080 \
+            min-scale=0 \
+            max-scale=1 \
+            memory-limit=512 \
+            cpu-limit=280 \
+            privacy=public \
+            deploy=true \
+            region=$SCW_REGION \
+            environment-variables.ENV=local \
+            environment-variables.QDRANT_URL=${{ steps.deploy-qdrant.outputs.url }} \
+            environment-variables.FIRESTORE_EMULATOR_HOST=${{ steps.deploy-firestore.outputs.url }} \
+            environment-variables.FIREBASE_AUTH_EMULATOR_HOST=${{ steps.deploy-auth.outputs.url }} \
+            environment-variables.EMBEDDING_PROVIDER=google \
+            secret-environment-variables.0.key=GOOGLE_API_KEY \
+            secret-environment-variables.0.value=${{ secrets.GOOGLE_API_KEY }} \
+            -o json)
+
+          ID=$(echo "$RESULT" | jq -r '.id')
+          echo "Waiting for backend-pr-$PR_NUM to be ready..."
+          for i in $(seq 1 60); do
+            STATUS=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.status')
+            if [ "$STATUS" = "ready" ]; then
+              URL=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.domain_name')
+              echo "url=https://$URL" >> "$GITHUB_OUTPUT"
+              echo "Backend ready at https://$URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ERROR: Backend container failed to become ready"
+          exit 1
+
+  # ── Step 4: Seed data ───────────────────────────────────────────────────
+  seed-preview:
+    needs: deploy-preview-infra
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Set up Python
+        uses: actions/setup-python@v5
+        with:
+          python-version: '3.11'
+
+      - name: Install backend dependencies
+        working-directory: CHATVOTE-BackEnd
+        run: |
+          pip install poetry
+          poetry config virtualenvs.create false
+          poetry install --no-root --only main
+
+      - name: Seed Firestore and Qdrant (with vectors)
+        working-directory: CHATVOTE-BackEnd
+        run: |
+          python scripts/seed_local.py --with-vectors
+        env:
+          ENV: local
+          EMBEDDING_PROVIDER: google
+          GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          FIRESTORE_EMULATOR_HOST: ${{ needs.deploy-preview-infra.outputs.firestore_url }}
+          QDRANT_URL: ${{ needs.deploy-preview-infra.outputs.qdrant_url }}
+
+  # ── Step 5: Deploy frontend to Vercel ───────────────────────────────────
+  deploy-frontend:
+    needs: [changes, deploy-preview-infra, seed-preview]
+    if: always() && (needs.changes.outputs.frontend == 'true' || needs.changes.outputs.backend == 'true')
+    runs-on: ubuntu-latest
+    outputs:
+      preview_url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '9'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: CHATVOTE-FrontEnd/pnpm-lock.yaml
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        working-directory: CHATVOTE-FrontEnd
+        run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        working-directory: CHATVOTE-FrontEnd
+        run: vercel build --token=${{ secrets.VERCEL_TOKEN }}
+        env:
+          NEXT_PUBLIC_SOCKET_URL: ${{ needs.deploy-preview-infra.outputs.backend_url || '' }}
+
+      - name: Deploy
+        id: deploy
+        working-directory: CHATVOTE-FrontEnd
+        run: |
+          URL=$(vercel deploy --prebuilt --token=${{ secrets.VERCEL_TOKEN }})
+          echo "url=$URL" >> "$GITHUB_OUTPUT"
+
+  # ── Step 6: Comment on PR ───────────────────────────────────────────────
+  comment:
+    needs: [deploy-preview-infra, deploy-frontend]
+    if: always() && (needs.deploy-frontend.result == 'success' || needs.deploy-preview-infra.result == 'success')
+    runs-on: ubuntu-latest
+    permissions:
+      pull-requests: write
+    steps:
+      - name: Post preview URLs
+        uses: marocchino/sticky-pull-request-comment@v2
+        with:
+          header: preview-deploy
+          message: |
+            ## Preview Deployment
+
+            | Service | URL |
+            |---------|-----|
+            | **Frontend** | ${{ needs.deploy-frontend.outputs.preview_url || 'N/A (no frontend changes)' }} |
+            | **Backend** | ${{ needs.deploy-preview-infra.outputs.backend_url || 'N/A (no backend changes)' }} |
+            | **Qdrant** | ${{ needs.deploy-preview-infra.outputs.qdrant_url || 'N/A' }} |
+            | **Firestore** | ${{ needs.deploy-preview-infra.outputs.firestore_url || 'N/A' }} |
+            | **Auth** | ${{ needs.deploy-preview-infra.outputs.auth_url || 'N/A' }} |
+
+            > Containers use min resources (scale-to-zero when idle, ~free).
+            > Containers are automatically cleaned up when this PR is closed.

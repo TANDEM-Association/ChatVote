@@ -1,0 +1,162 @@
+name: Production Deploy
+
+on:
+  push:
+    branches: [main]
+
+env:
+  SCW_REGION: fr-par
+  SCW_REGISTRY: rg.fr-par.scw.cloud/chatvote
+  SCW_NS_ID: ${{ secrets.SCW_CONTAINER_NAMESPACE_ID }}
+  VERCEL_ORG_ID: ${{ secrets.VERCEL_ORG_ID }}
+  VERCEL_PROJECT_ID: ${{ secrets.VERCEL_PROJECT_ID }}
+
+jobs:
+  # ── Detect changes ──────────────────────────────────────────────────────
+  changes:
+    runs-on: ubuntu-latest
+    outputs:
+      backend: ${{ steps.filter.outputs.backend }}
+      frontend: ${{ steps.filter.outputs.frontend }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: dorny/paths-filter@v3
+        id: filter
+        with:
+          filters: |
+            backend:
+              - 'CHATVOTE-BackEnd/**'
+              - 'docker-compose*.yml'
+              - 'Makefile'
+            frontend:
+              - 'CHATVOTE-FrontEnd/**'
+
+  # ── Deploy backend to Scaleway ──────────────────────────────────────────
+  deploy-backend:
+    needs: changes
+    if: needs.changes.outputs.backend == 'true'
+    runs-on: ubuntu-latest
+    outputs:
+      backend_url: ${{ steps.deploy.outputs.url }}
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Log in to Scaleway Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: rg.fr-par.scw.cloud
+          username: nologin
+          password: ${{ secrets.SCW_SECRET_KEY }}
+
+      - name: Build and push
+        uses: docker/build-push-action@v5
+        with:
+          context: ./CHATVOTE-BackEnd
+          push: true
+          tags: |
+            ${{ env.SCW_REGISTRY }}/backend:${{ github.sha }}
+            ${{ env.SCW_REGISTRY }}/backend:latest
+
+      - name: Install Scaleway CLI
+        run: |
+          curl -fsSL https://github.com/scaleway/scaleway-cli/releases/latest/download/scaleway-cli_linux_amd64 -o /usr/local/bin/scw
+          chmod +x /usr/local/bin/scw
+          scw init access-key=${{ secrets.SCW_ACCESS_KEY }} secret-key=${{ secrets.SCW_SECRET_KEY }} \
+            organization-id=${{ secrets.SCW_PROJECT_ID }} project-id=${{ secrets.SCW_PROJECT_ID }} \
+            send-telemetry=false install-autocomplete=false with-ssh-key=false
+
+      - name: Deploy production backend
+        id: deploy
+        run: |
+          # Check if production container exists
+          EXISTING=$(scw container container list namespace-id=$SCW_NS_ID name=backend-prod region=$SCW_REGION -o json | jq -r '.[0].id // empty')
+
+          if [ -n "$EXISTING" ]; then
+            echo "Updating existing production container..."
+            scw container container update $EXISTING \
+              registry-image=${{ env.SCW_REGISTRY }}/backend:${{ github.sha }} \
+              region=$SCW_REGION
+            scw container container deploy $EXISTING region=$SCW_REGION
+            ID=$EXISTING
+          else
+            echo "Creating production container..."
+            RESULT=$(scw container container create \
+              namespace-id=$SCW_NS_ID \
+              name=backend-prod \
+              registry-image=${{ env.SCW_REGISTRY }}/backend:${{ github.sha }} \
+              port=8080 \
+              min-scale=1 \
+              max-scale=3 \
+              memory-limit=512 \
+              cpu-limit=280 \
+              privacy=public \
+              deploy=true \
+              region=$SCW_REGION \
+              -o json)
+            ID=$(echo "$RESULT" | jq -r '.id')
+          fi
+
+          echo "Waiting for backend-prod to be ready..."
+          for i in $(seq 1 60); do
+            STATUS=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.status')
+            if [ "$STATUS" = "ready" ]; then
+              URL=$(scw container container get $ID region=$SCW_REGION -o json | jq -r '.domain_name')
+              echo "url=https://$URL" >> "$GITHUB_OUTPUT"
+              echo "Production backend ready at https://$URL"
+              exit 0
+            fi
+            sleep 5
+          done
+          echo "ERROR: Production backend failed to become ready"
+          exit 1
+
+  # ── Deploy frontend to Vercel (production) ──────────────────────────────
+  deploy-frontend:
+    needs: [changes, deploy-backend]
+    if: always() && (needs.changes.outputs.frontend == 'true' || needs.deploy-backend.result == 'success')
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: pnpm/action-setup@v4
+        with:
+          version: '9'
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+          cache: 'pnpm'
+          cache-dependency-path: CHATVOTE-FrontEnd/pnpm-lock.yaml
+
+      - name: Install Vercel CLI
+        run: npm install --global vercel@latest
+
+      - name: Pull Vercel environment
+        working-directory: CHATVOTE-FrontEnd
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Build
+        working-directory: CHATVOTE-FrontEnd
+        run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Deploy
+        working-directory: CHATVOTE-FrontEnd
+        run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
+
+  # ── Gate — fail if any enabled job failed ───────────────────────────────
+  ci-gate:
+    needs: [deploy-backend, deploy-frontend]
+    if: always()
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check all deployments
+        run: |
+          backend="${{ needs.deploy-backend.result }}"
+          frontend="${{ needs.deploy-frontend.result }}"
+          for result in "$backend" "$frontend"; do
+            if [[ "$result" != "success" && "$result" != "skipped" ]]; then
+              echo "Deployment failed: $result"
+              exit 1
+            fi
+          done
+          echo "All deployments succeeded."

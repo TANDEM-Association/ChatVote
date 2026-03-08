@@ -80,8 +80,9 @@ dev: dev-infra
 	@echo ""
 	@$(MAKE) check
 	@echo ""
-	@echo "  Qdrant dashboard:  http://localhost:6333/dashboard"
-	@echo "  App:               http://localhost:3000"
+	@echo "  App:                http://localhost:3000"
+	@echo "  Qdrant dashboard:   http://localhost:6333/dashboard"
+	@echo "  Firebase emulators: http://localhost:4000"
 	@echo ""
 	@echo "  Logs:  make logs           (tail all logs)"
 	@echo "  Stop:  make stop           (stop everything)"

@@ -10,14 +10,15 @@ services:
     command: >
       sh -c "npm install && npx firebase emulators:start --project chat-vote-dev --only firestore,auth"
     ports:
+      - "4000:4000"
       - "8081:8081"
       - "9099:9099"
     healthcheck:
-      test: ["CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8081"]
+      test: ["CMD-SHELL", "curl -sf http://localhost:8081/ > /dev/null && curl -sf http://localhost:9099/ > /dev/null"]
       interval: 5s
       timeout: 3s
       retries: 12
-      start_period: 30s
+      start_period: 60s
 
   qdrant:
     image: qdrant/qdrant:latest
