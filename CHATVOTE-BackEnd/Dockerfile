@@ -40,27 +40,23 @@ WORKDIR /app
 # Configure poetry to not create virtual env (use system python)
 RUN poetry config virtualenvs.create false
 
-# Install PyTorch: use CUDA if available, otherwise CPU-only (~200MB vs ~2GB)
+# Install dependencies (production only)
+RUN poetry install --no-root --only main
+
+# Replace PyTorch with CPU-only build if no CUDA available (~200MB vs ~2GB)
 # Override with: docker build --build-arg TORCH_VARIANT=gpu .
 ARG TORCH_VARIANT=auto
 RUN if [ "$TORCH_VARIANT" = "auto" ]; then \
       if command -v nvidia-smi >/dev/null 2>&1 && nvidia-smi >/dev/null 2>&1; then \
-        echo "CUDA detected — installing GPU-enabled PyTorch"; \
-        pip install torch; \
+        echo "CUDA detected — keeping GPU-enabled PyTorch"; \
       else \
-        echo "WARNING: No CUDA/GPU detected — installing CPU-only PyTorch (smaller image)"; \
+        echo "WARNING: No CUDA/GPU detected — replacing with CPU-only PyTorch (saves ~1.8GB)"; \
         pip install torch --index-url https://download.pytorch.org/whl/cpu; \
       fi; \
     elif [ "$TORCH_VARIANT" = "cpu" ]; then \
-      echo "Installing CPU-only PyTorch (TORCH_VARIANT=cpu)"; \
+      echo "Replacing with CPU-only PyTorch (TORCH_VARIANT=cpu)"; \
       pip install torch --index-url https://download.pytorch.org/whl/cpu; \
-    else \
-      echo "Installing GPU-enabled PyTorch (TORCH_VARIANT=$TORCH_VARIANT)"; \
-      pip install torch; \
     fi
-
-# Install dependencies (production only)
-RUN poetry install --no-root --only main
 
 # Install Playwright browsers (Chromium only for smaller image)
 RUN playwright install chromium
