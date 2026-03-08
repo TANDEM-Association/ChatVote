@@ -109,10 +109,10 @@ dev-infra:
 		echo "TIP: For Apple Silicon, install natively: brew install ollama && ollama serve"; \
 		PROFILES="$$PROFILES --profile ollama"; \
 	fi; \
-	if curl -sf http://localhost:8081/ > /dev/null 2>&1; then \
-		echo "Native Firebase emulators detected on :8081 — skipping Docker emulators."; \
+	if curl -sf http://localhost:8081/ > /dev/null 2>&1 && curl -sf http://localhost:9099/ > /dev/null 2>&1; then \
+		echo "Native Firebase emulators detected on :8081/:9099 — skipping Docker emulators."; \
 	else \
-		echo "No native Firebase emulators found — starting in Docker."; \
+		echo "Starting Firebase emulators in Docker (Firestore :8081, Auth :9099)..."; \
 		PROFILES="$$PROFILES --profile firebase"; \
 	fi; \
 	docker compose -f docker-compose.dev.yml $$PROFILES up -d --wait
@@ -194,6 +194,8 @@ check:
 		(curl -sf http://localhost:11434/ > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 	@printf "  Firestore (:8081)  ... " && \
 		(curl -sf http://localhost:8081/ > /dev/null 2>&1 && echo "OK" || echo "FAIL")
+	@printf "  Auth      (:9099)  ... " && \
+		(curl -sf http://localhost:9099/ > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 	@printf "  Backend   (:8080)  ... " && \
 		(curl -sf http://localhost:8080/healthz > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 	@printf "  Frontend  (:3000)  ... " && \
@@ -220,6 +222,7 @@ stop:
 			echo "  $$svc stopped."; \
 		fi; \
 	done
+	@lsof -ti :9099,:8081 2>/dev/null | sort -u | xargs kill 2>/dev/null && echo "  native firebase emulators stopped." || true
 	@echo "All services stopped."
 
 # ---------------------------------------------------------------------------

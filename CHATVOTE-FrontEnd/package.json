@@ -5,7 +5,7 @@
   "scripts": {
     "generate:types": "node scripts/generate-types.mjs",
     "predev": "npm run generate:types",
-    "dev": "node scripts/watch-backend-types.mjs & next dev --turbopack",
+    "dev": "react-grab-claude-code && node scripts/watch-backend-types.mjs & next dev --turbopack",
     "dev:next": "next dev --turbopack",
     "prebuild": "npm run generate:types",
     "build": "next build --turbopack",
@@ -63,6 +63,7 @@
   "devDependencies": {
     "@next/third-parties": "^16.1.6",
     "@playwright/test": "^1.58.2",
+    "@react-grab/claude-code": "^0.1.26",
     "@tailwindcss/postcss": "^4.1.18",
     "@tailwindcss/typography": "^0.5.19",
     "@types/node": "^20.17.9",
@@ -81,10 +82,10 @@
     "eslint-plugin-simple-import-sort": "^12.1.1",
     "eslint-plugin-tailwindcss": "4.0.0-beta.0",
     "eslint-plugin-unused-imports": "^4.2.0",
-
     "postcss": "^8.4.49",
     "prettier": "^3.8.0",
     "prettier-plugin-tailwindcss": "^0.7.2",
+    "react-grab": "^0.1.26",
     "socket.io": "^4.8.3",
     "tailwind-animate": "^0.2.10",
     "tailwindcss": "^4.1.18",

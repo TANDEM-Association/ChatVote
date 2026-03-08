@@ -1,4 +1,5 @@
 import { type Metadata } from "next";
+import Script from "next/script";
 import { Merriweather, Merriweather_Sans } from "next/font/google";
 import { headers } from "next/headers";
 
@@ -139,6 +140,19 @@ export default async function RootLayout({
   return (
     <html lang={locale} data-theme={theme}>
       <head>
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="//unpkg.com/react-grab/dist/index.global.js"
+            crossOrigin="anonymous"
+            strategy="beforeInteractive"
+          />
+        )}
+        {process.env.NODE_ENV === "development" && (
+          <Script
+            src="//unpkg.com/@react-grab/claude-code/dist/client.global.js"
+            strategy="lazyOnload"
+          />
+        )}
         <meta name="viewport" content="width=device-width, initial-scale=1" />
       </head>
       <body

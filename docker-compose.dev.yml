@@ -3,9 +3,8 @@ services:
   # If you already run emulators natively (e.g. Playwright global-setup), the
   # Makefile auto-detects them on :8081 and skips this container.
   firebase-emulators:
-    image: node:20
+    build: ./CHATVOTE-BackEnd/firebase
     profiles: ["firebase"]
-    working_dir: /firebase
     volumes:
       - ./CHATVOTE-BackEnd/firebase:/firebase
     command: >
