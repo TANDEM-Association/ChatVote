@@ -161,17 +161,21 @@ jobs:
         run: npm install --global vercel@latest
 
       - name: Link Vercel project
+        working-directory: CHATVOTE-FrontEnd
         run: |
           mkdir -p .vercel
           echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
 
       - name: Pull Vercel environment
+        working-directory: CHATVOTE-FrontEnd
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Build
+        working-directory: CHATVOTE-FrontEnd
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
+        working-directory: CHATVOTE-FrontEnd
         run: vercel deploy --prebuilt --prod --token=${{ secrets.VERCEL_TOKEN }}
 
   # ── Gate — fail if any enabled job failed ───────────────────────────
