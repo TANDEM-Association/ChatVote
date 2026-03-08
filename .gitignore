@@ -5,7 +5,7 @@
 .osgrep
 .omc/
 .quint/
-.claude/
+.claude/todos
 .playwright-mcp/
 
 # Editor/IDE
@@ -13,6 +13,9 @@
 
 # Logs
 .logs/
+
+# Emulator/runtime artifacts
+.qdrant-initialized
 
 # OS
 .DS_Store
