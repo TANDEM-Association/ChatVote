@@ -216,5 +216,2423 @@
     "created_at": "2026-03-02T10:34:36.088Z",
     "updated_at": "2026-03-02T10:34:36.088Z",
     "title": "Démocratie selon Place Publique"
+  },
+  "sess-bourg-001": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "renaissance",
+      "europe-ecologie-les-verts"
+    ],
+    "title": "Pistes cyclables en centre-ville",
+    "created_at": {
+      "_seconds": 1741392000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-001/messages/msg-001-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741392060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Je voudrais savoir si vous prévoyez de créer de nouvelles pistes cyclables en centre-ville, notamment sur l'avenue Alsace-Lorraine qui est très dangereuse pour les vélos en ce moment."
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-001/messages/msg-001-a1": {
+    "role": "assistant",
+    "created_at": {
+      "_seconds": 1741392120,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Voici ce que proposent les différentes listes sur ce sujet..."
+      }
+    ]
+  },
+  "sess-bourg-002": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "la-france-insoumise",
+      "renaissance"
+    ],
+    "title": "Taxe foncière et budget municipal",
+    "created_at": {
+      "_seconds": 1741478400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-002/messages/msg-002-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741478460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La taxe foncière a encore augmenté cette année. Quelles sont vos propositions pour alléger la pression fiscale sur les propriétaires, notamment les retraités à revenus modestes ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-003": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "place-publique"
+    ],
+    "title": "Espaces verts et biodiversité",
+    "created_at": {
+      "_seconds": 1741564800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-003/messages/msg-003-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741564860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Quels sont vos projets pour préserver et développer les espaces verts à Bourg-en-Bresse ? Le parc de la Reyssouze est très fréquenté mais manque d'entretien."
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-003/messages/msg-003-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741564920,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Et concernant la biodiversité, prévoyez-vous de planter des arbres en ville pour lutter contre les îlots de chaleur ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-004": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "renaissance",
+      "reconquete"
+    ],
+    "title": "Sécurité publique et vidéosurveillance",
+    "created_at": {
+      "_seconds": 1741651200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-004/messages/msg-004-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741651260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Que proposez-vous pour améliorer la sécurité dans les quartiers sensibles ? Les incivilités ont beaucoup augmenté ces dernières années et les habitants ne se sentent plus en sécurité le soir."
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-005": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "la-france-insoumise",
+      "place-publique"
+    ],
+    "title": "Cantine scolaire et tarification",
+    "created_at": {
+      "_seconds": 1741737600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-005/messages/msg-005-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741737660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La cantine scolaire est devenue trop chère pour beaucoup de familles modestes. Est-ce que vous prévoyez de mettre en place une tarification sociale basée sur les revenus des parents ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-005/messages/msg-005-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741737720,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Et pour les repas végétariens à la cantine, avez-vous une position sur l'alimentation durable dans les écoles publiques ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-006": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "renaissance",
+      "europe-ecologie-les-verts"
+    ],
+    "title": "Commerces du centre-ville",
+    "created_at": {
+      "_seconds": 1741824000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-006/messages/msg-006-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741824060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le centre-ville se vide de ses commerces depuis plusieurs années avec beaucoup de locaux vides. Quels sont vos projets concrets pour redynamiser le commerce local et attirer de nouveaux artisans et commerçants ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-007": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "la-france-insoumise",
+      "reconquete"
+    ],
+    "title": "Logements sociaux et PLU",
+    "created_at": {
+      "_seconds": 1741910400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-007/messages/msg-007-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741910460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Quelle est votre position sur la construction de nouveaux logements sociaux à Bourg-en-Bresse ? La liste d'attente est extrêmement longue et beaucoup de familles sont dans des situations précaires."
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-008": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "renaissance",
+      "place-publique"
+    ],
+    "title": "Bibliothèque et culture",
+    "created_at": {
+      "_seconds": 1741996800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-008/messages/msg-008-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741996860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Est-ce que vous prévoyez d'étendre les horaires de la médiathèque ? Elle ferme trop tôt en semaine et beaucoup de gens qui travaillent ne peuvent pas y aller. Une ouverture le dimanche serait aussi très appréciée."
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-008/messages/msg-008-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1741996920,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Et pour les fêtes locales, quel budget prévoyez-vous pour les événements culturels et les animations de quartier ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-009": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "la-france-insoumise"
+    ],
+    "title": "Recyclage et déchets",
+    "created_at": {
+      "_seconds": 1742083200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-009/messages/msg-009-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742083260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le tri des déchets est très mal organisé dans notre quartier, les bacs débordent souvent. Que proposez-vous pour améliorer la collecte sélective et réduire les dépôts sauvages ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-010": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "renaissance",
+      "reconquete"
+    ],
+    "title": "État des routes et voirie",
+    "created_at": {
+      "_seconds": 1742169600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-010/messages/msg-010-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742169660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les routes de Bourg-en-Bresse sont dans un état déplorable, il y a des nids-de-poule partout. Quel est votre programme pour la réfection de la voirie et sur quelles priorités allez-vous vous concentrer en premier mandat ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-010/messages/msg-010-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742169720,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Et pour les trottoirs, beaucoup sont inaccessibles aux personnes en fauteuil roulant. Avez-vous un plan d'accessibilité ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-011": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "la-france-insoumise",
+      "renaissance"
+    ],
+    "title": "Crèches et places petite enfance",
+    "created_at": {
+      "_seconds": 1742256000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-011/messages/msg-011-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742256060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le manque de places en crèche est un vrai problème pour les jeunes parents qui travaillent. Combien de nouvelles places en crèche envisagez-vous de créer si vous êtes élu ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-012": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "place-publique"
+    ],
+    "title": "Transports en commun",
+    "created_at": {
+      "_seconds": 1742342400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-012/messages/msg-012-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742342460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les transports en commun à Bourg-en-Bresse sont insuffisants, surtout les week-ends et en soirée. Prévoyez-vous d'augmenter la fréquence des bus et d'étendre les horaires pour permettre aux jeunes de rentrer le soir sans voiture ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-013": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "reconquete",
+      "renaissance"
+    ],
+    "title": "Police municipale et éclairage",
+    "created_at": {
+      "_seconds": 1742428800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-013/messages/msg-013-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742428860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Plusieurs rues du centre ne sont pas bien éclairées la nuit, ce qui pose des problèmes de sécurité. Quels sont vos projets pour améliorer l'éclairage public tout en réduisant la consommation d'énergie ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-014": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "la-france-insoumise",
+      "europe-ecologie-les-verts"
+    ],
+    "title": "Budget participatif",
+    "created_at": {
+      "_seconds": 1742515200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-014/messages/msg-014-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742515260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Seriez-vous favorable à la création d'un budget participatif permettant aux habitants de voter directement sur certains projets municipaux ? Si oui, quel serait le montant alloué et comment fonctionnerait le dispositif ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-015": {
+    "municipality_code": "01053",
+    "party_ids": [
+      "renaissance",
+      "place-publique"
+    ],
+    "title": "Emploi local et développement économique",
+    "created_at": {
+      "_seconds": 1742601600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-bourg-015/messages/msg-015-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742601660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le chômage des jeunes reste élevé dans notre ville. Quelles mesures concrètes proposez-vous pour favoriser l'emploi local, attirer des entreprises et soutenir la création d'activités économiques sur le territoire ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-bourg-015/messages/msg-015-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742601720,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Et pour les marchés locaux, y a-t-il des projets pour valoriser les producteurs locaux et les circuits courts ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-001": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "la-france-insoumise",
+      "renaissance"
+    ],
+    "title": "Rénovation urbaine et logement",
+    "created_at": {
+      "_seconds": 1742688000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-001/messages/msg-sq001-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742688060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La rénovation des quartiers anciens est urgente à Saint-Quentin. Quel plan de réhabilitation du bâti ancien proposez-vous, et comment comptez-vous aider les copropriétaires à financer les travaux d'isolation thermique ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-002": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "reconquete",
+      "renaissance"
+    ],
+    "title": "Insécurité et délinquance",
+    "created_at": {
+      "_seconds": 1742774400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-002/messages/msg-sq002-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742774460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La délinquance dans certains quartiers de Saint-Quentin est préoccupante. Combien d'agents de police municipale supplémentaires prévoyez-vous de recruter et quelles sont vos priorités en matière de sécurité publique ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-002/messages/msg-sq002-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742774520,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Pensez-vous que la vidéosurveillance est une réponse efficace à la délinquance, ou préférez-vous d'autres approches préventives ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-003": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "place-publique"
+    ],
+    "title": "Pollution et qualité de l'air",
+    "created_at": {
+      "_seconds": 1742860800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-003/messages/msg-sq003-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742860860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La qualité de l'air est un problème à Saint-Quentin à cause du trafic routier. Que proposez-vous pour réduire la pollution atmosphérique, notamment dans les zones résidentielles proches des axes passants ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-004": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "la-france-insoumise",
+      "place-publique"
+    ],
+    "title": "Services périscolaires",
+    "created_at": {
+      "_seconds": 1742947200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-004/messages/msg-sq004-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742947260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les activités périscolaires ont été réduites ces dernières années. Quel est votre engagement pour le périscolaire, notamment les activités artistiques et sportives après l'école pour les enfants des familles qui n'ont pas les moyens de payer des cours privés ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-004/messages/msg-sq004-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1742947320,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Y a-t-il des projets pour ouvrir de nouveaux centres de loisirs dans les quartiers défavorisés ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-005": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "renaissance",
+      "reconquete"
+    ],
+    "title": "Dette municipale et gestion des finances",
+    "created_at": {
+      "_seconds": 1743033600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-005/messages/msg-sq005-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743033660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La dette de la ville est importante. Comment comptez-vous gérer les finances municipales pour investir dans les services publics sans creuser davantage le déficit ? Quelles économies envisagez-vous et sur quels postes ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-006": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "la-france-insoumise"
+    ],
+    "title": "Arbres et canopée urbaine",
+    "created_at": {
+      "_seconds": 1743120000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-006/messages/msg-sq006-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743120060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les étés sont de plus en plus chauds et les rues manquent cruellement d'arbres. Quel programme de plantation d'arbres en ville comptez-vous mettre en œuvre pour lutter contre les canicules et créer des îlots de fraîcheur ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-007": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "renaissance",
+      "place-publique"
+    ],
+    "title": "Marché hebdomadaire et commerces",
+    "created_at": {
+      "_seconds": 1743206400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-007/messages/msg-sq007-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743206460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le marché hebdomadaire est un lieu de vie essentiel pour notre ville, mais il perd des commerçants chaque année. Que ferez-vous pour le redynamiser et attirer de nouveaux exposants, notamment des producteurs locaux ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-007/messages/msg-sq007-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743206520,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Avez-vous des projets pour développer une halle couverte permanente pour les producteurs locaux ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-008": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "la-france-insoumise",
+      "renaissance"
+    ],
+    "title": "Patrimoine historique",
+    "created_at": {
+      "_seconds": 1743292800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-008/messages/msg-sq008-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743292860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Saint-Quentin a un patrimoine architectural remarquable mais plusieurs bâtiments sont en mauvais état. Quels sont vos projets pour la restauration et la mise en valeur du patrimoine historique local, notamment la basilique ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-009": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "reconquete",
+      "renaissance"
+    ],
+    "title": "Parking et stationnement",
+    "created_at": {
+      "_seconds": 1743379200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-009/messages/msg-sq009-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743379260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le problème du stationnement en centre-ville est très irritant. Prévoyez-vous la construction de nouveaux parkings ou la réorganisation de l'espace pour faciliter l'accès aux commerces ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-010": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "renaissance"
+    ],
+    "title": "PLU et densification",
+    "created_at": {
+      "_seconds": 1743465600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-010/messages/msg-sq010-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743465660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Quelle est votre position sur la révision du PLU ? Certains quartiers pavillonnaires sont menacés par des projets de densification que les riverains ne veulent pas. Comment comptez-vous concilier le besoin de logements et la préservation du cadre de vie ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-010/messages/msg-sq010-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743465720,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Pensez-vous que la construction en hauteur est la bonne solution pour répondre à la demande de logements abordables ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-011": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "la-france-insoumise",
+      "place-publique"
+    ],
+    "title": "Impôts locaux et taxe d'habitation",
+    "created_at": {
+      "_seconds": 1743552000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-011/messages/msg-sq011-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743552060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Depuis la suppression de la taxe d'habitation, la pression fiscale repose entièrement sur les propriétaires. Allez-vous augmenter la taxe foncière lors du prochain mandat, et si oui dans quelles proportions ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-012": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "reconquete",
+      "la-france-insoumise"
+    ],
+    "title": "École et numérique",
+    "created_at": {
+      "_seconds": 1743638400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-012/messages/msg-sq012-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743638460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Quelle est votre vision pour l'école numérique ? Les équipements informatiques dans les écoles primaires sont vieillissants. Prévoyez-vous un plan de renouvellement du matériel et une formation des enseignants aux outils numériques ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-013": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "renaissance",
+      "europe-ecologie-les-verts"
+    ],
+    "title": "Vélo et mobilité douce",
+    "created_at": {
+      "_seconds": 1743724800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-013/messages/msg-sq013-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743724860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Je suis cycliste et les routes de Saint-Quentin sont très dangereuses pour les vélos. Avez-vous un plan vélo avec un réseau de pistes cyclables sécurisées reliant les quartiers résidentiels au centre-ville et aux zones d'emploi ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-013/messages/msg-sq013-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743724920,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Prévoyez-vous des arceaux vélos supplémentaires et des stations de réparation libre-service ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-014": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "place-publique",
+      "renaissance"
+    ],
+    "title": "Activités pour les jeunes",
+    "created_at": {
+      "_seconds": 1743811200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-014/messages/msg-sq014-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743811260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les jeunes de Saint-Quentin manquent d'activités, surtout pendant les vacances scolaires. Quels projets avez-vous pour ouvrir de nouvelles infrastructures sportives et culturelles adaptées aux adolescents ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-015": {
+    "municipality_code": "02691",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "reconquete"
+    ],
+    "title": "Gestion des déchets et propreté",
+    "created_at": {
+      "_seconds": 1743897600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-saintquentin-015/messages/msg-sq015-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743897660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La propreté des rues laisse à désirer, notamment dans certains quartiers où les dépôts sauvages sont fréquents. Comment comptez-vous renforcer la collecte des déchets et sanctionner les contrevenants qui ne respectent pas les règles de tri ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-saintquentin-015/messages/msg-sq015-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743897720,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Pensez-vous à créer des ressourceries ou déchetteries de quartier pour faciliter le réemploi des objets ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-001": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "renaissance",
+      "europe-ecologie-les-verts"
+    ],
+    "title": "Front de mer et tourisme durable",
+    "created_at": {
+      "_seconds": 1743984000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-001/messages/msg-ab001-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1743984060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le tourisme de masse pose des problèmes sur le front de mer d'Antibes. Comment comptez-vous gérer l'afflux touristique estival tout en préservant le cadre de vie des résidents permanents et la biodiversité marine ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-002": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "reconquete",
+      "renaissance"
+    ],
+    "title": "Sécurité et police municipale",
+    "created_at": {
+      "_seconds": 1744070400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-002/messages/msg-ab002-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744070460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La sécurité à Antibes s'est dégradée ces dernières années. Prévoyez-vous de renforcer les effectifs de la police municipale et d'étendre la vidéoprotection dans les zones sensibles, notamment autour de la vieille ville ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-002/messages/msg-ab002-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744070520,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Que pensez-vous d'une brigade spécialisée dans la lutte contre les incivilités sur les plages pendant la saison estivale ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-003": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "place-publique"
+    ],
+    "title": "Protection du littoral et biodiversité marine",
+    "created_at": {
+      "_seconds": 1744156800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-003/messages/msg-ab003-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744156860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les herbiers de posidonie au large d'Antibes sont menacés par les mouillages anarchiques des bateaux. Quelles mesures concrètes proposez-vous pour protéger la biodiversité marine et les fonds sous-marins ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-004": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "la-france-insoumise",
+      "renaissance"
+    ],
+    "title": "Logement et prix de l'immobilier",
+    "created_at": {
+      "_seconds": 1744243200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-004/messages/msg-ab004-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744243260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le prix de l'immobilier à Antibes est devenu inaccessible pour les jeunes ménages et les travailleurs locaux. Comment comptez-vous favoriser la construction de logements intermédiaires et de logements sociaux pour permettre aux actifs locaux de se loger ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-004/messages/msg-ab004-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744243320,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Y a-t-il des projets pour encadrer les meublés de tourisme type Airbnb qui réduisent le parc locatif pour les résidents permanents ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-005": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "renaissance",
+      "place-publique"
+    ],
+    "title": "École bilingue et enseignement des langues",
+    "created_at": {
+      "_seconds": 1744329600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-005/messages/msg-ab005-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744329660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Antibes accueille beaucoup d'expatriés et de familles internationales. Quels sont vos projets pour renforcer l'enseignement des langues étrangères dans les écoles primaires publiques et soutenir les dispositifs bilingues ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-006": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "reconquete"
+    ],
+    "title": "Circulation et embouteillages",
+    "created_at": {
+      "_seconds": 1744416000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-006/messages/msg-ab006-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744416060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les embouteillages à Antibes sont catastrophiques en été. Quelle est votre stratégie pour fluidifier la circulation, réduire le trafic en centre-ville et développer des alternatives à la voiture individuelle ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-007": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "la-france-insoumise",
+      "europe-ecologie-les-verts"
+    ],
+    "title": "Jardins partagés et agriculture urbaine",
+    "created_at": {
+      "_seconds": 1744502400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-007/messages/msg-ab007-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744502460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Il y a peu de jardins partagés à Antibes alors que la demande est forte. Prévoyez-vous de mettre à disposition des terrains municipaux pour des potagers collectifs et des espaces de jardinage urbain pour les habitants sans jardin ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-007/messages/msg-ab007-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744502520,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Et pour les toits végétalisés sur les bâtiments municipaux, avez-vous un programme en ce sens ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-008": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "renaissance",
+      "reconquete"
+    ],
+    "title": "Fêtes et événements culturels",
+    "created_at": {
+      "_seconds": 1744588800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-008/messages/msg-ab008-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744588860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Antibes est réputée pour ses festivals et sa vie culturelle. Quel budget prévoyez-vous pour soutenir les événements culturels locaux, notamment les festivals de jazz, les expositions et les animations de la vieille ville ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-009": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "la-france-insoumise",
+      "place-publique"
+    ],
+    "title": "Impôts locaux et services publics",
+    "created_at": {
+      "_seconds": 1744675200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-009/messages/msg-ab009-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744675260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les impôts locaux à Antibes sont parmi les plus élevés de la Côte d'Azur. Que comptez-vous faire pour optimiser les dépenses municipales et maintenir un niveau de service public de qualité sans augmenter davantage la pression fiscale ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-010": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "renaissance"
+    ],
+    "title": "Propreté des plages",
+    "created_at": {
+      "_seconds": 1744761600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-010/messages/msg-ab010-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744761660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les plages d'Antibes sont souvent sales après les week-ends estivaux. Quels moyens supplémentaires allez-vous mettre en place pour le nettoyage des plages et la sensibilisation des touristes au respect de l'environnement littoral ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-010/messages/msg-ab010-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744761720,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Avez-vous des projets pour interdire ou limiter les plastiques à usage unique sur les plages et dans les restaurants en bord de mer ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-011": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "reconquete",
+      "renaissance"
+    ],
+    "title": "École et capacité d'accueil",
+    "created_at": {
+      "_seconds": 1744848000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-011/messages/msg-ab011-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744848060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Les écoles primaires d'Antibes sont surchargées avec des classes de 30 élèves. Prévoyez-vous la construction de nouvelles écoles ou l'extension de celles existantes pour améliorer les conditions d'apprentissage des enfants ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-012": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "la-france-insoumise",
+      "renaissance"
+    ],
+    "title": "Vieille ville et patrimoine",
+    "created_at": {
+      "_seconds": 1744934400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-012/messages/msg-ab012-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1744934460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La vieille ville d'Antibes Juan-les-Pins est un trésor patrimonial mais certaines rues sont en mauvais état. Quels investissements prévoyez-vous pour la restauration du patrimoine historique et l'amélioration de l'accessibilité dans la vieille ville ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-013": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "place-publique"
+    ],
+    "title": "Transition énergétique des bâtiments municipaux",
+    "created_at": {
+      "_seconds": 1745020800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-013/messages/msg-ab013-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745020860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Quels projets avez-vous pour réduire la consommation énergétique des bâtiments municipaux ? Prévoyez-vous l'installation de panneaux solaires sur les toits des écoles et bâtiments publics pour réduire la facture énergétique de la ville ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-014": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "renaissance",
+      "reconquete"
+    ],
+    "title": "Port de plaisance et économie maritime",
+    "created_at": {
+      "_seconds": 1745107200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-014/messages/msg-ab014-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745107260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le port Vauban est le plus grand port de plaisance de Méditerranée. Quels investissements prévoyez-vous pour moderniser les équipements portuaires, développer les services et attirer davantage d'anneaux pour les résidents locaux plutôt que les méga-yachts ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-014/messages/msg-ab014-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745107320,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Envisagez-vous des mesures pour réduire la pollution liée aux bateaux dans le port ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-antibes-015": {
+    "municipality_code": "06004",
+    "party_ids": [
+      "la-france-insoumise",
+      "place-publique"
+    ],
+    "title": "Aide sociale et CCAS",
+    "created_at": {
+      "_seconds": 1745193600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-antibes-015/messages/msg-ab015-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745193660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La précarité touche de plus en plus de personnes à Antibes, même des actifs. Quels moyens supplémentaires allez-vous allouer au CCAS pour renforcer l'aide alimentaire, l'accompagnement social et le soutien aux personnes âgées isolées ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-001": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "la-france-insoumise",
+      "renaissance"
+    ],
+    "title": "Transport en commun et réseau de métro",
+    "created_at": {
+      "_seconds": 1745280000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-001/messages/msg-mrs001-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745280060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le réseau de transports en commun de Marseille est insuffisant pour une ville de cette taille. Quels sont vos projets pour étendre le réseau de métro, de tramway et améliorer la fréquence des bus dans les quartiers excentrés ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-001/messages/msg-mrs001-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745280120,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Prévoyez-vous la gratuité des transports en commun pour certaines catégories de la population, comme les jeunes ou les demandeurs d'emploi ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-002": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "reconquete",
+      "renaissance"
+    ],
+    "title": "Sécurité dans les quartiers nord",
+    "created_at": {
+      "_seconds": 1745366400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-002/messages/msg-mrs002-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745366460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La violence dans certains quartiers nord de Marseille est insupportable. Quelles mesures concrètes proposez-vous pour lutter contre les trafics de drogue, renforcer la présence policière et redonner confiance aux habitants qui subissent ces violences au quotidien ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-003": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "place-publique"
+    ],
+    "title": "Pollution industrielle et qualité de l'air",
+    "created_at": {
+      "_seconds": 1745452800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-003/messages/msg-mrs003-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745452860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La pollution industrielle dans la zone de Fos-sur-Mer affecte la qualité de l'air de toute la région. Que comptez-vous faire pour contraindre les industriels à réduire leurs émissions et protéger la santé des habitants des communes voisines ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-004": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "la-france-insoumise",
+      "place-publique"
+    ],
+    "title": "Logement social et copropriétés dégradées",
+    "created_at": {
+      "_seconds": 1745539200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-004/messages/msg-mrs004-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745539260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Marseille a une crise du logement sévère avec des copropriétés dégradées dans le centre-ville qui sont dangereuses pour les occupants. Quel plan d'urgence proposez-vous pour traiter les immeubles insalubres et reloger les familles dans des conditions dignes ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-004/messages/msg-mrs004-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745539320,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Comment comptez-vous financer la rénovation des copropriétés dégradées sans faire supporter le coût aux copropriétaires déjà en difficulté ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-005": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "renaissance",
+      "europe-ecologie-les-verts"
+    ],
+    "title": "Calanques et tourisme de nature",
+    "created_at": {
+      "_seconds": 1745625600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-005/messages/msg-mrs005-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745625660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le parc national des Calanques est fragilisé par la surfréquentation touristique. Comment comptez-vous mieux réguler l'accès aux Calanques tout en permettant aux Marseillais de profiter de ce patrimoine naturel exceptionnel ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-006": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "la-france-insoumise",
+      "renaissance"
+    ],
+    "title": "Budget municipal et dette",
+    "created_at": {
+      "_seconds": 1745712000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-006/messages/msg-mrs006-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745712060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "La dette de Marseille est très élevée et limite les capacités d'investissement. Quelles sont vos priorités budgétaires pour le prochain mandat et comment comptez-vous financer les grands projets sans creuser davantage l'endettement de la ville ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-007": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "reconquete",
+      "renaissance"
+    ],
+    "title": "École et réfection des bâtiments scolaires",
+    "created_at": {
+      "_seconds": 1745798400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-007/messages/msg-mrs007-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745798460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "L'état des écoles primaires marseillaises est scandaleux, avec des classes insalubres, des toits qui fuient et du mobilier scolaire cassé. Quel est votre plan d'urgence pour la rénovation des bâtiments scolaires et dans quel délai comptez-vous traiter tous les cas identifiés ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-007/messages/msg-mrs007-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745798520,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Comment expliquez-vous que des enfants aient dû être scolarisés dans des préfabriqués pendant des années alors que la mairie disposait de budgets ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-008": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "la-france-insoumise"
+    ],
+    "title": "Tri des déchets et propreté urbaine",
+    "created_at": {
+      "_seconds": 1745884800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-008/messages/msg-mrs008-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745884860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Marseille souffre d'une image de ville sale à cause des ordures qui s'accumulent dans certains quartiers. Que proposez-vous pour améliorer la collecte des déchets, développer le tri sélectif et mettre fin aux dépôts sauvages qui enlaidissent la ville ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-009": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "renaissance",
+      "place-publique"
+    ],
+    "title": "Culture et MuCEM",
+    "created_at": {
+      "_seconds": 1745971200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-009/messages/msg-mrs009-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1745971260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Depuis Marseille-Provence 2013, la ville a beaucoup investi dans la culture avec le MuCEM et la Villa Méditerranée. Comment comptez-vous faire vivre cet héritage culturel et rendre l'offre culturelle accessible à tous les Marseillais, y compris dans les quartiers populaires ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-010": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "la-france-insoumise",
+      "reconquete"
+    ],
+    "title": "Emploi et économie sociale",
+    "created_at": {
+      "_seconds": 1746057600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-010/messages/msg-mrs010-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746057660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le chômage à Marseille est structurellement plus élevé que la moyenne nationale. Quels dispositifs d'insertion professionnelle et de développement économique local proposez-vous pour créer des emplois durables dans les quartiers prioritaires de la ville ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-010/messages/msg-mrs010-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746057720,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Comment comptez-vous attirer de nouvelles entreprises tout en soutenant l'économie sociale et solidaire qui répond aux besoins des habitants les plus précaires ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-011": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "europe-ecologie-les-verts",
+      "renaissance"
+    ],
+    "title": "Espaces verts et forêts urbaines",
+    "created_at": {
+      "_seconds": 1746144000,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-011/messages/msg-mrs011-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746144060,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Marseille est l'une des villes les moins bien dotées en espaces verts par habitant en France. Quels projets avez-vous pour créer de nouveaux parcs et espaces naturels accessibles à tous, notamment dans les arrondissements densément peuplés du nord ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-012": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "reconquete",
+      "place-publique"
+    ],
+    "title": "Éclairage public et entretien voirie",
+    "created_at": {
+      "_seconds": 1746230400,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-012/messages/msg-mrs012-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746230460,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Dans notre quartier, beaucoup de lampadaires sont en panne depuis des semaines sans que la mairie intervienne. Est-ce que vous prévoyez un plan de maintenance préventive de l'éclairage public et un numéro d'urgence pour signaler les pannes rapidement ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-013": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "la-france-insoumise",
+      "europe-ecologie-les-verts"
+    ],
+    "title": "Pistes cyclables et plan vélo",
+    "created_at": {
+      "_seconds": 1746316800,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-013/messages/msg-mrs013-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746316860,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Marseille est très en retard sur le vélo par rapport à d'autres grandes villes françaises. Quel plan cyclable proposez-vous avec un calendrier précis et un budget dédié pour créer un réseau cohérent de pistes cyclables sécurisées sur tout le territoire marseillais ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-013/messages/msg-mrs013-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746316920,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Allez-vous développer un service de vélo en libre-service étendu à tous les arrondissements, pas seulement au centre ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-014": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "renaissance",
+      "reconquete"
+    ],
+    "title": "Fiscalité locale et investissements",
+    "created_at": {
+      "_seconds": 1746403200,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-014/messages/msg-mrs014-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746403260,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Comment comptez-vous financer les nombreux investissements nécessaires à Marseille (écoles, transports, sécurité) sans augmenter les impôts locaux qui pèsent déjà lourd sur les ménages marseillais ? Avez-vous identifié des sources de financement innovantes ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-015": {
+    "municipality_code": "13055",
+    "party_ids": [
+      "place-publique",
+      "la-france-insoumise"
+    ],
+    "title": "Crèches et petite enfance",
+    "created_at": {
+      "_seconds": 1746489600,
+      "_nanoseconds": 0
+    },
+    "scope": "local"
+  },
+  "sess-marseille-015/messages/msg-mrs015-u1": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746489660,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Le manque de places en crèche et en halte-garderie à Marseille force de nombreux parents, surtout des mères, à réduire leur activité professionnelle. Quel est votre plan pour doubler les capacités d'accueil de la petite enfance au cours du prochain mandat ?"
+      }
+    ],
+    "quick_replies": []
+  },
+  "sess-marseille-015/messages/msg-mrs015-u2": {
+    "role": "user",
+    "created_at": {
+      "_seconds": 1746489720,
+      "_nanoseconds": 0
+    },
+    "messages": [
+      {
+        "content": "Envisagez-vous des crèches à horaires atypiques pour les parents qui travaillent en décalé (nuit, week-end) ?"
+      }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-001": {
+    "municipality_code": "75056",
+    "party_ids": ["renaissance", "europe-ecologie-les-verts", "la-france-insoumise"],
+    "title": "Nouvelles pistes cyclables et ZFE",
+    "created_at": { "_seconds": 1710000000, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-001/messages/msg-p001-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710000060, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Quelles sont vos propositions concrètes pour développer le réseau cyclable à Paris, notamment dans les arrondissements périphériques comme le 19e et le 20e ? La ZFE est-elle compatible avec une ville vraiment cyclable ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-002": {
+    "municipality_code": "75056",
+    "party_ids": ["la-france-insoumise", "place-publique"],
+    "title": "Loyers et encadrement Airbnb",
+    "created_at": { "_seconds": 1710000400, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-002/messages/msg-p002-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710000460, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Les loyers à Paris sont devenus inaccessibles pour les classes moyennes. Que proposez-vous face à la prolifération des meublés touristiques type Airbnb qui vident les quartiers de leurs habitants ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-002/messages/msg-p002-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710000520, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Faut-il selon vous interdire totalement les locations courte durée dans certains arrondissements ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-003": {
+    "municipality_code": "75056",
+    "party_ids": ["europe-ecologie-les-verts", "place-publique", "renaissance"],
+    "title": "Propreté des rues et dératisation",
+    "created_at": { "_seconds": 1710000800, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-003/messages/msg-p003-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710000860, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Le problème des rats est devenu insupportable dans mon quartier (11e arr.). Les poubelles débordent et la dératisation semble inefficace. Quelles solutions concrètes proposez-vous pour nettoyer Paris ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-004": {
+    "municipality_code": "75056",
+    "party_ids": ["reconquete", "renaissance"],
+    "title": "Sécurité gare du Nord et pickpockets",
+    "created_at": { "_seconds": 1710001200, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-004/messages/msg-p004-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710001260, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "La situation autour de la gare du Nord est devenue très difficile — pickpockets, incivilités, sentiment d'insécurité. Quelles mesures concrètes proposez-vous pour que les Parisiens et les touristes s'y sentent en sécurité ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-004/messages/msg-p004-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710001320, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Êtes-vous favorables à un renforcement de la vidéosurveillance dans ce secteur ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-005": {
+    "municipality_code": "75056",
+    "party_ids": ["la-france-insoumise", "europe-ecologie-les-verts"],
+    "title": "Dette de Paris et héritage des JO",
+    "created_at": { "_seconds": 1710001600, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-005/messages/msg-p005-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710001660, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "La dette de la ville de Paris a explosé après les Jeux Olympiques. Comment envisagez-vous de gérer cet héritage financier tout en maintenant les services publics municipaux de qualité ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-006": {
+    "municipality_code": "75056",
+    "party_ids": ["renaissance", "place-publique", "europe-ecologie-les-verts"],
+    "title": "Notre-Dame et patrimoine parisien",
+    "created_at": { "_seconds": 1710002000, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-006/messages/msg-p006-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710002060, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Avec la réouverture de Notre-Dame, comment la ville de Paris va-t-elle gérer l'afflux de touristes tout en protégeant le patrimoine du quartier et la qualité de vie des riverains ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-007": {
+    "municipality_code": "75056",
+    "party_ids": ["reconquete", "la-france-insoumise", "renaissance"],
+    "title": "Commerces de proximité et grandes surfaces",
+    "created_at": { "_seconds": 1710002400, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-007/messages/msg-p007-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710002460, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Dans mon quartier (15e arr.), de nombreux commerces de proximité ferment et sont remplacés par des grandes enseignes ou des dark kitchens. Quelles politiques envisagez-vous pour protéger l'artisanat et les petits commerçants parisiens ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-008": {
+    "municipality_code": "75056",
+    "party_ids": ["europe-ecologie-les-verts", "place-publique"],
+    "title": "Crèches et périscolaire à Paris",
+    "created_at": { "_seconds": 1710002800, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-008/messages/msg-p008-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710002860, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Trouver une place en crèche à Paris relève du parcours du combattant. Quelles sont vos propositions pour augmenter l'offre d'accueil des jeunes enfants et améliorer le périscolaire ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-008/messages/msg-p008-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710002920, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Envisagez-vous des crèches à horaires élargis pour les parents qui travaillent en horaires décalés ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-009": {
+    "municipality_code": "75056",
+    "party_ids": ["la-france-insoumise", "reconquete"],
+    "title": "Périphérique : fermeture ou réouverture ?",
+    "created_at": { "_seconds": 1710003200, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-009/messages/msg-p009-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710003260, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Le débat sur la fermeture partielle du périphérique divise les Parisiens. Quelle est votre position sur l'avenir du boulevard périphérique — maintien, réduction de vitesse, ou transformation en boulevard urbain ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-010": {
+    "municipality_code": "75056",
+    "party_ids": ["renaissance", "europe-ecologie-les-verts", "place-publique"],
+    "title": "Logements sociaux et densification",
+    "created_at": { "_seconds": 1710003600, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-010/messages/msg-p010-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710003660, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Paris compte 25 % de logements sociaux mais les listes d'attente restent interminables. Faut-il densifier davantage la ville, construire en hauteur ou miser sur la rénovation du parc existant ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-011": {
+    "municipality_code": "75056",
+    "party_ids": ["reconquete", "renaissance"],
+    "title": "Caméras de surveillance et libertés",
+    "created_at": { "_seconds": 1710004000, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-011/messages/msg-p011-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710004060, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Paris a déployé des milliers de caméras pour les JO. Faut-il les conserver, les étendre, ou au contraire limiter la surveillance au nom des libertés individuelles ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-011/messages/msg-p011-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710004120, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Quelle est votre position sur la reconnaissance faciale dans l'espace public ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-012": {
+    "municipality_code": "75056",
+    "party_ids": ["la-france-insoumise", "place-publique", "europe-ecologie-les-verts"],
+    "title": "Budget participatif et démocratie locale",
+    "created_at": { "_seconds": 1710004400, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-012/messages/msg-p012-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710004460, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Le budget participatif de Paris est l'un des plus importants au monde. Comptez-vous l'élargir, le réformer ? Comment mieux associer les Parisiens aux décisions municipales ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-013": {
+    "municipality_code": "75056",
+    "party_ids": ["europe-ecologie-les-verts", "renaissance"],
+    "title": "Baignade dans la Seine post-JO",
+    "created_at": { "_seconds": 1710004800, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-013/messages/msg-p013-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710004860, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Après l'épisode des JO et les problèmes de qualité de l'eau, est-ce que la baignade dans la Seine sera réellement possible et sécurisée pour les Parisiens d'ici 2027 ? Quelles mesures concrètes prévoyez-vous ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-014": {
+    "municipality_code": "75056",
+    "party_ids": ["reconquete", "la-france-insoumise"],
+    "title": "Marchés parisiens et commerces alimentaires",
+    "created_at": { "_seconds": 1710005200, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-014/messages/msg-p014-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710005260, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Les marchés de plein air sont un patrimoine vivant de Paris (Aligre, Raspail, Belleville...). Comment comptez-vous les soutenir face à la concurrence des grandes surfaces et du commerce en ligne ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-015": {
+    "municipality_code": "75056",
+    "party_ids": ["place-publique", "europe-ecologie-les-verts", "la-france-insoumise"],
+    "title": "Pollution de l'air et îlots de chaleur",
+    "created_at": { "_seconds": 1710005600, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-015/messages/msg-p015-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710005660, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Les étés parisiens sont de plus en plus chauds et la pollution de l'air reste un problème de santé publique majeur. Quelles actions concrètes proposez-vous contre les îlots de chaleur urbains et pour améliorer la qualité de l'air ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-015/messages/msg-p015-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710005720, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Prévoyez-vous de végétaliser davantage les toits et les façades des bâtiments parisiens ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-016": {
+    "municipality_code": "75056",
+    "party_ids": ["renaissance", "reconquete"],
+    "title": "Emploi et attractivité économique de Paris",
+    "created_at": { "_seconds": 1710006000, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-016/messages/msg-p016-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710006060, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Depuis le Brexit et la pandémie, Paris a regagné des entreprises. Comment maintenir cette attractivité économique tout en préservant la mixité sociale et en évitant la gentrification excessive ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-017": {
+    "municipality_code": "75056",
+    "party_ids": ["la-france-insoumise", "place-publique"],
+    "title": "Universités et logement étudiant",
+    "created_at": { "_seconds": 1710006400, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-017/messages/msg-p017-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710006460, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Les étudiants sont de plus en plus chassés du centre de Paris par les loyers. Quelles politiques municipales pour favoriser le logement étudiant abordable et améliorer la vie universitaire dans la capitale ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-018": {
+    "municipality_code": "75056",
+    "party_ids": ["europe-ecologie-les-verts", "renaissance", "reconquete"],
+    "title": "Trottinettes et mobilités douces",
+    "created_at": { "_seconds": 1710006800, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-018/messages/msg-p018-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710006860, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Paris a banni les trottinettes en libre-service après le référendum de 2023. Était-ce la bonne décision ? Quelles alternatives de mobilité douce souhaitez-vous développer pour les courtes distances ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-019": {
+    "municipality_code": "75056",
+    "party_ids": ["la-france-insoumise", "europe-ecologie-les-verts"],
+    "title": "Cantines scolaires et alimentation",
+    "created_at": { "_seconds": 1710007200, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-019/messages/msg-p019-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710007260, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "La qualité des repas dans les cantines scolaires parisiennes est inégale selon les arrondissements. Quelles sont vos ambitions pour la restauration scolaire — bio, local, végétarien, tarification sociale ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-019/messages/msg-p019-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710007320, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Souhaitez-vous imposer un menu végétarien hebdomadaire dans toutes les cantines municipales ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-020": {
+    "municipality_code": "75056",
+    "party_ids": ["reconquete", "renaissance", "la-france-insoumise"],
+    "title": "Incivilités et respect de l'espace public",
+    "created_at": { "_seconds": 1710007600, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-020/messages/msg-p020-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710007660, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Les incivilités dans les transports, les parcs et les rues parisiennes semblent augmenter. Dépôts sauvages, bruit, agressions verbales... Comment comptez-vous restaurer le respect de l'espace public ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-021": {
+    "municipality_code": "75056",
+    "party_ids": ["place-publique", "europe-ecologie-les-verts"],
+    "title": "Bibliothèques et culture de proximité",
+    "created_at": { "_seconds": 1710008000, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-021/messages/msg-p021-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710008060, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Le réseau de bibliothèques municipales parisiennes est riche mais certaines ont des horaires d'ouverture insuffisants. Quels sont vos projets pour la culture de proximité, les médiathèques et l'accès à la culture pour tous ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-022": {
+    "municipality_code": "75056",
+    "party_ids": ["renaissance", "la-france-insoumise", "reconquete"],
+    "title": "Grand Paris Express et desserte des banlieues",
+    "created_at": { "_seconds": 1710008400, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-022/messages/msg-p022-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710008460, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Le Grand Paris Express accuse encore des retards. Quel rôle la ville de Paris doit-elle jouer pour accélérer ce chantier et mieux connecter la banlieue à la capitale ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-022/messages/msg-p022-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710008520, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Faut-il selon vous réformer le financement d'Île-de-France Mobilités pour garantir les projets ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-023": {
+    "municipality_code": "75056",
+    "party_ids": ["europe-ecologie-les-verts", "place-publique"],
+    "title": "Rénovation thermique du parc immobilier",
+    "created_at": { "_seconds": 1710008800, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-023/messages/msg-p023-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710008860, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Des milliers de logements parisiens sont des passoires thermiques, notamment dans les copropriétés anciennes. Quelles aides municipales envisagez-vous pour financer la rénovation énergétique et réduire les charges des locataires ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-024": {
+    "municipality_code": "75056",
+    "party_ids": ["reconquete", "la-france-insoumise"],
+    "title": "Impôts locaux et finances de la ville",
+    "created_at": { "_seconds": 1710009200, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-024/messages/msg-p024-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710009260, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "La taxe foncière parisienne a fortement augmenté ces dernières années. Est-ce inévitable pour financer les services publics ou y a-t-il des économies à réaliser dans la gestion de la ville ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-024/messages/msg-p024-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710009320, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Quels postes budgétaires réduiriez-vous en priorité pour alléger la pression fiscale sur les Parisiens ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-025": {
+    "municipality_code": "75056",
+    "party_ids": ["place-publique", "renaissance", "europe-ecologie-les-verts"],
+    "title": "Festivals et vie culturelle nocturne",
+    "created_at": { "_seconds": 1710009600, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-025/messages/msg-p025-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710009660, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Paris a perdu des lieux de culture et de vie nocturne ces dernières années — fermetures de salles, gentrification, plaintes des riverains. Quelles politiques pour soutenir la nuit parisienne et préserver sa réputation mondiale en matière de culture ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-026": {
+    "municipality_code": "75056",
+    "party_ids": ["la-france-insoumise", "place-publique"],
+    "title": "Tourisme de masse et qualité de vie",
+    "created_at": { "_seconds": 1710010000, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-026/messages/msg-p026-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710010060, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Paris attire 50 millions de touristes par an. Comment gérer les impacts sur la qualité de vie des habitants — saturation des transports, hausse des prix, perte d'identité des quartiers populaires comme Montmartre ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-027": {
+    "municipality_code": "75056",
+    "party_ids": ["reconquete", "renaissance", "europe-ecologie-les-verts"],
+    "title": "Embouteillages et stationnement",
+    "created_at": { "_seconds": 1710010400, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-027/messages/msg-p027-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710010460, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "La suppression de places de stationnement et les nouvelles pistes cyclables entraînent des embouteillages monstres aux heures de pointe. Comment équilibrer la place de la voiture et des autres modes de transport à Paris ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-027/messages/msg-p027-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710010520, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Envisagez-vous un péage urbain à l'entrée de Paris ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-028": {
+    "municipality_code": "75056",
+    "party_ids": ["europe-ecologie-les-verts", "la-france-insoumise"],
+    "title": "Espaces verts et végétalisation de Paris",
+    "created_at": { "_seconds": 1710010800, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-028/messages/msg-p028-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710010860, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Paris manque cruellement d'espaces verts par rapport aux autres grandes capitales européennes. Quels projets avez-vous pour végétaliser la ville — parcs, forêt urbaine, jardins partagés — et améliorer la biodiversité en ville ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-029": {
+    "municipality_code": "75056",
+    "party_ids": ["place-publique", "reconquete", "renaissance"],
+    "title": "Numérique et services publics digitaux",
+    "created_at": { "_seconds": 1710011200, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-029/messages/msg-p029-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710011260, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "La dématérialisation des services publics exclut souvent les personnes âgées et les personnes sans maîtrise du numérique. Comment la ville de Paris peut-elle mieux accompagner ces publics tout en modernisant ses services ?" }
+    ],
+    "quick_replies": []
+  },
+
+  "sess-paris-030": {
+    "municipality_code": "75056",
+    "party_ids": ["la-france-insoumise", "europe-ecologie-les-verts", "place-publique"],
+    "title": "Justice sociale et inégalités entre arrondissements",
+    "created_at": { "_seconds": 1710011600, "_nanoseconds": 0 },
+    "scope": "local"
+  },
+  "sess-paris-030/messages/msg-p030-u1": {
+    "role": "user",
+    "created_at": { "_seconds": 1710011660, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Les inégalités entre l'ouest et l'est parisien restent criantes — équipements, propreté, sécurité, transports. Quelles politiques de rééquilibrage territorial proposez-vous pour une Paris plus juste entre ses arrondissements ?" }
+    ],
+    "quick_replies": []
+  },
+  "sess-paris-030/messages/msg-p030-u2": {
+    "role": "user",
+    "created_at": { "_seconds": 1710011720, "_nanoseconds": 0 },
+    "messages": [
+      { "content": "Faut-il selon vous augmenter les budgets alloués aux arrondissements populaires du nord-est parisien ?" }
+    ],
+    "quick_replies": []
   }
 }

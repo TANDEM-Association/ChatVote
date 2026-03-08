@@ -15,10 +15,10 @@ services:
       - "9099:9099"
     healthcheck:
       test: ["CMD-SHELL", "curl -sf http://localhost:8081/ > /dev/null && curl -sf http://localhost:9099/ > /dev/null"]
-      interval: 5s
-      timeout: 3s
-      retries: 12
-      start_period: 60s
+      interval: 10s
+      timeout: 5s
+      retries: 24
+      start_period: 120s
 
   qdrant:
     image: qdrant/qdrant:latest

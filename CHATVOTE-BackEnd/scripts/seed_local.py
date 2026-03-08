@@ -55,6 +55,7 @@ FIRESTORE_COLLECTIONS = {
     "municipalities": "municipalities.json",
     "electoral_lists": "electoral_lists.json",
     "system_status": "system_status.json",
+    "chat_sessions": "chat_sessions.json",
 }
 
 

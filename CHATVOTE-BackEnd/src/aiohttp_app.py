@@ -697,66 +697,100 @@ async def experiment_topic_stats(request):
     })
 
 
-@routes.get(f"{route_prefix}/experiment/bertopic-analysis")
-async def experiment_bertopic_analysis(request):
-    """Run BERTopic clustering on user chat messages from Firestore."""
+async def _collect_user_messages(
+    municipality_code: str | None = None,
+) -> tuple[list[dict], set[str]]:
+    """Collect user messages from Firestore, optionally filtered by commune.
+
+    Returns (messages, session_ids) where each message has text, session_id,
+    party_ids, chat_title.
+    """
+    query = async_db.collection("chat_sessions")
+    if municipality_code:
+        query = query.where("municipality_code", "==", municipality_code)
+
+    session_ids: set[str] = set()
+    user_messages: list[dict] = []
+    async for session in query.stream():
+        session_data = session.to_dict() or {}
+        session_id = session.id
+        session_ids.add(session_id)
+        party_ids = session_data.get("party_ids", [])
+        title = session_data.get("title", "")
+
+        messages_ref = (
+            async_db.collection("chat_sessions")
+            .document(session_id)
+            .collection("messages")
+            .order_by("created_at")
+        )
+        async for msg_doc in messages_ref.stream():
+            msg_data = msg_doc.to_dict() or {}
+            if msg_data.get("role") != "user":
+                continue
+            for item in msg_data.get("messages", []):
+                content = item.get("content", "").strip()
+                if content and len(content) > 10:
+                    user_messages.append({
+                        "text": content,
+                        "session_id": session_id,
+                        "party_ids": party_ids,
+                        "chat_title": title,
+                    })
+    return user_messages, session_ids
+
+
+async def _run_bertopic_analysis(
+    user_messages: list[dict],
+    session_ids: set[str],
+    cache_key: str,
+) -> dict:
+    """Run BERTopic on user messages with Firestore result caching.
+
+    Checks bertopic_cache/{cache_key} for a previous result. If the set of
+    session_ids hasn't changed, returns the cached result. Otherwise re-runs
+    BERTopic and stores the new result.
+    """
     import asyncio
 
     try:
-        from bertopic import BERTopic
+        from bertopic import BERTopic  # noqa: F811
     except ImportError:
-        return web.json_response(
-            {"status": "error", "message": "bertopic not installed"}, status=500
-        )
+        return {"status": "error", "message": "bertopic not installed", "topics": []}
 
+    if len(user_messages) < 5:
+        return {
+            "status": "insufficient_data",
+            "message": f"Only {len(user_messages)} user messages found. Need at least 5.",
+            "total_messages": len(user_messages),
+            "topics": [],
+        }
+
+    # ── Check cache ──
+    sorted_ids = sorted(session_ids)
     try:
-        # 1. Fetch all chat sessions and their user messages from Firestore
-        sessions_ref = async_db.collection("chat_sessions")
-        sessions = sessions_ref.stream()
+        cache_ref = async_db.collection("bertopic_cache").document(cache_key)
+        cache_doc = await cache_ref.get()
+        if cache_doc.exists:
+            cached = cache_doc.to_dict() or {}
+            if cached.get("session_ids") == sorted_ids:
+                logger.info(f"BERTopic cache hit for '{cache_key}' ({len(sorted_ids)} sessions unchanged)")
+                return cached.get("result", {})
+            else:
+                logger.info(
+                    f"BERTopic cache miss for '{cache_key}': "
+                    f"{len(cached.get('session_ids', []))} cached vs {len(sorted_ids)} current sessions"
+                )
+    except Exception as e:
+        logger.warning(f"BERTopic cache read failed: {e}")
 
-        user_messages: list[dict] = []
-        async for session in sessions:
-            session_data = session.to_dict() or {}
-            session_id = session.id
-            party_ids = session_data.get("party_ids", [])
-            title = session_data.get("title", "")
-
-            messages_ref = (
-                async_db.collection("chat_sessions")
-                .document(session_id)
-                .collection("messages")
-                .order_by("created_at")
-            )
-            msgs = messages_ref.stream()
-            async for msg_doc in msgs:
-                msg_data = msg_doc.to_dict() or {}
-                if msg_data.get("role") != "user":
-                    continue
-                for item in msg_data.get("messages", []):
-                    content = item.get("content", "").strip()
-                    if content and len(content) > 10:
-                        user_messages.append({
-                            "text": content,
-                            "session_id": session_id,
-                            "party_ids": party_ids,
-                            "chat_title": title,
-                        })
-
-        if len(user_messages) < 5:
-            return web.json_response({
-                "status": "insufficient_data",
-                "message": f"Only {len(user_messages)} user messages found. Need at least 5.",
-                "total_messages": len(user_messages),
-                "topics": [],
-            })
-
-        # 2. Run BERTopic (CPU, in thread pool to avoid blocking)
+    # ── Run BERTopic ──
+    try:
         texts = [m["text"] for m in user_messages]
 
-        def run_bertopic():
+        def _run():
             from sklearn.feature_extraction.text import CountVectorizer
 
-            # Use lightweight settings suitable for small corpora
             topic_model = BERTopic(
                 language="french",
                 min_topic_size=max(2, len(texts) // 20),
@@ -766,27 +800,19 @@ async def experiment_bertopic_analysis(request):
                 ),
                 calculate_probabilities=False,
             )
-            topics, probs = topic_model.fit_transform(texts)
+            topics, _ = topic_model.fit_transform(texts)
             return topic_model, topics
 
         loop = asyncio.get_event_loop()
-        topic_model, topics = await loop.run_in_executor(None, run_bertopic)
+        topic_model, topics = await loop.run_in_executor(None, _run)
 
-        # 3. Build response
         topic_info = topic_model.get_topic_info()
         topics_list = []
         for _, row in topic_info.iterrows():
             topic_id = int(row["Topic"])
-            if topic_id == -1:
-                label = "Outliers"
-            else:
-                label = row.get("Name", f"Topic {topic_id}")
-
-            # Get representative words
+            label = "Outliers" if topic_id == -1 else row.get("Name", f"Topic {topic_id}")
             topic_words = topic_model.get_topic(topic_id)
             words = [{"word": w, "weight": round(s, 4)} for w, s in (topic_words or [])]
-
-            # Get representative docs for this topic
             doc_indices = [i for i, t in enumerate(topics) if t == topic_id]
             representative_msgs = [
                 {
@@ -796,8 +822,6 @@ async def experiment_bertopic_analysis(request):
                 }
                 for i in doc_indices[:5]
             ]
-
-            # Party distribution for this topic
             party_counts: dict[str, int] = {}
             for i in doc_indices:
                 for pid in user_messages[i].get("party_ids", []):
@@ -813,18 +837,175 @@ async def experiment_bertopic_analysis(request):
                 "by_party": party_counts,
             })
 
-        return web.json_response({
+        result = {
             "status": "success",
             "total_messages": len(texts),
             "num_topics": len(topics_list),
             "topics": sorted(topics_list, key=lambda x: x["count"], reverse=True),
-        })
+        }
+
+        # ── Store in cache ──
+        try:
+            await cache_ref.set({"session_ids": sorted_ids, "result": result})
+            logger.info(f"BERTopic result cached for '{cache_key}' ({len(sorted_ids)} sessions)")
+        except Exception as e:
+            logger.warning(f"BERTopic cache write failed: {e}")
+
+        return result
 
     except Exception as e:
-        logger.error(f"BERTopic analysis failed: {e}", exc_info=True)
-        return web.json_response(
-            {"status": "error", "message": str(e)}, status=500
+        logger.error(f"BERTopic failed for '{cache_key}': {e}", exc_info=True)
+        return {"status": "error", "message": str(e), "topics": []}
+
+
+@routes.get(f"{route_prefix}/experiment/bertopic-analysis")
+async def experiment_bertopic_analysis(request):
+    """Run BERTopic clustering on user chat messages from Firestore."""
+    user_messages, session_ids = await _collect_user_messages()
+    result = await _run_bertopic_analysis(user_messages, session_ids, cache_key="global")
+    return web.json_response(result, status=500 if result.get("status") == "error" else 200)
+
+
+@routes.get(f"{route_prefix}/commune/{{commune_code}}/dashboard")
+async def commune_dashboard(request):
+    """Return aggregated dashboard data for a single commune."""
+    from collections import defaultdict
+    from qdrant_client.models import Filter, FieldCondition, MatchValue
+    from src.models.chunk_metadata import THEME_TAXONOMY
+
+    commune_code = request.match_info["commune_code"]
+
+    # ── 1. Commune info from Firestore ──────────────────────────────────────
+    commune_info: dict = {"code": commune_code}
+    try:
+        muni_query = async_db.collection("municipalities").where(
+            "code", "==", commune_code
         )
+        muni_docs = muni_query.stream()
+        async for doc in muni_docs:
+            data = doc.to_dict() or {}
+            commune_info["name"] = data.get("nom", data.get("name", ""))
+            postal_codes = data.get("codesPostaux", [])
+            commune_info["postal_code"] = postal_codes[0] if postal_codes else data.get("postal_code", "")
+            epci = data.get("epci", {})
+            commune_info["epci_nom"] = epci.get("nom", "") if isinstance(epci, dict) else data.get("epci_nom", "")
+            break
+    except Exception as e:
+        logger.warning(f"Could not fetch municipality {commune_code}: {e}")
+
+    # ── 2. Electoral lists ───────────────────────────────────────────────────
+    lists: list[dict] = []
+    try:
+        el_doc = await async_db.collection("electoral_lists").document(commune_code).get()
+        if el_doc.exists:
+            el_data = el_doc.to_dict() or {}
+            raw_lists = el_data.get("lists", [])
+            lists = [
+                {
+                    "panel_number": item.get("panel_number"),
+                    "list_label": item.get("list_label", ""),
+                    "list_short_label": item.get("list_short_label", ""),
+                    "head_first_name": item.get("head_first_name", ""),
+                    "head_last_name": item.get("head_last_name", ""),
+                    "nuance_code": item.get("nuance_code", ""),
+                    "nuance_label": item.get("nuance_label", ""),
+                }
+                for item in raw_lists
+            ]
+    except Exception as e:
+        logger.warning(f"Could not fetch electoral_lists for {commune_code}: {e}")
+
+    commune_info["list_count"] = len(lists)
+    commune_info["lists"] = lists
+
+    # ── 3. Chat session user messages ────────────────────────────────────────
+    user_messages: list[dict] = []
+    session_ids: set[str] = set()
+    try:
+        user_messages, session_ids = await _collect_user_messages(municipality_code=commune_code)
+    except Exception as e:
+        logger.warning(f"Could not fetch chat sessions for {commune_code}: {e}")
+
+    # ── 4. Qdrant taxonomy (scroll filtered by municipality_code) ────────────
+    qdrant_filter = Filter(
+        must=[
+            FieldCondition(
+                key="metadata.municipality_code",
+                match=MatchValue(value=commune_code),
+            )
+        ]
+    )
+
+    theme_data: dict[str, dict] = {}
+    total_chunks = 0
+
+    for col_name in [PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME]:
+        try:
+            offset = None
+            while True:
+                points, next_offset = qdrant_client.scroll(
+                    collection_name=col_name,
+                    scroll_filter=qdrant_filter,
+                    limit=256,
+                    offset=offset,
+                    with_payload=[
+                        "metadata.theme",
+                        "metadata.party_name",
+                        "metadata.namespace",
+                    ],
+                    with_vectors=False,
+                )
+                for p in points:
+                    meta = (p.payload or {}).get("metadata", {})
+                    total_chunks += 1
+                    theme = meta.get("theme")
+                    if not theme:
+                        continue
+                    list_name = meta.get("party_name") or meta.get("namespace", "")
+                    if theme not in theme_data:
+                        theme_data[theme] = {
+                            "theme": theme,
+                            "total_count": 0,
+                            "by_list": defaultdict(int),
+                        }
+                    theme_data[theme]["total_count"] += 1
+                    if list_name:
+                        theme_data[theme]["by_list"][list_name] += 1
+                if next_offset is None:
+                    break
+                offset = next_offset
+        except Exception as e:
+            logger.error(f"Error scrolling {col_name} for commune {commune_code}: {e}", exc_info=True)
+
+    taxonomy_themes = []
+    for td in sorted(theme_data.values(), key=lambda x: x["total_count"], reverse=True):
+        taxonomy_themes.append({
+            "theme": td["theme"],
+            "total_count": td["total_count"],
+            "percentage": round(td["total_count"] / total_chunks * 100, 1) if total_chunks else 0,
+            "by_list": dict(td["by_list"]),
+        })
+
+    themes_detected = len(theme_data)
+
+    # ── 5. BERTopic on commune messages (cached per commune) ────────────────
+    bertopic_result = await _run_bertopic_analysis(
+        user_messages, session_ids, cache_key=f"commune_{commune_code}"
+    )
+
+    return web.json_response({
+        "commune": commune_info,
+        "stats": {
+            "total_questions": len(user_messages),
+            "total_lists": len(lists),
+            "total_chunks": total_chunks,
+            "themes_detected": themes_detected,
+        },
+        "taxonomy": {
+            "themes": taxonomy_themes,
+        },
+        "bertopic": bertopic_result,
+    })
 
 
 @routes.post(f"{route_prefix}/get-parliamentary-question")
@@ -926,21 +1107,31 @@ async def on_startup(app):
     # Get the current event loop for thread-safe async execution
     event_loop = asyncio.get_running_loop()
 
-    # Start Firestore listener for parties (manifesto indexation)
-    logger.info("Starting Firestore parties listener...")
-    try:
-        start_parties_listener(event_loop=event_loop)
-        logger.info("Firestore parties listener started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start Firestore parties listener: {e}")
+    # Skip Firestore indexation listeners in local dev — seeding triggers them
+    # and causes heavy scraping/embedding (Gemini API calls) on every restart.
+    # Vectors are already seeded by `make seed --with-vectors`.
+    env = os.environ.get("ENV", "local")
+    if env == "local":
+        logger.info(
+            "Skipping Firestore indexation listeners (ENV=local). "
+            "Use /admin/index-* endpoints to trigger manually."
+        )
+    else:
+        # Start Firestore listener for parties (manifesto indexation)
+        logger.info("Starting Firestore parties listener...")
+        try:
+            start_parties_listener(event_loop=event_loop)
+            logger.info("Firestore parties listener started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start Firestore parties listener: {e}")
 
-    # Start Firestore listener for candidates (website indexation)
-    logger.info("Starting Firestore candidates listener...")
-    try:
-        start_candidates_listener(event_loop=event_loop)
-        logger.info("Firestore candidates listener started successfully")
-    except Exception as e:
-        logger.error(f"Failed to start Firestore candidates listener: {e}")
+        # Start Firestore listener for candidates (website indexation)
+        logger.info("Starting Firestore candidates listener...")
+        try:
+            start_candidates_listener(event_loop=event_loop)
+            logger.info("Firestore candidates listener started successfully")
+        except Exception as e:
+            logger.error(f"Failed to start Firestore candidates listener: {e}")
 
     # Start the scheduler for periodic tasks
     logger.info("Starting scheduler for periodic tasks...")
