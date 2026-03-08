@@ -2,7 +2,7 @@
 #
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
-# ── Stage 1: Build (compile C extensions, export deps) ──────────────
+# ── Stage 1: Build (compile C extensions, install deps into venv) ───
 FROM python:3.11.3-slim AS builder
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
@@ -19,25 +19,26 @@ WORKDIR /app
 # Export pinned requirements from lockfile
 RUN poetry export --only main --without-hashes -f requirements.txt -o requirements.txt
 
+# Use a venv so all deps end up in one clean, copyable directory
+RUN python -m venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
+
 # Install CPU-only PyTorch first (skip CUDA — saves ~4GB in image)
-# Override with: docker build --build-arg TORCH_VARIANT=gpu .
 ARG TORCH_VARIANT=cpu
 RUN if [ "$TORCH_VARIANT" = "gpu" ]; then \
-      echo "Installing GPU-enabled PyTorch"; \
-      pip install --prefix=/install torch; \
+      pip install torch; \
     else \
-      echo "Installing CPU-only PyTorch (~200MB vs ~2GB)"; \
-      pip install --prefix=/install torch --index-url https://download.pytorch.org/whl/cpu; \
+      pip install torch --index-url https://download.pytorch.org/whl/cpu; \
     fi
 
 # Install remaining deps (exclude torch* and nvidia* since torch is already installed)
 RUN grep -v -E '^(torch|nvidia|triton)' requirements.txt > requirements-no-torch.txt && \
-    pip install --prefix=/install -r requirements-no-torch.txt
+    pip install -r requirements-no-torch.txt
 
 # ── Stage 2: Runtime (slim, no build tools) ─────────────────────────
 FROM python:3.11.3-slim
 
-# Playwright runtime dependencies only
+# Playwright runtime dependencies
 RUN apt-get update && apt-get install -y --no-install-recommends \
     libnss3 \
     libnspr4 \
@@ -58,9 +59,9 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     libcairo2 \
     && rm -rf /var/lib/apt/lists/*
 
-# Copy installed Python packages from builder
-COPY --from=builder /install/lib /usr/local/lib
-COPY --from=builder /install/bin /usr/local/bin
+# Copy venv from builder (includes ALL deps correctly)
+COPY --from=builder /opt/venv /opt/venv
+ENV PATH="/opt/venv/bin:$PATH"
 
 # Install Playwright browsers (Chromium only for smaller image)
 RUN playwright install chromium && playwright install-deps chromium
