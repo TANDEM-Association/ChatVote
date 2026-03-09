@@ -79,20 +79,24 @@ async def _cached_get(key: str, fetch_fn: Any) -> Any:
 
 
 async def aget_parties() -> list[Party]:
+    import asyncio
+
     async def _fetch() -> list[Party]:
-        parties = async_db.collection("parties").stream()
-        return [Party(**party.to_dict()) async for party in parties]
+        def _sync():
+            return [Party(**p.to_dict()) for p in db.collection("parties").stream()]
+        return await asyncio.get_event_loop().run_in_executor(None, _sync)
 
     return await _cached_get("parties", _fetch)
 
 
 async def aget_party_by_id(party_id: str) -> Optional[Party]:
+    import asyncio
+
     async def _fetch() -> Optional[Party]:
-        party_ref = async_db.collection("parties").document(party_id)
-        party = await party_ref.get()
-        if party.exists:
-            return Party(**party.to_dict())
-        return None
+        def _sync():
+            doc = db.collection("parties").document(party_id).get()
+            return Party(**doc.to_dict()) if doc.exists else None
+        return await asyncio.get_event_loop().run_in_executor(None, _sync)
 
     return await _cached_get(f"party:{party_id}", _fetch)
 
@@ -166,13 +170,17 @@ async def aget_candidate_by_id(candidate_id: str) -> Optional[Candidate]:
 
 async def aget_candidates_with_website() -> List[Candidate]:
     """Get all candidates that have a website URL defined."""
-    candidates = async_db.collection("candidates").stream()
-    result = []
-    async for candidate in candidates:
-        candidate_data = candidate.to_dict()
-        if candidate_data.get("website_url"):
-            result.append(Candidate(**candidate_data))
-    return result
+    import asyncio
+
+    def _sync():
+        result = []
+        for candidate in db.collection("candidates").stream():
+            candidate_data = candidate.to_dict()
+            if candidate_data.get("website_url"):
+                result.append(Candidate(**candidate_data))
+        return result
+
+    return await asyncio.get_event_loop().run_in_executor(None, _sync)
 
 
 async def aget_candidates_by_election_type(election_type_id: str) -> List[Candidate]:
