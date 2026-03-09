@@ -1,7 +1,6 @@
 "use client";
 
 import { Button } from "@components/ui/button";
-import { DropdownMenuTrigger } from "@components/ui/dropdown-menu";
 import { useSidebar } from "@components/ui/sidebar";
 import {
   Tooltip,
@@ -24,16 +23,14 @@ function CreateNewChatDropdownButtonTrigger({ onTriggerClick }: Props) {
   return (
     <Tooltip>
       <TooltipTrigger asChild>
-        <DropdownMenuTrigger asChild>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="size-8"
-            onClick={onTriggerClick}
-          >
-            <SquarePenIcon />
-          </Button>
-        </DropdownMenuTrigger>
+        <Button
+          size="icon"
+          variant="ghost"
+          className="size-8"
+          onClick={onTriggerClick}
+        >
+          <SquarePenIcon />
+        </Button>
       </TooltipTrigger>
       <TooltipContent>{t("createNewChat")}</TooltipContent>
     </Tooltip>

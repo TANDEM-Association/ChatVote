@@ -12,6 +12,9 @@ export const newChat: ChatStoreActionHandlerFor<"newChat"> =
       error: undefined,
       currentQuickReplies: [],
       currentChatTitle: undefined,
+      municipalityCode: undefined,
+      scope: "national",
+      selectedElectoralLists: [],
     });
 
     trackNewChatStarted({
