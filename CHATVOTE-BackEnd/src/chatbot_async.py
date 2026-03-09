@@ -1370,6 +1370,21 @@ async def generate_streaming_global_combined_response(
                 f"Tu réponds UNIQUEMENT sur les propositions et le programme de ce parti. "
                 f"Base-toi sur le programme officiel fourni ci-dessous."
             )
+    elif is_single_party_focus and len(all_parties) > 1:
+        # User selected multiple specific parties - focus only on those
+        party_names_str = ", ".join(f"**{p.name}**" for p in all_parties)
+        if locale == "en":
+            scope_description = (
+                f"The user has selected the following parties: {party_names_str}. "
+                f"You respond ONLY about the proposals and programs of these selected parties. "
+                f"Do NOT include information about other parties."
+            )
+        else:
+            scope_description = (
+                f"L'utilisateur a sélectionné les partis suivants : {party_names_str}. "
+                f"Tu réponds UNIQUEMENT sur les propositions et programmes de ces partis sélectionnés. "
+                f"N'inclus PAS d'informations sur d'autres partis."
+            )
     elif scope == "local" and municipality_name:
         if locale == "en":
             scope_description = f"LOCAL level - Municipality of {municipality_name}. You respond about the candidates present in this municipality and their parties' proposals."
