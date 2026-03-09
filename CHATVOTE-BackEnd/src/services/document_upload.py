@@ -15,6 +15,7 @@ import asyncio
 import io
 import json
 import logging
+import os
 import time
 import uuid
 from typing import Any, Optional
@@ -85,6 +86,12 @@ def _update_job(job_id: str, **kwargs: Any) -> None:
 # Text extraction
 # ---------------------------------------------------------------------------
 
+# Minimum chars from pypdf before falling back to OCR.
+# Scanned PDFs often have a small footer (printer info, ~100 chars)
+# but no real content — 200 chars catches these.
+_MIN_TEXT_LENGTH = 200
+
+
 def extract_text_from_pdf_bytes(data: bytes) -> str:
     """Extract text from in-memory PDF bytes."""
     try:
@@ -100,6 +107,48 @@ def extract_text_from_pdf_bytes(data: bytes) -> str:
         raise
 
 
+async def ocr_pdf_with_gemini(data: bytes, filename: str) -> str:
+    """OCR a PDF using Gemini vision (for image-based / scanned PDFs).
+
+    Sends the raw PDF to Gemini 2.0 Flash which can read images and
+    extract text from scanned documents.
+    """
+    import base64
+    from google import genai
+
+    api_key = os.environ.get("GOOGLE_API_KEY", "")
+    if not api_key:
+        raise ValueError("GOOGLE_API_KEY required for OCR")
+
+    client = genai.Client(api_key=api_key)
+
+    pdf_b64 = base64.standard_b64encode(data).decode("utf-8")
+
+    logger.info(f"[OCR] Sending {filename} ({len(data):,} bytes) to Gemini for OCR")
+
+    response = await asyncio.to_thread(
+        client.models.generate_content,
+        model="gemini-2.0-flash",
+        contents=[
+            {
+                "parts": [
+                    {"inline_data": {"mime_type": "application/pdf", "data": pdf_b64}},
+                    {"text": (
+                        "Extract ALL text from this scanned PDF document. "
+                        "Return ONLY the extracted text, preserving paragraph structure. "
+                        "If there are multiple pages, separate them with blank lines. "
+                        "Do not add any commentary or formatting — just the raw text content."
+                    )},
+                ]
+            }
+        ],
+    )
+
+    text = response.text.strip() if response.text else ""
+    logger.info(f"[OCR] Gemini extracted {len(text)} chars from {filename}")
+    return text
+
+
 def extract_text_from_txt_bytes(data: bytes) -> str:
     """Decode TXT file bytes to string."""
     for encoding in ("utf-8", "latin-1"):
@@ -110,11 +159,22 @@ def extract_text_from_txt_bytes(data: bytes) -> str:
     raise ValueError("Could not decode TXT file with utf-8 or latin-1")
 
 
-def extract_text(filename: str, data: bytes) -> str:
-    """Dispatch text extraction based on file extension."""
+async def extract_text(filename: str, data: bytes) -> str:
+    """Dispatch text extraction based on file extension.
+
+    For PDFs: tries pypdf first, falls back to Gemini OCR for image PDFs.
+    """
     lower = filename.lower()
     if lower.endswith(".pdf"):
-        return extract_text_from_pdf_bytes(data)
+        text = extract_text_from_pdf_bytes(data)
+        if len(text.strip()) >= _MIN_TEXT_LENGTH:
+            return text
+        # Image-based PDF — fall back to Gemini OCR
+        logger.info(
+            f"pypdf extracted only {len(text.strip())} chars from {filename}, "
+            f"falling back to Gemini OCR"
+        )
+        return await ocr_pdf_with_gemini(data, filename)
     elif lower.endswith(".txt"):
         return extract_text_from_txt_bytes(data)
     else:
@@ -331,9 +391,9 @@ async def process_upload(job_id: str, filename: str, data: bytes) -> None:
     Updates job status throughout. Intended to run as a background task.
     """
     try:
-        # Stage 1: Extract text
+        # Stage 1: Extract text (may use Gemini OCR for image PDFs)
         _update_job(job_id, status="extracting", progress=10)
-        text = extract_text(filename, data)
+        text = await extract_text(filename, data)
         if not text or len(text.strip()) < 50:
             _update_job(job_id, status="error", error="Extracted text is too short or empty")
             return
