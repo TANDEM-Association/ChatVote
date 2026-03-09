@@ -1113,6 +1113,8 @@ async def commune_dashboard(request):
     ]
 
     # ── 4. Qdrant taxonomy (scroll filtered by municipality_code) ────────────
+    #    Falls back to national party manifesto data when no commune-specific
+    #    chunks exist, since national manifestos are relevant to all communes.
     qdrant_filter = Filter(
         must=[
             FieldCondition(
@@ -1122,46 +1124,59 @@ async def commune_dashboard(request):
         ]
     )
 
-    theme_data: dict[str, dict] = {}
-    total_chunks = 0
+    def _scroll_qdrant_themes(scroll_filter, collections):
+        """Scroll Qdrant collections and aggregate theme data."""
+        _theme_data: dict[str, dict] = {}
+        _total = 0
+        for col_name in collections:
+            try:
+                offset = None
+                while True:
+                    points, next_offset = qdrant_client.scroll(
+                        collection_name=col_name,
+                        scroll_filter=scroll_filter,
+                        limit=256,
+                        offset=offset,
+                        with_payload=[
+                            "metadata.theme",
+                            "metadata.party_name",
+                            "metadata.namespace",
+                        ],
+                        with_vectors=False,
+                    )
+                    for p in points:
+                        meta = (p.payload or {}).get("metadata", {})
+                        _total += 1
+                        theme = meta.get("theme")
+                        if not theme:
+                            continue
+                        list_name = meta.get("party_name") or meta.get("namespace", "")
+                        if theme not in _theme_data:
+                            _theme_data[theme] = {
+                                "theme": theme,
+                                "total_count": 0,
+                                "by_list": defaultdict(int),
+                            }
+                        _theme_data[theme]["total_count"] += 1
+                        if list_name:
+                            _theme_data[theme]["by_list"][list_name] += 1
+                    if next_offset is None:
+                        break
+                    offset = next_offset
+            except Exception as e:
+                logger.error(f"Error scrolling {col_name} for commune {commune_code}: {e}", exc_info=True)
+        return _theme_data, _total
 
-    for col_name in [PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME]:
-        try:
-            offset = None
-            while True:
-                points, next_offset = qdrant_client.scroll(
-                    collection_name=col_name,
-                    scroll_filter=qdrant_filter,
-                    limit=256,
-                    offset=offset,
-                    with_payload=[
-                        "metadata.theme",
-                        "metadata.party_name",
-                        "metadata.namespace",
-                    ],
-                    with_vectors=False,
-                )
-                for p in points:
-                    meta = (p.payload or {}).get("metadata", {})
-                    total_chunks += 1
-                    theme = meta.get("theme")
-                    if not theme:
-                        continue
-                    list_name = meta.get("party_name") or meta.get("namespace", "")
-                    if theme not in theme_data:
-                        theme_data[theme] = {
-                            "theme": theme,
-                            "total_count": 0,
-                            "by_list": defaultdict(int),
-                        }
-                    theme_data[theme]["total_count"] += 1
-                    if list_name:
-                        theme_data[theme]["by_list"][list_name] += 1
-                if next_offset is None:
-                    break
-                offset = next_offset
-        except Exception as e:
-            logger.error(f"Error scrolling {col_name} for commune {commune_code}: {e}", exc_info=True)
+    theme_data, total_chunks = _scroll_qdrant_themes(
+        qdrant_filter, [PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME]
+    )
+
+    # Fallback: if no commune-specific chunks, use national manifesto data
+    if total_chunks == 0:
+        logger.info(f"No commune-specific chunks for {commune_code}, falling back to national manifesto data")
+        theme_data, total_chunks = _scroll_qdrant_themes(
+            None, [PARTY_INDEX_NAME]  # No filter — all national manifesto chunks
+        )
 
     classified_chunks = sum(td["total_count"] for td in theme_data.values())
     taxonomy_themes = []
