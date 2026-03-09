@@ -100,7 +100,8 @@ const MunicipalitySearch = ({
   useEffect(() => {
     // Skip if already cached (state is already initialized from cache)
     if (municipalitiesClientCache !== null) {
-      handleSelectMunicipalityFromCodeProp(municipalitiesClientCache);
+      setMunicipalities(municipalitiesClientCache);
+      setIsLoadingData(false);
       return;
     }
 
@@ -111,7 +112,6 @@ const MunicipalitySearch = ({
         if (!abortController.signal.aborted) {
           setMunicipalities(data);
           setIsLoadingData(false);
-          handleSelectMunicipalityFromCodeProp(data);
         }
       })
       .catch((error) => {
@@ -129,6 +129,22 @@ const MunicipalitySearch = ({
       abortController.abort();
     };
   }, []);
+
+  // Auto-select municipality from URL code prop (runs when municipalities load
+  // or when municipalityCode changes — fixes stale closure with [] deps)
+  useEffect(() => {
+    if (
+      !municipalityCode ||
+      municipalities.length === 0 ||
+      selectedMunicipality?.code === municipalityCode
+    ) {
+      return;
+    }
+    const match = municipalities.find((m) => m.code === municipalityCode);
+    if (match) {
+      onSelectMunicipality(match);
+    }
+  }, [municipalityCode, municipalities, selectedMunicipality, onSelectMunicipality]);
 
   // Filter municipalities locally (instant results)
   const allSuggestions = useMemo(() => {
@@ -166,23 +182,6 @@ const MunicipalitySearch = ({
     },
     [onSelectMunicipality],
   );
-
-  const handleSelectMunicipalityFromCodeProp = (
-    localMunicipalities: Municipality[],
-  ) => {
-    if (
-      !municipalityCode ||
-      localMunicipalities.length === 0 ||
-      selectedMunicipality?.code === municipalityCode
-    ) {
-      return;
-    }
-
-    const match = localMunicipalities.find((m) => m.code === municipalityCode);
-    if (match) {
-      onSelectMunicipality(match);
-    }
-  };
 
   // Close suggestions when clicking outside
   useEffect(() => {

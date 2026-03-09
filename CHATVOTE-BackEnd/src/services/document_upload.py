@@ -25,7 +25,7 @@ from langchain_core.messages import HumanMessage, SystemMessage
 from langchain_text_splitters import RecursiveCharacterTextSplitter
 from pypdf import PdfReader
 
-from src.firebase_service import aget_parties
+from src.firebase_service import aget_parties, aget_candidates
 from src.models.chunk_metadata import ChunkMetadata
 from src.vector_store_helper import (
     get_qdrant_vector_store,
@@ -213,12 +213,12 @@ class AssignmentResult:
 
 
 async def _try_filename_match(filename: str) -> Optional[AssignmentResult]:
-    """Try to match a party from the filename."""
-    parties = await aget_parties()
+    """Try to match a party or candidate from the filename."""
     lower_fn = filename.lower()
 
+    # Check national parties
+    parties = await aget_parties()
     for party in parties:
-        # Check party_id and name in filename
         if party.party_id.lower() in lower_fn or party.name.lower() in lower_fn:
             return AssignmentResult(
                 target_type="party",
@@ -227,7 +227,6 @@ async def _try_filename_match(filename: str) -> Optional[AssignmentResult]:
                 collection=PARTY_INDEX_NAME,
                 confidence=0.85,
             )
-        # Also check common abbreviations if stored
         if hasattr(party, "abbreviation") and party.abbreviation:
             if party.abbreviation.lower() in lower_fn:
                 return AssignmentResult(
@@ -237,71 +236,133 @@ async def _try_filename_match(filename: str) -> Optional[AssignmentResult]:
                     collection=PARTY_INDEX_NAME,
                     confidence=0.80,
                 )
+
+    # Check candidates by full name
+    candidates = await aget_candidates()
+    for c in candidates:
+        full = c.full_name.lower()
+        last = c.last_name.lower()
+        # Match "lastname" (>3 chars to avoid false positives) or "firstname lastname"
+        if (len(last) > 3 and last in lower_fn) or full in lower_fn:
+            return AssignmentResult(
+                target_type="candidate",
+                target_id=c.candidate_id,
+                target_name=f"{c.full_name} ({c.municipality_name or ''})",
+                collection=CANDIDATES_INDEX_NAME,
+                confidence=0.80,
+            )
+
     return None
 
 
-async def _llm_classify(text_excerpt: str) -> Optional[AssignmentResult]:
-    """Use the LLM to classify which party/candidate a document belongs to."""
+async def _llm_classify(text_excerpt: str, filename: str) -> Optional[AssignmentResult]:
+    """Use the LLM to classify which party, candidate, or local list
+    a document belongs to. Handles both national parties and local
+    municipal electoral lists."""
     from src.llms import DETERMINISTIC_LLMS, get_answer_from_llms
 
     parties = await aget_parties()
-    party_list = ", ".join(
-        f"{p.party_id} ({p.name})" for p in parties
-    )
+    candidates = await aget_candidates()
+
+    party_list = ", ".join(f"{p.party_id} ({p.name})" for p in parties)
+
+    # Build a concise candidate reference grouped by municipality
+    municipalities: dict[str, list] = {}
+    for c in candidates:
+        key = c.municipality_name or c.municipality_code or "unknown"
+        if key not in municipalities:
+            municipalities[key] = []
+        municipalities[key].append(
+            f"{c.candidate_id}: {c.full_name}"
+            + (f" [{', '.join(c.party_ids)}]" if c.party_ids else "")
+        )
+
+    # Limit to avoid huge prompt — include first 40 municipalities
+    candidate_lines = []
+    for muni, cands in list(municipalities.items())[:40]:
+        candidate_lines.append(f"  {muni}: " + "; ".join(cands[:10]))
+    candidate_ref = "\n".join(candidate_lines)
 
     system_msg = SystemMessage(content=(
-        "You are a document classifier for French political elections. "
-        "Given a text excerpt, determine which political party or candidate "
-        "this document belongs to. Respond ONLY with valid JSON, no markdown."
+        "You are a document classifier for French municipal and national elections. "
+        "Given a document, determine which entity it belongs to: a national party, "
+        "a local electoral list, or a specific candidate. "
+        "Respond ONLY with valid JSON, no markdown."
     ))
     human_msg = HumanMessage(content=(
-        f"Known parties: {party_list}\n\n"
+        f"Filename: {filename}\n\n"
+        f"Known national parties: {party_list}\n\n"
+        f"Known candidates by municipality:\n{candidate_ref}\n\n"
         f"Text excerpt:\n{text_excerpt[:2000]}\n\n"
-        "Respond with JSON: "
-        '{"party_id": "<id>", "confidence": <0.0-1.0>, "reason": "<brief reason>"}\n'
-        "If you cannot determine the party, respond with: "
-        '{"party_id": null, "confidence": 0.0, "reason": "unable to determine"}'
+        "Determine which entity this document belongs to. Respond with JSON:\n"
+        "If it matches a NATIONAL PARTY:\n"
+        '  {"type": "party", "id": "<party_id>", "confidence": <0.0-1.0>, "reason": "..."}\n'
+        "If it matches a LOCAL CANDIDATE or a local electoral list:\n"
+        '  {"type": "candidate", "id": "<candidate_id>", "confidence": <0.0-1.0>, "reason": "..."}\n'
+        "For local electoral lists, pick the tête de liste / head candidate from "
+        "the same municipality. The type MUST be either \"party\" or \"candidate\".\n"
+        "If you can identify the national party affiliation (e.g. LFI, Renaissance) "
+        "but no specific candidate, use type=\"party\" with the party_id.\n"
+        "If you cannot determine:\n"
+        '  {"type": null, "id": null, "confidence": 0.0, "reason": "unable to determine"}'
     ))
 
     try:
         response = await get_answer_from_llms(DETERMINISTIC_LLMS, [system_msg, human_msg])
         content = response.content.strip()
-        # Strip markdown code fences if present
         if content.startswith("```"):
             content = content.split("\n", 1)[-1].rsplit("```", 1)[0].strip()
 
         result = json.loads(content)
-        party_id = result.get("party_id")
+        entity_type = result.get("type")
+        entity_id = result.get("id")
         confidence = float(result.get("confidence", 0.0))
 
-        if not party_id or confidence < 0.3:
+        if not entity_type or not entity_id or confidence < 0.3:
             logger.info(f"LLM classification low confidence: {result}")
             return None
 
-        # Verify party_id exists
-        party = next((p for p in parties if p.party_id == party_id), None)
-        if not party:
-            logger.warning(f"LLM returned unknown party_id: {party_id}")
+        if entity_type == "party":
+            party = next((p for p in parties if p.party_id == entity_id), None)
+            if not party:
+                logger.warning(f"LLM returned unknown party_id: {entity_id}")
+                return None
+            return AssignmentResult(
+                target_type="party",
+                target_id=party.party_id,
+                target_name=party.name,
+                collection=PARTY_INDEX_NAME,
+                confidence=confidence,
+            )
+        elif entity_type == "candidate":
+            candidate = next(
+                (c for c in candidates if c.candidate_id == entity_id), None
+            )
+            if not candidate:
+                logger.warning(f"LLM returned unknown candidate_id: {entity_id}")
+                return None
+            return AssignmentResult(
+                target_type="candidate",
+                target_id=candidate.candidate_id,
+                target_name=f"{candidate.full_name} ({candidate.municipality_name or ''})",
+                collection=CANDIDATES_INDEX_NAME,
+                confidence=confidence,
+            )
+        else:
+            logger.warning(f"LLM returned unknown type: {entity_type}")
             return None
 
-        return AssignmentResult(
-            target_type="party",
-            target_id=party.party_id,
-            target_name=party.name,
-            collection=PARTY_INDEX_NAME,
-            confidence=confidence,
-        )
     except Exception as e:
         logger.warning(f"LLM classification failed: {e}")
         return None
 
 
 async def auto_assign(filename: str, text: str) -> Optional[AssignmentResult]:
-    """Auto-assign a document to a party or candidate.
+    """Auto-assign a document to a party, candidate, or local electoral list.
 
     Strategy:
-    1. Try filename heuristics first (fast, high confidence)
-    2. Fall back to LLM classification of text excerpt
+    1. Try filename heuristics (national parties + candidate names)
+    2. Fall back to LLM classification with full context (parties + candidates)
     """
     # Step 1: filename match
     result = await _try_filename_match(filename)
@@ -312,8 +373,8 @@ async def auto_assign(filename: str, text: str) -> Optional[AssignmentResult]:
         )
         return result
 
-    # Step 2: LLM classification
-    result = await _llm_classify(text)
+    # Step 2: LLM classification (includes both parties and candidates)
+    result = await _llm_classify(text, filename)
     if result:
         logger.info(
             f"LLM classification: {filename} -> {result.target_name} "
