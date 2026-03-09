@@ -299,7 +299,7 @@ async def index_all_candidates(scraper_backend: str = "auto") -> dict[str, int]:
         logger.info("Using Firecrawl scraper backend")
         scraper = FirecrawlScraper()
         scraped_websites = await scraper.scrape_multiple_candidates(
-            candidates, max_concurrent=10
+            candidates, max_concurrent=3
         )
     else:
         logger.info("Using Playwright scraper backend")

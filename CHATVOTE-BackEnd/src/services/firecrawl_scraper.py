@@ -76,7 +76,9 @@ class FirecrawlScraper:
             "Content-Type": "application/json",
         }
 
-    async def scrape_candidate_website(self, candidate: Candidate) -> ScrapedWebsite:
+    async def scrape_candidate_website(
+        self, candidate: Candidate, _retry: int = 0
+    ) -> ScrapedWebsite:
         """Crawl a candidate's website using Firecrawl and return ScrapedWebsite."""
         url = candidate.website_url
         if not url:
@@ -101,6 +103,16 @@ class FirecrawlScraper:
                         },
                     },
                 )
+
+                # Retry on rate limit (429) with exponential backoff
+                if crawl_resp.status == 429 and _retry < 3:
+                    wait = 2 ** _retry * 5  # 5s, 10s, 20s
+                    logger.warning(
+                        f"[Firecrawl] Rate limited for {candidate.full_name}, "
+                        f"retrying in {wait}s (attempt {_retry + 1}/3)"
+                    )
+                    await asyncio.sleep(wait)
+                    return await self.scrape_candidate_website(candidate, _retry + 1)
 
                 if crawl_resp.status != 200:
                     error_text = await crawl_resp.text()
@@ -254,12 +266,12 @@ class FirecrawlScraper:
     async def scrape_multiple_candidates(
         self,
         candidates: List[Candidate],
-        max_concurrent: int = 10,
+        max_concurrent: int = 3,
     ) -> List[ScrapedWebsite]:
         """Scrape multiple candidate websites concurrently.
 
-        Firecrawl handles its own rate limiting, so we can be more aggressive
-        than with Playwright (10 concurrent vs 3).
+        Firecrawl rate limits at ~3 concurrent crawl requests.
+        Each crawl already runs async on their side, so 3 is plenty.
         """
         semaphore = asyncio.Semaphore(max_concurrent)
 
