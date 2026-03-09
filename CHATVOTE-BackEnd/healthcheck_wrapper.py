@@ -1,10 +1,8 @@
 """
-Diagnostic wrapper: import real app, inspect on_startup handlers,
-then serve with timeout protection on each handler.
+Diagnostic wrapper v4: import real app WITHOUT Socket.IO, test if HTTP works.
 """
 import asyncio
 import logging
-import sys
 import traceback
 
 from aiohttp import web
@@ -17,47 +15,40 @@ logger = logging.getLogger("wrapper")
 
 
 if __name__ == "__main__":
-    logger.info("=== wrapper: importing real app ===")
+    logger.info("=== wrapper v4: importing app WITHOUT Socket.IO ===")
 
     try:
-        from src import aiohttp_app
+        # Import the module but DON'T use its app (which has sio.attach)
+        # Instead, rebuild a fresh app with the same routes
+        from src.aiohttp_app import routes, api_key_middleware, on_startup
 
-        real_app = aiohttp_app.app
-        logger.info(f"=== wrapper: real app loaded, {len(real_app.on_startup)} on_startup handlers ===")
+        fresh_app = web.Application(middlewares=[api_key_middleware])
+        fresh_app.router.add_routes(routes)
 
-        for i, handler in enumerate(real_app.on_startup):
-            logger.info(f"  on_startup[{i}]: {handler.__name__} from {handler.__module__}")
+        # Skip Socket.IO, skip CORS — just test if raw aiohttp works
 
-        # Replace all on_startup handlers with timeout-protected versions
-        original_handlers = list(real_app.on_startup)
-        real_app.on_startup.clear()
-
+        # Add the on_startup handler with timeout protection
         async def safe_startup(app):
-            for i, handler in enumerate(original_handlers):
-                name = f"{handler.__module__}.{handler.__name__}"
-                logger.info(f"=== wrapper: running on_startup[{i}] {name} ===")
-                try:
-                    await asyncio.wait_for(handler(app), timeout=15)
-                    logger.info(f"=== wrapper: on_startup[{i}] {name} completed ===")
-                except asyncio.TimeoutError:
-                    logger.error(f"=== wrapper: on_startup[{i}] {name} TIMED OUT (15s) — SKIPPING ===")
-                except Exception as e:
-                    logger.error(f"=== wrapper: on_startup[{i}] {name} FAILED: {e} ===")
+            logger.info("=== safe_startup: running on_startup with 15s timeout ===")
+            try:
+                await asyncio.wait_for(on_startup(app), timeout=15)
+                logger.info("=== safe_startup: on_startup completed ===")
+            except asyncio.TimeoutError:
+                logger.error("=== safe_startup: on_startup TIMED OUT (15s) ===")
+            except Exception as e:
+                logger.error(f"=== safe_startup: on_startup FAILED: {e} ===")
 
-        real_app.on_startup.append(safe_startup)
+        fresh_app.on_startup.append(safe_startup)
 
-        logger.info("=== wrapper: starting real app on 0.0.0.0:8080 ===")
-        web.run_app(real_app, host="0.0.0.0", port=8080)
+        logger.info("=== wrapper: starting fresh app (no sio, no cors) on 0.0.0.0:8080 ===")
+        web.run_app(fresh_app, host="0.0.0.0", port=8080)
 
     except Exception as e:
         logger.error(f"=== FATAL: {e} ===")
         logger.error(traceback.format_exc())
 
         async def error_health(request):
-            return web.json_response(
-                {"status": "error", "error": str(e)},
-                status=500,
-            )
+            return web.json_response({"status": "error", "error": str(e)}, status=500)
 
         fallback = web.Application()
         fallback.router.add_route("*", "/{path:.*}", error_health)
