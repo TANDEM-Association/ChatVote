@@ -235,14 +235,20 @@ async def admin_index_party_manifesto(request):
 
 @routes.post(f"{route_prefix}/admin/index-all-candidates")
 async def admin_index_all_candidates(request):
-    """Trigger indexation of all candidate websites (runs in background)."""
+    """Trigger indexation of all candidate websites (runs in background).
+
+    Query params:
+        scraper: "auto" | "firecrawl" | "playwright"
+        force: "true" to re-scrape candidates already in Qdrant
+    """
     scraper_backend = request.query.get("scraper", "auto")
-    logger.info(f"Admin triggered: indexing all candidate websites (scraper={scraper_backend})")
+    force = request.query.get("force", "").lower() == "true"
+    logger.info(f"Admin triggered: indexing all candidate websites (scraper={scraper_backend}, force={force})")
 
     async def _run():
         try:
             _indexing_status["candidates"] = {"status": "running", "started": True}
-            results = await index_all_candidates(scraper_backend=scraper_backend)
+            results = await index_all_candidates(scraper_backend=scraper_backend, force=force)
             total = sum(results.values())
             successful = sum(1 for v in results.values() if v > 0)
             _indexing_status["candidates"] = {

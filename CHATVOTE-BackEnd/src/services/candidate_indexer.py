@@ -271,13 +271,49 @@ async def index_candidate_website(
     return len(documents)
 
 
-async def index_all_candidates(scraper_backend: str = "auto") -> dict[str, int]:
+def _get_indexed_candidate_counts() -> dict[str, int]:
+    """Return {candidate_id: chunk_count} for candidates already in Qdrant."""
+    try:
+        _ensure_candidates_collection_exists()
+        counts: dict[str, int] = {}
+        offset = None
+        while True:
+            results, next_offset = qdrant_client.scroll(
+                collection_name=CANDIDATES_INDEX_NAME,
+                limit=256,
+                offset=offset,
+                with_payload=["metadata.namespace"],
+                with_vectors=False,
+            )
+            if not results:
+                break
+            for point in results:
+                ns = (point.payload or {}).get("metadata", {}).get("namespace", "")
+                if ns:
+                    counts[ns] = counts.get(ns, 0) + 1
+            if next_offset is None:
+                break
+            offset = next_offset
+        return counts
+    except Exception as e:
+        logger.warning(f"Could not check existing candidates in Qdrant: {e}")
+        return {}
+
+
+async def index_all_candidates(
+    scraper_backend: str = "auto",
+    force: bool = False,
+) -> dict[str, int]:
     """
     Index websites for all candidates with a website URL.
+
+    Skips candidates already indexed in Qdrant (saves scraping credits).
+    Use force=True to re-scrape and re-index everything.
 
     Args:
         scraper_backend: "auto" (use Firecrawl if key is set, else Playwright),
                          "firecrawl", or "playwright".
+        force: If True, re-scrape all candidates even if already indexed.
 
     Returns a dict of candidate_id -> number of chunks indexed.
     """
@@ -286,7 +322,25 @@ async def index_all_candidates(scraper_backend: str = "auto") -> dict[str, int]:
     candidates = await aget_candidates_with_website()
     logger.info(f"Found {len(candidates)} candidates with website URLs")
 
-    results = {}
+    # Check which candidates are already indexed
+    existing = _get_indexed_candidate_counts() if not force else {}
+    if existing:
+        logger.info(
+            f"Already indexed: {len(existing)} candidates "
+            f"({sum(existing.values())} chunks). Skipping these."
+        )
+
+    # Filter to only candidates that need scraping
+    to_scrape = [c for c in candidates if c.candidate_id not in existing]
+    already_done = {cid: count for cid, count in existing.items()}
+
+    if not to_scrape:
+        logger.info("All candidates already indexed, nothing to do.")
+        return already_done
+
+    logger.info(f"Need to scrape: {len(to_scrape)} candidates")
+
+    results = dict(already_done)
 
     # Choose scraper backend
     use_firecrawl = scraper_backend == "firecrawl" or (
@@ -299,20 +353,20 @@ async def index_all_candidates(scraper_backend: str = "auto") -> dict[str, int]:
         logger.info("Using Firecrawl scraper backend")
         scraper = FirecrawlScraper()
         scraped_websites = await scraper.scrape_multiple_candidates(
-            candidates, max_concurrent=3
+            to_scrape, max_concurrent=3
         )
     else:
         logger.info("Using Playwright scraper backend")
         scraper = CandidateWebsiteScraper()
         scraped_websites = await scraper.scrape_multiple_candidates(
-            candidates, max_concurrent=3
+            to_scrape, max_concurrent=3
         )
 
     # Create a map of candidate_id -> scraped_website
     scraped_map = {sw.candidate_id: sw for sw in scraped_websites}
 
     # Index each candidate
-    for candidate in candidates:
+    for candidate in to_scrape:
         try:
             scraped_website = scraped_map.get(candidate.candidate_id)
             count = await index_candidate_website(candidate, scraped_website)
@@ -324,7 +378,8 @@ async def index_all_candidates(scraper_backend: str = "auto") -> dict[str, int]:
     total = sum(results.values())
     successful = sum(1 for v in results.values() if v > 0)
     logger.info(
-        f"Indexation complete: {total} total chunks for {successful}/{len(candidates)} candidates"
+        f"Indexation complete: {total} total chunks for {successful}/{len(results)} candidates "
+        f"({len(existing)} were already indexed)"
     )
 
     return results
