@@ -5,6 +5,7 @@ import React from "react";
 import Image from "next/image";
 
 import { useAnonymousAuth } from "@components/anonymous-auth";
+import { trackInitialSuggestionClicked } from "@lib/firebase/analytics";
 import { useChatStore } from "@components/providers/chat-store-provider";
 import { type ProposedQuestion } from "@lib/firebase/firebase.types";
 import { type PartyDetails } from "@lib/party-details";
@@ -39,6 +40,7 @@ const GroupChatEmptyView = ({ parties, proposedQuestions }: Props) => {
       return;
     }
 
+    trackInitialSuggestionClicked({ suggestion_text: suggestion });
     addUserMessage(user.uid, suggestion);
   }
 

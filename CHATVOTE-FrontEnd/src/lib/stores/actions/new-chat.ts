@@ -1,7 +1,10 @@
+import { trackNewChatStarted } from "@lib/firebase/analytics";
 import { type ChatStoreActionHandlerFor } from "@lib/stores/chat-store.types";
 
 export const newChat: ChatStoreActionHandlerFor<"newChat"> =
   (get, set) => () => {
+    const { scope, partyIds } = get();
+
     set({
       chatId: undefined,
       messages: [],
@@ -9,5 +12,10 @@ export const newChat: ChatStoreActionHandlerFor<"newChat"> =
       error: undefined,
       currentQuickReplies: [],
       currentChatTitle: undefined,
+    });
+
+    trackNewChatStarted({
+      scope,
+      party_count: partyIds.size,
     });
   };

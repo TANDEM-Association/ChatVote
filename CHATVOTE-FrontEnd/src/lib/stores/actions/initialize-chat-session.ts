@@ -1,3 +1,4 @@
+import { trackChatSessionStart } from "@lib/firebase/analytics";
 import { type ChatStoreActionHandlerFor } from "@lib/stores/chat-store.types";
 import { generateUuid } from "@lib/utils";
 
@@ -62,5 +63,11 @@ export const initializeChatSession: ChatStoreActionHandlerFor<
         head_last_name: l.head_last_name,
       })),
     locale,
+  });
+
+  trackChatSessionStart({
+    municipality_code: municipalityCode,
+    party_ids: [...partyIds],
+    scope,
   });
 };

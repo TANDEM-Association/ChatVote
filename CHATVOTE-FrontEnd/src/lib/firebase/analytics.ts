@@ -1,5 +1,5 @@
 import { getApp } from "firebase/app";
-import { getAnalytics, isSupported, logEvent, type Analytics } from "firebase/analytics";
+import { getAnalytics, isSupported, logEvent, setUserId, setUserProperties, type Analytics } from "firebase/analytics";
 
 let analyticsInstance: Analytics | null = null;
 
@@ -123,5 +123,123 @@ export function trackElectoralListSelected(params: {
   trackEvent("electoral_list_selected", {
     panel_number: params.panel_number,
     list_label: params.list_label,
+  });
+}
+
+export function setAnalyticsUserId(userId: string): void {
+  if (!analyticsInstance) return;
+  setUserId(analyticsInstance, userId);
+}
+
+export function setAnalyticsUserProperties(properties: Record<string, string>): void {
+  if (!analyticsInstance) return;
+  setUserProperties(analyticsInstance, properties);
+}
+
+export function trackLogin(params: { method: string }): void {
+  trackEvent("login", { method: params.method });
+}
+
+export function trackSignUp(params: { method: string }): void {
+  trackEvent("sign_up", { method: params.method });
+}
+
+export function trackQuickReplyClicked(params: {
+  reply_text: string;
+  session_id: string;
+}): void {
+  trackEvent("quick_reply_clicked", {
+    reply_text: params.reply_text.slice(0, 100),
+    session_id: params.session_id,
+  });
+}
+
+export function trackProConRequested(params: {
+  session_id: string;
+  topic: string;
+}): void {
+  trackEvent("pro_con_requested", {
+    session_id: params.session_id,
+    topic: params.topic.slice(0, 100),
+  });
+}
+
+export function trackVotingBehaviorRequested(params: {
+  session_id: string;
+  party_id: string;
+}): void {
+  trackEvent("voting_behavior_requested", {
+    session_id: params.session_id,
+    party_id: params.party_id,
+  });
+}
+
+export function trackVotingBehaviorDetailViewed(params: {
+  vote_id: string;
+  party_id: string;
+}): void {
+  trackEvent("voting_behavior_detail_viewed", {
+    vote_id: params.vote_id,
+    party_id: params.party_id,
+  });
+}
+
+export function trackShareClicked(params: {
+  content_type: string;
+  session_id?: string;
+}): void {
+  trackEvent("share", {
+    content_type: params.content_type,
+    ...(params.session_id ? { session_id: params.session_id } : {}),
+  });
+}
+
+export function trackSourceClicked(params: {
+  source_url: string;
+  party_id: string;
+}): void {
+  trackEvent("source_clicked", {
+    source_url: params.source_url.slice(0, 500),
+    party_id: params.party_id,
+  });
+}
+
+export function trackCommuneDashboardView(params: {
+  commune_code: string;
+  commune_name: string;
+  list_count: number;
+}): void {
+  trackEvent("commune_dashboard_view", {
+    commune_code: params.commune_code,
+    commune_name: params.commune_name,
+    list_count: params.list_count,
+  });
+}
+
+export function trackInitialSuggestionClicked(params: {
+  suggestion_text: string;
+}): void {
+  trackEvent("initial_suggestion_clicked", {
+    suggestion_text: params.suggestion_text.slice(0, 100),
+  });
+}
+
+export function trackMunicipalitySearched(params: {
+  search_term: string;
+  result_count: number;
+}): void {
+  trackEvent("municipality_searched", {
+    search_term: params.search_term,
+    result_count: params.result_count,
+  });
+}
+
+export function trackNewChatStarted(params: {
+  scope: string;
+  party_count: number;
+}): void {
+  trackEvent("new_chat_started", {
+    scope: params.scope,
+    party_count: params.party_count,
   });
 }

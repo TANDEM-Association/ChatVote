@@ -2,6 +2,7 @@
 
 import { useCallback, useEffect, useState } from "react";
 
+import { trackElectoralListSelected } from "@lib/firebase/analytics";
 import {
   type ElectoralList,
   type ElectoralListsByCommune,
@@ -102,6 +103,10 @@ const ChatContextSidebar = () => {
   const handleSelectList = useCallback(
     (list: ElectoralList) => {
       toggleElectoralList(list.panel_number);
+      trackElectoralListSelected({
+        panel_number: list.panel_number,
+        list_label: list.list_label,
+      });
     },
     [toggleElectoralList],
   );

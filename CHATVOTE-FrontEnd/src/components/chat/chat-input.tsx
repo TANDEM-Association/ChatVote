@@ -1,6 +1,7 @@
 "use client";
 
 import { useAnonymousAuth } from "@components/anonymous-auth";
+import { trackQuickReplyClicked } from "@lib/firebase/analytics";
 import { useChatStore } from "@components/providers/chat-store-provider";
 import { Button } from "@components/ui/button";
 import { cn } from "@lib/utils";
@@ -21,6 +22,7 @@ const ChatInput = ({ disabled }: Props) => {
   const setInput = useChatStore((state) => state.setInput);
   const addUserMessage = useChatStore((state) => state.addUserMessage);
   const quickReplies = useChatStore((state) => state.currentQuickReplies);
+  const chatId = useChatStore((state) => state.chatId);
   const loading = useChatStore((state) => {
     const loading = state.loading;
     return (
@@ -52,6 +54,7 @@ const ChatInput = ({ disabled }: Props) => {
   };
 
   const handleQuickReplyClick = (reply: string) => {
+    trackQuickReplyClicked({ reply_text: reply, session_id: chatId ?? "" });
     handleSubmit(reply);
   };
 

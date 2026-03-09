@@ -10,6 +10,7 @@ import MicrosoftIcon from "@components/icons/microsoft-icon";
 import { Button } from "@components/ui/button";
 import { Input } from "@components/ui/input";
 import { Label } from "@components/ui/label";
+import { trackLogin, trackSignUp, setAnalyticsUserId } from "@lib/firebase/analytics";
 import { getUser } from "@lib/firebase/firebase";
 import { FirebaseError } from "firebase/app";
 import {
@@ -46,6 +47,10 @@ function LoginForm({ onSuccess }: Props) {
   const handleAuthSuccess = async () => {
     await refreshUser();
     const uid = getAuth().currentUser?.uid;
+
+    if (uid) {
+      setAnalyticsUserId(uid);
+    }
 
     if (uid) {
       const user = await getUser(uid);
@@ -124,6 +129,7 @@ function LoginForm({ onSuccess }: Props) {
     const auth = getAuth();
     try {
       await signInWithEmailAndPassword(auth, email, password);
+      trackLogin({ method: "email" });
       await handleAuthSuccess();
     } catch (error) {
       handleAuthError(error, "email");
@@ -142,6 +148,7 @@ function LoginForm({ onSuccess }: Props) {
     try {
       const credential = EmailAuthProvider.credential(email, password);
       await linkWithCredential(auth.currentUser, credential);
+      trackSignUp({ method: "email" });
       await handleAuthSuccess();
     } catch (error) {
       handleAuthError(error, "email");
@@ -171,6 +178,8 @@ function LoginForm({ onSuccess }: Props) {
       }
 
       await linkWithCredential(auth.currentUser, credential);
+      const methodName = provider instanceof GoogleAuthProvider ? "google" : "microsoft";
+      trackLogin({ method: methodName });
       await handleAuthSuccess();
     } catch (error) {
       handleAuthError(

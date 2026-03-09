@@ -12,6 +12,7 @@ import {
   DrawerTrigger,
 } from "@components/ui/drawer";
 import { Sheet, SheetContent, SheetTrigger } from "@components/ui/sheet";
+import { trackVotingBehaviorDetailViewed } from "@lib/firebase/analytics";
 import { type VotingBehavior } from "@lib/stores/chat-store.types";
 import { track } from "@vercel/analytics/react";
 import { ScrollTextIcon } from "lucide-react";
@@ -82,6 +83,7 @@ const ChatVotingBehaviorDetailButton = forwardRef<
       track("voting_behavior_detail_button_clicked", {
         voteId,
       });
+      trackVotingBehaviorDetailViewed({ vote_id: voteId, party_id: partyId });
     },
   }));
 

@@ -2,6 +2,7 @@ import {
   addUserMessageToChatSession,
   createChatSession,
 } from "@lib/firebase/firebase";
+import { trackChatMessageSent } from "@lib/firebase/analytics";
 import { chatViewScrollToBottom } from "@lib/scroll-utils";
 import { type ChatStoreActionHandlerFor } from "@lib/stores/chat-store.types";
 import { generateUuid } from "@lib/utils";
@@ -120,6 +121,12 @@ export const chatAddUserMessage: ChatStoreActionHandlerFor<"addUserMessage"> =
         user_message: message,
         party_ids: Array.from(partyIds),
         user_is_logged_in: !isAnonymous,
+      });
+
+      trackChatMessageSent({
+        session_id: safeSessionId,
+        message_length: message.length,
+        has_demographics: false,
       });
 
       const currentStreamingMessageId = generateUuid();

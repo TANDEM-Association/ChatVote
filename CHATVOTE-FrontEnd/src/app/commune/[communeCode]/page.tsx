@@ -18,6 +18,7 @@ import {
   ResponsiveContainer,
 } from "recharts";
 
+import { trackCommuneDashboardView } from "@lib/firebase/analytics";
 import { toTitleCase } from "@lib/utils";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
@@ -668,6 +669,16 @@ export default function CommuneDashboardPage() {
     fetchData();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [communeCode]);
+
+  useEffect(() => {
+    if (data) {
+      trackCommuneDashboardView({
+        commune_code: data.commune.code,
+        commune_name: data.commune.name,
+        list_count: data.commune.list_count,
+      });
+    }
+  }, [data]);
 
   // ---- Loading state -------------------------------------------------------
   if (loading) {
