@@ -35,11 +35,61 @@ else
     echo -e "  ${GREEN}✓${NC} Created CHATVOTE-FrontEnd/.env.local"
 fi
 
+# ---- Frontend port selection (first free port between 3000 and 3333) ----
+FRONTEND_PORT_FILE="$FRONTEND_DIR/.frontend-port"
+if [ ! -f "$FRONTEND_PORT_FILE" ]; then
+    FRONTEND_PORT=3000
+    for port in $(seq 3000 3333); do
+        if ! lsof -ti :"$port" > /dev/null 2>&1; then
+            FRONTEND_PORT=$port
+            break
+        fi
+    done
+    echo "$FRONTEND_PORT" > "$FRONTEND_PORT_FILE"
+    sed -i '' "s|NEXT_PUBLIC_APP_URL=http://localhost:[0-9]*|NEXT_PUBLIC_APP_URL=http://localhost:$FRONTEND_PORT|" "$FRONTEND_ENV"
+    echo -e "  ${GREEN}✓${NC} Frontend port: ${CYAN}$FRONTEND_PORT${NC} (saved to .frontend-port)"
+else
+    FRONTEND_PORT=$(cat "$FRONTEND_PORT_FILE")
+    echo -e "  ${GREEN}✓${NC} Frontend port: ${CYAN}$FRONTEND_PORT${NC} (from .frontend-port)"
+fi
+
 # ---- Backend .env (interactive) ----
 if [ -f "$BACKEND_ENV" ]; then
     echo -e "  ${GREEN}✓${NC} CHATVOTE-BackEnd/.env already exists — skipped"
     echo ""
     echo -e "  ${YELLOW}Tip:${NC} Delete CHATVOTE-BackEnd/.env and re-run to reconfigure."
+    SKIP_ENV=true
+else
+    SKIP_ENV=false
+fi
+
+# ---- Firebase service account (always ensure it exists) ----
+FIREBASE_KEY="$BACKEND_DIR/chat-vote-dev-firebase-adminsdk.json"
+if [ ! -f "$FIREBASE_KEY" ]; then
+    echo -e "  ${CYAN}→${NC} Generating dummy Firebase service account for local emulator..."
+    PRIVATE_KEY=$(openssl genrsa 2048 2>/dev/null | awk '{printf "%s\\n", $0}' | sed 's/\\n$//')
+    cat > "$FIREBASE_KEY" << KEYEOF
+{
+  "type": "service_account",
+  "project_id": "chat-vote-dev",
+  "private_key_id": "local-dev-dummy-key",
+  "private_key": "$PRIVATE_KEY",
+  "client_email": "firebase-adminsdk@chat-vote-dev.iam.gserviceaccount.com",
+  "client_id": "000000000000000000000",
+  "auth_uri": "https://accounts.google.com/o/oauth2/auth",
+  "token_uri": "https://oauth2.googleapis.com/token",
+  "auth_provider_x509_cert_url": "https://www.googleapis.com/oauth2/v1/certs",
+  "client_x509_cert_url": "https://www.googleapis.com/robot/v1/metadata/x509/firebase-adminsdk%40chat-vote-dev.iam.gserviceaccount.com"
+}
+KEYEOF
+    echo -e "  ${GREEN}✓${NC} Created dummy Firebase service account (local emulator only)"
+fi
+
+if [ "$SKIP_ENV" = true ]; then
+    if ! grep -q "^GOOGLE_APPLICATION_CREDENTIALS=" "$BACKEND_ENV" 2>/dev/null; then
+        echo "GOOGLE_APPLICATION_CREDENTIALS=$FIREBASE_KEY" >> "$BACKEND_ENV"
+        echo -e "  ${GREEN}✓${NC} Added GOOGLE_APPLICATION_CREDENTIALS to CHATVOTE-BackEnd/.env"
+    fi
     echo ""
     exit 0
 fi
@@ -102,6 +152,7 @@ EMBEDDING_PROVIDER=ollama
 # ANTHROPIC_API_KEY=
 ENVEOF
 
+    echo "GOOGLE_APPLICATION_CREDENTIALS=$FIREBASE_KEY" >> "$BACKEND_ENV"
     echo -e "  ${GREEN}✓${NC} Created CHATVOTE-BackEnd/.env (Local / Ollama)"
     echo ""
     echo -e "  Embeddings: ${CYAN}nomic-embed-text (768d)${NC} via Ollama"
@@ -125,6 +176,7 @@ OLLAMA_EMBED_MODEL=nomic-embed-text
 OLLAMA_EMBED_DIM=768
 ENVEOF
 
+    echo "GOOGLE_APPLICATION_CREDENTIALS=$FIREBASE_KEY" >> "$BACKEND_ENV"
     echo -e "  ${GREEN}✓${NC} Created CHATVOTE-BackEnd/.env (Cloud / Gemini)"
     echo ""
     echo -e "  Embeddings: ${CYAN}gemini-embedding-001 (3072d)${NC} via Google AI"
