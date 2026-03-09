@@ -6,7 +6,7 @@ manually via admin endpoints if needed.
 import os
 import logging
 
-os.environ["DISABLE_SOCKETIO"] = "1"
+# Socket.IO re-enabled now that Firestore uses sync client in run_in_executor
 
 from aiohttp import web
 
