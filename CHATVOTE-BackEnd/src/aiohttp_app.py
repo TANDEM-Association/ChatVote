@@ -1141,7 +1141,12 @@ for route in list(app.router.routes()):
     logger.info(f"Adding CORS to route {route}")
     cors.add(route, cors_config)
 
-sio.attach(app)
+# Attach Socket.IO only when not explicitly disabled (for debugging)
+if os.environ.get("DISABLE_SOCKETIO") != "1":
+    sio.attach(app)
+    logger.info("Socket.IO attached to app")
+else:
+    logger.warning("Socket.IO DISABLED (DISABLE_SOCKETIO=1)")
 
 
 # Background initialization (non-blocking) so the HTTP server starts immediately
