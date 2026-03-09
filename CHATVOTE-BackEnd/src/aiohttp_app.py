@@ -6,6 +6,7 @@ import asyncio
 import logging
 import os
 import json
+import time
 
 import aiohttp
 from aiohttp import web
@@ -34,6 +35,12 @@ from src.services.firestore_listener import (
     start_candidates_listener,
     is_listener_running,
     is_candidates_listener_running,
+)
+from src.services.document_upload import (
+    create_job,
+    get_job,
+    get_all_jobs,
+    process_upload,
 )
 from src.services.scheduler import create_scheduler
 from src.models.dtos import (
@@ -315,6 +322,112 @@ async def admin_reset_rate_limit(request):
             {"status": "error", "message": str(e)},
             status=500,
         )
+
+
+# ---------------------------------------------------------------------------
+# Document upload endpoints (secret-protected)
+# ---------------------------------------------------------------------------
+UPLOAD_SECRET = os.environ.get("ADMIN_UPLOAD_SECRET", "")
+
+
+def _check_upload_secret(request: web.Request) -> None:
+    """Validate upload secret from header or query param.
+
+    Raises 404 (not 403) to avoid revealing the endpoint exists.
+    """
+    secret = request.headers.get("X-Upload-Secret") or request.query.get("secret")
+    if not UPLOAD_SECRET or secret != UPLOAD_SECRET:
+        raise web.HTTPNotFound()
+
+
+@routes.post(route_prefix + "/admin/upload")
+async def admin_upload(request: web.Request) -> web.Response:
+    """Upload one or more PDF/TXT files for auto-classification and indexing."""
+    _check_upload_secret(request)
+
+    reader = await request.multipart()
+    jobs: list[dict] = []
+
+    while True:
+        part = await reader.next()
+        if part is None:
+            break
+        if part.filename is None:
+            continue  # skip non-file fields
+
+        filename = part.filename
+        data = await part.read(decode=False)
+
+        if not data:
+            jobs.append({"filename": filename, "error": "Empty file"})
+            continue
+
+        job_id = create_job(filename)
+        file_size = len(data)
+
+        # Small files (<5MB): process inline; larger ones: background task
+        if file_size < 5 * 1024 * 1024:
+            try:
+                await process_upload(job_id, filename, data)
+            except Exception as e:
+                logger.error(f"Upload processing error for {filename}: {e}", exc_info=True)
+        else:
+            asyncio.create_task(process_upload(job_id, filename, data))
+
+        current = get_job(job_id) or {}
+        jobs.append({"job_id": job_id, "filename": filename, "status": current.get("status", "pending")})
+
+    if not jobs:
+        return web.json_response(
+            {"status": "error", "message": "No files found in request"},
+            status=400,
+        )
+
+    return web.json_response({"status": "accepted", "jobs": jobs})
+
+
+@routes.get(route_prefix + "/admin/upload-status")
+async def admin_upload_status(request: web.Request) -> web.Response:
+    """Return status of all upload jobs."""
+    _check_upload_secret(request)
+    return web.json_response({"jobs": get_all_jobs()})
+
+
+@routes.get(route_prefix + "/admin/upload-status/{job_id}")
+async def admin_upload_job_status(request: web.Request) -> web.Response:
+    """Return status of a single upload job. Supports SSE via Accept header."""
+    _check_upload_secret(request)
+
+    job_id = request.match_info["job_id"]
+    job = get_job(job_id)
+    if job is None:
+        return web.json_response(
+            {"status": "error", "message": "Job not found"}, status=404
+        )
+
+    # SSE streaming if client requests it
+    if "text/event-stream" in request.headers.get("Accept", ""):
+        resp = web.StreamResponse()
+        resp.content_type = "text/event-stream"
+        resp.headers["Cache-Control"] = "no-cache"
+        resp.headers["X-Accel-Buffering"] = "no"
+        await resp.prepare(request)
+
+        # Poll and stream updates until terminal state
+        max_wait = 300  # 5 min timeout
+        start = time.monotonic()
+        while (time.monotonic() - start) < max_wait:
+            current = get_job(job_id)
+            if current is None:
+                break
+            await resp.write(f"data: {json.dumps(current)}\n\n".encode())
+            if current["status"] in ("done", "error"):
+                break
+            await asyncio.sleep(1)
+
+        return resp
+
+    return web.json_response(job)
 
 
 @routes.get(f"{route_prefix}/admin/debug-qdrant")
