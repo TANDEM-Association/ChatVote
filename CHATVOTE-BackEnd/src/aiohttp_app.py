@@ -170,32 +170,29 @@ async def get_assistant_info(request):
     return web.json_response(CHATVOTE_ASSISTANT.model_dump())
 
 
+_indexing_status: dict = {"manifestos": None, "candidates": None}
+
+
 @routes.post(f"{route_prefix}/admin/index-all-manifestos")
 async def admin_index_all_manifestos(request):
-    """
-    Admin endpoint to trigger indexation of all party manifestos.
-
-    This should be called once to index existing parties, or to re-index all.
-    """
+    """Trigger indexation of all party manifestos (runs in background)."""
     logger.info("Admin triggered: indexing all party manifestos")
 
-    try:
-        results = await index_all_parties()
-        total = sum(results.values())
-
-        return web.json_response(
-            {
-                "status": "success",
-                "message": f"Indexed {total} chunks for {len(results)} parties",
-                "details": results,
+    async def _run():
+        try:
+            _indexing_status["manifestos"] = {"status": "running", "started": True}
+            results = await index_all_parties()
+            total = sum(results.values())
+            _indexing_status["manifestos"] = {
+                "status": "done", "total": total, "details": results,
             }
-        )
-    except Exception as e:
-        logger.error(f"Error indexing manifestos: {e}", exc_info=True)
-        return web.json_response(
-            {"status": "error", "message": str(e)},
-            status=500,
-        )
+            logger.info(f"Manifesto indexing complete: {total} chunks for {len(results)} parties")
+        except Exception as e:
+            _indexing_status["manifestos"] = {"status": "error", "message": str(e)}
+            logger.error(f"Error indexing manifestos: {e}", exc_info=True)
+
+    asyncio.create_task(_run())
+    return web.json_response({"status": "started", "message": "Manifesto indexing started in background. Check /admin/index-status for progress."})
 
 
 @routes.post(route_prefix + "/admin/index-party-manifesto/{party_id}")
@@ -231,31 +228,31 @@ async def admin_index_party_manifesto(request):
 
 @routes.post(f"{route_prefix}/admin/index-all-candidates")
 async def admin_index_all_candidates(request):
-    """
-    Admin endpoint to trigger indexation of all candidate websites.
-
-    This will scrape and index all candidates with a website_url.
-    """
+    """Trigger indexation of all candidate websites (runs in background)."""
     logger.info("Admin triggered: indexing all candidate websites")
 
-    try:
-        results = await index_all_candidates()
-        total = sum(results.values())
-        successful = sum(1 for v in results.values() if v > 0)
-
-        return web.json_response(
-            {
-                "status": "success",
-                "message": f"Indexed {total} chunks for {successful}/{len(results)} candidates",
-                "details": results,
+    async def _run():
+        try:
+            _indexing_status["candidates"] = {"status": "running", "started": True}
+            results = await index_all_candidates()
+            total = sum(results.values())
+            successful = sum(1 for v in results.values() if v > 0)
+            _indexing_status["candidates"] = {
+                "status": "done", "total": total, "successful": successful, "details": results,
             }
-        )
-    except Exception as e:
-        logger.error(f"Error indexing candidate websites: {e}", exc_info=True)
-        return web.json_response(
-            {"status": "error", "message": str(e)},
-            status=500,
-        )
+            logger.info(f"Candidate indexing complete: {total} chunks for {successful}/{len(results)} candidates")
+        except Exception as e:
+            _indexing_status["candidates"] = {"status": "error", "message": str(e)}
+            logger.error(f"Error indexing candidates: {e}", exc_info=True)
+
+    asyncio.create_task(_run())
+    return web.json_response({"status": "started", "message": "Candidate indexing started in background. Check /admin/index-status for progress."})
+
+
+@routes.get(f"{route_prefix}/admin/index-status")
+async def admin_index_status(request):
+    """Check status of background indexing tasks."""
+    return web.json_response(_indexing_status)
 
 
 @routes.post(route_prefix + "/admin/index-candidate-website/{candidate_id}")
