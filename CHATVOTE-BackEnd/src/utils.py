@@ -67,6 +67,7 @@ def get_cors_allowed_origins(env: Optional[str]) -> Union[str, list[str]]:
     else:
         return [
             "https://chatvote.fr",
+            "https://app.chatvote.org",
             "https://embed.chatvote.fr",
             "https://pre-prod.chatvote.fr",
             "https://dev.chatvote.fr",
