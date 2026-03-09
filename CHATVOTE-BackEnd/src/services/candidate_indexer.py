@@ -271,9 +271,13 @@ async def index_candidate_website(
     return len(documents)
 
 
-async def index_all_candidates() -> dict[str, int]:
+async def index_all_candidates(scraper_backend: str = "auto") -> dict[str, int]:
     """
     Index websites for all candidates with a website URL.
+
+    Args:
+        scraper_backend: "auto" (use Firecrawl if key is set, else Playwright),
+                         "firecrawl", or "playwright".
 
     Returns a dict of candidate_id -> number of chunks indexed.
     """
@@ -284,11 +288,25 @@ async def index_all_candidates() -> dict[str, int]:
 
     results = {}
 
-    # Scrape all websites first
-    scraper = CandidateWebsiteScraper()
-    scraped_websites = await scraper.scrape_multiple_candidates(
-        candidates, max_concurrent=3
+    # Choose scraper backend
+    use_firecrawl = scraper_backend == "firecrawl" or (
+        scraper_backend == "auto" and bool(os.getenv("FIRECRAWL_API_KEY"))
     )
+
+    if use_firecrawl:
+        from src.services.firecrawl_scraper import FirecrawlScraper
+
+        logger.info("Using Firecrawl scraper backend")
+        scraper = FirecrawlScraper()
+        scraped_websites = await scraper.scrape_multiple_candidates(
+            candidates, max_concurrent=10
+        )
+    else:
+        logger.info("Using Playwright scraper backend")
+        scraper = CandidateWebsiteScraper()
+        scraped_websites = await scraper.scrape_multiple_candidates(
+            candidates, max_concurrent=3
+        )
 
     # Create a map of candidate_id -> scraped_website
     scraped_map = {sw.candidate_id: sw for sw in scraped_websites}
