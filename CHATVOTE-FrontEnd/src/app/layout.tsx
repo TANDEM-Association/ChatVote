@@ -1,7 +1,7 @@
 import { type Metadata } from "next";
-import Script from "next/script";
 import { Merriweather, Merriweather_Sans } from "next/font/google";
 import { headers } from "next/headers";
+import Script from "next/script";
 
 import { getLocale } from "@actions/i18n/getLocale";
 import { config } from "@config";
@@ -12,6 +12,7 @@ import { getAuth, getParties } from "@lib/firebase/firebase-server";
 import { getTheme } from "@lib/theme/getTheme";
 import { getAppUrl } from "@lib/url";
 import { GoogleAnalytics } from "@next/third-parties/google";
+import { Analytics } from "@vercel/analytics/next";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 
@@ -169,6 +170,7 @@ export default async function RootLayout({
             {children}
           </AppProvider>
         </NextIntlClientProvider>
+        <Analytics />
       </body>
       <GoogleAnalytics gaId={config.googleAnalytics.gaId} />
     </html>
