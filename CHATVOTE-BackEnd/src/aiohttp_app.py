@@ -1268,6 +1268,265 @@ async def get_parliamentary_question(body: ParliamentaryQuestionRequestDto):
     return web.json_response(parliamentary_question_dto.model_dump())
 
 
+# ==================== Data Sources Pipeline API ====================
+
+# Track running pipeline tasks so we can cancel them
+_pipeline_tasks: dict[str, asyncio.Task] = {}
+
+# DAG execution order for run-all
+_PIPELINE_ORDER = [
+    "population", "candidatures", "websites", "pourquituvotes",
+    "professions", "seed", "scraper", "crawl_scraper", "indexer",
+]
+
+
+def _check_admin_secret(request: web.Request) -> bool:
+    """Validate X-Admin-Secret header if ADMIN_SECRET env var is set."""
+    expected = os.getenv("ADMIN_SECRET")
+    if not expected:
+        return True  # no secret configured — allow all
+    return request.headers.get("X-Admin-Secret") == expected
+
+
+@routes.get(f"{route_prefix}/admin/data-sources/status")
+async def ds_status(request):
+    """Return current config/status for all pipeline nodes."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    from src.services.data_pipeline import PIPELINE_NODES
+    from src.services.data_pipeline.base import load_config
+
+    result = {}
+    for node_id, node in PIPELINE_NODES.items():
+        cfg = await load_config(node_id, node.default_config())
+        result[node_id] = cfg.to_dict()
+    return web.json_response(result)
+
+
+@routes.post(f"{route_prefix}/admin/data-sources/run/{{node_id}}")
+async def ds_run_node(request):
+    """Run a single pipeline node in the background."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    node_id = request.match_info["node_id"]
+
+    from src.services.data_pipeline import PIPELINE_NODES
+    node = PIPELINE_NODES.get(node_id)
+    if not node:
+        return web.json_response({"error": f"Unknown node: {node_id}"}, status=404)
+
+    body = await request.json() if request.content_length else {}
+    force = body.get("force", False)
+
+    # Don't start if already running
+    if node_id in _pipeline_tasks and not _pipeline_tasks[node_id].done():
+        return web.json_response({"status": "already_running", "node_id": node_id})
+
+    async def _run():
+        try:
+            await node.execute(force=force)
+        except Exception as exc:
+            logger.error("[data-sources] node %s failed: %s", node_id, exc, exc_info=True)
+        finally:
+            _pipeline_tasks.pop(node_id, None)
+
+    task = asyncio.create_task(_run())
+    _pipeline_tasks[node_id] = task
+    return web.json_response({"status": "started", "node_id": node_id})
+
+
+@routes.put(f"{route_prefix}/admin/data-sources/config/{{node_id}}")
+async def ds_update_config(request):
+    """Update a node's enabled flag and/or settings."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    node_id = request.match_info["node_id"]
+
+    from src.services.data_pipeline import PIPELINE_NODES
+    from src.services.data_pipeline.base import load_config, save_config
+
+    node = PIPELINE_NODES.get(node_id)
+    if not node:
+        return web.json_response({"error": f"Unknown node: {node_id}"}, status=404)
+
+    body = await request.json()
+    cfg = await load_config(node_id, node.default_config())
+
+    if "enabled" in body:
+        cfg.enabled = body["enabled"]
+    if "settings" in body:
+        cfg.settings.update(body["settings"])
+
+    await save_config(cfg)
+    return web.json_response(cfg.to_dict())
+
+
+@routes.post(f"{route_prefix}/admin/data-sources/bust-cache")
+async def ds_bust_cache(request):
+    """Clear the in-memory pipeline context cache."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    from src.services.data_pipeline import clear_context
+    clear_context()
+    return web.json_response({"status": "ok", "message": "Pipeline context cleared"})
+
+
+@routes.post(f"{route_prefix}/admin/data-sources/clear-all")
+async def ds_clear_all(request):
+    """Reset all pipeline node configs in Firestore to defaults."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    from src.services.data_pipeline import PIPELINE_NODES, clear_context
+    from src.services.data_pipeline.base import save_config
+
+    cleared = []
+    for node_id, node in PIPELINE_NODES.items():
+        await save_config(node.default_config())
+        cleared.append(node_id)
+
+    clear_context()
+    logger.info("[data-sources] cleared all node configs: %s", cleared)
+    return web.json_response({"status": "ok", "cleared": cleared})
+
+
+@routes.post(f"{route_prefix}/admin/data-sources/run-all")
+async def ds_run_all(request):
+    """Run all enabled nodes in DAG order (background task)."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    body = await request.json() if request.content_length else {}
+    force = body.get("force", False)
+    top_communes = body.get("top_communes")
+
+    from src.services.data_pipeline import PIPELINE_NODES, clear_context
+    from src.services.data_pipeline.base import load_config
+
+    # Don't start if a run-all is already in progress
+    if "_run_all" in _pipeline_tasks and not _pipeline_tasks["_run_all"].done():
+        return web.json_response({"status": "already_running"})
+
+    async def _run_all():
+        clear_context()
+
+        # If top_communes is specified, inject it into population settings
+        if top_communes is not None:
+            from src.services.data_pipeline.base import save_config as _save
+            node = PIPELINE_NODES.get("population")
+            if node:
+                cfg = await load_config("population", node.default_config())
+                cfg.settings["top_communes"] = top_communes
+                await _save(cfg)
+
+        for node_id in _PIPELINE_ORDER:
+            node = PIPELINE_NODES.get(node_id)
+            if not node:
+                continue
+            cfg = await load_config(node_id, node.default_config())
+            if not cfg.enabled and not force:
+                logger.info("[data-sources] run-all: skipping disabled node %s", node_id)
+                continue
+            try:
+                logger.info("[data-sources] run-all: executing %s", node_id)
+                await node.execute(force=force)
+            except Exception as exc:
+                logger.error("[data-sources] run-all: %s failed: %s", node_id, exc, exc_info=True)
+        _pipeline_tasks.pop("_run_all", None)
+
+    task = asyncio.create_task(_run_all())
+    _pipeline_tasks["_run_all"] = task
+    return web.json_response({"status": "started", "order": _PIPELINE_ORDER})
+
+
+@routes.post(f"{route_prefix}/admin/data-sources/stop/{{node_id}}")
+async def ds_stop_node(request):
+    """Cancel a running pipeline node task."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    node_id = request.match_info["node_id"]
+
+    from src.services.data_pipeline.base import update_status, NodeStatus
+
+    task = _pipeline_tasks.get(node_id)
+    if task and not task.done():
+        task.cancel()
+        _pipeline_tasks.pop(node_id, None)
+        await update_status(node_id, NodeStatus.ERROR, last_error="Cancelled by admin")
+        return web.json_response({"status": "stopped", "node_id": node_id})
+    return web.json_response({"status": "not_running", "node_id": node_id})
+
+
+@routes.post(f"{route_prefix}/admin/data-sources/stop-all")
+async def ds_stop_all(request):
+    """Cancel all running pipeline tasks."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    from src.services.data_pipeline.base import update_status, NodeStatus
+
+    stopped = []
+    for key, task in list(_pipeline_tasks.items()):
+        if not task.done():
+            task.cancel()
+            if key != "_run_all":
+                await update_status(key, NodeStatus.ERROR, last_error="Cancelled by admin")
+            stopped.append(key)
+    _pipeline_tasks.clear()
+    return web.json_response({"status": "ok", "stopped": stopped})
+
+
+@routes.get(f"{route_prefix}/admin/data-sources/preview/{{node_id}}")
+async def ds_preview(request):
+    """Return a preview of data produced by a pipeline node."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    node_id = request.match_info["node_id"]
+
+    from src.services.data_pipeline import PIPELINE_NODES
+    from src.services.data_pipeline.base import load_config
+
+    node = PIPELINE_NODES.get(node_id)
+    if not node:
+        return web.json_response({"error": f"Unknown node: {node_id}"}, status=404)
+
+    cfg = await load_config(node_id, node.default_config())
+
+    # Return checkpoints and counts as preview data
+    preview: dict = {
+        "node_id": node_id,
+        "status": cfg.status.value if hasattr(cfg.status, "value") else cfg.status,
+        "counts": cfg.counts,
+        "checkpoints": cfg.checkpoints,
+        "settings": cfg.settings,
+    }
+
+    # For specific nodes, add extra preview data
+    if node_id == "population":
+        from src.services.data_pipeline.population import get_top_communes
+        communes = get_top_communes()
+        preview["sample"] = communes[:10] if communes else []
+        preview["total"] = len(communes) if communes else 0
+    elif node_id == "candidatures":
+        from src.services.data_pipeline.candidatures import get_candidatures
+        cands = get_candidatures()
+        preview["total"] = len(cands) if cands else 0
+        preview["sample"] = cands[:5] if cands else []
+    elif node_id == "websites":
+        from src.services.data_pipeline.websites import get_websites
+        sites = get_websites()
+        preview["total"] = len(sites) if sites else 0
+        preview["sample"] = list(sites.items())[:5] if sites else []
+
+    return web.json_response(preview)
+
+
 app = web.Application(middlewares=[api_key_middleware])
 
 # Add routes to the app

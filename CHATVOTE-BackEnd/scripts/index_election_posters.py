@@ -76,7 +76,7 @@ text_splitter = RecursiveCharacterTextSplitter(
 )
 
 # Max concurrent Gemini OCR calls (free tier: 15 RPM → safe at 5)
-OCR_SEMAPHORE = asyncio.Semaphore(5)
+OCR_SEMAPHORE = asyncio.Semaphore(10)
 
 # Keyword-based theme classification (same as aiohttp_app.py dashboard)
 _THEME_KEYWORDS: dict[str, list[str]] = {
@@ -284,8 +284,12 @@ def delete_poster_namespace(namespace: str) -> None:
         logger.error(f"Error deleting namespace {namespace}: {e}")
 
 
-async def ocr_and_extract(row: PosterRow) -> str:
-    """Extract text from a poster PDF, using OCR if needed."""
+async def ocr_and_extract(row: PosterRow, skip_ocr: bool = False) -> str:
+    """Extract text from a poster PDF, using OCR if needed.
+
+    Strategy: try pypdf text extraction first. If text is too short (<200 chars),
+    fall back to Gemini OCR (unless --skip-ocr is set).
+    """
     pdf_path = row.full_pdf_path
     if not pdf_path.exists():
         logger.warning(f"PDF not found: {pdf_path}")
@@ -294,12 +298,38 @@ async def ocr_and_extract(row: PosterRow) -> str:
     data = pdf_path.read_bytes()
     filename = pdf_path.name
 
+    MIN_TEXT_CHARS = 200  # below this, pypdf result is likely just footers/headers
+
+    # Step 1: Try fast pypdf text extraction
+    pypdf_text = ""
+    try:
+        import pypdf
+        import io
+        reader = pypdf.PdfReader(io.BytesIO(data))
+        pypdf_text = "\n".join(page.extract_text() or "" for page in reader.pages)
+    except Exception as e:
+        logger.debug(f"pypdf extraction failed for {filename}: {e}")
+
+    if len(pypdf_text.strip()) >= MIN_TEXT_CHARS:
+        logger.info(f"  Text layer OK ({len(pypdf_text.strip())} chars): {filename}")
+        return pypdf_text
+
+    # Step 2: Text layer too small — need OCR
+    if skip_ocr:
+        if pypdf_text.strip():
+            logger.info(f"  Skipping OCR for {filename} — only {len(pypdf_text.strip())} chars in text layer (--skip-ocr)")
+        else:
+            logger.info(f"  Skipping image-only PDF: {filename} (--skip-ocr)")
+        return ""
+
+    # Step 3: Fall back to Gemini OCR
+    logger.info(f"  Text layer insufficient ({len(pypdf_text.strip())} chars), using Gemini OCR: {filename}")
     async with OCR_SEMAPHORE:
         try:
             text = await extract_text(filename, data)
             return text
         except Exception as e:
-            logger.error(f"Failed to extract text from {filename}: {e}")
+            logger.error(f"Failed OCR for {filename}: {e}")
             return ""
 
 
@@ -347,9 +377,9 @@ def build_documents(row: PosterRow, text: str) -> list[Document]:
 # Main pipeline
 # --------------------------------------------------------------------------- #
 
-async def index_poster(row: PosterRow, dry_run: bool = False) -> int:
+async def index_poster(row: PosterRow, dry_run: bool = False, skip_ocr: bool = False) -> int:
     """Process one poster: OCR → chunk → classify → index. Returns chunk count."""
-    text = await ocr_and_extract(row)
+    text = await ocr_and_extract(row, skip_ocr=skip_ocr)
     if not text or len(text.strip()) < 50:
         logger.warning(f"  [{row.namespace}] No text extracted from {row.pdf_path}")
         return 0
@@ -390,6 +420,7 @@ async def main():
     parser.add_argument("--commune", nargs="*", help="Specific commune code(s) to index")
     parser.add_argument("--dry-run", action="store_true", help="Extract and chunk but don't write to Qdrant")
     parser.add_argument("--force", action="store_true", help="Re-index even if namespace already exists")
+    parser.add_argument("--skip-ocr", action="store_true", help="Skip image-only PDFs (no Gemini OCR)")
     args = parser.parse_args()
 
     logger.info(f"COWORK_OUTPUT: {COWORK_OUTPUT}")
@@ -455,24 +486,32 @@ async def main():
     fail_count = 0
     commune_stats: dict[str, int] = {}
 
-    for commune_code, commune_rows in by_commune.items():
+    # Sort communes by population descending (most populated first)
+    sorted_communes = sorted(
+        by_commune.items(),
+        key=lambda item: item[1][0].population if item[1] else 0,
+        reverse=True,
+    )
+
+    for commune_code, commune_rows in sorted_communes:
         commune_name = commune_rows[0].commune_name
         logger.info(f"\n{'='*60}")
         logger.info(f"Commune: {commune_name} ({commune_code}) — {len(commune_rows)} posters")
 
-        commune_chunks = 0
-        for row in commune_rows:
+        async def _process_poster(row):
             try:
-                count = await index_poster(row, dry_run=args.dry_run)
+                count = await index_poster(row, dry_run=args.dry_run, skip_ocr=args.skip_ocr)
                 if count > 0:
-                    success_count += 1
-                    commune_chunks += count
                     logger.info(f"  [{row.namespace}] {row.display_list_name}: {count} chunks")
-                else:
-                    fail_count += 1
+                return count
             except Exception as e:
                 logger.error(f"  [{row.namespace}] Error: {e}")
-                fail_count += 1
+                return -1
+
+        results = await asyncio.gather(*[_process_poster(row) for row in commune_rows])
+        commune_chunks = sum(c for c in results if c > 0)
+        success_count += sum(1 for c in results if c > 0)
+        fail_count += sum(1 for c in results if c <= 0)
 
         total_chunks += commune_chunks
         commune_stats[commune_code] = commune_chunks
