@@ -179,6 +179,8 @@ jobs:
           SYNC_FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
           SYNC_NEXT_PUBLIC_API_URL: ${{ secrets.NEXT_PUBLIC_API_URL }}
           SYNC_NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
+          SYNC_STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          SYNC_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
         run: |
           # Ensure server-side env vars are set for Vercel runtime (not just build time)
           sync_var() {
@@ -190,6 +192,8 @@ jobs:
           sync_var FIREBASE_PRIVATE_KEY "$SYNC_FIREBASE_PRIVATE_KEY"
           sync_var NEXT_PUBLIC_API_URL "$SYNC_NEXT_PUBLIC_API_URL"
           sync_var NEXT_PUBLIC_APP_URL "$SYNC_NEXT_PUBLIC_APP_URL"
+          sync_var STRIPE_SECRET_KEY "$SYNC_STRIPE_SECRET_KEY"
+          sync_var NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY "$SYNC_NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY"
 
       - name: Build
         env:
@@ -205,6 +209,8 @@ jobs:
           NEXT_PUBLIC_APP_URL: ${{ secrets.NEXT_PUBLIC_APP_URL }}
           FIREBASE_CLIENT_EMAIL: ${{ secrets.FIREBASE_CLIENT_EMAIL }}
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
+          STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
+          NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
