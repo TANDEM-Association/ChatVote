@@ -242,11 +242,11 @@ _qdrant_api_key = os.getenv("QDRANT_API_KEY")
 _force_rest = _qdrant_url.startswith("https://")
 qdrant_client = QdrantClient(
     url=_qdrant_url, api_key=_qdrant_api_key, prefer_grpc=False, https=_force_rest,
-    port=443 if _force_rest else 6333,
+    port=443 if _force_rest else 6333, timeout=30,
 )
 async_qdrant_client = AsyncQdrantClient(
     url=_qdrant_url, api_key=_qdrant_api_key, prefer_grpc=False, https=_force_rest,
-    port=443 if _force_rest else 6333,
+    port=443 if _force_rest else 6333, timeout=30,
 )
 
 # Cache collection existence to avoid repeated get_collections() round-trips
