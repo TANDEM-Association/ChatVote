@@ -1,5 +1,7 @@
 .PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-gemini seed-snapshots seed-firestore test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
 
+FRONTEND_PORT := $(shell cat CHATVOTE-FrontEnd/.frontend-port 2>/dev/null || echo 3000)
+
 # ---------------------------------------------------------------------------
 # Setup — run once after cloning
 # ---------------------------------------------------------------------------
@@ -57,8 +59,9 @@ dev: dev-infra
 		> $(CURDIR)/.logs/backend.log 2>&1 & \
 		echo "$$!" > $(CURDIR)/.logs/backend.pid
 	@echo "Starting frontend (logs → .logs/frontend.log)..."
+	@rm -f CHATVOTE-FrontEnd/.next/dev/lock
 	@cd CHATVOTE-FrontEnd && \
-		npm run dev \
+		PORT=$(FRONTEND_PORT) npm run dev \
 		> $(CURDIR)/.logs/frontend.log 2>&1 & \
 		echo "$$!" > $(CURDIR)/.logs/frontend.pid
 	@echo ""
@@ -69,8 +72,8 @@ dev: dev-infra
 		fi; \
 		sleep 1; \
 	done
-	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
-		if curl -so /dev/null http://localhost:3000/chat 2>/dev/null; then \
+	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15 16 17 18 19 20 21 22 23 24 25 26 27 28 29 30; do \
+		if curl -so /dev/null http://localhost:$(FRONTEND_PORT)/chat 2>/dev/null; then \
 			break; \
 		fi; \
 		sleep 1; \
@@ -80,7 +83,7 @@ dev: dev-infra
 	@echo ""
 	@$(MAKE) check
 	@echo ""
-	@echo "  App:                http://localhost:3000"
+	@echo "  App:                http://localhost:$(FRONTEND_PORT)"
 	@echo "  Qdrant dashboard:   http://localhost:6333/dashboard"
 	@echo "  Firebase emulators: http://localhost:4000"
 	@echo ""
@@ -202,8 +205,8 @@ check:
 		(curl -sf http://localhost:9099/ > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 	@printf "  Backend   (:8080)  ... " && \
 		(curl -sf http://localhost:8080/healthz > /dev/null 2>&1 && echo "OK" || echo "FAIL")
-	@printf "  Frontend  (:3000)  ... " && \
-		(curl -so /dev/null -w '' http://localhost:3000/chat 2>/dev/null && echo "OK" || echo "FAIL")
+	@printf "  Frontend  (:$(FRONTEND_PORT))  ... " && \
+		(curl -so /dev/null -w '' http://localhost:$(FRONTEND_PORT)/chat 2>/dev/null && echo "OK" || echo "FAIL")
 
 # ---------------------------------------------------------------------------
 # Logs
@@ -227,6 +230,7 @@ stop:
 		fi; \
 	done
 	@lsof -ti :9099,:8081 2>/dev/null | sort -u | xargs kill 2>/dev/null && echo "  native firebase emulators stopped." || true
+	@rm -f CHATVOTE-FrontEnd/.next/dev/lock
 	@echo "All services stopped."
 
 # ---------------------------------------------------------------------------
