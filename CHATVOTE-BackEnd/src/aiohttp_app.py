@@ -564,21 +564,23 @@ async def admin_test_rag_search(request):
             ]
         )
 
-        results = qdrant_client.search(
+        _query_response = qdrant_client.query_points(
             collection_name=PARTY_INDEX_NAME,
-            query_vector=("dense", query_vector),
+            query=query_vector,
+            using="dense",
             limit=5,
             with_payload=True,
             query_filter=filter_condition,
             score_threshold=0.3,
         )
+        results = _query_response.points
 
         docs = []
         for point in results:
             payload = point.payload or {}
             docs.append(
                 {
-                    "score": point.score,
+                    "score": round(point.score, 4) if point.score is not None else None,
                     "metadata": payload.get("metadata", {}),
                     "content_preview": (payload.get("page_content", "")[:300] + "...")
                     if payload.get("page_content")
@@ -657,20 +659,22 @@ async def experiment_search(request):
                 must_not=must_not_conditions or None,
             )
 
-        results = qdrant_client.search(
+        _query_response = qdrant_client.query_points(
             collection_name=col_name,
-            query_vector=("dense", query_vector),
+            query=query_vector,
+            using="dense",
             limit=limit,
             with_payload=True,
             query_filter=query_filter,
             score_threshold=0.3,
         )
+        results = _query_response.points
 
         docs = []
         for point in results:
             payload = point.payload or {}
             docs.append({
-                "score": round(point.score, 4),
+                "score": round(point.score, 4) if point.score is not None else None,
                 "content": payload.get("page_content", ""),
                 "metadata": payload.get("metadata", {}),
             })
@@ -712,8 +716,11 @@ async def experiment_metadata_schema(request):
                 np_val = meta.get("nuance_politique")
                 if np_val:
                     nuances.add(np_val)
-        except Exception:
-            pass
+        except Exception as exc:
+            logger.warning(
+                f"Failed to scroll {col_name} for metadata schema: "
+                f"{type(exc).__name__}: {exc!r}"
+            )
 
     return web.json_response({
         "themes": THEME_TAXONOMY,

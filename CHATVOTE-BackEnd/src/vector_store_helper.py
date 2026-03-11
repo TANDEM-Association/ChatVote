@@ -403,16 +403,20 @@ async def _identify_relevant_documents(
     filter_condition = _combine_filters(namespace_filter, _build_fiabilite_filter(max_fiabilite))
 
     # Search using async client to avoid blocking the event loop
-    _query_response = await async_qdrant_client.query_points(
-        collection_name=vector_store.collection_name,
-        query=query_vector,
-        using="dense",
-        limit=n_docs,
-        with_payload=True,
-        query_filter=filter_condition,
-        score_threshold=score_threshold,
-    )
-    search_result = _query_response.points
+    try:
+        _query_response = await async_qdrant_client.query_points(
+            collection_name=vector_store.collection_name,
+            query=query_vector,
+            using="dense",
+            limit=n_docs,
+            with_payload=True,
+            query_filter=filter_condition,
+            score_threshold=score_threshold,
+        )
+        search_result = _query_response.points
+    except Exception as e:
+        logger.error(f"Qdrant query_points failed for {vector_store.collection_name}: {type(e).__name__}: {e!r}")
+        raise
 
     # Create LangChain Documents manually to preserve all metadata
     documents = []
@@ -615,16 +619,20 @@ async def _identify_relevant_candidate_documents(
     filter_condition = _combine_filters(entity_filter, _build_fiabilite_filter(max_fiabilite))
 
     # Search using async client to avoid blocking the event loop
-    _query_response = await async_qdrant_client.query_points(
-        collection_name=CANDIDATES_INDEX_NAME,
-        query=query_vector,
-        using="dense",
-        limit=n_docs,
-        with_payload=True,
-        query_filter=filter_condition,
-        score_threshold=score_threshold,
-    )
-    search_result = _query_response.points
+    try:
+        _query_response = await async_qdrant_client.query_points(
+            collection_name=CANDIDATES_INDEX_NAME,
+            query=query_vector,
+            using="dense",
+            limit=n_docs,
+            with_payload=True,
+            query_filter=filter_condition,
+            score_threshold=score_threshold,
+        )
+        search_result = _query_response.points
+    except Exception as e:
+        logger.error(f"Qdrant query_points failed for {CANDIDATES_INDEX_NAME}: {type(e).__name__}: {e!r}")
+        raise
 
     # Create LangChain Documents
     documents = []
@@ -918,9 +926,12 @@ async def _search_candidate_docs_by_party(
             score_threshold=score_threshold,
         )
         search_result = _query_response.points
-    except Exception as e:
-        logger.warning(f"Error searching candidates collection: {type(e).__name__}: {e!r}")
+    except (ConnectionError, TimeoutError) as e:
+        logger.warning(f"Qdrant unavailable for candidates search: {type(e).__name__}: {e!r}")
         return []
+    except Exception as e:
+        logger.error(f"Unexpected error in candidates search: {type(e).__name__}: {e!r}", exc_info=True)
+        raise
 
     documents = []
     for point in search_result:
@@ -975,9 +986,12 @@ async def _search_candidate_docs_by_party_and_municipality(
             score_threshold=score_threshold,
         )
         search_result = _query_response.points
-    except Exception as e:
-        logger.warning(f"Error searching candidates collection: {type(e).__name__}: {e!r}")
+    except (ConnectionError, TimeoutError) as e:
+        logger.warning(f"Qdrant unavailable for candidates search: {type(e).__name__}: {e!r}")
         return []
+    except Exception as e:
+        logger.error(f"Unexpected error in candidates search: {type(e).__name__}: {e!r}", exc_info=True)
+        raise
 
     documents = []
     for point in search_result:
@@ -1018,16 +1032,20 @@ async def _identify_relevant_manifesto_documents(
         _build_fiabilite_filter(max_fiabilite),
     )
 
-    _query_response = await async_qdrant_client.query_points(
-        collection_name=PARTY_INDEX_NAME,
-        query=query_vector,
-        using="dense",
-        limit=n_docs,
-        with_payload=True,
-        query_filter=filter_condition,
-        score_threshold=score_threshold,
-    )
-    search_result = _query_response.points
+    try:
+        _query_response = await async_qdrant_client.query_points(
+            collection_name=PARTY_INDEX_NAME,
+            query=query_vector,
+            using="dense",
+            limit=n_docs,
+            with_payload=True,
+            query_filter=filter_condition,
+            score_threshold=score_threshold,
+        )
+        search_result = _query_response.points
+    except Exception as e:
+        logger.error(f"Qdrant query_points failed for {PARTY_INDEX_NAME}: {type(e).__name__}: {e!r}")
+        raise
 
     # Create LangChain Documents
     documents = []

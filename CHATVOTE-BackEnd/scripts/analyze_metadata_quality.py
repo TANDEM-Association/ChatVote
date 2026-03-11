@@ -97,7 +97,7 @@ def _is_present(meta: dict, field: str) -> bool:
 # Qdrant scroll — returns all points
 # ---------------------------------------------------------------------------
 
-def scroll_all(client: QdrantClient, collection: str) -> list[dict]:
+def scroll_all(client: QdrantClient, collection: str) -> tuple[list[dict], list[str], list]:
     """Scroll through all points in a collection, return list of payloads."""
     payloads: list[dict] = []
     contents: list[str] = []

@@ -1002,13 +1002,20 @@ async def handle_combined_answer_request(
         if len(source_doc.page_content) > 80:
             content_preview += "..."
 
+        candidate_id = source_doc.metadata.get("namespace") or None
+        if not candidate_id:
+            logger.debug(
+                "Candidate source missing namespace/candidate_id: "
+                f"doc={source_doc.metadata.get('document_name', 'unknown')}"
+            )
+
         source = {
             "source": source_doc.metadata.get("document_name", "Site candidat"),
             "page": page_number,
             "content_preview": content_preview,
             "url": source_doc.metadata.get("url"),
             "source_type": "candidate",
-            "candidate_id": source_doc.metadata.get("namespace"),
+            "candidate_id": candidate_id,
             "candidate_name": source_doc.metadata.get("candidate_name"),
             "municipality_name": source_doc.metadata.get("municipality_name"),
             "municipality_code": source_doc.metadata.get("municipality_code"),

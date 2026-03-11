@@ -51,19 +51,19 @@ def test_build_party_filter(vsh):
 
 
 def test_build_fiabilite_filter(vsh):
-    """_build_fiabilite_filter creates a Range filter."""
+    """_build_fiabilite_filter creates a must_not Range(gt=) filter."""
     f = vsh._build_fiabilite_filter(max_fiabilite=3)
     assert f is not None
-    assert len(f.must) == 1
-    cond = f.must[0]
+    assert len(f.must_not) == 1
+    cond = f.must_not[0]
     assert cond.key == "metadata.fiabilite"
-    assert cond.range.lte == 3
+    assert cond.range.gt == 3
 
 
 def test_build_fiabilite_filter_custom(vsh):
     """Custom max_fiabilite value."""
     f = vsh._build_fiabilite_filter(max_fiabilite=2)
-    assert f.must[0].range.lte == 2
+    assert f.must_not[0].range.gt == 2
 
 
 def test_combine_filters_merges_must(vsh):
