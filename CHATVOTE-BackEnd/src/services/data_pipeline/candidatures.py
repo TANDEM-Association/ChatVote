@@ -166,7 +166,9 @@ class CandidaturesNode(DataSourceNode):
                         continue
 
                     commune_name = row["Circonscription"]
-                    panneau = row["Numéro de panneau"]
+                    panneau = row.get("Numéro de panneau", "").strip()
+                    if not panneau:
+                        continue
 
                     if commune_code not in communes:
                         communes[commune_code] = {
@@ -190,7 +192,7 @@ class CandidaturesNode(DataSourceNode):
 
                     lst = commune["lists"][panneau]
                     candidate = {
-                        "ordre": int(row["Ordre"]),
+                        "ordre": int(row["Ordre"]) if row.get("Ordre", "").strip() else 0,
                         "sexe": row["Sexe"],
                         "nom": row["Nom sur le bulletin de vote"],
                         "prenom": row["Prénom sur le bulletin de vote"],
