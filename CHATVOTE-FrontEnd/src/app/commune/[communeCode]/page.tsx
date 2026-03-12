@@ -36,6 +36,8 @@ type ListInfo = {
   head_last_name: string;
   nuance_code: string | null;
   nuance_label: string | null;
+  website_url?: string;
+  manifesto_url?: string;
 };
 
 type TaxonomyTheme = {
@@ -334,6 +336,30 @@ function RadarCard({
           <p className="text-xs text-muted-foreground tracking-wider mt-0.5 truncate">
             {toTitleCase(list.list_label)}
           </p>
+          {(list.website_url || list.manifesto_url) && (
+            <div className="flex items-center gap-2 mt-1">
+              {list.website_url && (
+                <a
+                  href={list.website_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-primary/80 hover:text-primary underline underline-offset-2 truncate max-w-[140px]"
+                >
+                  Site web
+                </a>
+              )}
+              {list.manifesto_url && (
+                <a
+                  href={list.manifesto_url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="text-[10px] text-primary/80 hover:text-primary underline underline-offset-2 truncate max-w-[140px]"
+                >
+                  Programme
+                </a>
+              )}
+            </div>
+          )}
         </div>
 
         <div className="w-full aspect-square">

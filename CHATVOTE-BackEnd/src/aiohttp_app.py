@@ -1341,8 +1341,12 @@ async def commune_dashboard(request):
     }
 
     party_to_list_label: dict[str, str] = {}
+    # Also collect candidate info keyed by list_label (head candidate)
+    list_candidate_info: dict[str, dict] = {}
+
     def _fetch_candidate_party_mapping():
         mapping: dict[str, str] = {}
+        cand_info: dict[str, dict] = {}
         try:
             cands_query = db.collection("candidates").where(
                 "commune_code", "==", commune_code
@@ -1350,6 +1354,13 @@ async def commune_dashboard(request):
             for doc in cands_query.stream():
                 d = doc.to_dict() or {}
                 label = d.get("list_label", "")
+                website = d.get("website_url", "")
+                manifesto = d.get("manifesto_url", "") or d.get("election_manifesto_url", "")
+                if label:
+                    cand_info[label] = {
+                        "website_url": website,
+                        "manifesto_url": manifesto,
+                    }
                 for pid in d.get("party_ids", []):
                     if pid and label:
                         mapping[pid] = label
@@ -1359,9 +1370,18 @@ async def commune_dashboard(request):
                                 mapping[member] = label
         except Exception as e:
             logger.warning(f"Could not fetch candidate party mapping for {commune_code}: {e}")
-        return mapping
+        return mapping, cand_info
 
-    party_to_list_label = await loop.run_in_executor(None, _fetch_candidate_party_mapping)
+    party_to_list_label, list_candidate_info = await loop.run_in_executor(
+        None, _fetch_candidate_party_mapping
+    )
+
+    # Enrich electoral lists with candidate website/manifesto URLs
+    for lst in lists:
+        label = lst.get("list_label", "")
+        cinfo = list_candidate_info.get(label, {})
+        lst["website_url"] = cinfo.get("website_url", "")
+        lst["manifesto_url"] = cinfo.get("manifesto_url", "")
 
     qdrant_filter = Filter(
         must=[

@@ -4,7 +4,6 @@ import logging
 import os
 from typing import AsyncIterator, List, Tuple, Dict, Union, Optional
 from datetime import datetime
-from urllib.parse import urlparse
 from openai import AsyncOpenAI  # for API format
 
 from langchain_core.messages import HumanMessage, SystemMessage

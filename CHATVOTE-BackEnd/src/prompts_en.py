@@ -724,10 +724,9 @@ Time: {time}
 Generate a response that synthesizes the positions of the parties listed above based on official programs and candidate websites.
 If you are at the LOCAL level, start by presenting the candidates present in the municipality, then detail their proposals.
 Compare the different positions neutrally and fairly.
-IMPORTANT — Candidate links: The candidate list above contains clickable Markdown links in [Text](URL) format. When mentioning a candidate:
-- Reproduce EXACTLY the Markdown links as they appear in the list (e.g., [Website](https://example.com) → write [Website](https://example.com)).
-- Do NOT rephrase links. Do NOT change the link text. Do NOT put the URL as plain text.
-- If a candidate does NOT have a link in the list, do not mention a website or manifesto for that candidate.
+IMPORTANT — Candidate links: The candidate list above contains website URLs and manifesto PDF URLs. When mentioning a candidate:
+- Reproduce URLs EXACTLY as they appear, as plain text. Example: "Website: https://example.com".
+- If a candidate does NOT have a website or manifesto in the list, do not mention these elements.
 - NEVER fabricate URLs. Only use links provided in the list above.
 
 {answer_guidelines}
