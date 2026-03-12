@@ -1,10 +1,27 @@
-"""Pipeline node: merge population + candidatures + websites into Firestore seed data."""
+"""Pipeline node: merge population + candidatures + websites into Firestore seed data.
+
+This node builds three Firestore collections from upstream pipeline data:
+- ``municipalities`` (~35k docs — ALL French communes)
+- ``electoral_lists`` (~35k docs — one per commune with candidatures)
+- ``candidates`` (~50k docs — one per tête de liste)
+
+**When does it actually write?**
+Each collection is fingerprinted with a SHA-256 hash.  If the hash matches
+the one stored in the checkpoint, the entire collection is skipped.  Writes
+only happen when upstream data (population, candidatures, websites) changes.
+
+**Why not per-doc hashing?**
+Storing 120k per-doc hashes in the checkpoint would exceed Firestore's 1 MB
+document-size limit and was the root cause of seed timeouts on Scaleway.
+"""
 from __future__ import annotations
 
+import asyncio
 import hashlib
 import json
 import logging
 import re
+import time as _time
 import unicodedata
 from pathlib import Path
 from typing import Any
@@ -12,10 +29,12 @@ from typing import Any
 from src.services.data_pipeline.base import (
     DataSourceNode,
     NodeConfig,
+    NodeStatus,
     content_hash,
     register_node,
     save_checkpoint,
     should_skip,
+    update_status,
 )
 from src.services.data_pipeline.candidatures import get_candidatures
 from src.services.data_pipeline.population import get_all_communes, get_top_communes
@@ -224,49 +243,67 @@ def _enrich_candidates_with_professions(
 
 
 # ---------------------------------------------------------------------------
-# Firestore incremental write
+# Firestore parallel batch write
 # ---------------------------------------------------------------------------
-async def _write_collection_incremental(
+_BATCH_SIZE = 450  # Firestore limit is 500; leave margin
+_CONCURRENCY = 5   # Max parallel batch commits
+
+
+async def _write_collection(
     collection_name: str,
     docs: dict[str, Any],
-    stored_hashes: dict[str, str],
-) -> tuple[int, int, dict[str, str]]:
-    """Write docs to Firestore, skipping unchanged ones.
+    node_id: str,
+) -> int:
+    """Write all docs to Firestore using parallel batch commits.
 
-    Returns (written_count, skipped_count, new_hashes).
+    Returns the total number of documents written.
     """
     from src.firebase_service import async_db
 
+    items = list(docs.items())
+    total = len(items)
+    if total == 0:
+        return 0
+
+    # Split into chunks of _BATCH_SIZE
+    chunks: list[list[tuple[str, Any]]] = []
+    for i in range(0, total, _BATCH_SIZE):
+        chunks.append(items[i : i + _BATCH_SIZE])
+
     written = 0
-    skipped = 0
-    new_hashes: dict[str, str] = {}
+    t0 = _time.monotonic()
+    sem = asyncio.Semaphore(_CONCURRENCY)
 
-    # Batch writes — Firestore limits to 500 per batch
-    batch = async_db.batch()
-    batch_count = 0
-
-    for doc_id, data in docs.items():
-        h = _doc_hash(data)
-        new_hashes[doc_id] = h
-
-        if h == stored_hashes.get(doc_id):
-            skipped += 1
-            continue
-
-        ref = async_db.collection(collection_name).document(doc_id)
-        batch.set(ref, data)
-        written += 1
-        batch_count += 1
-
-        if batch_count >= 499:
-            await batch.commit()
+    async def _commit_chunk(chunk: list[tuple[str, Any]]) -> int:
+        async with sem:
             batch = async_db.batch()
-            batch_count = 0
+            for doc_id, data in chunk:
+                ref = async_db.collection(collection_name).document(doc_id)
+                batch.set(ref, data)
+            await batch.commit()
+            return len(chunk)
 
-    if batch_count > 0:
-        await batch.commit()
+    # Fire all batch commits with bounded concurrency
+    tasks = [_commit_chunk(chunk) for chunk in chunks]
+    for i, coro in enumerate(asyncio.as_completed(tasks)):
+        count = await coro
+        written += count
+        # Log progress every 10 batches
+        if (i + 1) % 10 == 0 or written == total:
+            elapsed = _time.monotonic() - t0
+            rate = written / elapsed if elapsed > 0 else 0
+            logger.info(
+                "[seed] %s: %d/%d docs written (%.0f docs/s, %.1fs)",
+                collection_name, written, total, rate, elapsed,
+            )
 
-    return written, skipped, new_hashes
+    # Status update so Scaleway knows we're alive
+    await update_status(
+        node_id, NodeStatus.RUNNING,
+        counts={"phase": collection_name, "written": written, "total": total},
+    )
+
+    return written
 
 
 # ---------------------------------------------------------------------------
@@ -333,6 +370,9 @@ class SeedNode(DataSourceNode):
 
         # ------------------------------------------------------------------
         # 3. Check collection-level hashes — skip entirely if unchanged
+        #    NOTE: We only store collection-level hashes in the checkpoint,
+        #    NOT per-doc hashes.  Storing 120k per-doc hashes would exceed
+        #    Firestore's 1 MB document-size limit on the config doc.
         # ------------------------------------------------------------------
         mun_hash = _collection_hash(municipalities)
         el_hash = _collection_hash(electoral_lists)
@@ -365,37 +405,26 @@ class SeedNode(DataSourceNode):
             return cfg
 
         # ------------------------------------------------------------------
-        # 4. Write to Firestore (incremental — per-doc hash comparison)
+        # 4. Write to Firestore (parallel batch commits per collection)
+        #    Only collections whose hash changed get rewritten.
         # ------------------------------------------------------------------
         total_written = 0
-        total_skipped = 0
 
-        collections_to_write: list[tuple[str, dict[str, Any], str]] = [
-            ("municipalities", municipalities, "municipalities_hash"),
-            ("electoral_lists", electoral_lists, "electoral_lists_hash"),
-            ("candidates", candidates, "candidates_hash"),
+        collections_to_write: list[tuple[str, dict[str, Any], str, str, str | None]] = [
+            ("municipalities", municipalities, mun_hash, "municipalities_hash", stored_mun_hash),
+            ("electoral_lists", electoral_lists, el_hash, "electoral_lists_hash", stored_el_hash),
+            ("candidates", candidates, cand_hash, "candidates_hash", stored_cand_hash),
         ]
 
-        for coll_name, docs, hash_key in collections_to_write:
-            stored_doc_hashes: dict[str, str] = cfg.checkpoints.get(
-                f"{coll_name}_doc_hashes", {}
-            )
+        for coll_name, docs, new_hash, hash_key, old_hash in collections_to_write:
+            if not force and should_skip(new_hash, old_hash):
+                logger.info("[seed] %s: hash unchanged, skipping (%d docs)", coll_name, len(docs))
+                continue
 
-            written, skipped, new_doc_hashes = await _write_collection_incremental(
-                coll_name, docs, stored_doc_hashes
-            )
-
+            logger.info("[seed] %s: hash changed, writing %d docs...", coll_name, len(docs))
+            written = await _write_collection(coll_name, docs, cfg.node_id)
             total_written += written
-            total_skipped += skipped
-
-            cfg.checkpoints[f"{coll_name}_doc_hashes"] = new_doc_hashes
-
-            logger.info(
-                "[seed] %s: %d written, %d skipped",
-                coll_name,
-                written,
-                skipped,
-            )
+            logger.info("[seed] %s: %d docs written", coll_name, written)
 
         # ------------------------------------------------------------------
         # 5. Write JSON fixtures for local dev
@@ -415,7 +444,18 @@ class SeedNode(DataSourceNode):
 
         # ------------------------------------------------------------------
         # 6. Update checkpoints and counts
+        #    IMPORTANT: Only store collection-level hashes and counts here.
+        #    Do NOT store per-doc hashes — that would exceed Firestore's
+        #    1 MB document limit with 120k+ entries.
         # ------------------------------------------------------------------
+        # Clean up legacy per-doc hashes if present (from older versions)
+        for legacy_key in [
+            "municipalities_doc_hashes",
+            "electoral_lists_doc_hashes",
+            "candidates_doc_hashes",
+        ]:
+            cfg.checkpoints.pop(legacy_key, None)
+
         cfg.checkpoints["municipalities_hash"] = mun_hash
         cfg.checkpoints["electoral_lists_hash"] = el_hash
         cfg.checkpoints["candidates_hash"] = cand_hash
@@ -431,19 +471,17 @@ class SeedNode(DataSourceNode):
             "with_website": websites_linked,
             "with_manifesto": with_manifesto,
             "docs_written": total_written,
-            "docs_skipped": total_skipped,
         }
 
         logger.info(
             "[seed] done — %d municipalities, %d electoral_lists, %d candidates "
-            "(%d with website, %d with manifesto) | %d written, %d skipped",
+            "(%d with website, %d with manifesto) | %d written",
             len(municipalities),
             len(electoral_lists),
             len(candidates),
             websites_linked,
             with_manifesto,
             total_written,
-            total_skipped,
         )
 
         return cfg
