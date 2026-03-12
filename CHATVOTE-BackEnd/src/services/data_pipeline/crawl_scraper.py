@@ -391,24 +391,34 @@ class CrawlScraperNode(DataSourceNode):
         order_by: str = "",
         page_size: int = 200,
     ) -> list[dict[str, Any]]:
-        """List children of a Shared Drive folder."""
+        """List children of a Shared Drive folder (with pagination)."""
         q = f"'{folder_id}' in parents and trashed=false"
         if mime_filter:
             q += f" and mimeType='{mime_filter}'"
-        url = (
+        base_url = (
             f"{DRIVE_API_URL}/files"
             f"?q={q}"
-            f"&fields=files(id,name,mimeType,size,createdTime)"
+            f"&fields=nextPageToken,files(id,name,mimeType,size,createdTime)"
             f"&pageSize={page_size}"
             "&supportsAllDrives=true&includeItemsFromAllDrives=true"
         )
         if order_by:
-            url += f"&orderBy={order_by}"
+            base_url += f"&orderBy={order_by}"
         headers = {"Authorization": f"Bearer {token}"}
-        async with session.get(url, headers=headers) as resp:
-            resp.raise_for_status()
-            data = await resp.json()
-        return data.get("files", [])
+        all_files: list[dict[str, Any]] = []
+        page_token: str | None = None
+        while True:
+            url = base_url
+            if page_token:
+                url += f"&pageToken={page_token}"
+            async with session.get(url, headers=headers) as resp:
+                resp.raise_for_status()
+                data = await resp.json()
+            all_files.extend(data.get("files", []))
+            page_token = data.get("nextPageToken")
+            if not page_token:
+                break
+        return all_files
 
     async def _drive_download(
         self,
