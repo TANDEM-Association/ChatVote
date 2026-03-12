@@ -6,6 +6,7 @@ import { type Locale } from "@i18n/config";
 import ChatSocket from "@lib/chat-socket";
 import {
   type CandidateProConPerspectiveReadyPayload,
+  type ChatResponseCompletePayload,
   type ChatSessionInitializedPayload,
   type DebugLlmCallPayload,
   type PartyResponseChunkReadyPayload,
@@ -99,6 +100,9 @@ function SocketProvider({ children }: Props) {
   );
   const resetStreamingMessage = useChatStore(
     (state) => state.resetStreamingMessage,
+  );
+  const cancelStreamingMessages = useChatStore(
+    (state) => state.cancelStreamingMessages,
   );
   const addDebugLlmCall = useChatStore((state) => state.addDebugLlmCall);
 
@@ -206,6 +210,12 @@ function SocketProvider({ children }: Props) {
       resetStreamingMessage(data.session_id, data.party_id, data.reason);
     }
 
+    function onChatResponseComplete(data: ChatResponseCompletePayload) {
+      if (data.status.indicator === "error") {
+        cancelStreamingMessages();
+      }
+    }
+
     function onDebugLlmCall(data: DebugLlmCallPayload) {
       addDebugLlmCall(data);
     }
@@ -230,6 +240,7 @@ function SocketProvider({ children }: Props) {
     chatSocket.on("voting_behavior_result", onVotingBehaviorResult);
     chatSocket.on("voting_behavior_complete", onVotingBehaviorComplete);
     chatSocket.on("stream_reset", onStreamReset);
+    chatSocket.on("chat_response_complete", onChatResponseComplete);
     chatSocket.on("debug_llm_call", onDebugLlmCall);
 
     return () => {
@@ -259,6 +270,7 @@ function SocketProvider({ children }: Props) {
       chatSocket.off("voting_behavior_result", onVotingBehaviorResult);
       chatSocket.off("voting_behavior_complete", onVotingBehaviorComplete);
       chatSocket.off("stream_reset", onStreamReset);
+      chatSocket.off("chat_response_complete", onChatResponseComplete);
       chatSocket.off("debug_llm_call", onDebugLlmCall);
     };
   }, [
@@ -277,6 +289,7 @@ function SocketProvider({ children }: Props) {
     addVotingBehaviorResult,
     completeVotingBehavior,
     resetStreamingMessage,
+    cancelStreamingMessages,
     addDebugLlmCall,
   ]);
 

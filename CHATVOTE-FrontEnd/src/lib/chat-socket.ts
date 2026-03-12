@@ -6,6 +6,7 @@ import {
   type AddUserMessagePayload,
   type CandidateProConPerspectiveReadyPayload,
   type CandidateProConPerspectiveRequestPayload,
+  type ChatResponseCompletePayload,
   type ChatSessionInitializedPayload,
   type ChatSessionInitPayload,
   type DebugLlmCallPayload,
@@ -44,6 +45,7 @@ type ChatSocketListenerEvent = {
   ) => void;
   voting_behavior_complete: (data: VotingBehaviorCompletePayload) => void;
   stream_reset: (data: StreamResetPayload) => void;
+  chat_response_complete: (data: ChatResponseCompletePayload) => void;
   debug_llm_call: (data: DebugLlmCallPayload) => void;
 };
 

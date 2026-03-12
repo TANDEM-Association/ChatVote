@@ -30,11 +30,17 @@ GEO_API_URL = (
 # Module-level cache so other nodes can access the result
 # ---------------------------------------------------------------------------
 _cached_communes: dict[str, dict[str, Any]] | None = None
+_cached_all_communes: dict[str, dict[str, Any]] | None = None
 
 
 def get_top_communes() -> dict[str, dict[str, Any]] | None:
-    """Return the top communes dict populated by the last run, or ``None``."""
+    """Return the top N communes dict populated by the last run, or ``None``."""
     return _cached_communes
+
+
+def get_all_communes() -> dict[str, dict[str, Any]] | None:
+    """Return ALL communes dict populated by the last run, or ``None``."""
+    return _cached_all_communes
 
 
 # ---------------------------------------------------------------------------
@@ -43,13 +49,15 @@ def get_top_communes() -> dict[str, dict[str, Any]] | None:
 class PopulationNode(DataSourceNode):
     node_id = "population"
     label = "Population INSEE"
-    default_settings: dict[str, Any] = {}
+    default_settings: dict[str, Any] = {"communes_to_scrap": 287}
 
     async def run(self, cfg: NodeConfig, *, force: bool = False) -> NodeConfig:
-        global _cached_communes
+        global _cached_communes, _cached_all_communes
 
         api_url = os.environ.get("GEO_API_COMMUNES_URL", GEO_API_URL)
-        top_n: int = int(cfg.settings.get("top_communes", 287))
+        top_n: int = int(
+            cfg.settings.get("communes_to_scrap") or cfg.settings.get("top_communes", 287)
+        )
 
         # ------------------------------------------------------------------
         # 1. Fetch communes JSON from geo.api.gouv.fr
@@ -69,7 +77,7 @@ class PopulationNode(DataSourceNode):
         source_hash = f"sha256:{h.hexdigest()}"
         stored_hash = cfg.checkpoints.get("source_hash")
 
-        if not force and should_skip(source_hash, stored_hash) and _cached_communes is not None:
+        if not force and should_skip(source_hash, stored_hash) and _cached_communes is not None and _cached_all_communes is not None:
             logger.info("[population] data unchanged (hash=%s), skipping", source_hash)
             return cfg
 
@@ -106,7 +114,9 @@ class PopulationNode(DataSourceNode):
             raise ValueError("No communes found — geo API returned empty data")
 
         top_dict = {c["code"]: c for c in top}
+        all_dict = {c["code"]: c for c in communes}
         _cached_communes = top_dict
+        _cached_all_communes = all_dict
 
         # ------------------------------------------------------------------
         # 5. Update config: checkpoints and counts
@@ -115,6 +125,7 @@ class PopulationNode(DataSourceNode):
         await save_checkpoint(cfg.node_id, cfg.checkpoints)
 
         cfg.counts = {
+            "total_all_communes": len(all_dict),
             "total_communes": len(top_dict),
             "largest_name": top[0]["nom"],
             "largest_pop": top[0]["population"],
@@ -123,8 +134,8 @@ class PopulationNode(DataSourceNode):
         }
 
         logger.info(
-            "[population] fetched %d communes → top %d  |  largest: %s (%s)  smallest: %s (%s)",
-            len(communes),
+            "[population] fetched %d communes → top %d (to scrap)  |  largest: %s (%s)  smallest: %s (%s)",
+            len(all_dict),
             len(top_dict),
             top[0]["nom"],
             f"{top[0]['population']:,}",

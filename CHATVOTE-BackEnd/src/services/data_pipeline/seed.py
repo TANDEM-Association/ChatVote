@@ -18,7 +18,7 @@ from src.services.data_pipeline.base import (
     should_skip,
 )
 from src.services.data_pipeline.candidatures import get_candidatures
-from src.services.data_pipeline.population import get_top_communes
+from src.services.data_pipeline.population import get_all_communes, get_top_communes
 from src.services.data_pipeline.professions import get_professions
 from src.services.data_pipeline.websites import get_websites
 
@@ -271,6 +271,13 @@ class SeedNode(DataSourceNode):
         # ------------------------------------------------------------------
         # 0. Validate upstream nodes have run
         # ------------------------------------------------------------------
+        all_communes = get_all_communes()
+        if all_communes is None:
+            raise RuntimeError(
+                "Population node must run before seed node "
+                "(get_all_communes() returned None)"
+            )
+
         top_communes = get_top_communes()
         if top_communes is None:
             raise RuntimeError(
@@ -290,7 +297,8 @@ class SeedNode(DataSourceNode):
         # ------------------------------------------------------------------
         # 1. Build the three collections
         # ------------------------------------------------------------------
-        municipalities = _build_municipalities(top_communes)
+        # ALL communes go to Firestore municipalities (not just top N)
+        municipalities = _build_municipalities(all_communes)
         electoral_lists = _build_electoral_lists(candidatures)
         candidates = _build_candidates(candidatures)
 
