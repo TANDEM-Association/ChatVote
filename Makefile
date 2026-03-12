@@ -58,6 +58,9 @@ dev: dev-infra
 		echo "$$!" > $(CURDIR)/.logs/backend.pid
 	@echo "Starting frontend (logs → .logs/frontend.log)..."
 	@cd CHATVOTE-FrontEnd && \
+		export NVM_DIR="$$HOME/.nvm" && \
+		[ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh" && \
+		nvm use > /dev/null 2>&1 || true && \
 		npm run dev \
 		> $(CURDIR)/.logs/frontend.log 2>&1 & \
 		echo "$$!" > $(CURDIR)/.logs/frontend.pid
@@ -129,6 +132,7 @@ dev-backend:
 	cd CHATVOTE-BackEnd && poetry run python -m src.aiohttp_app --debug
 
 dev-frontend:
+	@export NVM_DIR="$$HOME/.nvm" && [ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh" && nvm use > /dev/null 2>&1 || true; \
 	cd CHATVOTE-FrontEnd && npm run dev
 
 # ---------------------------------------------------------------------------

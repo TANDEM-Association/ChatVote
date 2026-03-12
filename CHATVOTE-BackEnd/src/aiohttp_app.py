@@ -1013,6 +1013,16 @@ async def experiment_bertopic_analysis(request):
     return web.json_response(result, status=200)
 
 
+@routes.get(f"{route_prefix}/experiment/candidate-coverage")
+async def experiment_candidate_coverage(request):
+    """Return chunk counts per candidate from Qdrant for RAG coverage tracking."""
+    from src.services.candidate_indexer import _get_indexed_candidate_counts
+
+    loop = asyncio.get_event_loop()
+    counts = await loop.run_in_executor(None, _get_indexed_candidate_counts)
+    return web.json_response({"candidate_chunks": counts})
+
+
 # Keyword mapping for citizen message classification (commune dashboard)
 _CITIZEN_THEME_KEYWORDS: dict[str, list[str]] = {
     "economie": ["économie", "economie", "impôt", "impot", "fiscal", "budget", "dette", "emploi", "chômage", "chomage", "salaire", "pouvoir d'achat", "inflation", "entreprise", "commerce", "travail"],
