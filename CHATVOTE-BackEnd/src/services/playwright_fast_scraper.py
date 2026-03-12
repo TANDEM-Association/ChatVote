@@ -29,8 +29,19 @@ from urllib.parse import urljoin, urlparse
 
 import aiohttp
 from bs4 import BeautifulSoup
-from markdownify import markdownify as md
-from playwright.async_api import Browser, BrowserContext, async_playwright
+
+try:
+    from markdownify import markdownify as md
+except ImportError:
+    md = None  # type: ignore[assignment,misc]
+
+# Playwright is optional (dev dependency) — imported lazily in methods that need it
+try:
+    from playwright.async_api import Browser, BrowserContext, async_playwright
+except ImportError:
+    async_playwright = None  # type: ignore[assignment,misc]
+    Browser = None  # type: ignore[assignment,misc]
+    BrowserContext = None  # type: ignore[assignment,misc]
 
 from src.models.candidate import Candidate
 

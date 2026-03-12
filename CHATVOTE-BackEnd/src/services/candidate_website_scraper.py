@@ -26,14 +26,23 @@ from urllib.parse import urljoin, urlparse
 
 import aiohttp
 from bs4 import BeautifulSoup  # type: ignore[import-not-found]
-from playwright.async_api import (  # type: ignore[import-not-found]
-    async_playwright,
-    Page,
-    Browser,
-    BrowserContext,
-    TimeoutError as PlaywrightTimeout,
-)
 from pypdf import PdfReader
+
+# Playwright is optional (dev dependency) — imported lazily in methods that need it
+try:
+    from playwright.async_api import (  # type: ignore[import-not-found]
+        async_playwright,
+        Page,
+        Browser,
+        BrowserContext,
+        TimeoutError as PlaywrightTimeout,
+    )
+except ImportError:
+    async_playwright = None  # type: ignore[assignment,misc]
+    Page = None  # type: ignore[assignment,misc]
+    Browser = None  # type: ignore[assignment,misc]
+    BrowserContext = None  # type: ignore[assignment,misc]
+    PlaywrightTimeout = TimeoutError  # type: ignore[assignment,misc]
 
 from src.models.candidate import Candidate
 
