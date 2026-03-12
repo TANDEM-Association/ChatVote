@@ -91,7 +91,7 @@ from src.utils import (
 from src.i18n import get_text, Locale, normalize_locale
 
 MAX_RESPONSE_CHUNK_LENGTH = 10
-CHAT_RESPONSE_TIMEOUT = int(os.getenv("CHAT_RESPONSE_TIMEOUT_SECONDS", "40"))
+CHAT_RESPONSE_TIMEOUT = int(os.getenv("CHAT_RESPONSE_TIMEOUT_SECONDS", "90"))
 MAX_USER_MESSAGE_LENGTH = int(os.getenv("MAX_USER_MESSAGE_LENGTH", "2000"))
 
 logger = logging.getLogger(__name__)
