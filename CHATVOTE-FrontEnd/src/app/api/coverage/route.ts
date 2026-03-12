@@ -30,11 +30,7 @@ export async function GET() {
       );
     }
 
-    return NextResponse.json(data, {
-      headers: {
-        "Cache-Control": "no-store",
-      },
-    });
+    return NextResponse.json(data);
   } catch (error) {
     console.error("[coverage] Error fetching coverage data:", error);
     return NextResponse.json(

@@ -123,10 +123,10 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
   try {
     const [partiesSnap, municipalitiesSnap, sessionsSnap, electoralListsSnap, topicStats, candidateChunks] =
       await Promise.all([
-        db.collection("parties").get(),
-        db.collection("municipalities").get(),
-        db.collection("chat_sessions").get(),
-        db.collection("electoral_lists").get(),
+        db.collection("parties").select("party_id", "name", "long_name", "short_name", "election_manifesto_url").get(),
+        db.collection("municipalities").select("code", "nom", "name", "population").get(),
+        db.collection("chat_sessions").select("municipality_code", "commune_code").get(),
+        db.collection("electoral_lists").select("commune_code", "list_count", "lists").get(),
         fetchTopicStats(),
         fetchCandidateChunks(),
       ]);
@@ -188,7 +188,12 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
     let candidates: CandidateCoverage[] = [];
     let totalCandidates = 0;
     try {
-      const candidatesSnap = await db.collection("candidates").get();
+      const candidatesSnap = await db.collection("candidates").select(
+        "first_name", "last_name", "commune_code", "municipality_code",
+        "commune_name", "municipality_name", "website_url", "website",
+        "has_manifesto", "manifesto_url", "election_manifesto_url", "manifesto_pdf_path",
+        "has_scraped", "scrape_chars", "list_label", "nuance_label", "nuance_code", "party_name",
+      ).get();
       totalCandidates = candidatesSnap.size;
       candidates = candidatesSnap.docs.map((doc) => {
         const data = doc.data();

@@ -48,6 +48,7 @@ type NodesMap = Record<string, NodeConfig>;
 interface PipelineTabProps {
   secret: string;
   apiUrl: string;
+  active?: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -654,7 +655,7 @@ function NodeCard({
 // Pipeline Tab Component
 // ---------------------------------------------------------------------------
 
-export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
+export default function PipelineTab({ secret, apiUrl, active }: PipelineTabProps) {
   const [nodes, setNodes] = useState<NodesMap>({});
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
@@ -881,6 +882,7 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
   const anyRunning = Object.values(nodes).some((n) => n.status === "running");
 
   useEffect(() => {
+    if (!active) return;
     pollRef.current = setInterval(
       () => fetchStatusRef.current(),
       POLL_INTERVAL_MS,
@@ -891,7 +893,7 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
         pollRef.current = null;
       }
     };
-  }, []);
+  }, [active]);
 
   // ---- Arrow position calculation ----
 
