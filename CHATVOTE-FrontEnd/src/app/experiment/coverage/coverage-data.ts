@@ -203,7 +203,7 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
           has_manifesto: Boolean(
             data.has_manifesto || data.manifesto_url || data.election_manifesto_url || data.manifesto_pdf_path,
           ),
-          has_scraped: Boolean(data.has_scraped),
+          has_scraped: Boolean(data.has_scraped) || (candidateChunks[doc.id] ?? 0) > 0,
           chunk_count: candidateChunks[doc.id] ?? 0,
           scrape_chars: (data.scrape_chars as number) ?? 0,
           party_label:

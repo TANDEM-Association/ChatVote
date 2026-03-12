@@ -113,5 +113,350 @@
       "code": "200030195",
       "nom": ""
     }
+  },
+  "44109": {
+    "code": "44109",
+    "nom": "Nantes",
+    "population": 327734,
+    "codeDepartement": "44",
+    "departement": {
+      "code": "44",
+      "nom": ""
+    },
+    "codeRegion": "52",
+    "region": {
+      "code": "52",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "44000"
+    ],
+    "codeEpci": "244400404",
+    "epci": {
+      "code": "244400404",
+      "nom": ""
+    }
+  },
+  "34172": {
+    "code": "34172",
+    "nom": "Montpellier",
+    "population": 310240,
+    "codeDepartement": "34",
+    "departement": {
+      "code": "34",
+      "nom": ""
+    },
+    "codeRegion": "76",
+    "region": {
+      "code": "76",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "34000"
+    ],
+    "codeEpci": "243400017",
+    "epci": {
+      "code": "243400017",
+      "nom": ""
+    }
+  },
+  "67482": {
+    "code": "67482",
+    "nom": "Strasbourg",
+    "population": 293771,
+    "codeDepartement": "67",
+    "departement": {
+      "code": "67",
+      "nom": ""
+    },
+    "codeRegion": "44",
+    "region": {
+      "code": "44",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "67000"
+    ],
+    "codeEpci": "246700488",
+    "epci": {
+      "code": "246700488",
+      "nom": ""
+    }
+  },
+  "33063": {
+    "code": "33063",
+    "nom": "Bordeaux",
+    "population": 267991,
+    "codeDepartement": "33",
+    "departement": {
+      "code": "33",
+      "nom": ""
+    },
+    "codeRegion": "75",
+    "region": {
+      "code": "75",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "33000"
+    ],
+    "codeEpci": "243300316",
+    "epci": {
+      "code": "243300316",
+      "nom": ""
+    }
+  },
+  "59350": {
+    "code": "59350",
+    "nom": "Lille",
+    "population": 238246,
+    "codeDepartement": "59",
+    "departement": {
+      "code": "59",
+      "nom": ""
+    },
+    "codeRegion": "32",
+    "region": {
+      "code": "32",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "59000"
+    ],
+    "codeEpci": "200093201",
+    "epci": {
+      "code": "200093201",
+      "nom": ""
+    }
+  },
+  "35238": {
+    "code": "35238",
+    "nom": "Rennes",
+    "population": 230890,
+    "codeDepartement": "35",
+    "departement": {
+      "code": "35",
+      "nom": ""
+    },
+    "codeRegion": "53",
+    "region": {
+      "code": "53",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "35000"
+    ],
+    "codeEpci": "243500139",
+    "epci": {
+      "code": "243500139",
+      "nom": ""
+    }
+  },
+  "83137": {
+    "code": "83137",
+    "nom": "Toulon",
+    "population": 179116,
+    "codeDepartement": "83",
+    "departement": {
+      "code": "83",
+      "nom": ""
+    },
+    "codeRegion": "93",
+    "region": {
+      "code": "93",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "83000"
+    ],
+    "codeEpci": "248300543",
+    "epci": {
+      "code": "248300543",
+      "nom": ""
+    }
+  },
+  "51454": {
+    "code": "51454",
+    "nom": "Reims",
+    "population": 177674,
+    "codeDepartement": "51",
+    "departement": {
+      "code": "51",
+      "nom": ""
+    },
+    "codeRegion": "44",
+    "region": {
+      "code": "44",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "51100"
+    ],
+    "codeEpci": "200067213",
+    "epci": {
+      "code": "200067213",
+      "nom": ""
+    }
+  },
+  "42218": {
+    "code": "42218",
+    "nom": "Saint-Étienne",
+    "population": 173136,
+    "codeDepartement": "42",
+    "departement": {
+      "code": "42",
+      "nom": ""
+    },
+    "codeRegion": "84",
+    "region": {
+      "code": "84",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "42000"
+    ],
+    "codeEpci": "244200770",
+    "epci": {
+      "code": "244200770",
+      "nom": ""
+    }
+  },
+  "76351": {
+    "code": "76351",
+    "nom": "Le Havre",
+    "population": 166687,
+    "codeDepartement": "76",
+    "departement": {
+      "code": "76",
+      "nom": ""
+    },
+    "codeRegion": "28",
+    "region": {
+      "code": "28",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "76600"
+    ],
+    "codeEpci": "200084952",
+    "epci": {
+      "code": "200084952",
+      "nom": ""
+    }
+  },
+  "69266": {
+    "code": "69266",
+    "nom": "Villeurbanne",
+    "population": 163684,
+    "codeDepartement": "69",
+    "departement": {
+      "code": "69",
+      "nom": ""
+    },
+    "codeRegion": "84",
+    "region": {
+      "code": "84",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "69100"
+    ],
+    "codeEpci": "200046977",
+    "epci": {
+      "code": "200046977",
+      "nom": ""
+    }
+  },
+  "21231": {
+    "code": "21231",
+    "nom": "Dijon",
+    "population": 161830,
+    "codeDepartement": "21",
+    "departement": {
+      "code": "21",
+      "nom": ""
+    },
+    "codeRegion": "27",
+    "region": {
+      "code": "27",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "21000"
+    ],
+    "codeEpci": "242100410",
+    "epci": {
+      "code": "242100410",
+      "nom": ""
+    }
+  },
+  "49007": {
+    "code": "49007",
+    "nom": "Angers",
+    "population": 159022,
+    "codeDepartement": "49",
+    "departement": {
+      "code": "49",
+      "nom": ""
+    },
+    "codeRegion": "52",
+    "region": {
+      "code": "52",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "49000"
+    ],
+    "codeEpci": "244900015",
+    "epci": {
+      "code": "244900015",
+      "nom": ""
+    }
+  },
+  "38185": {
+    "code": "38185",
+    "nom": "Grenoble",
+    "population": 156140,
+    "codeDepartement": "38",
+    "departement": {
+      "code": "38",
+      "nom": ""
+    },
+    "codeRegion": "84",
+    "region": {
+      "code": "84",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "38000"
+    ],
+    "codeEpci": "200040715",
+    "epci": {
+      "code": "200040715",
+      "nom": ""
+    }
+  },
+  "97411": {
+    "code": "97411",
+    "nom": "Saint-Denis",
+    "population": 155634,
+    "codeDepartement": "974",
+    "departement": {
+      "code": "974",
+      "nom": ""
+    },
+    "codeRegion": "04",
+    "region": {
+      "code": "04",
+      "nom": ""
+    },
+    "codesPostaux": [
+      "97400"
+    ],
+    "codeEpci": "249740119",
+    "epci": {
+      "code": "249740119",
+      "nom": ""
+    }
   }
 }

@@ -1101,9 +1101,9 @@ async def generate_streaming_candidate_local_response(
             if party is not None:
                 party_names.append(party.name)
         party_str = ", ".join(party_names) if party_names else "Indépendant"
-        has_website = "Oui" if c.website_url else "Non"
+        website_part = f" - [Site web]({c.website_url})" if c.website_url else ""
         manifesto = f" - [Profession de foi]({c.manifesto_pdf_url})" if c.has_manifesto and c.manifesto_pdf_url else ""
-        candidates_list += f"- {c.full_name} ({party_str}) - Site web: {has_website}{manifesto}\n"
+        candidates_list += f"- {c.full_name} ({party_str}){website_part}{manifesto}\n"
 
     if not candidates_list:
         candidates_list = "Aucun candidat enregistré pour cette commune."
@@ -1418,9 +1418,9 @@ async def generate_streaming_global_combined_response(
                 )
                 if locale == "en":
                     website_info = (
-                        f" - Website: {candidate.website_url}"
+                        f" - [Website]({candidate.website_url})"
                         if candidate.website_url
-                        else " - No website"
+                        else ""
                     )
                     incumbent_info = " (incumbent)" if candidate.is_incumbent else ""
                     manifesto_info = (
@@ -1430,9 +1430,9 @@ async def generate_streaming_global_combined_response(
                     )
                 else:
                     website_info = (
-                        f" - Site: {candidate.website_url}"
+                        f" - [Site web]({candidate.website_url})"
                         if candidate.website_url
-                        else " - Pas de site web"
+                        else ""
                     )
                     incumbent_info = " (sortant)" if candidate.is_incumbent else ""
                     manifesto_info = (

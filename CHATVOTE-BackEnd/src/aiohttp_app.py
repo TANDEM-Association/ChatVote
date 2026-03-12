@@ -963,7 +963,7 @@ async def experiment_topic_stats(request):
                         }
                     td = theme_data[theme]
                     td["count"] += 1
-                    party = meta.get("party_name") or meta.get("namespace")
+                    party = meta.get("namespace") or meta.get("party_name")
                     if party:
                         td["by_party"][party] += 1
                     src = meta.get("source_document")
@@ -1326,6 +1326,43 @@ async def commune_dashboard(request):
     # ── 4. Qdrant taxonomy (scroll filtered by municipality_code) ────────────
     #    Falls back to national party manifesto data when no commune-specific
     #    chunks exist, since national manifestos are relevant to all communes.
+
+    # Build party_id → list_label mapping from Firestore candidates so we can
+    # key by_list by the electoral list label the frontend expects.
+    # Coalition parties map specific parties to broad coalition IDs used by
+    # candidates.  E.g. a candidate with party_ids=["extreme_droite"] covers
+    # Qdrant namespace "reconquete" because Reconquête is part of that coalition.
+    _COALITION_MEMBERS: dict[str, list[str]] = {
+        "extreme_droite": ["reconquete", "rn"],
+        "extreme_gauche": [],
+        "union_gauche": ["ps", "europe-ecologie-les-verts"],
+        "union_droite": ["lr"],
+        "union_centre": ["union_centre"],
+    }
+
+    party_to_list_label: dict[str, str] = {}
+    def _fetch_candidate_party_mapping():
+        mapping: dict[str, str] = {}
+        try:
+            cands_query = db.collection("candidates").where(
+                "commune_code", "==", commune_code
+            )
+            for doc in cands_query.stream():
+                d = doc.to_dict() or {}
+                label = d.get("list_label", "")
+                for pid in d.get("party_ids", []):
+                    if pid and label:
+                        mapping[pid] = label
+                        # Also map member parties of this coalition
+                        for member in _COALITION_MEMBERS.get(pid, []):
+                            if member not in mapping:
+                                mapping[member] = label
+        except Exception as e:
+            logger.warning(f"Could not fetch candidate party mapping for {commune_code}: {e}")
+        return mapping
+
+    party_to_list_label = await loop.run_in_executor(None, _fetch_candidate_party_mapping)
+
     qdrant_filter = Filter(
         must=[
             FieldCondition(
@@ -1352,6 +1389,7 @@ async def commune_dashboard(request):
                             "metadata.theme",
                             "metadata.party_name",
                             "metadata.namespace",
+                            "metadata.party_ids",
                         ],
                         with_vectors=False,
                     )
@@ -1361,7 +1399,24 @@ async def commune_dashboard(request):
                         theme = meta.get("theme")
                         if not theme:
                             continue
-                        list_name = meta.get("party_name") or meta.get("namespace", "")
+
+                        # Resolve the list label: try party_ids mapping first,
+                        # then namespace, then party_name.
+                        namespace = meta.get("namespace", "")
+                        chunk_party_ids = meta.get("party_ids", [])
+                        list_label = ""
+                        # Try party_ids from the chunk
+                        for pid in (chunk_party_ids or []):
+                            if pid in party_to_list_label:
+                                list_label = party_to_list_label[pid]
+                                break
+                        # Try namespace as party_id
+                        if not list_label and namespace in party_to_list_label:
+                            list_label = party_to_list_label[namespace]
+                        # Fallback to namespace (for display when no mapping exists)
+                        if not list_label:
+                            list_label = namespace or meta.get("party_name", "")
+
                         if theme not in _theme_data:
                             _theme_data[theme] = {
                                 "theme": theme,
@@ -1369,8 +1424,8 @@ async def commune_dashboard(request):
                                 "by_list": defaultdict(int),
                             }
                         _theme_data[theme]["total_count"] += 1
-                        if list_name:
-                            _theme_data[theme]["by_list"][list_name] += 1
+                        if list_label:
+                            _theme_data[theme]["by_list"][list_label] += 1
                     if next_offset is None:
                         break
                     offset = next_offset

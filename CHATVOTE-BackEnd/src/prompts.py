@@ -1302,7 +1302,11 @@ Génère une réponse qui synthétise les positions des partis listés ci-dessus
 Si tu es au niveau LOCAL, commence par présenter les candidats présents dans la commune, puis détaille leurs propositions.
 Compare les différentes positions de manière neutre et équilibrée.
 Si l'utilisateur a sélectionné des listes électorales (voir section "Listes électorales sélectionnées" ci-dessus), tu as connaissance de cette sélection. Réponds en conséquence si l'utilisateur fait référence à sa sélection.
-IMPORTANT — Professions de foi : Certains candidats dans la liste ci-dessus ont un lien "Profession de foi" (PDF officiel du ministère de l'Intérieur). Même si tu n'as PAS de contenu extrait de ces PDFs dans les sources RAG, tu DOIS mentionner l'existence de ces professions de foi et fournir le lien cliquable en Markdown quand l'utilisateur demande les programmes, propositions, manifestes, ou professions de foi. Dis par exemple : "La profession de foi de [Candidat] est disponible ici : [Profession de foi](url)". Ne dis PAS qu'il n'y a pas d'information si un lien de profession de foi existe.
+IMPORTANT — Liens des candidats : La liste des candidats ci-dessus contient des liens Markdown cliquables au format [Texte](URL). Quand tu mentionnes un candidat :
+- Reproduis EXACTEMENT les liens Markdown tels qu'ils apparaissent dans la liste (ex: [Site web](https://example.com) → écris [Site web](https://example.com)).
+- Ne reformule PAS les liens. Ne change PAS le texte du lien. Ne mets PAS l'URL en texte brut.
+- Si un candidat n'a PAS de lien dans la liste, ne mentionne pas de site web ou profession de foi pour ce candidat.
+- Ne fabrique JAMAIS d'URL. Utilise uniquement les liens fournis dans la liste ci-dessus.
 
 {answer_guidelines}
 """
