@@ -1453,9 +1453,18 @@ async def ds_status(request):
     return web.json_response(result)
 
 
+# Nodes that are too heavy to run in-process and must run as K8s Jobs.
+_K8S_JOB_NODES = frozenset({"indexer", "crawl_scraper"})
+
+
 @routes.post(f"{route_prefix}/admin/data-sources/run/{{node_id}}")
 async def ds_run_node(request):
-    """Run a single pipeline node in the background."""
+    """Run a single pipeline node in the background.
+
+    For heavy nodes (indexer, crawl_scraper) running inside K8s, a Job is
+    created instead of running the node in-process, to avoid starving the
+    event loop and crashing health-checks.
+    """
     if not _check_admin_secret(request):
         return web.json_response({"error": "Unauthorized"}, status=401)
 
@@ -1469,7 +1478,25 @@ async def ds_run_node(request):
     body = await request.json() if request.content_length else {}
     force = body.get("force", False)
 
-    # Don't start if already running
+    # Heavy nodes: delegate to a K8s Job when running inside the cluster.
+    if node_id in _K8S_JOB_NODES:
+        from src.services.k8s_job_launcher import is_running_in_k8s, create_pipeline_job
+        if is_running_in_k8s():
+            try:
+                job_meta = await create_pipeline_job(node_id, force=force)
+            except Exception as exc:
+                logger.error("[data-sources] failed to create K8s job for %s: %s", node_id, exc)
+                return web.json_response(
+                    {"error": f"Failed to create K8s job: {exc}"}, status=500
+                )
+            return web.json_response({
+                "status": "started",
+                "node_id": node_id,
+                "mode": "k8s-job",
+                "job_name": job_meta.get("name"),
+            })
+
+    # Don't start if already running (in-process fallback or non-K8s nodes)
     if node_id in _pipeline_tasks and not _pipeline_tasks[node_id].done():
         return web.json_response({"status": "already_running", "node_id": node_id})
 
@@ -1603,13 +1630,25 @@ async def ds_run_all(request):
 
 @routes.post(f"{route_prefix}/admin/data-sources/stop/{{node_id}}")
 async def ds_stop_node(request):
-    """Cancel a running pipeline node task."""
+    """Cancel a running pipeline node task (in-process or K8s Job)."""
     if not _check_admin_secret(request):
         return web.json_response({"error": "Unauthorized"}, status=401)
 
     node_id = request.match_info["node_id"]
 
     from src.services.data_pipeline.base import update_status, NodeStatus
+
+    # When running in K8s, attempt to delete the Job for heavy nodes.
+    if node_id in _K8S_JOB_NODES:
+        from src.services.k8s_job_launcher import is_running_in_k8s, delete_pipeline_job
+        if is_running_in_k8s():
+            deleted = await delete_pipeline_job(node_id)
+            await update_status(node_id, NodeStatus.ERROR, last_error="Stopped by admin")
+            return web.json_response({
+                "status": "stopped" if deleted else "not_running",
+                "node_id": node_id,
+                "mode": "k8s-job",
+            })
 
     task = _pipeline_tasks.get(node_id)
     if task and not task.done():

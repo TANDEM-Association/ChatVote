@@ -20,6 +20,7 @@ spec:
       labels:
         app: chatvote-backend
     spec:
+      serviceAccountName: chatvote-backend-sa
       terminationGracePeriodSeconds: 75
       nodeSelector:
         k8s.scaleway.com/pool-name: pool-par-2-8gb

@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: chatvote-backend-sa
+  namespace: chatvote
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  name: chatvote-backend-job-manager
+  namespace: chatvote
+rules:
+  - apiGroups: ["batch"]
+    resources: ["jobs"]
+    verbs: ["create", "get", "list", "delete"]
+  - apiGroups: [""]
+    resources: ["pods"]
+    verbs: ["get", "list"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: chatvote-backend-job-manager
+  namespace: chatvote
+subjects:
+  - kind: ServiceAccount
+    name: chatvote-backend-sa
+    namespace: chatvote
+roleRef:
+  kind: Role
+  name: chatvote-backend-job-manager
+  apiGroup: rbac.authorization.k8s.io

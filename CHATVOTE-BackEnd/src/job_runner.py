@@ -1,13 +1,19 @@
-"""CLI entrypoint for K8s CronJobs.
+"""CLI entrypoint for K8s CronJobs and admin-launched Jobs.
 
 Usage:
     python -m src.job_runner crawl_scraper
     python -m src.job_runner indexer
+
+Environment variables:
+    PIPELINE_FORCE  Set to "true", "1", or "yes" to force re-execution even if
+                    the node is up-to-date.  CronJobs always pass force=True;
+                    admin-launched jobs set this env var explicitly.
 """
 from __future__ import annotations
 
 import asyncio
 import logging
+import os
 import sys
 
 
@@ -34,7 +40,8 @@ async def _run(node_id: str) -> None:
         logging.error("Unknown node_id %r. Available: %s", node_id, list(PIPELINE_NODES))
         sys.exit(1)
 
-    await node.execute(force=True)
+    force = os.getenv("PIPELINE_FORCE", "").lower() in ("true", "1", "yes")
+    await node.execute(force=force)
 
 
 def main() -> None:
