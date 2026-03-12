@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-# Backend v2 — commune dashboard, candidate scraping, admin auth guard
+# Backend v2 — commune dashboard, candidate scraping, admin auth, pipeline env
 
 import argparse
 import asyncio
@@ -2436,6 +2436,29 @@ async def admin_dashboard_data_consistency(request: web.Request) -> web.Response
         return web.json_response(
             {"status": "error", "error": str(e)}, status=500
         )
+
+
+@routes.get(f"{route_prefix}/admin/crawler/status")
+async def admin_crawler_status(request: web.Request) -> web.Response:
+    """Proxy the K8s crawler status API, keeping the crawler secret server-side."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    crawl_api_url = os.getenv("CRAWL_API_URL", "http://51.159.25.158:4000")
+    crawl_api_secret = os.getenv("CRAWL_API_SECRET", "")
+
+    try:
+        async with aiohttp.ClientSession() as session:
+            async with session.get(
+                f"{crawl_api_url}/api/status",
+                params={"secret": crawl_api_secret},
+                timeout=aiohttp.ClientTimeout(total=10),
+            ) as resp:
+                data = await resp.json()
+                return web.json_response(data, status=resp.status)
+    except Exception as e:
+        logger.error("Error proxying crawler status: %s", e, exc_info=True)
+        return web.json_response({"error": str(e)}, status=502)
 
 
 app = web.Application(middlewares=[api_key_middleware])
