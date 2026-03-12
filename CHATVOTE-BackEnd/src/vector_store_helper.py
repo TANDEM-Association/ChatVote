@@ -779,16 +779,41 @@ async def identify_relevant_docs_combined(
     # Create tasks for parallel execution
     tasks = []
 
-    # Search manifesto for each party
-    for party_id in party_ids:
+    # Determine which Qdrant manifesto namespaces actually exist
+    # so we can detect mismatches (e.g., local party_ids like "lfi"
+    # vs Qdrant namespaces like "la-france-insoumise")
+    _existing_namespaces = _get_manifesto_namespaces()
+
+    party_ids_with_manifesto = [pid for pid in party_ids if pid in _existing_namespaces]
+
+    if party_ids_with_manifesto:
+        # Search manifesto for each matched party
+        for party_id in party_ids_with_manifesto:
+            tasks.append(
+                _identify_relevant_manifesto_documents(
+                    rag_query=rag_query,
+                    namespace=party_id,
+                    n_docs=n_docs_manifesto,
+                    score_threshold=score_threshold,
+                )
+            )
+        manifesto_task_count = len(party_ids_with_manifesto)
+    else:
+        # No party_ids match Qdrant namespaces — search ALL manifestos
+        # (common for local-scope queries where candidate party_ids differ)
+        logger.info(
+            f"No manifesto namespaces match party_ids {party_ids}, "
+            f"searching all manifestos (available: {_existing_namespaces})"
+        )
         tasks.append(
             _identify_relevant_manifesto_documents(
                 rag_query=rag_query,
-                namespace=party_id,
-                n_docs=n_docs_manifesto,
+                namespace=None,  # unfiltered search across all parties
+                n_docs=n_docs_manifesto * min(len(party_ids), 5),
                 score_threshold=score_threshold,
             )
         )
+        manifesto_task_count = 1
 
     # Search candidate websites
     if candidate_ids:
@@ -830,7 +855,6 @@ async def identify_relevant_docs_combined(
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
     # Separate results
-    party_result_count = len(party_ids)
     for i, result in enumerate(results):
         if isinstance(result, BaseException):
             logger.error(f"Search task {i} failed: {result}")
@@ -838,7 +862,7 @@ async def identify_relevant_docs_combined(
 
         # At this point, result is List[Document] not an exception
         docs: list[Any] = result
-        if i < party_result_count:
+        if i < manifesto_task_count:
             # This is a manifesto result
             manifesto_docs.extend(docs)
         else:
@@ -894,6 +918,44 @@ def _collection_exists(collection_name: str) -> bool:
     except Exception as e:
         logger.warning(f"Error checking collection {collection_name}: {e}")
         return False
+
+
+_manifesto_namespaces: set[str] | None = None
+
+
+def _get_manifesto_namespaces() -> set[str]:
+    """Return the set of distinct metadata.namespace values in the manifesto collection.
+
+    Results are cached after the first call since manifesto data changes rarely.
+    """
+    global _manifesto_namespaces
+    if _manifesto_namespaces is not None:
+        return _manifesto_namespaces
+
+    try:
+        # Scroll through all points to collect unique namespaces
+        namespaces: set[str] = set()
+        offset = None
+        while True:
+            points, next_offset = qdrant_client.scroll(
+                collection_name=PARTY_INDEX_NAME,
+                limit=100,
+                offset=offset,
+                with_payload=["metadata.namespace"],
+            )
+            for point in points:
+                ns = (point.payload or {}).get("metadata", {}).get("namespace")
+                if ns:
+                    namespaces.add(ns)
+            if next_offset is None:
+                break
+            offset = next_offset
+        _manifesto_namespaces = namespaces
+        logger.info(f"Manifesto namespaces in Qdrant: {namespaces}")
+        return namespaces
+    except Exception as e:
+        logger.warning(f"Could not fetch manifesto namespaces: {e}")
+        return set()
 
 
 async def _search_candidate_docs_by_party(
@@ -975,11 +1037,11 @@ async def _search_candidate_docs_by_party_and_municipality(
         ]
     )
 
-    # Party filter is optional — candidate metadata may not have party_ids populated
-    filters = [municipality_filter, _build_fiabilite_filter(max_fiabilite)]
-    if party_ids:
-        filters.insert(0, _build_party_filter(party_ids))
-    query_filter = _combine_filters(*filters)
+    # Municipality filter is the primary scope — party_ids filtering is skipped
+    # because candidate website metadata typically has empty party_ids arrays
+    # (the affiliation is inferred from the candidate's Firestore record, not
+    # stored in the Qdrant payload).
+    query_filter = _combine_filters(municipality_filter, _build_fiabilite_filter(max_fiabilite))
 
     try:
         _query_response = await async_qdrant_client.query_points(
@@ -1014,20 +1076,23 @@ async def _search_candidate_docs_by_party_and_municipality(
 
 async def _identify_relevant_manifesto_documents(
     rag_query: str,
-    namespace: str,
+    namespace: Optional[str] = None,
     n_docs: int = 10,
     score_threshold: float = 0.65,
     max_fiabilite: int = 3,
 ) -> list[Document]:
     """
     Search for relevant manifesto documents in the party index.
+
+    If namespace is None, searches across ALL party manifestos (useful for
+    local-scope queries where candidate party_ids don't map to manifesto namespaces).
     """
 
     # Get query embedding
     query_vector = await embed.aembed_query(rag_query)
 
     # Filter by namespace (party_id) + fiabilité
-    filter_condition = _combine_filters(
+    namespace_filter = (
         Filter(
             must=[
                 FieldCondition(
@@ -1035,7 +1100,12 @@ async def _identify_relevant_manifesto_documents(
                     match=MatchValue(value=namespace),
                 )
             ]
-        ),
+        )
+        if namespace
+        else None
+    )
+    filter_condition = _combine_filters(
+        namespace_filter,
         _build_fiabilite_filter(max_fiabilite),
     )
 
