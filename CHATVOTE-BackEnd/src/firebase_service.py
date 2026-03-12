@@ -7,6 +7,9 @@ import time
 from typing import Any, List, Optional
 import firebase_admin
 from firebase_admin import firestore, credentials, firestore_async
+from google.auth.credentials import AnonymousCredentials
+from google.cloud.firestore import Client as FirestoreClient
+from google.cloud.firestore_v1.async_client import AsyncClient as AsyncFirestoreClient
 from pathlib import Path
 
 from src.models.candidate import Candidate
@@ -26,8 +29,7 @@ _fb_logger.info(f"firebase_service: initializing (ENV={env})")
 
 if env == "local":
     os.environ.setdefault("FIRESTORE_EMULATOR_HOST", "localhost:8081")
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app(options={"projectId": "chat-vote-dev"})
+    project_id = os.getenv("GOOGLE_CLOUD_PROJECT", "chat-vote-dev")
 else:
     credentials_path = (
         "chat-vote-firebase-adminsdk.json"
@@ -52,10 +54,15 @@ else:
         firebase_admin.initialize_app()
 
 _fb_logger.info("firebase_service: creating Firestore clients...")
-db = firestore.client()
-_fb_logger.info("firebase_service: sync client OK")
+if env == "local":
+    emulator_credentials = AnonymousCredentials()
+    db = FirestoreClient(project=project_id, credentials=emulator_credentials)
+    async_db = AsyncFirestoreClient(project=project_id, credentials=emulator_credentials)
+else:
+    db = firestore.client()
+    async_db = firestore_async.client()
 
-async_db = firestore_async.client()
+_fb_logger.info("firebase_service: sync client OK")
 _fb_logger.info("firebase_service: async client OK")
 
 # ---------------------------------------------------------------------------

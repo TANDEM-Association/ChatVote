@@ -18,6 +18,30 @@ import { Input } from "../ui/input";
 
 const RESULTS_PER_PAGE = 20;
 
+function getBestMatchingPostalCode(
+  municipality: Municipality,
+  searchTerm: string,
+): number {
+  const numericPostalCodes = (municipality.codesPostaux ?? [])
+    .filter((cp) => cp.startsWith(searchTerm))
+    .map((cp) => Number(cp))
+    .filter((cp) => Number.isFinite(cp));
+
+  if (numericPostalCodes.length > 0) {
+    return Math.min(...numericPostalCodes);
+  }
+
+  const fallbackPostalCodes = (municipality.codesPostaux ?? [])
+    .map((cp) => Number(cp))
+    .filter((cp) => Number.isFinite(cp));
+
+  if (fallbackPostalCodes.length > 0) {
+    return Math.min(...fallbackPostalCodes);
+  }
+
+  return Number.MAX_SAFE_INTEGER;
+}
+
 // Client-side search helper (pure function)
 function filterMunicipalities(
   municipalities: Municipality[],
@@ -29,19 +53,31 @@ function filterMunicipalities(
 
   const searchLower = searchTerm.trim().toLowerCase();
   const isNumericSearch = /^\d+$/.test(searchLower);
-
-  return municipalities.filter((municipality) => {
+  const filtered = municipalities.filter((municipality) => {
     if (isNumericSearch) {
-      // Search by postal code or INSEE code
-      if (municipality.code.includes(searchLower)) {
-        return true;
-      }
-      return (municipality.codesPostaux ?? []).some((cp) => cp.includes(searchLower));
+      // Search numeric input by postal code prefix only.
+      return (municipality.codesPostaux ?? []).some((cp) => cp.startsWith(searchLower));
     }
 
     // Search by name (substring, case insensitive)
     return municipality.nom.toLowerCase().includes(searchLower);
   });
+
+  if (isNumericSearch) {
+    filtered.sort((a, b) => {
+      const postalDiff =
+        getBestMatchingPostalCode(a, searchLower) -
+        getBestMatchingPostalCode(b, searchLower);
+
+      if (postalDiff !== 0) {
+        return postalDiff;
+      }
+
+      return a.nom.localeCompare(b.nom, "fr");
+    });
+  }
+
+  return filtered;
 }
 
 // Global client-side cache for municipalities (persists across component remounts)

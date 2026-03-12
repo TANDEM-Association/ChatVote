@@ -1,4 +1,4 @@
-"""Pipeline node: fetch communes with population from geo.api.gouv.fr and pick top N."""
+"""Pipeline node: fetch communes with population from geo.api.gouv.fr."""
 from __future__ import annotations
 
 import hashlib
@@ -25,6 +25,7 @@ GEO_API_URL = (
     "?fields=nom,code,population,codeDepartement,codeRegion,codesPostaux,codeEpci"
     "&boost=population"
 )
+DEFAULT_TOP_COMMUNES = 287
 
 # ---------------------------------------------------------------------------
 # Module-level cache so other nodes can access the result
@@ -32,9 +33,21 @@ GEO_API_URL = (
 _cached_communes: dict[str, dict[str, Any]] | None = None
 
 
-def get_top_communes() -> dict[str, dict[str, Any]] | None:
-    """Return the top communes dict populated by the last run, or ``None``."""
+def get_all_communes() -> dict[str, dict[str, Any]] | None:
+    """Return all fetched communes populated by the last run, or ``None``."""
     return _cached_communes
+
+
+def get_top_communes(limit: int = DEFAULT_TOP_COMMUNES) -> dict[str, dict[str, Any]] | None:
+    """Return the top ``limit`` communes from the last population sync."""
+    if _cached_communes is None:
+        return None
+
+    if limit <= 0:
+        return {}
+
+    items = list(_cached_communes.items())[:limit]
+    return dict(items)
 
 
 # ---------------------------------------------------------------------------
@@ -43,13 +56,13 @@ def get_top_communes() -> dict[str, dict[str, Any]] | None:
 class PopulationNode(DataSourceNode):
     node_id = "population"
     label = "Population INSEE"
-    default_settings: dict[str, Any] = {}
+    default_settings: dict[str, Any] = {"top_communes": DEFAULT_TOP_COMMUNES}
 
     async def run(self, cfg: NodeConfig, *, force: bool = False) -> NodeConfig:
         global _cached_communes
 
         api_url = os.environ.get("GEO_API_COMMUNES_URL", GEO_API_URL)
-        top_n: int = int(cfg.settings.get("top_communes", 287))
+        top_n: int = int(cfg.settings.get("top_communes", DEFAULT_TOP_COMMUNES))
 
         # ------------------------------------------------------------------
         # 1. Fetch communes JSON from geo.api.gouv.fr
@@ -97,16 +110,14 @@ class PopulationNode(DataSourceNode):
             })
 
         # ------------------------------------------------------------------
-        # 4. Sort by population desc, pick top N
+        # 4. Sort by population desc and cache all communes in rank order
         # ------------------------------------------------------------------
         communes.sort(key=lambda c: c["population"], reverse=True)
-        top = communes[:top_n]
-
-        if not top:
+        if not communes:
             raise ValueError("No communes found — geo API returned empty data")
 
-        top_dict = {c["code"]: c for c in top}
-        _cached_communes = top_dict
+        _cached_communes = {c["code"]: c for c in communes}
+        top = communes if top_n <= 0 else communes[:top_n]
 
         # ------------------------------------------------------------------
         # 5. Update config: checkpoints and counts
@@ -115,7 +126,8 @@ class PopulationNode(DataSourceNode):
         await save_checkpoint(cfg.node_id, cfg.checkpoints)
 
         cfg.counts = {
-            "total_communes": len(top_dict),
+            "total_communes": len(communes),
+            "top_communes": len(top),
             "largest_name": top[0]["nom"],
             "largest_pop": top[0]["population"],
             "smallest_name": top[-1]["nom"],
@@ -125,7 +137,7 @@ class PopulationNode(DataSourceNode):
         logger.info(
             "[population] fetched %d communes → top %d  |  largest: %s (%s)  smallest: %s (%s)",
             len(communes),
-            len(top_dict),
+            len(top),
             top[0]["nom"],
             f"{top[0]['population']:,}",
             top[-1]["nom"],

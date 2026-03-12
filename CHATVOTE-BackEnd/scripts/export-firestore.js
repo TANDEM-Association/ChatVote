@@ -180,11 +180,6 @@ async function main() {
     try {
       let collectionRef = db.collection(collectionName);
 
-      // Filter municipalities to 30k+ population (matches municipalities_sync.py threshold)
-      if (collectionName === 'municipalities') {
-        collectionRef = collectionRef.where('population', '>=', 30000);
-      }
-
       const data = await exportCollection(collectionRef);
       const docCount = Object.keys(data).length;
 

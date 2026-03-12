@@ -4,8 +4,9 @@
     "indexes": "firestore.indexes.json"
   },
   "emulators": {
-    "auth": { "port": 9099 },
-    "firestore": { "port": 8081 },
+    "auth": { "port": 9099, "host": "0.0.0.0" },
+    "firestore": { "port": 8081, "host": "0.0.0.0" },
+    "ui": { "enabled": true, "port": 4000, "host": "0.0.0.0" },
     "singleProjectMode": true
   }
 }

@@ -53,17 +53,12 @@ dev: dev-infra
 	@echo ""
 	@echo "Starting backend (logs → .logs/backend.log)..."
 	@cd CHATVOTE-BackEnd && \
-		poetry run python -m src.aiohttp_app --debug \
-		> $(CURDIR)/.logs/backend.log 2>&1 & \
-		echo "$$!" > $(CURDIR)/.logs/backend.pid
+		python3.11 -c 'import subprocess; log = open("$(CURDIR)/.logs/backend.log", "ab", buffering=0); p = subprocess.Popen(["poetry", "run", "python", "-m", "src.aiohttp_app", "--debug"], stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True); print(p.pid)' \
+		> $(CURDIR)/.logs/backend.pid
 	@echo "Starting frontend (logs → .logs/frontend.log)..."
 	@cd CHATVOTE-FrontEnd && \
-		export NVM_DIR="$$HOME/.nvm" && \
-		[ -s "$$NVM_DIR/nvm.sh" ] && . "$$NVM_DIR/nvm.sh" && \
-		nvm use > /dev/null 2>&1 || true && \
-		npm run dev \
-		> $(CURDIR)/.logs/frontend.log 2>&1 & \
-		echo "$$!" > $(CURDIR)/.logs/frontend.pid
+		python3.11 -c 'import subprocess; log = open("$(CURDIR)/.logs/frontend.log", "ab", buffering=0); cmd = "export NVM_DIR=\"$$HOME/.nvm\"; [ -s \"$$NVM_DIR/nvm.sh\" ] && . \"$$NVM_DIR/nvm.sh\"; nvm use > /dev/null 2>&1 || true; exec npm run dev"; p = subprocess.Popen(["/bin/zsh", "-lc", cmd], stdin=subprocess.DEVNULL, stdout=log, stderr=subprocess.STDOUT, start_new_session=True); print(p.pid)' \
+		> $(CURDIR)/.logs/frontend.pid
 	@echo ""
 	@echo "Waiting for services to be ready..."
 	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
@@ -92,6 +87,7 @@ dev: dev-infra
 	@echo ""
 
 dev-infra:
+	@mkdir -p $(CURDIR)/.logs
 	@PROFILES=""; \
 	if curl -sf http://localhost:11434/ > /dev/null 2>&1; then \
 		echo "Native Ollama detected on :11434 — skipping Docker Ollama (GPU accelerated)."; \
@@ -230,7 +226,9 @@ stop:
 			echo "  $$svc stopped."; \
 		fi; \
 	done
-	@lsof -ti :9099,:8081 2>/dev/null | sort -u | xargs kill 2>/dev/null && echo "  native firebase emulators stopped." || true
+	@lsof -ti :3000,:8080,:9099,:8081 2>/dev/null | sort -u | xargs kill 2>/dev/null || true
+	@sleep 1
+	@lsof -ti :3000,:8080,:9099,:8081 2>/dev/null | sort -u | xargs kill -9 2>/dev/null && echo "  lingering local listeners stopped." || true
 	@echo "All services stopped."
 
 # ---------------------------------------------------------------------------

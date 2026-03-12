@@ -16,6 +16,8 @@ import logging
 import os
 import sys
 from pathlib import Path
+from google.auth.credentials import AnonymousCredentials
+from google.cloud.firestore import Client as FirestoreClient
 
 # Add project root to path so we can import from src
 PROJECT_ROOT = Path(__file__).resolve().parent.parent
@@ -91,9 +93,6 @@ def wait_for_emulator(host: str, timeout: int = 30) -> bool:
 
 def seed_firestore():
     """Seed Firestore emulator with data from JSON files."""
-    import firebase_admin
-    from firebase_admin import firestore
-
     emulator_host = os.environ.get("FIRESTORE_EMULATOR_HOST", "localhost:8081")
     if not wait_for_emulator(emulator_host):
         raise RuntimeError(
@@ -101,10 +100,8 @@ def seed_firestore():
             "Run 'make dev-infra' first."
         )
 
-    if not firebase_admin._apps:
-        firebase_admin.initialize_app(options={"projectId": "chat-vote-dev"})
-
-    db = firestore.client()
+    project_id = os.environ.get("GOOGLE_CLOUD_PROJECT", "chat-vote-dev")
+    db = FirestoreClient(project=project_id, credentials=AnonymousCredentials())
 
     for collection_name, json_filename in FIRESTORE_COLLECTIONS.items():
         json_path = FIREBASE_DATA_DIR / json_filename

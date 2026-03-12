@@ -39,6 +39,9 @@ if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true") {
   connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
 }
 
+const useFirebaseEmulators =
+  process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
+
 export async function createChatSession(
   userId: string,
   partyIds: string[],
@@ -75,6 +78,14 @@ export function listenToHistory(
   uid: string,
   callback: (history: ChatSession[]) => void,
 ) {
+  if (useFirebaseEmulators) {
+    void getUsersChatHistory(uid)
+      .then(callback)
+      .catch(() => callback([]));
+
+    return () => {};
+  }
+
   const unsubscribe = onSnapshot(
     query(
       collection(db, "chat_sessions"),
@@ -99,6 +110,20 @@ export function listenToHistory(
 export function listenToSystemStatus(
   callback: (status: LlmSystemStatus) => void,
 ) {
+  if (useFirebaseEmulators) {
+    void getDoc(doc(db, "system_status", "llm_status"))
+      .then((snapshot) => {
+        callback({
+          is_at_rate_limit: snapshot.data()?.is_at_rate_limit ?? false,
+        });
+      })
+      .catch(() => {
+        callback({ is_at_rate_limit: false });
+      });
+
+    return () => {};
+  }
+
   const unsubscribe = onSnapshot(
     doc(db, "system_status", "llm_status"),
     (snapshot) => {

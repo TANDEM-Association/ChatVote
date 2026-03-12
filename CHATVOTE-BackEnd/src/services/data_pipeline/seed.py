@@ -18,14 +18,14 @@ from src.services.data_pipeline.base import (
     should_skip,
 )
 from src.services.data_pipeline.candidatures import get_candidatures
-from src.services.data_pipeline.population import get_top_communes
+from src.services.data_pipeline.population import get_all_communes
 from src.services.data_pipeline.professions import get_professions
 from src.services.data_pipeline.websites import get_websites
 
 logger = logging.getLogger(__name__)
 
-REPO_ROOT = Path(__file__).resolve().parents[4]
-SEED_DIR = REPO_ROOT / "firebase" / "firestore_data" / "dev"
+BACKEND_ROOT = Path(__file__).resolve().parents[3]
+SEED_DIR = BACKEND_ROOT / "firebase" / "firestore_data" / "dev"
 
 # Map nuance codes from the candidatures CSV to Firestore party_ids.
 # These must match the party_id values in parties.json.
@@ -145,10 +145,11 @@ def _build_candidates(communes: dict[str, dict]) -> dict[str, Any]:
             nuance_code = lst["nuance_code"]
             party_id = NUANCE_TO_PARTY_ID.get(nuance_code)
             if not party_id:
-                logger.warning(
-                    "Unknown nuance code %r for %s — defaulting to 'divers'",
-                    nuance_code, cand_id,
-                )
+                if nuance_code:
+                    logger.warning(
+                        "Unknown nuance code %r for %s — defaulting to 'divers'",
+                        nuance_code, cand_id,
+                    )
                 party_id = "divers"
             result[cand_id] = {
                 "candidate_id": cand_id,
@@ -271,11 +272,11 @@ class SeedNode(DataSourceNode):
         # ------------------------------------------------------------------
         # 0. Validate upstream nodes have run
         # ------------------------------------------------------------------
-        top_communes = get_top_communes()
-        if top_communes is None:
+        all_communes = get_all_communes()
+        if all_communes is None:
             raise RuntimeError(
                 "Population node must run before seed node "
-                "(get_top_communes() returned None)"
+                "(get_all_communes() returned None)"
             )
 
         candidatures = get_candidatures()
@@ -290,7 +291,7 @@ class SeedNode(DataSourceNode):
         # ------------------------------------------------------------------
         # 1. Build the three collections
         # ------------------------------------------------------------------
-        municipalities = _build_municipalities(top_communes)
+        municipalities = _build_municipalities(all_communes)
         electoral_lists = _build_electoral_lists(candidatures)
         candidates = _build_candidates(candidatures)
 
@@ -359,9 +360,7 @@ class SeedNode(DataSourceNode):
         ]
 
         for coll_name, docs, hash_key in collections_to_write:
-            stored_doc_hashes: dict[str, str] = cfg.checkpoints.get(
-                f"{coll_name}_doc_hashes", {}
-            )
+            stored_doc_hashes: dict[str, str] = {}
 
             written, skipped, new_doc_hashes = await _write_collection_incremental(
                 coll_name, docs, stored_doc_hashes
@@ -369,8 +368,6 @@ class SeedNode(DataSourceNode):
 
             total_written += written
             total_skipped += skipped
-
-            cfg.checkpoints[f"{coll_name}_doc_hashes"] = new_doc_hashes
 
             logger.info(
                 "[seed] %s: %d written, %d skipped",

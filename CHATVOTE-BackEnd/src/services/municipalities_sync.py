@@ -29,9 +29,6 @@ GEO_API_PARAMS = {
     "fields": "code,nom,epci,zone,population,surface,codesPostaux,codeRegion,departement,codeDepartement,siren,region,codeEpci"
 }
 
-# Only sync communes above this population threshold (~300 largest cities)
-MIN_POPULATION = 30_000
-
 # Output path
 OUTPUT_DIR = Path(__file__).parent.parent.parent / "firebase" / "firestore_data" / "dev"
 OUTPUT_FILE = OUTPUT_DIR / "municipalities.json"
@@ -63,16 +60,10 @@ def transform_to_firestore_format(
     """
     result = {}
 
-    skipped = 0
     for commune in municipalities:
         code = commune.get("code")
         if not code:
             logger.warning(f"Skipping municipality without code: {commune}")
-            continue
-
-        population = commune.get("population", 0) or 0
-        if population < MIN_POPULATION:
-            skipped += 1
             continue
 
         # Add metadata
@@ -80,7 +71,7 @@ def transform_to_firestore_format(
 
         result[code] = commune
 
-    logger.info(f"Filtered out {skipped} communes below {MIN_POPULATION:,} population")
+    logger.info(f"Prepared {len(result)} municipalities for Firestore import")
     return result
 
 

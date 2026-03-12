@@ -5,6 +5,9 @@ let analyticsInstance: Analytics | null = null;
 
 export async function initAnalytics(): Promise<void> {
   if (typeof window === "undefined") return;
+  if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true") return;
+  if (!process.env.NEXT_PUBLIC_FIREBASE_API_KEY) return;
+  if (!process.env.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID) return;
 
   try {
     const supported = await isSupported();

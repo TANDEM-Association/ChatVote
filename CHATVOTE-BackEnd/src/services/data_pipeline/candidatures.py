@@ -22,7 +22,11 @@ from src.services.data_pipeline.base import (
     save_checkpoint,
     should_skip,
 )
-from src.services.data_pipeline.population import get_top_communes
+from src.services.data_pipeline.population import (
+    DEFAULT_TOP_COMMUNES,
+    get_all_communes,
+    get_top_communes,
+)
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +53,7 @@ def get_candidatures() -> dict[str, dict] | None:
 class CandidaturesNode(DataSourceNode):
     node_id = "candidatures"
     label = "Candidatures CSV"
-    default_settings: dict[str, Any] = {"top_communes": 287}
+    default_settings: dict[str, Any] = {"top_communes": 0}
 
     async def _load_csv(self, source: str, force: bool, cfg: NodeConfig) -> tuple[str, str, str]:
         """Load CSV to a temp file. Returns (tmp_path, source_hash, last_modified).
@@ -118,12 +122,21 @@ class CandidaturesNode(DataSourceNode):
         # ------------------------------------------------------------------
         # 0. Get target commune codes from population node
         # ------------------------------------------------------------------
-        top_communes = get_top_communes()
-        if top_communes is None:
-            raise RuntimeError(
-                "Population node must run first — no cached commune data available"
-            )
-        target_codes = set(top_communes.keys())
+        top_n = int(cfg.settings.get("top_communes", 0))
+        if top_n <= 0:
+            all_communes = get_all_communes()
+            if all_communes is None:
+                raise RuntimeError(
+                    "Population node must run first — no cached commune data available"
+                )
+            target_codes = set(all_communes.keys())
+        else:
+            top_communes = get_top_communes(top_n)
+            if top_communes is None:
+                raise RuntimeError(
+                    "Population node must run first — no cached commune data available"
+                )
+            target_codes = set(top_communes.keys())
 
         # ------------------------------------------------------------------
         # 1. Load CSV (remote or local)
@@ -159,12 +172,15 @@ class CandidaturesNode(DataSourceNode):
                 reader = csv.DictReader(f, delimiter=";")
                 for row in reader:
                     total_rows += 1
-                    commune_code = row["Code circonscription"]
+                    commune_code = (row.get("Code circonscription") or "").strip()
+                    panneau = (row.get("Numéro de panneau") or "").strip()
+                    if not commune_code or not panneau:
+                        continue
+
                     if commune_code not in target_codes:
                         continue
 
-                    commune_name = row["Circonscription"]
-                    panneau = row["Numéro de panneau"]
+                    commune_name = (row.get("Circonscription") or "").strip()
 
                     if commune_code not in communes:
                         communes[commune_code] = {
@@ -176,7 +192,7 @@ class CandidaturesNode(DataSourceNode):
                     commune = communes[commune_code]
                     if panneau not in commune["lists"]:
                         commune["lists"][panneau] = {
-                            "panneau": int(panneau),
+                        "panneau": int(panneau),
                             "list_label": row["Libellé de la liste"],
                             "list_short_label": row["Libellé abrégé de liste"],
                             "nuance_code": row.get("Code nuance de liste", ""),

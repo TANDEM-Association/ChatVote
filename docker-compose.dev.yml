@@ -8,7 +8,7 @@ services:
     volumes:
       - ./CHATVOTE-BackEnd/firebase:/firebase
     command: >
-      sh -c "npm install && npx firebase emulators:start --project chat-vote-dev --only firestore,auth"
+      sh -c "npm install && npx firebase emulators:start --config firebase-test.json --project chat-vote-dev --only firestore,auth"
     ports:
       - "4000:4000"
       - "8081:8081"
