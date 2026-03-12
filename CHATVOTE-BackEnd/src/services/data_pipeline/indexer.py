@@ -2,12 +2,16 @@
 
 Indexes:
 - Party manifestos (PDFs from Firebase Storage → chunks → embeddings)
-- Candidate websites (uses pre-scraped data from scraper node → chunks → embeddings)
+- Candidate websites (Google Drive → chunks → embeddings)
+
+Data flow: CrawlScraperNode puts content in Google Drive → IndexerNode reads
+from Drive → chunks → embeds → Qdrant.  No Playwright scraping involved.
 
 Disabled by default because each run involves costly LLM embedding calls.
 """
 from __future__ import annotations
 
+import asyncio
 import logging
 import time as _time
 from datetime import datetime, timezone
@@ -31,6 +35,7 @@ class IndexerNode(DataSourceNode):
     default_settings: dict[str, Any] = {
         "index_manifestos": True,
         "index_candidates": True,
+        "classify_themes": True,
     }
 
     def default_config(self) -> NodeConfig:
@@ -47,13 +52,14 @@ class IndexerNode(DataSourceNode):
         candidates_indexed: int = 0
         errors: list[str] = []
         t0 = _time.monotonic()
+        classify_themes = settings.get("classify_themes", True)
 
         # --- Manifesto indexing -------------------------------------------
         if settings.get("index_manifestos", True):
             logger.info("[indexer] starting manifesto indexing phase...")
             await update_status(
                 cfg.node_id, NodeStatus.RUNNING,
-                counts={"phase": "manifestos", "parties_indexed": 0, "candidates_indexed": 0, "current": "loading parties..."},
+                counts={"phase": "manifestos", "parties_indexed": 0, "chunks_indexed": 0, "current": "loading parties..."},
             )
             try:
                 from src.services.manifesto_indexer import index_all_parties
@@ -74,35 +80,33 @@ class IndexerNode(DataSourceNode):
 
         # --- Candidate website indexing -----------------------------------
         if settings.get("index_candidates", True):
-            logger.info("[indexer] indexing candidate websites...")
+            logger.info("[indexer] indexing candidate websites (Drive-only mode)...")
             await update_status(
                 cfg.node_id, NodeStatus.RUNNING,
                 counts={
                     "phase": "candidates",
                     "parties_indexed": parties_indexed,
-                    "candidates_indexed": 0,
+                    "chunks_indexed": 0,
                 },
             )
             try:
-                import asyncio
-
                 from src.services.candidate_indexer import (
                     aget_candidates_with_website,
                     index_candidate_website,
                     _get_indexed_candidate_counts,
                 )
-                # Use pre-scraped data from pipeline context if available
+                from src.services.data_pipeline.crawl_scraper import load_scraped_from_drive
+
+                # Check pipeline context first (available when crawler ran in same pipeline)
                 scraped = get_context("scraped_websites")
+
                 logger.info("[indexer] fetching candidates with websites from Firestore...")
                 candidates = await aget_candidates_with_website()
                 logger.info("[indexer] found %d candidates with websites", len(candidates))
-                logger.info("[indexer] checking existing indexed counts (force=%s)...", force)
-                existing = _get_indexed_candidate_counts() if not force else {}
-                logger.info("[indexer] %d candidates already indexed in Qdrant", len(existing))
 
+                # Only index candidates that have been scraped by the crawler
                 if scraped:
-                    # Always re-index pre-scraped candidates (crawl service
-                    # content is fresher than old Playwright scrapes)
+                    # Pipeline context available — use it directly
                     scraped_ids = {
                         cid for cid, sw in scraped.items()
                         if sw and sw.is_successful
@@ -111,86 +115,139 @@ class IndexerNode(DataSourceNode):
                         c for c in candidates
                         if c.candidate_id in scraped_ids
                     ]
+                    logger.info(
+                        "[indexer] %d candidates from pipeline context",
+                        len(to_index),
+                    )
                 else:
-                    to_index = [c for c in candidates if c.candidate_id not in existing]
+                    # No pipeline context — filter to has_scraped candidates only
+                    from src.firebase_service import async_db
 
-                logger.info(
-                    "[indexer] %d candidates to index (%d already done, %d pre-scraped)",
-                    len(to_index), len(existing),
-                    len(scraped) if scraped else 0,
-                )
+                    scraped_cids: set[str] = set()
+                    async for doc in async_db.collection("candidates").stream():
+                        data = doc.to_dict()
+                        if data.get("has_scraped"):
+                            scraped_cids.add(doc.id)
 
-                indexed_count = 0
-                index_errors = 0
-                # Initial progress so the UI shows totals immediately
-                await update_status(
-                    cfg.node_id, NodeStatus.RUNNING,
-                    counts={
-                        "phase": "candidates",
-                        "parties_indexed": parties_indexed,
-                        "candidates_indexed": 0,
-                        "candidates_done": 0,
-                        "candidates_total": len(to_index),
-                        "elapsed_s": 0,
-                        "eta_s": 0,
-                    },
-                )
+                    existing = _get_indexed_candidate_counts() if not force else {}
+                    logger.info("[indexer] %d candidates already indexed in Qdrant", len(existing))
 
-                # Index candidates concurrently (embedding API calls are I/O bound)
-                max_concurrent = int(cfg.settings.get("max_concurrent_index", 3))
-                sem = asyncio.Semaphore(max_concurrent)
+                    to_index = [
+                        c for c in candidates
+                        if c.candidate_id in scraped_cids
+                        and (force or c.candidate_id not in existing)
+                    ]
+                    logger.info(
+                        "[indexer] %d candidates to index (%d has_scraped, %d already indexed, force=%s)",
+                        len(to_index), len(scraped_cids), len(existing), force,
+                    )
 
-                async def _index_one(candidate: Any) -> int:
-                    nonlocal indexed_count, candidates_indexed, index_errors
-                    async with sem:
-                        try:
-                            t_start = _time.monotonic()
-                            scraped_website = scraped.get(candidate.candidate_id) if scraped else None
-                            logger.info(
-                                "[indexer] starting %s (id=%s, scraped=%s)...",
-                                candidate.full_name, candidate.candidate_id,
-                                bool(scraped_website),
-                            )
-                            count = await index_candidate_website(candidate, scraped_website)
-                            candidates_indexed += count
-                            indexed_count += 1
-                            dur = _time.monotonic() - t_start
-                            logger.info(
-                                "[indexer] %d/%d indexed %s (%d chunks, %.1fs)",
-                                indexed_count, len(to_index),
-                                candidate.full_name, count, dur,
-                            )
+                if not to_index:
+                    logger.info("[indexer] no candidates to index")
+                else:
+                    indexed_count = 0
+                    index_errors = 0
+                    skipped_no_drive = 0
 
-                            # Update progress after every candidate
-                            elapsed = _time.monotonic() - t0
-                            rate = indexed_count / elapsed if elapsed > 0 else 0
-                            remaining = (len(to_index) - indexed_count) / rate if rate > 0 else 0
-                            await update_status(
-                                cfg.node_id, NodeStatus.RUNNING,
-                                counts={
-                                    "phase": "candidates",
-                                    "parties_indexed": parties_indexed,
-                                    "candidates_indexed": candidates_indexed,
-                                    "candidates_done": indexed_count,
-                                    "candidates_total": len(to_index),
-                                    "current": candidate.full_name,
-                                    "rate_per_sec": round(rate, 2),
-                                    "elapsed_s": round(elapsed, 1),
-                                    "eta_s": round(remaining, 0),
-                                },
-                            )
-                            return count
-                        except Exception as e:
-                            index_errors += 1
-                            indexed_count += 1
-                            logger.error(
-                                "[indexer] error indexing %s: %s: %s",
-                                candidate.candidate_id, type(e).__name__, e,
-                                exc_info=True,
-                            )
-                            return 0
+                    await update_status(
+                        cfg.node_id, NodeStatus.RUNNING,
+                        counts={
+                            "phase": "candidates",
+                            "parties_indexed": parties_indexed,
+                            "chunks_indexed": 0,
+                            "candidates_done": 0,
+                            "candidates_total": len(to_index),
+                            "elapsed_s": 0,
+                            "eta_s": 0,
+                        },
+                    )
 
-                await asyncio.gather(*[_index_one(c) for c in to_index])
+                    max_concurrent = int(cfg.settings.get("max_concurrent_index", 3))
+                    sem = asyncio.Semaphore(max_concurrent)
+
+                    async def _index_one(candidate: Any) -> int:
+                        nonlocal indexed_count, candidates_indexed, index_errors, skipped_no_drive
+                        async with sem:
+                            try:
+                                t_start = _time.monotonic()
+
+                                # Source 1: pipeline context (same-run crawl)
+                                scraped_website = scraped.get(candidate.candidate_id) if scraped else None
+
+                                # Source 2: Google Drive (previous crawl run)
+                                if scraped_website is None and candidate.website_url:
+                                    scraped_website = await load_scraped_from_drive(
+                                        candidate.candidate_id, candidate.website_url,
+                                    )
+                                    if scraped_website:
+                                        logger.info(
+                                            "[indexer] loaded %s from Drive (%d pages, %.1fs)",
+                                            candidate.full_name,
+                                            len(scraped_website.pages),
+                                            _time.monotonic() - t_start,
+                                        )
+
+                                if scraped_website is None:
+                                    skipped_no_drive += 1
+                                    indexed_count += 1
+                                    logger.warning(
+                                        "[indexer] no Drive data for %s, skipping",
+                                        candidate.full_name,
+                                    )
+                                    return 0
+
+                                logger.info(
+                                    "[indexer] indexing %s (%d pages, themes=%s)...",
+                                    candidate.full_name,
+                                    len(scraped_website.pages),
+                                    classify_themes,
+                                )
+                                count = await index_candidate_website(
+                                    candidate, scraped_website,
+                                    classify_themes=classify_themes,
+                                )
+                                candidates_indexed += count
+                                indexed_count += 1
+                                dur = _time.monotonic() - t_start
+                                logger.info(
+                                    "[indexer] %d/%d indexed %s (%d chunks, %.1fs)",
+                                    indexed_count, len(to_index),
+                                    candidate.full_name, count, dur,
+                                )
+
+                                # Update progress
+                                elapsed = _time.monotonic() - t0
+                                rate = indexed_count / elapsed if elapsed > 0 else 0
+                                remaining = (len(to_index) - indexed_count) / rate if rate > 0 else 0
+                                await update_status(
+                                    cfg.node_id, NodeStatus.RUNNING,
+                                    counts={
+                                        "phase": "candidates",
+                                        "parties_indexed": parties_indexed,
+                                        "chunks_indexed": candidates_indexed,
+                                        "candidates_done": indexed_count,
+                                        "candidates_total": len(to_index),
+                                        "current": candidate.full_name,
+                                        "rate_per_sec": round(rate, 2),
+                                        "elapsed_s": round(elapsed, 1),
+                                        "eta_s": round(remaining, 0),
+                                    },
+                                )
+                                return count
+                            except Exception as e:
+                                index_errors += 1
+                                indexed_count += 1
+                                logger.error(
+                                    "[indexer] error indexing %s: %s: %s",
+                                    candidate.candidate_id, type(e).__name__, e,
+                                    exc_info=True,
+                                )
+                                return 0
+
+                    await asyncio.gather(*[_index_one(c) for c in to_index])
+
+                    if skipped_no_drive:
+                        logger.warning("[indexer] %d candidates skipped (no Drive data)", skipped_no_drive)
 
             except Exception as exc:
                 msg = f"candidate indexing failed: {exc}"
@@ -203,7 +260,7 @@ class IndexerNode(DataSourceNode):
         elapsed = _time.monotonic() - t0
         cfg.counts = {
             "parties_indexed": parties_indexed,
-            "candidates_indexed": candidates_indexed,
+            "chunks_indexed": candidates_indexed,
             "elapsed_s": round(elapsed, 1),
         }
         cfg.checkpoints["last_indexed_at"] = datetime.now(timezone.utc).isoformat()

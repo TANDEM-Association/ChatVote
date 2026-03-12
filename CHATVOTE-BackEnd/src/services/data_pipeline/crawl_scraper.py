@@ -67,6 +67,26 @@ _JUNK_PATTERNS = [
     re.compile(r"^\s*https?://\S+\s*$", re.I),  # page is just a URL
 ]
 
+# XML sitemap detection — drop entire page
+_SITEMAP_PATTERNS = [
+    re.compile(r"<\?xml", re.I),
+    re.compile(r"<urlset", re.I),
+    re.compile(r"<sitemapindex", re.I),
+    re.compile(r"xmlns.*sitemaps\.org", re.I),
+]
+
+# Facebook/Meta cookie wall — if >50% of content is this, the page is a wall
+_META_WALL_KEYWORDS = [
+    "cookies d'autres entreprises",
+    "produits meta",
+    "politique d'utilisation des cookies",
+    "cookies essentiels",
+    "connectez-vous ou inscrivez-vous",
+    "autoriser l'utilisation des cookies de facebook",
+    "créer un compte",
+    "mot de passe oublié",
+]
+
 # OCR image descriptions that are visual descriptions, not real text content.
 # These are useless for RAG — the OCR model describes what an image looks like
 # rather than extracting actual text.
@@ -107,6 +127,36 @@ def _is_junk_content(text: str) -> bool:
     return False
 
 
+def _is_sitemap_xml(text: str) -> bool:
+    """Return True if the page is an XML sitemap (not useful content)."""
+    # Only check first 500 chars — sitemaps have XML markers at the top
+    head = text[:500]
+    return any(pat.search(head) for pat in _SITEMAP_PATTERNS)
+
+
+def _normalize_apostrophes(text: str) -> str:
+    """Replace curly/typographic apostrophes with straight ones for matching."""
+    return text.replace("\u2019", "'").replace("\u2018", "'").replace("\u00b4", "'")
+
+
+def _is_social_media_wall(text: str, url: str) -> bool:
+    """Return True if the page is a Facebook/social media login/cookie wall.
+
+    Only triggers when:
+    - URL is from facebook.com, instagram.com, etc. AND
+    - Content is predominantly cookie/login boilerplate (>=3 wall keywords)
+    This avoids false positives on real pages that just mention Facebook.
+    """
+    lower_url = url.lower()
+    social_domains = ("facebook.com", "instagram.com", "fb.com")
+    if not any(d in lower_url for d in social_domains):
+        return False
+    lower = _normalize_apostrophes(text.lower())
+    hits = sum(1 for kw in _META_WALL_KEYWORDS if kw in lower)
+    # Need at least 3 wall keywords to be confident it's a wall
+    return hits >= 3
+
+
 def _is_ocr_visual_description(text: str) -> bool:
     """Return True if text is an OCR visual description (describes image, not real text)."""
     stripped = text.strip()
@@ -122,6 +172,12 @@ def _clean_scraped_pages(pages: list[ScrapedPage]) -> list[ScrapedPage]:
     for page in pages:
         if _is_junk_content(page.content):
             logger.debug("[crawl_scraper] dropping junk page: %s (len=%d)", page.url, len(page.content))
+            continue
+        if _is_sitemap_xml(page.content):
+            logger.debug("[crawl_scraper] dropping sitemap XML: %s", page.url)
+            continue
+        if _is_social_media_wall(page.content, page.url):
+            logger.debug("[crawl_scraper] dropping social media wall: %s", page.url)
             continue
         cleaned.append(page)
     return cleaned
@@ -186,6 +242,81 @@ def _slugify_url(url: str) -> str:
 def _row_get(row: list[str], idx: int) -> str:
     """Safely get a value from a row by index (handles ragged rows)."""
     return row[idx].strip() if idx < len(row) else ""
+
+
+# ---------------------------------------------------------------------------
+# Standalone Drive loader (used by indexer to skip Playwright)
+# ---------------------------------------------------------------------------
+
+async def load_scraped_from_drive(
+    candidate_id: str,
+    website_url: str,
+    drive_folder_id: str | None = None,
+) -> ScrapedWebsite | None:
+    """Load a candidate's scraped content from Google Drive.
+
+    Returns a ScrapedWebsite with pages populated from Drive markdown files,
+    or None if no Drive folder is found for this candidate.
+    """
+    try:
+        creds = _get_crawl_credentials()
+    except Exception:
+        return None
+
+    node = CrawlScraperNode()
+    if drive_folder_id is None:
+        drive_folder_id = node.default_settings["drive_folder_id"]
+
+    slug = _slugify_url(website_url)
+    if not slug:
+        return None
+
+    async with aiohttp.ClientSession() as session:
+        token = node._ensure_token(creds)
+
+        # Find the candidate's subfolder by URL slug
+        try:
+            subfolders = await node._drive_list(session, drive_folder_id, token,
+                mime_filter="application/vnd.google-apps.folder")
+        except Exception as exc:
+            logger.warning("[load_scraped_from_drive] Drive list failed: %s", exc)
+            return None
+
+        # Match slug to folder name
+        site_folder = None
+        for f in subfolders:
+            if f["name"] == slug or slug in f["name"]:
+                site_folder = f
+                break
+
+        if not site_folder:
+            return None
+
+        # Download content
+        try:
+            token = node._ensure_token(creds)
+            raw_pages = await node._download_crawl_content(
+                session, site_folder["id"], site_folder["name"], token,
+            )
+            cleaned = _clean_scraped_pages(raw_pages)
+        except Exception as exc:
+            logger.warning("[load_scraped_from_drive] download failed %s: %s", candidate_id, exc)
+            return None
+
+        if not cleaned:
+            return None
+
+        sw = ScrapedWebsite(
+            candidate_id=candidate_id,
+            website_url=website_url,
+            backend="crawl_service",
+        )
+        sw.pages = cleaned
+        logger.info(
+            "[load_scraped_from_drive] %s: %d pages, %d chars from Drive",
+            candidate_id, len(cleaned), sw.total_content_length,
+        )
+        return sw
 
 
 # ---------------------------------------------------------------------------
@@ -324,65 +455,53 @@ class CrawlScraperNode(DataSourceNode):
         1. markdown/*.md        — HTML→markdown (best quality for RAG)
         2. pdf_markdown/*.md    — PDF transcriptions
         3. images/*/descriptions.json — OCR fallback
+
+        Optimized: single listing of site folder children, parallel file downloads.
         """
         pages: list[ScrapedPage] = []
 
+        # Single API call to list all subfolders in the site folder
+        all_children = await self._drive_list(session, site_folder_id, token)
+        subfolder_map: dict[str, str] = {}
+        for child in all_children:
+            if child.get("mimeType") == "application/vnd.google-apps.folder":
+                subfolder_map[child["name"]] = child["id"]
+
+        async def _download_md(f: dict, page_type: str, title_prefix: str) -> ScrapedPage | None:
+            try:
+                raw = await self._drive_download(session, f["id"], token)
+                text = raw.decode("utf-8", errors="replace").strip()
+                if len(text) > 50:
+                    title = f["name"].replace(".md", "").replace("-", " ").title()
+                    if title_prefix:
+                        title = f"{title_prefix} {title}"
+                    return ScrapedPage(
+                        url=f["name"], title=title,
+                        content=text, page_type=page_type,
+                    )
+            except Exception as exc:
+                logger.debug("[crawl_scraper] download failed %s: %s", f["name"], exc)
+            return None
+
         # --- Priority 1: markdown/ folder ---
-        md_folder_id = await self._find_subfolder(
-            session, site_folder_id, "markdown", token
-        )
+        md_folder_id = subfolder_map.get("markdown")
         if md_folder_id:
             md_files = await self._drive_list(session, md_folder_id, token)
-            for f in md_files:
-                if not f["name"].endswith(".md"):
-                    continue
-                try:
-                    raw = await self._drive_download(session, f["id"], token)
-                    text = raw.decode("utf-8", errors="replace").strip()
-                    if len(text) > 50:
-                        pages.append(ScrapedPage(
-                            url=f["name"],
-                            title=f["name"].replace(".md", "").replace("-", " ").title(),
-                            content=text,
-                            page_type="html",
-                        ))
-                except Exception as exc:
-                    logger.debug(
-                        "[crawl_scraper] markdown download failed %s: %s",
-                        f["name"], exc,
-                    )
+            md_files = [f for f in md_files if f["name"].endswith(".md")]
+            results = await asyncio.gather(*[_download_md(f, "html", "") for f in md_files])
+            pages.extend(p for p in results if p)
 
         # --- Priority 2: pdf_markdown/ folder ---
-        pdf_md_id = await self._find_subfolder(
-            session, site_folder_id, "pdf_markdown", token
-        )
+        pdf_md_id = subfolder_map.get("pdf_markdown")
         if pdf_md_id:
             pdf_files = await self._drive_list(session, pdf_md_id, token)
-            for f in pdf_files:
-                if not f["name"].endswith(".md"):
-                    continue
-                try:
-                    raw = await self._drive_download(session, f["id"], token)
-                    text = raw.decode("utf-8", errors="replace").strip()
-                    if len(text) > 50:
-                        pages.append(ScrapedPage(
-                            url=f["name"],
-                            title=f"[PDF] {f['name'].replace('.md', '')}",
-                            content=text,
-                            page_type="pdf_transcription",
-                        ))
-                except Exception as exc:
-                    logger.debug(
-                        "[crawl_scraper] pdf_markdown download failed %s: %s",
-                        f["name"], exc,
-                    )
+            pdf_files = [f for f in pdf_files if f["name"].endswith(".md")]
+            results = await asyncio.gather(*[_download_md(f, "pdf_transcription", "[PDF]") for f in pdf_files])
+            pages.extend(p for p in results if p)
 
         # --- Priority 3: images/*/descriptions.json (OCR fallback) ---
-        # Only if we got nothing above
         if not pages:
-            images_id = await self._find_subfolder(
-                session, site_folder_id, "images", token
-            )
+            images_id = subfolder_map.get("images")
             if images_id:
                 hash_folders = await self._drive_list(
                     session, images_id, token,
@@ -486,17 +605,30 @@ class CrawlScraperNode(DataSourceNode):
 
         # --- 1. Get unscraped candidates from Firestore --------------------
         logger.info("[crawl_scraper] fetching unscraped candidates from Firestore")
+        # Social media domains that block scrapers or produce junk content
+        SKIP_DOMAINS = (
+            "facebook.com", "fb.com", "instagram.com", "twitter.com",
+            "x.com", "tiktok.com", "linkedin.com", "youtube.com",
+        )
         unscraped: list[Candidate] = []
+        skipped_social = 0
         async for doc in async_db.collection("candidates").stream():
             data = doc.to_dict()
             raw_url = (data.get("website_url") or "").strip()
             if not raw_url or not raw_url.startswith(("http://", "https://")) or (data.get("has_scraped") and not force):
+                continue
+            # Skip social media URLs — they block scrapers and waste resources
+            domain = raw_url.split("//", 1)[-1].split("/", 1)[0].lower().removeprefix("www.")
+            if any(domain == d or domain.endswith("." + d) for d in SKIP_DOMAINS):
+                skipped_social += 1
                 continue
             try:
                 unscraped.append(Candidate(**data))
             except Exception as exc:
                 logger.debug("[crawl_scraper] skip malformed %s: %s", doc.id, exc)
 
+        if skipped_social:
+            logger.info("[crawl_scraper] skipped %d social media URLs (Facebook/Instagram/etc.)", skipped_social)
         logger.info("[crawl_scraper] %d unscraped candidates with websites", len(unscraped))
 
         if not unscraped:
@@ -643,6 +775,18 @@ class CrawlScraperNode(DataSourceNode):
                     sw.error = str(exc)
                 scraped_map[cid] = sw
                 downloaded_ids.add(cid)
+                # Mark has_scraped in Firestore immediately (survives cancellation)
+                if sw.is_successful:
+                    try:
+                        ref = async_db.collection("candidates").document(cid)
+                        await ref.set({
+                            "has_scraped": True,
+                            "scrape_backend": "crawl_service",
+                            "scrape_pages": len(sw.pages),
+                            "scrape_chars": sw.total_content_length,
+                        }, merge=True)
+                    except Exception as exc:
+                        logger.debug("[crawl_scraper] Firestore update failed %s: %s", cid, exc)
                 # Update status after each download for live progress
                 await update_status(
                     cfg.node_id, NodeStatus.RUNNING,
@@ -688,6 +832,8 @@ class CrawlScraperNode(DataSourceNode):
                         order_by="createdTime desc",
                     )
 
+                    # Match all candidates to Drive folders first
+                    download_tasks = []
                     for cid in list(tracked_ids - downloaded_ids):
                         url = poll_url_map.get(cid, "")
                         if not url:
@@ -697,7 +843,15 @@ class CrawlScraperNode(DataSourceNode):
                             if cid not in processed_ids:
                                 drive_matched_ids.add(cid)
                             processed_ids.add(cid)
-                            await _download_candidate(cid, folder)
+                            download_tasks.append(_download_candidate(cid, folder))
+
+                    # Download up to 5 candidates concurrently
+                    if download_tasks:
+                        dl_sem = asyncio.Semaphore(5)
+                        async def _throttled_dl(coro):
+                            async with dl_sem:
+                                return await coro
+                        await asyncio.gather(*[_throttled_dl(t) for t in download_tasks])
                 except Exception as exc:
                     logger.debug("[crawl_scraper] Drive check: %s", exc)
 
@@ -730,6 +884,19 @@ class CrawlScraperNode(DataSourceNode):
 
                 if downloaded_ids >= tracked_ids:
                     logger.info("[crawl_scraper] all %d candidates downloaded", len(downloaded_ids))
+                    break
+
+                # If no new candidates were submitted (to_submit empty) and no
+                # new downloads happened this iteration, the remaining candidates
+                # simply have no Drive data — skip them instead of polling forever
+                newly_submitted_pending = to_submit and (need_polling - processed_ids)
+                if not newly_submitted_pending and not download_tasks:
+                    no_drive = tracked_ids - downloaded_ids
+                    logger.warning(
+                        "[crawl_scraper] %d candidates have no Drive data, skipping: %s",
+                        len(no_drive),
+                        [cand_by_id[c].full_name for c in list(no_drive)[:5]],
+                    )
                     break
 
                 await asyncio.sleep(poll_interval)

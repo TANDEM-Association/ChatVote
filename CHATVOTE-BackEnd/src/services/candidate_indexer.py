@@ -13,8 +13,10 @@ This service:
 """
 
 import asyncio
+import hashlib
 import logging
 import os
+import re
 from typing import List, Optional
 
 from langchain_core.documents import Document
@@ -35,7 +37,6 @@ from src.firebase_service import (
     aget_candidate_by_id,
 )
 from src.services.candidate_website_scraper import (
-    CandidateWebsiteScraper,
     ScrapedWebsite,
 )
 from src.vector_store_helper import qdrant_client, embed, EMBEDDING_DIM
@@ -57,6 +58,119 @@ text_splitter = RecursiveCharacterTextSplitter(
     length_function=len,
     separators=["\n\n", "\n", ". ", "? ", "! ", "; ", " ", ""],
 )
+
+
+# ---------------------------------------------------------------------------
+# Chunk-level content filtering (runs AFTER splitting, before embedding)
+# ---------------------------------------------------------------------------
+
+# Consent / cookie banner boilerplate — strip from chunks that also have real content.
+# These are French GDPR cookie consent blocks scraped from every page.
+_CONSENT_BLOCK = re.compile(
+    r"(?:Gérer le consentement|Gestion des cookies|Politique d'utilisation des cookies)"
+    r".*?"
+    r"(?:Toujours activ|Enregistrer les préférences|Accepter|Refuser|Tout accepter)",
+    re.I | re.DOTALL,
+)
+
+# Accessibility widget boilerplate — entire chunk is widget UI text
+_A11Y_WIDGET_PATTERNS = [
+    re.compile(r"Disability profiles supported", re.I),
+    re.compile(r"(WCAG|ADA|Section 508)\s+(2\.\d|compliance)", re.I),
+    re.compile(r"screen.reader\s+adjustments", re.I),
+    re.compile(r"Seizure Safe Profile", re.I),
+    re.compile(r"keyboard navigation\s+(optimization|motor)", re.I),
+    re.compile(r"shortcuts such as .M.\s*\(menus\)", re.I),
+    re.compile(r"Accessible website.*UserWay", re.I),
+]
+
+
+def _strip_consent_boilerplate(text: str) -> str:
+    """Remove GDPR consent blocks from a chunk while keeping surrounding content."""
+    cleaned = _CONSENT_BLOCK.sub("", text).strip()
+    # Also strip trailing "Gérer le consentement" that appears as a footer link
+    cleaned = re.sub(r"\s*Gérer le consentement\s*$", "", cleaned, flags=re.I).strip()
+    return cleaned
+
+
+def _is_a11y_widget_chunk(text: str) -> bool:
+    """Return True if the chunk is entirely accessibility widget boilerplate."""
+    hits = sum(1 for pat in _A11Y_WIDGET_PATTERNS if pat.search(text))
+    # Need at least 2 matches to be confident it's widget text, not a mention
+    return hits >= 2
+
+
+# URL path segments → source_document type (checked left to right, first match wins)
+_PROGRAMME_KEYWORDS = frozenset(
+    ["programme", "projet", "propositions", "mesures", "priorites", "engagements"]
+)
+_ABOUT_KEYWORDS = frozenset(
+    [
+        "bilan",
+        "realisations",
+        "about",
+        "qui-sommes",
+        "equipe",
+        "liste",
+        "biographie",
+        "candidat",
+    ]
+)
+_ACTUALITE_KEYWORDS = frozenset(
+    ["actualite", "actualites", "actu", "news", "blog", "communique", "presse"]
+)
+_LEGAL_KEYWORDS = frozenset(
+    ["mentions-legales", "politique-confidentialite", "cgu", "rgpd", "cookies"]
+)
+
+
+def _infer_source_document(page) -> str:  # page: ScrapedPage
+    """
+    Infer a specific source_document type from the page URL, title, and depth.
+
+    Maps to the keys recognised by _SOURCE_FIABILITE_MAP in chunk_metadata.py:
+      candidate_website_programme  → OFFICIAL (2)
+      candidate_website_about      → OFFICIAL (2)
+      candidate_website_actualite  → PRESS    (3)
+      candidate_website_html       → PRESS    (3) fallback
+    PDFs keep their original page_type suffix (e.g. pdf_transcription).
+    """
+    # Non-HTML pages (pdf, sitemap, …) keep the original type suffix as-is.
+    if page.page_type != "html":
+        return f"candidate_website_{page.page_type}"
+
+    # Normalise the URL path for keyword matching.
+    url_lower = page.url.lower()
+    # Strip scheme + host so we only look at path segments.
+    try:
+        from urllib.parse import urlparse as _urlparse
+
+        path = _urlparse(url_lower).path
+    except Exception:
+        path = url_lower
+
+    # Check legal / boilerplate pages first so we can fall through to html.
+    for kw in _LEGAL_KEYWORDS:
+        if kw in path:
+            return "candidate_website_html"  # legal pages → generic fallback
+
+    for kw in _PROGRAMME_KEYWORDS:
+        if kw in path:
+            return "candidate_website_programme"
+
+    for kw in _ABOUT_KEYWORDS:
+        if kw in path:
+            return "candidate_website_about"
+
+    for kw in _ACTUALITE_KEYWORDS:
+        if kw in path:
+            return "candidate_website_actualite"
+
+    # Homepage (depth 0) is treated as "about".
+    if page.depth == 0:
+        return "candidate_website_about"
+
+    return "candidate_website_html"
 
 
 def _ensure_candidates_collection_exists() -> None:
@@ -146,16 +260,37 @@ def create_documents_from_scraped_website(
 
     documents = []
     chunk_index = 0
+    seen_hashes: set[str] = set()  # dedup within a candidate
+
+    if not candidate.party_ids:
+        logger.warning(
+            f"Candidate {candidate.candidate_id} has no party_ids — "
+            f"party-based filtering will not find this candidate's chunks"
+        )
 
     for page in scraped_website.pages:
         chunks = text_splitter.split_text(page.content)
 
         for chunk in chunks:
+            # Strip consent boilerplate (keeps surrounding content)
+            chunk = _strip_consent_boilerplate(chunk)
+
             if len(chunk.strip()) < 30:
                 continue
+
+            # Drop accessibility widget chunks
+            if _is_a11y_widget_chunk(chunk):
+                continue
+
+            # Deduplicate — skip chunks we've already seen for this candidate
+            chunk_hash = hashlib.md5(chunk.strip().encode()).hexdigest()
+            if chunk_hash in seen_hashes:
+                continue
+            seen_hashes.add(chunk_hash)
+
             cm = ChunkMetadata(
                 namespace=candidate.candidate_id,
-                source_document=f"candidate_website_{page.page_type}",
+                source_document=_infer_source_document(page),
                 party_ids=candidate.party_ids or [],
                 candidate_ids=[candidate.candidate_id],
                 candidate_name=candidate.full_name,
@@ -207,6 +342,8 @@ async def delete_candidate_documents(candidate_id: str) -> None:
 async def index_candidate_website(
     candidate: Candidate,
     scraped_website: Optional[ScrapedWebsite] = None,
+    *,
+    classify_themes: bool = True,
 ) -> int:
     """
     Index a candidate's website content into Qdrant.
@@ -215,20 +352,19 @@ async def index_candidate_website(
 
     Returns the number of chunks indexed.
     """
+    import time as _t
+    _t0 = _t.monotonic()
+
     logger.info(
         f"Indexing website for candidate: {candidate.full_name} ({candidate.candidate_id})"
     )
 
-    # Scrape if not provided
+    # scraped_website is required — caller must provide it (from Drive)
     if scraped_website is None:
-        if not candidate.website_url:
-            logger.warning(
-                f"Candidate {candidate.candidate_id} has no website URL, skipping"
-            )
-            return 0
-
-        scraper = CandidateWebsiteScraper()
-        scraped_website = await scraper.scrape_candidate_website(candidate)
+        logger.warning(
+            f"No scraped data provided for {candidate.candidate_id} ({candidate.full_name}), skipping"
+        )
+        return 0
 
     if not scraped_website.is_successful:
         logger.error(
@@ -242,31 +378,59 @@ async def index_candidate_website(
     )
 
     # Create documents from scraped content
+    _ts = _t.monotonic()
     documents = create_documents_from_scraped_website(candidate, scraped_website)
+    logger.info(f"[TIMING] chunk {candidate.full_name}: {_t.monotonic()-_ts:.1f}s — {len(documents)} chunks")
 
     if not documents:
         logger.warning(f"No documents created for candidate {candidate.candidate_id}")
         return 0
 
-    logger.info(f"Created {len(documents)} chunks for {candidate.full_name}")
+    # Classify themes (LLM-primary with keyword fast-path) — optional, adds 20-45s
+    if classify_themes:
+        _ts = _t.monotonic()
+        try:
+            from src.services.theme_classifier import classify_chunks, apply_themes_to_documents
+            chunk_texts = [doc.page_content for doc in documents]
+            theme_results = await classify_chunks(chunk_texts)
+            apply_themes_to_documents(documents, theme_results)
+            classified = sum(1 for r in theme_results if r.theme is not None)
+            logger.info(
+                f"[TIMING] theme classify {candidate.full_name}: {_t.monotonic()-_ts:.1f}s — "
+                f"{classified}/{len(documents)} classified"
+            )
+        except Exception as e:
+            logger.warning(
+                f"[TIMING] theme classify {candidate.full_name}: {_t.monotonic()-_ts:.1f}s — "
+                f"FAILED: {e}"
+            )
+    else:
+        logger.info(f"[indexer] theme classification skipped for {candidate.full_name}")
 
     # Delete existing documents for this candidate
+    _ts = _t.monotonic()
     await delete_candidate_documents(candidate.candidate_id)
+    logger.info(f"[TIMING] delete old docs {candidate.full_name}: {_t.monotonic()-_ts:.1f}s")
 
     # Index into Qdrant
+    _ts = _t.monotonic()
     vector_store = _get_candidates_vector_store()
 
     # Add documents in batches
     batch_size = 50
     for i in range(0, len(documents), batch_size):
+        _tb = _t.monotonic()
         batch = documents[i : i + batch_size]
         await vector_store.aadd_documents(batch)
-        logger.debug(
-            f"Indexed batch {i // batch_size + 1} for {candidate.candidate_id}"
+        logger.info(
+            f"[TIMING] embed+upload batch {i // batch_size + 1} ({len(batch)} docs) "
+            f"{candidate.full_name}: {_t.monotonic()-_tb:.1f}s"
         )
+    logger.info(f"[TIMING] total embed+upload {candidate.full_name}: {_t.monotonic()-_ts:.1f}s")
 
     logger.info(
-        f"Successfully indexed {len(documents)} chunks for {candidate.full_name}"
+        f"[TIMING] TOTAL {candidate.full_name}: {_t.monotonic()-_t0:.1f}s — "
+        f"{len(documents)} chunks indexed"
     )
     return len(documents)
 
@@ -342,25 +506,33 @@ async def index_all_candidates(
 
     results = dict(already_done)
 
-    # Choose scraper backend
-    use_firecrawl = scraper_backend == "firecrawl" or (
-        scraper_backend == "auto" and bool(os.getenv("FIRECRAWL_API_KEY"))
-    )
+    # Use Drive data first, fall back to Firecrawl (no Playwright)
+    from src.services.data_pipeline.crawl_scraper import load_scraped_from_drive
 
-    if use_firecrawl:
-        from src.services.firecrawl_scraper import FirecrawlScraper
+    scraped_websites: list[ScrapedWebsite] = []
+    drive_loaded = 0
 
-        logger.info("Using Firecrawl scraper backend")
-        scraper = FirecrawlScraper()
-        scraped_websites = await scraper.scrape_multiple_candidates(
-            to_scrape, max_concurrent=3
-        )
-    else:
-        logger.info("Using Playwright scraper backend")
-        scraper = CandidateWebsiteScraper()
-        scraped_websites = await scraper.scrape_multiple_candidates(
-            to_scrape, max_concurrent=3
-        )
+    for c in to_scrape:
+        if c.website_url:
+            sw = await load_scraped_from_drive(c.candidate_id, c.website_url)
+            if sw and sw.is_successful:
+                scraped_websites.append(sw)
+                drive_loaded += 1
+                continue
+        # Firecrawl fallback for candidates not in Drive
+        firecrawl_key = os.getenv("FIRECRAWL_API_KEY", "")
+        if firecrawl_key:
+            try:
+                from src.services.firecrawl_scraper import FirecrawlScraper
+                scraper = FirecrawlScraper(api_key=firecrawl_key)
+                sw = await scraper.scrape_candidate_website(c)
+                scraped_websites.append(sw)
+            except Exception as exc:
+                logger.warning(f"Firecrawl failed for {c.candidate_id}: {exc}")
+        else:
+            logger.warning(f"No Drive data and no FIRECRAWL_API_KEY for {c.candidate_id}, skipping")
+
+    logger.info(f"Loaded {drive_loaded} from Drive, {len(scraped_websites) - drive_loaded} from Firecrawl")
 
     # Create a map of candidate_id -> scraped_website
     scraped_map = {sw.candidate_id: sw for sw in scraped_websites}
@@ -386,13 +558,18 @@ async def index_all_candidates(
 
 
 async def index_candidate_by_id(candidate_id: str) -> int:
-    """Index website for a specific candidate by ID."""
+    """Index website for a specific candidate by ID (loads from Drive)."""
     candidate = await aget_candidate_by_id(candidate_id)
     if candidate is None:
         logger.error(f"Candidate {candidate_id} not found in Firestore")
         return 0
 
-    return await index_candidate_website(candidate)
+    scraped_website = None
+    if candidate.website_url:
+        from src.services.data_pipeline.crawl_scraper import load_scraped_from_drive
+        scraped_website = await load_scraped_from_drive(candidate.candidate_id, candidate.website_url)
+
+    return await index_candidate_website(candidate, scraped_website)
 
 
 async def index_candidates_by_municipality(municipality_code: str) -> dict[str, int]:
