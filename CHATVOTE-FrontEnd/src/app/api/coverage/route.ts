@@ -7,10 +7,11 @@ import {
   type CandidateCoverage,
   type CoverageSummary,
   type CoverageResponse,
+  type ChartAggregations,
 } from "../../experiment/coverage/coverage-data";
 
 // Re-export types so existing consumers that import from this route module still work
-export type { CommuneCoverage, PartyCoverage, CandidateCoverage, CoverageSummary, CoverageResponse };
+export type { CommuneCoverage, PartyCoverage, CandidateCoverage, CoverageSummary, CoverageResponse, ChartAggregations };
 
 // Cache this route for 10 minutes to avoid Firestore quota exhaustion
 export const revalidate = 600;

@@ -19,7 +19,7 @@ import {
   Legend,
 } from "recharts";
 
-import type { CoverageResponse, CommuneCoverage, CandidateCoverage } from "../../../../api/coverage/route";
+import type { CoverageResponse, CommuneCoverage, ChartAggregations } from "../../../../api/coverage/route";
 
 // ---------------------------------------------------------------------------
 // Props
@@ -28,25 +28,6 @@ import type { CoverageResponse, CommuneCoverage, CandidateCoverage } from "../..
 interface ChartsTabProps {
   secret: string;
   apiUrl: string;
-}
-
-// ---------------------------------------------------------------------------
-// Score helpers (mirrors coverage-tables-client.tsx)
-// ---------------------------------------------------------------------------
-
-function computeCoverageScore(
-  commune: CommuneCoverage,
-  communeCandidates: CandidateCoverage[],
-): number {
-  let score = 0;
-  if (commune.list_count > 0) score += 33;
-  if (communeCandidates.length > 0) {
-    const withWebsite = communeCandidates.filter((c) => c.has_website).length;
-    score += 33 * (withWebsite / communeCandidates.length);
-    const withManifesto = communeCandidates.filter((c) => c.has_manifesto).length;
-    score += 34 * (withManifesto / communeCandidates.length);
-  }
-  return Math.round(score);
 }
 
 // ---------------------------------------------------------------------------
@@ -119,17 +100,12 @@ function DarkTooltip({
 // Chart 1: Coverage Funnel
 // ---------------------------------------------------------------------------
 
-function CoverageFunnelChart({ candidates }: { candidates: CandidateCoverage[] }) {
-  const total = candidates.length;
-  const hasWebsite = candidates.filter((c) => c.has_website).length;
-  const scraped = candidates.filter((c) => c.has_scraped).length;
-  const indexed = candidates.filter((c) => c.chunk_count > 0).length;
-
+function CoverageFunnelChart({ funnel }: { funnel: ChartAggregations["funnel"] }) {
   const data = [
-    { label: "Total", value: total, fill: COLORS.purple1 },
-    { label: "Has Website", value: hasWebsite, fill: COLORS.purple2 },
-    { label: "Scraped", value: scraped, fill: COLORS.purple4 },
-    { label: "Indexed", value: indexed, fill: COLORS.blue },
+    { label: "Total", value: funnel.total, fill: COLORS.purple1 },
+    { label: "Has Website", value: funnel.hasWebsite, fill: COLORS.purple2 },
+    { label: "Scraped", value: funnel.scraped, fill: COLORS.purple4 },
+    { label: "Indexed", value: funnel.indexed, fill: COLORS.blue },
   ];
 
   return (
@@ -155,18 +131,14 @@ function CoverageFunnelChart({ candidates }: { candidates: CandidateCoverage[] }
 // Chart 2: Candidate Status Donut
 // ---------------------------------------------------------------------------
 
-function CandidateStatusChart({ candidates }: { candidates: CandidateCoverage[] }) {
-  const noWebsite = candidates.filter((c) => !c.has_website).length;
-  const hasWebsiteNotIndexed = candidates.filter((c) => c.has_website && c.chunk_count === 0).length;
-  const indexed = candidates.filter((c) => c.chunk_count > 0).length;
+function CandidateStatusChart({ status }: { status: ChartAggregations["status"] }) {
+  const total = status.noWebsite + status.hasWebsiteNotIndexed + status.indexed;
 
   const data = [
-    { name: "No Website", value: noWebsite, fill: COLORS.red },
-    { name: "Has Website (not indexed)", value: hasWebsiteNotIndexed, fill: COLORS.yellow },
-    { name: "Indexed in RAG", value: indexed, fill: COLORS.green },
+    { name: "No Website", value: status.noWebsite, fill: COLORS.red },
+    { name: "Has Website (not indexed)", value: status.hasWebsiteNotIndexed, fill: COLORS.yellow },
+    { name: "Indexed in RAG", value: status.indexed, fill: COLORS.green },
   ].filter((d) => d.value > 0);
-
-  const total = candidates.length;
 
   return (
     <ChartCard title="Candidate Status">
@@ -217,34 +189,24 @@ function CandidateStatusChart({ candidates }: { candidates: CandidateCoverage[] 
 function CommuneRankChart({
   title,
   communes,
-  candidates,
+  coverageByCommune,
   mode,
 }: {
   title: string;
   communes: CommuneCoverage[];
-  candidates: CandidateCoverage[];
+  coverageByCommune: ChartAggregations["coverageByCommune"];
   mode: "top" | "bottom";
 }) {
-  const candidatesByCommune = useMemo(() => {
-    const map: Record<string, CandidateCoverage[]> = {};
-    for (const c of candidates) {
-      if (c.commune_code) {
-        (map[c.commune_code] ??= []).push(c);
-      }
-    }
-    return map;
-  }, [candidates]);
-
   const scored = useMemo(() => {
     return communes
       .filter((c) => c.candidate_count > 0)
       .map((c) => ({
         name: c.name.length > 18 ? c.name.slice(0, 16) + "…" : c.name,
-        score: computeCoverageScore(c, candidatesByCommune[c.code] ?? []),
+        score: coverageByCommune[c.code]?.score ?? 0,
       }))
       .sort((a, b) => (mode === "top" ? b.score - a.score : a.score - b.score))
       .slice(0, 15);
-  }, [communes, candidatesByCommune, mode]);
+  }, [communes, coverageByCommune, mode]);
 
   const fill = mode === "top" ? COLORS.green : COLORS.red;
 
@@ -276,26 +238,16 @@ function getDeptCode(communeCode: string): string {
 
 function CoverageByDeptChart({
   communes,
-  candidates,
+  coverageByCommune,
 }: {
   communes: CommuneCoverage[];
-  candidates: CandidateCoverage[];
+  coverageByCommune: ChartAggregations["coverageByCommune"];
 }) {
-  const candidatesByCommune = useMemo(() => {
-    const map: Record<string, CandidateCoverage[]> = {};
-    for (const c of candidates) {
-      if (c.commune_code) {
-        (map[c.commune_code] ??= []).push(c);
-      }
-    }
-    return map;
-  }, [candidates]);
-
   const data = useMemo(() => {
     const deptScores: Record<string, number[]> = {};
     for (const c of communes) {
       const dept = getDeptCode(c.code);
-      const score = computeCoverageScore(c, candidatesByCommune[c.code] ?? []);
+      const score = coverageByCommune[c.code]?.score ?? 0;
       (deptScores[dept] ??= []).push(score);
     }
     return Object.entries(deptScores)
@@ -304,7 +256,7 @@ function CoverageByDeptChart({
         avg: Math.round(scores.reduce((s, v) => s + v, 0) / scores.length),
       }))
       .sort((a, b) => b.avg - a.avg);
-  }, [communes, candidatesByCommune]);
+  }, [communes, coverageByCommune]);
 
   return (
     <ChartCard title="Coverage by Department (avg score)">
@@ -325,24 +277,14 @@ function CoverageByDeptChart({
 // Chart 6: Party Label Distribution
 // ---------------------------------------------------------------------------
 
-function PartyLabelDistributionChart({ candidates }: { candidates: CandidateCoverage[] }) {
+function PartyLabelDistributionChart({ partyLabels }: { partyLabels: ChartAggregations["partyLabels"] }) {
   const data = useMemo(() => {
-    const counts: Record<string, { total: number; withWebsite: number }> = {};
-    for (const c of candidates) {
-      const label = c.party_label || "Unknown";
-      if (!counts[label]) counts[label] = { total: 0, withWebsite: 0 };
-      counts[label].total++;
-      if (c.has_website) counts[label].withWebsite++;
-    }
-    return Object.entries(counts)
-      .map(([label, v]) => ({
-        label: label.length > 12 ? label.slice(0, 10) + "…" : label,
-        total: v.total,
-        withWebsite: v.withWebsite,
-      }))
-      .sort((a, b) => b.total - a.total)
-      .slice(0, 20);
-  }, [candidates]);
+    return partyLabels.map((entry) => ({
+      label: entry.label.length > 12 ? entry.label.slice(0, 10) + "…" : entry.label,
+      total: entry.total,
+      withWebsite: entry.withWebsite,
+    }));
+  }, [partyLabels]);
 
   return (
     <ChartCard title="Candidates by Political Label">
@@ -367,30 +309,20 @@ function PartyLabelDistributionChart({ candidates }: { candidates: CandidateCove
 
 function PopulationVsCoverageChart({
   communes,
-  candidates,
+  coverageByCommune,
 }: {
   communes: CommuneCoverage[];
-  candidates: CandidateCoverage[];
+  coverageByCommune: ChartAggregations["coverageByCommune"];
 }) {
-  const candidatesByCommune = useMemo(() => {
-    const map: Record<string, CandidateCoverage[]> = {};
-    for (const c of candidates) {
-      if (c.commune_code) {
-        (map[c.commune_code] ??= []).push(c);
-      }
-    }
-    return map;
-  }, [candidates]);
-
   const data = useMemo(() => {
     return communes
       .filter((c) => c.population > 0 && c.candidate_count > 0)
       .map((c) => ({
         population: c.population,
-        score: computeCoverageScore(c, candidatesByCommune[c.code] ?? []),
+        score: coverageByCommune[c.code]?.score ?? 0,
         name: c.name,
       }));
-  }, [communes, candidatesByCommune]);
+  }, [communes, coverageByCommune]);
 
   return (
     <ChartCard title="Population vs Coverage Score">
@@ -441,26 +373,11 @@ function PopulationVsCoverageChart({
 // Chart 8: Chunk Count Distribution Histogram
 // ---------------------------------------------------------------------------
 
-function ChunkDistributionChart({ candidates }: { candidates: CandidateCoverage[] }) {
-  const data = useMemo(() => {
-    const buckets = [
-      { label: "0", min: 0, max: 0 },
-      { label: "1–10", min: 1, max: 10 },
-      { label: "11–25", min: 11, max: 25 },
-      { label: "26–50", min: 26, max: 50 },
-      { label: "51–100", min: 51, max: 100 },
-      { label: "100+", min: 101, max: Infinity },
-    ];
-    return buckets.map((b) => ({
-      label: b.label,
-      count: candidates.filter((c) => c.chunk_count >= b.min && c.chunk_count <= b.max).length,
-    }));
-  }, [candidates]);
-
+function ChunkDistributionChart({ chunkDistribution }: { chunkDistribution: ChartAggregations["chunkDistribution"] }) {
   return (
     <ChartCard title="Chunk Count Distribution (indexed candidates)">
       <ResponsiveContainer width="100%" height={280}>
-        <BarChart data={data} margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
+        <BarChart data={chunkDistribution} margin={{ left: 4, right: 16, top: 4, bottom: 4 }}>
           <CartesianGrid strokeDasharray="3 3" stroke={GRID_STROKE} vertical={false} />
           <XAxis dataKey="label" tick={{ fill: TICK_FILL, fontSize: 11 }} tickLine={false} axisLine={false} />
           <YAxis tick={{ fill: TICK_FILL, fontSize: 11 }} tickLine={false} axisLine={false} />
@@ -522,14 +439,22 @@ export default function ChartsTab({ secret, apiUrl }: ChartsTabProps) {
 
   if (!data) return null;
 
-  const { communes, candidates } = data;
+  const { communes, charts } = data;
+
+  if (!charts) {
+    return (
+      <div className="rounded-lg border border-border-subtle p-6 text-center">
+        <p className="text-sm text-muted-foreground">Chart data not available.</p>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-4">
       {/* Header row */}
       <div className="flex items-center justify-between">
         <p className="text-sm text-muted-foreground">
-          {communes.length} communes · {candidates.length} candidates
+          {communes.length} communes · {charts.funnel.total.toLocaleString()} candidates
         </p>
         <Button size="sm" variant="ghost" onClick={fetchData} className="h-8 gap-1.5 text-xs">
           <RefreshCw className="size-3.5" />
@@ -539,24 +464,24 @@ export default function ChartsTab({ secret, apiUrl }: ChartsTabProps) {
 
       {/* 2-column grid */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-        <CoverageFunnelChart candidates={candidates} />
-        <CandidateStatusChart candidates={candidates} />
+        <CoverageFunnelChart funnel={charts.funnel} />
+        <CandidateStatusChart status={charts.status} />
         <CommuneRankChart
           title="Top 15 Communes by Coverage Score"
           communes={communes}
-          candidates={candidates}
+          coverageByCommune={charts.coverageByCommune}
           mode="top"
         />
         <CommuneRankChart
           title="Bottom 15 Communes by Coverage Score"
           communes={communes}
-          candidates={candidates}
+          coverageByCommune={charts.coverageByCommune}
           mode="bottom"
         />
-        <CoverageByDeptChart communes={communes} candidates={candidates} />
-        <PartyLabelDistributionChart candidates={candidates} />
-        <PopulationVsCoverageChart communes={communes} candidates={candidates} />
-        <ChunkDistributionChart candidates={candidates} />
+        <CoverageByDeptChart communes={communes} coverageByCommune={charts.coverageByCommune} />
+        <PartyLabelDistributionChart partyLabels={charts.partyLabels} />
+        <PopulationVsCoverageChart communes={communes} coverageByCommune={charts.coverageByCommune} />
+        <ChunkDistributionChart chunkDistribution={charts.chunkDistribution} />
       </div>
     </div>
   );

@@ -611,19 +611,15 @@ async def admin_list_municipalities(request):
     if not _check_admin_secret(request):
         return web.json_response({"error": "Unauthorized"}, status=401)
 
-    def _fetch():
-        results = []
-        for doc in db.collection("municipalities").stream():
-            d = doc.to_dict() or {}
-            results.append({
-                "code": d.get("code") or doc.id,
-                "name": d.get("nom", d.get("name", "")),
-            })
-        results.sort(key=lambda x: x["name"])
-        return results
-
-    municipalities = await asyncio.get_event_loop().run_in_executor(None, _fetch)
-    return web.json_response({"municipalities": municipalities})
+    results = []
+    async for doc in async_db.collection("municipalities").select(["code", "nom", "name"]).stream():
+        d = doc.to_dict() or {}
+        results.append({
+            "code": d.get("code") or doc.id,
+            "name": d.get("nom", d.get("name", "")),
+        })
+    results.sort(key=lambda x: x["name"])
+    return web.json_response({"municipalities": results})
 
 
 @routes.post(f"{route_prefix}/admin/multi-query")
@@ -647,19 +643,14 @@ async def admin_multi_query(request):
     # Fetch all parties once (needed to build party_ids_to_search per commune)
     all_parties = await aget_parties()
 
-    # If no municipality_codes provided, fetch all from Firestore
+    # If no municipality_codes provided, refuse — scanning all 35k docs is too expensive
     if not municipality_codes:
-        def _fetch_all_municipality_codes() -> list[str]:
-            codes = []
-            for doc in db.collection("municipalities").stream():
-                d = doc.to_dict() or {}
-                code = d.get("code") or d.get("municipality_code") or doc.id
-                if code:
-                    codes.append(code)
-            return codes
-
-        municipality_codes = await asyncio.get_event_loop().run_in_executor(
-            None, _fetch_all_municipality_codes
+        return web.json_response(
+            {
+                "status": "error",
+                "message": "municipality_codes is required; scanning all municipalities is not supported",
+            },
+            status=400,
         )
 
     # Improve the query once (same LLM call the chat would do) — skip for speed,
@@ -677,15 +668,16 @@ async def admin_multi_query(request):
                 municipality_name = candidates[0].municipality_name if candidates else ""
                 if not municipality_name:
                     # Try to resolve name from Firestore municipalities collection
-                    def _fetch_muni_name(code: str) -> str:
-                        for doc in db.collection("municipalities").where("code", "==", code).stream():
-                            d = doc.to_dict() or {}
-                            return d.get("nom", d.get("name", ""))
-                        return ""
-
-                    municipality_name = await asyncio.get_event_loop().run_in_executor(
-                        None, _fetch_muni_name, municipality_code
-                    )
+                    async for muni_doc in (
+                        async_db.collection("municipalities")
+                        .where("code", "==", municipality_code)
+                        .select(["nom", "name"])
+                        .limit(1)
+                        .stream()
+                    ):
+                        d = muni_doc.to_dict() or {}
+                        municipality_name = d.get("nom", d.get("name", ""))
+                        break
 
                 # Determine party_ids_to_search (same logic as websocket_app lines 1016-1027)
                 local_party_ids: set[str] = set()
@@ -1913,35 +1905,36 @@ async def admin_dashboard_warnings(request: web.Request) -> web.Response:
 
     try:
         # --- Data completeness ---
-        candidates = [
-            doc.to_dict() | {"id": doc.id}
-            async for doc in async_db.collection("candidates").stream()
-        ]
-        parties = [
-            doc.to_dict() | {"id": doc.id}
-            async for doc in async_db.collection("parties").stream()
-        ]
+        # Only fetch the fields we actually check, to minimise data transfer
+        candidates_no_website_count = 0
+        async for doc in async_db.collection("candidates").select(["has_website"]).stream():
+            d = doc.to_dict() or {}
+            if not d.get("has_website"):
+                candidates_no_website_count += 1
 
-        no_website = [c for c in candidates if not c.get("has_website")]
-        no_manifesto_parties = [p for p in parties if not p.get("manifesto_pdf_url")]
+        no_manifesto_count = 0
+        async for doc in async_db.collection("parties").select(["manifesto_pdf_url"]).stream():
+            d = doc.to_dict() or {}
+            if not d.get("manifesto_pdf_url"):
+                no_manifesto_count += 1
 
-        if no_website:
+        if candidates_no_website_count:
             data_warnings.append(
                 {
                     "severity": "warning",
                     "category": "data",
-                    "message": f"{len(no_website)} candidates missing websites",
-                    "count": len(no_website),
+                    "message": f"{candidates_no_website_count} candidates missing websites",
+                    "count": candidates_no_website_count,
                     "tab_link": "coverage",
                 }
             )
-        if no_manifesto_parties:
+        if no_manifesto_count:
             data_warnings.append(
                 {
                     "severity": "warning",
                     "category": "data",
-                    "message": f"{len(no_manifesto_parties)} parties missing manifestos",
-                    "count": len(no_manifesto_parties),
+                    "message": f"{no_manifesto_count} parties missing manifestos",
+                    "count": no_manifesto_count,
                     "tab_link": "coverage",
                 }
             )
@@ -2089,32 +2082,31 @@ async def admin_dashboard_data_consistency(request: web.Request) -> web.Response
         return web.json_response({"error": "Unauthorized"}, status=401)
 
     try:
-        # --- Firestore counts ---
-        parties = {
-            doc.id: doc.to_dict()
-            async for doc in async_db.collection("parties").stream()
-        }
-        candidates = {
-            doc.id: doc.to_dict()
-            async for doc in async_db.collection("candidates").stream()
-        }
-        municipalities = {
-            doc.id: doc.to_dict()
-            async for doc in async_db.collection("municipalities").stream()
-        }
+        # --- Firestore counts (minimal field selection to reduce data transfer) ---
+        # Parties: only need doc IDs for cross-reference checks
+        party_ids_fs: set[str] = set()
+        async for doc in async_db.collection("parties").select([]).stream():
+            party_ids_fs.add(doc.id)
 
-        party_ids_fs = set(parties.keys())
-        candidate_ids_fs = set(candidates.keys())
-        municipality_codes_fs = set(municipalities.keys())
-        candidates_with_website = [
-            c for c in candidates.values() if c.get("has_website")
-        ]
+        # Candidates: need IDs + has_website for counts
+        candidate_ids_fs: set[str] = set()
+        candidates_with_website_count = 0
+        async for doc in async_db.collection("candidates").select(["has_website"]).stream():
+            candidate_ids_fs.add(doc.id)
+            d = doc.to_dict() or {}
+            if d.get("has_website"):
+                candidates_with_website_count += 1
+
+        # Municipalities: only need doc IDs for cross-reference checks
+        municipality_codes_fs: set[str] = set()
+        async for doc in async_db.collection("municipalities").select([]).stream():
+            municipality_codes_fs.add(doc.id)
 
         firestore_info = {
-            "parties": len(parties),
-            "candidates": len(candidates),
-            "municipalities": len(municipalities),
-            "candidates_with_website": len(candidates_with_website),
+            "parties": len(party_ids_fs),
+            "candidates": len(candidate_ids_fs),
+            "municipalities": len(municipality_codes_fs),
+            "candidates_with_website": candidates_with_website_count,
         }
 
         # --- Qdrant: manifesto collection ---

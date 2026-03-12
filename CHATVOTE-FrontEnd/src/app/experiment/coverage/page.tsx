@@ -59,7 +59,7 @@ export default async function CoveragePage() {
     );
   }
 
-  const { summary, communes, parties, candidates } = data;
+  const { summary, communes, parties, candidates, charts } = data;
 
   return (
     <div className="flex h-screen bg-background text-foreground">
@@ -98,7 +98,7 @@ export default async function CoveragePage() {
           </div>
 
           {/* Tables */}
-          <CoverageTablesClient communes={communes} parties={parties} candidates={candidates} />
+          <CoverageTablesClient communes={communes} parties={parties} candidates={candidates} coverageByCommune={charts?.coverageByCommune ?? {}} />
         </div>
       </div>
     </div>

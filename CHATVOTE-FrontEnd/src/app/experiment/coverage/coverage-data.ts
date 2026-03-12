@@ -48,11 +48,28 @@ export type CoverageSummary = {
   indexed_candidates: number;
 };
 
+export type ChartAggregations = {
+  funnel: { total: number; hasWebsite: number; scraped: number; indexed: number };
+  status: { noWebsite: number; hasWebsiteNotIndexed: number; indexed: number };
+  partyLabels: Array<{ label: string; total: number; withWebsite: number }>;
+  chunkDistribution: Array<{ label: string; count: number }>;
+  coverageByCommune: Record<string, {
+    score: number;
+    ingestionScore: number;
+    hasWebsite: number;
+    hasManifesto: number;
+    hasScraped: number;
+    hasIndexed: number;
+    total: number;
+  }>;
+};
+
 export type CoverageResponse = {
   communes: CommuneCoverage[];
   parties: PartyCoverage[];
-  candidates: CandidateCoverage[];
+  candidates: CandidateCoverage[];  // Keep type for backwards compat, will be empty array
   summary: CoverageSummary;
+  charts?: ChartAggregations;  // New pre-computed chart data
 };
 
 // ---------------------------------------------------------------------------
@@ -122,16 +139,29 @@ function buildPartyChunkCounts(
 
 export async function fetchCoverage(): Promise<CoverageResponse | null> {
   try {
-    const [partiesSnap, municipalitiesSnap, sessionsSnap, electoralListsSnap, topicStats, candidateChunks, municipalityCountSnap] =
-      await Promise.all([
-        db.collection("parties").select("party_id", "name", "long_name", "short_name", "election_manifesto_url").get(),
-        db.collection("municipalities").where("has_electoral_data", "==", true).select("code", "nom", "name", "population").get(),
-        db.collection("chat_sessions").select("municipality_code", "commune_code").get(),
-        db.collection("electoral_lists").select("commune_code", "list_count", "lists").get(),
-        fetchTopicStats(),
-        fetchCandidateChunks(),
-        db.collection("municipalities").count().get(),
-      ]);
+    const [
+      partiesSnap,
+      municipalitiesSnap,
+      sessionsSnap,
+      electoralListsSnap,
+      topicStats,
+      candidateChunks,
+      municipalityCountSnap,
+      candidatesTotalSnap,
+      candidatesScrapedSnap,
+    ] = await Promise.all([
+      db.collection("parties").select("party_id", "name", "long_name", "short_name", "election_manifesto_url").get(),
+      db.collection("municipalities").where("has_electoral_data", "==", true).select("code", "nom", "name", "population").get(),
+      // Only 2 fields needed for per-commune question counts
+      db.collection("chat_sessions").select("municipality_code", "commune_code").get(),
+      db.collection("electoral_lists").select("commune_code", "list_count", "lists").get(),
+      fetchTopicStats(),
+      fetchCandidateChunks(),
+      db.collection("municipalities").count().get(),
+      // count() queries for summary stats — avoids loading all candidate docs for totals
+      db.collection("candidates").count().get(),
+      db.collection("candidates").where("has_scraped", "==", true).count().get(),
+    ]);
 
     const questionsByCommune: Record<string, number> = {};
     for (const doc of sessionsSnap.docs) {
@@ -187,52 +217,178 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
     });
     communes.sort((a, b) => b.question_count - a.question_count);
 
-    let candidates: CandidateCoverage[] = [];
-    let totalCandidates = 0;
-    try {
-      const candidatesSnap = await db.collection("candidates").select(
-        "first_name", "last_name", "commune_code", "municipality_code",
-        "commune_name", "municipality_name", "website_url", "website",
-        "has_manifesto", "manifesto_url", "election_manifesto_url", "manifesto_pdf_path",
-        "has_scraped", "scrape_chars", "list_label", "nuance_label", "nuance_code", "party_name",
-      ).get();
-      totalCandidates = candidatesSnap.size;
-      candidates = candidatesSnap.docs.map((doc) => {
-        const data = doc.data();
-        return {
-          candidate_id: doc.id,
-          name:
-            [data.first_name, data.last_name].filter(Boolean).join(" ") ||
-            doc.id,
-          commune_code: data.commune_code ?? data.municipality_code ?? "",
-          commune_name: data.commune_name ?? data.municipality_name ?? "",
-          has_website: Boolean(data.website_url || data.website),
-          has_manifesto: Boolean(
-            data.has_manifesto || data.manifesto_url || data.election_manifesto_url || data.manifesto_pdf_path,
-          ),
-          has_scraped: Boolean(data.has_scraped) || (candidateChunks[doc.id] ?? 0) > 0,
-          chunk_count: candidateChunks[doc.id] ?? 0,
-          scrape_chars: (data.scrape_chars as number) ?? 0,
-          party_label:
-            data.list_label ?? data.nuance_label ?? data.nuance_code ?? data.party_name ?? "",
-        };
-      });
-      candidates.sort((a, b) => a.name.localeCompare(b.name));
+    // Summary totals derived from count() queries and candidateChunks map —
+    // no need to scan the loaded candidates array for these values.
+    const totalCandidates = candidatesTotalSnap.data().count;
+    const scrapedFromDb = candidatesScrapedSnap.data().count;
+    // indexed = candidates that have at least 1 chunk in Qdrant (from backend map)
+    const indexedCandidates = Object.values(candidateChunks).filter((v) => v > 0).length;
+    // scraped = whichever is higher: Firestore has_scraped flag or has chunks in Qdrant
+    const scrapedCandidates = Math.max(scrapedFromDb, indexedCandidates);
 
-      const candidatesByCommune: Record<string, number> = {};
+    // Per-commune aggregates needed for chart computations and coverage/ingestion scores.
+    // Shape: commune_code -> { total, hasWebsite, hasManifesto, hasScraped, hasIndexed,
+    //                          partyLabels (for party distribution chart),
+    //                          chunkCounts (for chunk distribution histogram) }
+    type CommuneAgg = {
+      total: number;
+      hasWebsite: number;
+      hasManifesto: number;
+      hasScraped: number;
+      hasIndexed: number;
+    };
+    const communeAgg: Record<string, CommuneAgg> = {};
+
+    // For chart aggregations computed across ALL candidates
+    let totalWithWebsite = 0;
+    let totalScraped = 0;
+    let totalIndexed = 0;
+    let totalNoWebsite = 0;
+    let totalHasWebsiteNotIndexed = 0;
+    const partyLabelCounts: Record<string, { total: number; withWebsite: number }> = {};
+    const chunkBuckets = [0, 0, 0, 0, 0, 0]; // 0, 1-10, 11-25, 26-50, 51-100, 100+
+
+    let candidates: CandidateCoverage[] = [];
+    try {
+      // Fetch only the fields needed for aggregation.
+      const candidatesSnap = await db.collection("candidates").select(
+        "first_name", "last_name",
+        "commune_code", "municipality_code",
+        "commune_name", "municipality_name",
+        "website_url", "website",
+        "has_manifesto", "manifesto_url", "election_manifesto_url", "manifesto_pdf_path",
+        "has_scraped", "scrape_chars",
+        "list_label", "nuance_label", "nuance_code", "party_name",
+      ).get();
+
+      // Populate per-commune candidate_count using the already-loaded docs
+      const candidateCountByCommune: Record<string, number> = {};
       for (const doc of candidatesSnap.docs) {
         const data = doc.data();
         const code: string = data.commune_code ?? data.municipality_code ?? "";
         if (code) {
-          candidatesByCommune[code] = (candidatesByCommune[code] ?? 0) + 1;
+          candidateCountByCommune[code] = (candidateCountByCommune[code] ?? 0) + 1;
         }
       }
       for (const commune of communes) {
-        commune.candidate_count = candidatesByCommune[commune.code] ?? 0;
+        commune.candidate_count = candidateCountByCommune[commune.code] ?? 0;
+      }
+
+      // Compute all chart aggregations in a single pass over candidates
+      for (const doc of candidatesSnap.docs) {
+        const data = doc.data();
+        const code: string = data.commune_code ?? data.municipality_code ?? "";
+        const chunkCount = candidateChunks[doc.id] ?? 0;
+        const hasWebsite = Boolean(data.website_url || data.website);
+        const hasManifesto = Boolean(
+          data.has_manifesto || data.manifesto_url || data.election_manifesto_url || data.manifesto_pdf_path,
+        );
+        const hasScraped = Boolean(data.has_scraped) || chunkCount > 0;
+        const hasIndexed = chunkCount > 0;
+        const partyLabel = data.list_label ?? data.nuance_label ?? data.nuance_code ?? data.party_name ?? "Unknown";
+
+        // Per-commune aggregates
+        if (code) {
+          if (!communeAgg[code]) {
+            communeAgg[code] = { total: 0, hasWebsite: 0, hasManifesto: 0, hasScraped: 0, hasIndexed: 0 };
+          }
+          communeAgg[code].total++;
+          if (hasWebsite) communeAgg[code].hasWebsite++;
+          if (hasManifesto) communeAgg[code].hasManifesto++;
+          if (hasScraped) communeAgg[code].hasScraped++;
+          if (hasIndexed) communeAgg[code].hasIndexed++;
+        }
+
+        // Global funnel counters
+        if (hasWebsite) totalWithWebsite++;
+        if (hasScraped) totalScraped++;
+        if (hasIndexed) totalIndexed++;
+
+        // Status donut
+        if (!hasWebsite) {
+          totalNoWebsite++;
+        } else if (!hasIndexed) {
+          totalHasWebsiteNotIndexed++;
+        }
+
+        // Party label distribution
+        if (!partyLabelCounts[partyLabel]) partyLabelCounts[partyLabel] = { total: 0, withWebsite: 0 };
+        partyLabelCounts[partyLabel].total++;
+        if (hasWebsite) partyLabelCounts[partyLabel].withWebsite++;
+
+        // Chunk distribution buckets: 0, 1-10, 11-25, 26-50, 51-100, 100+
+        if (chunkCount === 0) chunkBuckets[0]++;
+        else if (chunkCount <= 10) chunkBuckets[1]++;
+        else if (chunkCount <= 25) chunkBuckets[2]++;
+        else if (chunkCount <= 50) chunkBuckets[3]++;
+        else if (chunkCount <= 100) chunkBuckets[4]++;
+        else chunkBuckets[5]++;
       }
     } catch {
       // candidates collection may not exist
     }
+
+    // Build coverageByCommune map: pre-compute coverage and ingestion scores server-side
+    function computeCoverageScore(listCount: number, agg: CommuneAgg): number {
+      let score = 0;
+      if (listCount > 0) score += 33;
+      if (agg.total > 0) {
+        score += 33 * (agg.hasWebsite / agg.total);
+        score += 34 * (agg.hasManifesto / agg.total);
+      }
+      return Math.round(score);
+    }
+
+    function computeIngestionScore(agg: CommuneAgg): number {
+      if (agg.total === 0 || agg.hasWebsite === 0) return 0;
+      let score = 0;
+      score += 50 * (agg.hasScraped / agg.hasWebsite);
+      score += 50 * (agg.hasIndexed / agg.hasWebsite);
+      return Math.round(score);
+    }
+
+    const coverageByCommune: ChartAggregations["coverageByCommune"] = {};
+    for (const [code, agg] of Object.entries(communeAgg)) {
+      const listCount = listCountByCommune[code] ?? 0;
+      coverageByCommune[code] = {
+        score: computeCoverageScore(listCount, agg),
+        ingestionScore: computeIngestionScore(agg),
+        hasWebsite: agg.hasWebsite,
+        hasManifesto: agg.hasManifesto,
+        hasScraped: agg.hasScraped,
+        hasIndexed: agg.hasIndexed,
+        total: agg.total,
+      };
+    }
+
+    const totalCandidatesLoaded = Object.values(communeAgg).reduce((s, a) => s + a.total, 0);
+
+    const charts: ChartAggregations = {
+      funnel: {
+        total: totalCandidatesLoaded,
+        hasWebsite: totalWithWebsite,
+        scraped: totalScraped,
+        indexed: totalIndexed,
+      },
+      status: {
+        noWebsite: totalNoWebsite,
+        hasWebsiteNotIndexed: totalHasWebsiteNotIndexed,
+        indexed: totalIndexed,
+      },
+      partyLabels: Object.entries(partyLabelCounts)
+        .map(([label, v]) => ({ label, total: v.total, withWebsite: v.withWebsite }))
+        .sort((a, b) => b.total - a.total)
+        .slice(0, 20),
+      chunkDistribution: [
+        { label: "0", count: chunkBuckets[0] },
+        { label: "1–10", count: chunkBuckets[1] },
+        { label: "11–25", count: chunkBuckets[2] },
+        { label: "26–50", count: chunkBuckets[3] },
+        { label: "51–100", count: chunkBuckets[4] },
+        { label: "100+", count: chunkBuckets[5] },
+      ],
+      coverageByCommune,
+    };
 
     const summary: CoverageSummary = {
       total_communes: communes.length,
@@ -242,11 +398,13 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
       total_lists: communes.reduce((sum, c) => sum + c.list_count, 0),
       total_questions: sessionsSnap.size,
       total_chunks: topicStats?.total_chunks ?? 0,
-      scraped_candidates: candidates.filter(c => c.has_scraped).length,
-      indexed_candidates: candidates.filter(c => c.chunk_count > 0).length,
+      scraped_candidates: scrapedCandidates,
+      indexed_candidates: indexedCandidates,
     };
 
-    return { communes, parties, candidates, summary };
+    // Return candidates as empty array — individual records are not needed by the frontend.
+    // All chart data and per-commune aggregates are pre-computed in `charts`.
+    return { communes, parties, candidates, summary, charts };
   } catch (error) {
     console.error("[coverage] Error fetching coverage data:", error);
     return null;

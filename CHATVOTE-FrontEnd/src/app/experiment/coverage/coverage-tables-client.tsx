@@ -1,6 +1,6 @@
 "use client";
 
-import { Fragment, useState, useMemo } from "react";
+import { Fragment, useState, useMemo, useRef, useCallback } from "react";
 
 import {
   CheckIcon,
@@ -12,71 +12,18 @@ import {
   ChevronRightIcon,
 } from "lucide-react";
 
-import { type CandidateCoverage, type CommuneCoverage, type PartyCoverage } from "../../api/coverage/route";
+import { useVirtualizer } from "@tanstack/react-virtual";
+
+import { type CandidateCoverage, type CommuneCoverage, type PartyCoverage, type ChartAggregations } from "../../api/coverage/route";
+
+type CommuneAggEntry = ChartAggregations["coverageByCommune"][string];
 
 // ---------------------------------------------------------------------------
 // Two-score system: Coverage (data completeness) + Ingestion (scrape/index)
+// Scores are pre-computed server-side via ChartAggregations.coverageByCommune
 // ---------------------------------------------------------------------------
 
 type CommuneWithScore = CommuneCoverage & { coverage: number; ingestion: number };
-
-/**
- * Coverage score (0–100): how complete is the data for this commune?
- *
- * Default (useOr = false):
- *   33% — has electoral lists
- *   33% — % of candidates with a website URL
- *   34% — % of candidates with a profession de foi
- *
- * OR mode (useOr = true):
- *   33% — has electoral lists
- *   67% — % of candidates with a website OR a profession de foi
- */
-function computeCoverageScore(
-  commune: CommuneCoverage,
-  communeCandidates: CandidateCoverage[],
-  useOr: boolean = false,
-): number {
-  let score = 0;
-  if (commune.list_count > 0) score += 33;
-  if (communeCandidates.length > 0) {
-    if (useOr) {
-      const withEither = communeCandidates.filter((c) => c.has_website || c.has_manifesto).length;
-      score += 67 * (withEither / communeCandidates.length);
-    } else {
-      const withWebsite = communeCandidates.filter((c) => c.has_website).length;
-      score += 33 * (withWebsite / communeCandidates.length);
-      const withManifesto = communeCandidates.filter((c) => c.has_manifesto).length;
-      score += 34 * (withManifesto / communeCandidates.length);
-    }
-  }
-  return Math.round(score);
-}
-
-/**
- * Ingestion score (0–100): how much content was successfully scraped & indexed?
- *   50% — % of candidates with website that were scraped successfully
- *   50% — % of candidates indexed in RAG (have chunks)
- */
-function computeIngestionScore(
-  communeCandidates: CandidateCoverage[],
-): number {
-  if (communeCandidates.length === 0) return 0;
-  const withWebsite = communeCandidates.filter((c) => c.has_website).length;
-  const withScraped = communeCandidates.filter((c) => c.has_scraped).length;
-  const withIndexed = communeCandidates.filter((c) => c.chunk_count > 0).length;
-
-  let score = 0;
-  // 50pts: scrape success rate (of those with websites)
-  if (withWebsite > 0) {
-    score += 50 * (withScraped / withWebsite);
-  }
-  // 50pts: indexing rate (of those with websites)
-  if (withWebsite > 0) {
-    score += 50 * (withIndexed / withWebsite);
-  }
-  return Math.round(score);
-}
 
 // ---------------------------------------------------------------------------
 // Types
@@ -223,18 +170,16 @@ function ScoreBar({ score, gradient }: { score: number; gradient?: string }) {
 
 function ScoreBreakdown({
   commune,
-  communeCandidates,
+  agg,
 }: {
   commune: CommuneWithScore;
-  communeCandidates: CandidateCoverage[];
+  agg: CommuneAggEntry | undefined;
 }) {
-  const withWebsite = communeCandidates.filter((c) => c.has_website).length;
-  const withManifesto = communeCandidates.filter((c) => c.has_manifesto).length;
-  const withScraped = communeCandidates.filter((c) => c.has_scraped).length;
-  const withIndexed = communeCandidates.filter((c) => c.chunk_count > 0).length;
-  const pendingIndex = communeCandidates.filter((c) => c.has_scraped && c.chunk_count === 0 && c.scrape_chars > 500).length;
-  const junkScrape = communeCandidates.filter((c) => c.has_scraped && c.chunk_count === 0 && c.scrape_chars <= 500).length;
-  const total = communeCandidates.length;
+  const total = agg?.total ?? 0;
+  const withWebsite = agg?.hasWebsite ?? 0;
+  const withManifesto = agg?.hasManifesto ?? 0;
+  const withScraped = agg?.hasScraped ?? 0;
+  const withIndexed = agg?.hasIndexed ?? 0;
 
   const coverageItems = [
     {
@@ -269,18 +214,6 @@ function ScoreBreakdown({
       ok: withWebsite > 0 && withIndexed >= withWebsite,
       detail: withWebsite > 0 ? `${withIndexed} / ${withWebsite}` : "—",
       pct: withWebsite > 0 ? Math.round(100 * (withIndexed / withWebsite)) : 0,
-    },
-    {
-      label: "Pending indexing",
-      ok: pendingIndex === 0,
-      detail: pendingIndex > 0 ? `${pendingIndex} candidates` : "—",
-      pct: 0,
-    },
-    {
-      label: "Junk / empty scrape",
-      ok: junkScrape === 0,
-      detail: junkScrape > 0 ? `${junkScrape} candidates` : "—",
-      pct: 0,
     },
   ];
 
@@ -331,89 +264,41 @@ function ScoreBreakdown({
         {renderItems(ingestionItems)}
       </div>
 
-      {/* Candidate list */}
       {total > 0 && (
-        <div>
-          <p className="text-[11px] font-semibold uppercase tracking-wider text-muted-foreground mb-2">
-            Têtes de liste ({total})
-          </p>
-          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-1.5">
-            {communeCandidates.map((c) => (
-              <div
-                key={c.candidate_id}
-                className={`flex items-center gap-2 px-3 py-1.5 rounded-lg text-xs ${
-                  !c.has_website && !c.has_manifesto
-                    ? "bg-red-500/[0.06]"
-                    : "bg-border-subtle/20"
-                }`}
-              >
-                <span className="font-medium text-foreground truncate flex-1">{c.name}</span>
-                <span className="text-muted-foreground/60 truncate max-w-[120px] text-[10px]">
-                  {c.party_label}
-                </span>
-                <div className="flex items-center gap-1 shrink-0">
-                  {c.has_website ? (
-                    <span className="size-1.5 rounded-full bg-green-500" title="Has website" />
-                  ) : (
-                    <span className="size-1.5 rounded-full bg-red-400" title="No website" />
-                  )}
-                  {c.has_manifesto ? (
-                    <span className="size-1.5 rounded-full bg-green-500" title="Has PDF" />
-                  ) : (
-                    <span className="size-1.5 rounded-full bg-red-400" title="No PDF" />
-                  )}
-                  {c.chunk_count > 0 ? (
-                    <span className="size-1.5 rounded-full bg-violet-500" title={`${c.chunk_count} RAG chunks`} />
-                  ) : (
-                    <span className="size-1.5 rounded-full bg-red-400" title="Not indexed" />
-                  )}
-                </div>
-              </div>
-            ))}
-          </div>
-          <div className="flex items-center gap-4 mt-2 text-[10px] text-muted-foreground/50">
-            <span className="flex items-center gap-1"><span className="size-1.5 rounded-full bg-green-500 inline-block" /> website</span>
-            <span className="flex items-center gap-1"><span className="size-1.5 rounded-full bg-green-500 inline-block" /> profession de foi</span>
-            <span className="flex items-center gap-1"><span className="size-1.5 rounded-full bg-violet-500 inline-block" /> indexed RAG</span>
-            <span className="flex items-center gap-1"><span className="size-1.5 rounded-full bg-red-400 inline-block" /> missing</span>
-          </div>
-        </div>
+        <p className="text-[11px] text-muted-foreground/60">
+          {total} candidates — {withWebsite} with website · {withManifesto} with manifesto · {withIndexed} indexed in RAG
+        </p>
       )}
     </div>
   );
 }
 
-function CommunesTable({ communes, candidates }: { communes: CommuneCoverage[]; candidates: CandidateCoverage[] }) {
+function CommunesTable({
+  communes,
+  coverageByCommune,
+}: {
+  communes: CommuneCoverage[];
+  coverageByCommune: ChartAggregations["coverageByCommune"];
+}) {
   const [sortKey, setSortKey] = useState<CommuneSortKey>("coverage");
   const [sortDir, setSortDir] = useState<SortDir>("desc");
   const [statusFilter, setStatusFilter] = useState<CompletenessFilter>("all");
   const [hideEmpty, setHideEmpty] = useState(false);
-  const [useOr, setUseOr] = useState(false);
   const [expandedCode, setExpandedCode] = useState<string | null>(null);
 
-  // Group candidates by commune code
-  const candidatesByCommune = useMemo(() => {
-    const map: Record<string, CandidateCoverage[]> = {};
-    for (const c of candidates) {
-      const code = c.commune_code;
-      if (code) {
-        (map[code] ??= []).push(c);
-      }
-    }
-    return map;
-  }, [candidates]);
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
 
-  // Compute both scores
+  // Use pre-computed scores from server-side aggregates
   const communesWithScores: CommuneWithScore[] = useMemo(() => {
     return communes.map((c) => {
-      const cc = candidatesByCommune[c.code] ?? [];
+      const agg = coverageByCommune[c.code];
       return {
         ...c,
-        coverage: computeCoverageScore(c, cc, useOr),
-        ingestion: computeIngestionScore(cc),
+        coverage: agg?.score ?? 0,
+        ingestion: agg?.ingestionScore ?? 0,
       };
     });
-  }, [communes, candidatesByCommune, useOr]);
+  }, [communes, coverageByCommune]);
 
   const counts = useMemo(() => {
     let complete = 0, partial = 0, missing = 0;
@@ -459,6 +344,25 @@ function CommunesTable({ communes, candidates }: { communes: CommuneCoverage[]; 
     return mul * (a[sortKey] - b[sortKey]);
   });
 
+  // estimateSize returns a larger value for expanded rows so the virtualizer
+  // reserves space and avoids layout jumps when the panel opens.
+  const rowVirtualizer = useVirtualizer({
+    count: sorted.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: useCallback(
+      (index: number) => {
+        const commune = sorted[index];
+        if (!commune) return 48;
+        return expandedCode === commune.code ? 400 : 48;
+      },
+      // eslint-disable-next-line react-hooks/exhaustive-deps
+      [sorted, expandedCode],
+    ),
+    overscan: 10,
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
   return (
     <div className="bg-surface border border-border-subtle rounded-xl overflow-hidden">
       {/* Header */}
@@ -490,18 +394,18 @@ function CommunesTable({ communes, candidates }: { communes: CommuneCoverage[]; 
             active={hideEmpty}
             onClick={() => setHideEmpty((v) => !v)}
           />
-          <ToggleChip
-            label="Website or Manifesto"
-            active={useOr}
-            onClick={() => setUseOr((v) => !v)}
-          />
         </div>
       </div>
 
-      {/* Table */}
-      <div className="overflow-x-auto">
+      {/* Virtualized table — uses multiple <tbody> groups so measureElement
+          captures both the data row and any expanded detail row together,
+          giving the virtualizer accurate heights for variable-size items. */}
+      <div
+        ref={scrollContainerRef}
+        className="overflow-auto max-h-[600px]"
+      >
         <table className="w-full text-sm">
-          <thead>
+          <thead className="sticky top-0 bg-surface z-10">
             <tr className="border-b border-border-subtle text-left">
               <th className="px-5 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground w-10">#</th>
               <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground">Commune</th>
@@ -513,6 +417,7 @@ function CommunesTable({ communes, candidates }: { communes: CommuneCoverage[]; 
               <th className="px-3 py-2.5 text-xs font-semibold uppercase tracking-wider text-muted-foreground min-w-[180px]">Questions</th>
             </tr>
           </thead>
+
           <tbody className="divide-y divide-border-subtle/50">
             {sorted.length === 0 && (
               <tr>
@@ -521,7 +426,15 @@ function CommunesTable({ communes, candidates }: { communes: CommuneCoverage[]; 
                 </td>
               </tr>
             )}
-            {sorted.map((commune, i) => {
+
+            {/* Top padding row */}
+            {virtualItems.length > 0 && virtualItems[0]!.start > 0 && (
+              <tr style={{ height: `${virtualItems[0]!.start}px` }} />
+            )}
+
+            {virtualItems.map((virtualRow) => {
+              const commune = sorted[virtualRow.index];
+              if (!commune) return null;
               const isExpanded = expandedCode === commune.code;
               return (
                 <Fragment key={commune.code}>
@@ -574,7 +487,7 @@ function CommunesTable({ communes, candidates }: { communes: CommuneCoverage[]; 
                       <td colSpan={8}>
                         <ScoreBreakdown
                           commune={commune}
-                          communeCandidates={candidatesByCommune[commune.code] ?? []}
+                          agg={coverageByCommune[commune.code]}
                         />
                       </td>
                     </tr>
@@ -582,6 +495,13 @@ function CommunesTable({ communes, candidates }: { communes: CommuneCoverage[]; 
                 </Fragment>
               );
             })}
+
+            {/* Bottom padding row */}
+            {virtualItems.length > 0 && (() => {
+              const last = virtualItems[virtualItems.length - 1]!;
+              const pad = rowVirtualizer.getTotalSize() - last.end;
+              return pad > 0 ? <tr style={{ height: `${pad}px` }} /> : null;
+            })()}
           </tbody>
         </table>
       </div>
@@ -724,6 +644,8 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
   const [search, setSearch] = useState("");
   const [onlyMissing, setOnlyMissing] = useState(false);
 
+  const scrollContainerRef = useRef<HTMLDivElement>(null);
+
   const missingWebsite = candidates.filter((c) => !c.has_website).length;
   const missingManifesto = candidates.filter((c) => !c.has_manifesto).length;
 
@@ -761,6 +683,15 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
   if (missingManifesto > 0) warnings.push(`${missingManifesto} ${missingManifesto === 1 ? "candidate" : "candidates"} without a manifesto document`);
   if (notIndexed > 0) warnings.push(`${notIndexed} ${notIndexed === 1 ? "candidate has" : "candidates have"} a website but no indexed content — run the scraper + indexer pipeline`);
 
+  const rowVirtualizer = useVirtualizer({
+    count: sorted.length,
+    getScrollElement: () => scrollContainerRef.current,
+    estimateSize: () => 48,
+    overscan: 10,
+  });
+
+  const virtualItems = rowVirtualizer.getVirtualItems();
+
   return (
     <div className="space-y-3">
       <WarningBanner warnings={warnings} />
@@ -796,7 +727,7 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
             />
           </div>
         </div>
-        <div className="max-h-[500px] overflow-y-auto">
+        <div ref={scrollContainerRef} className="max-h-[500px] overflow-y-auto">
           <table className="w-full text-sm">
             <thead className="sticky top-0 bg-surface z-10">
               <tr className="border-b border-border-subtle text-left">
@@ -817,56 +748,73 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
                   </td>
                 </tr>
               )}
-              {sorted.map((c, i) => (
-                <tr
-                  key={c.candidate_id}
-                  className={`hover:bg-border-subtle/10 transition-colors ${
-                    !c.has_website || !c.has_manifesto ? "bg-red-500/[0.03]" : ""
-                  }`}
-                >
-                  <td className="px-5 py-3 text-xs text-muted-foreground tabular-nums">{i + 1}.</td>
-                  <td className="px-3 py-3">
-                    <span className="font-medium text-foreground">{c.name}</span>
-                  </td>
-                  <td className="px-3 py-3 text-muted-foreground">
-                    {c.commune_name || "—"}
-                    {c.commune_code && (
-                      <span className="ml-1.5 text-[10px] font-mono text-muted-foreground/60">{c.commune_code}</span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-muted-foreground text-xs">{c.party_label || "—"}</td>
-                  <td className="px-3 py-3 text-center">
-                    {c.has_website ? (
-                      <CheckIcon className="size-4 text-green-500 mx-auto" />
-                    ) : (
-                      <span className="inline-flex items-center gap-0.5 text-red-400 text-[11px] justify-center">
-                        <XIcon className="size-3.5" />
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    {c.has_manifesto ? (
-                      <CheckIcon className="size-4 text-green-500 mx-auto" />
-                    ) : (
-                      <span className="inline-flex items-center gap-0.5 text-red-400 text-[11px] justify-center">
-                        <XIcon className="size-3.5" />
-                      </span>
-                    )}
-                  </td>
-                  <td className="px-3 py-3 text-center">
-                    {c.chunk_count > 0 ? (
-                      <span className="inline-flex items-center gap-1 text-green-500 text-[11px]">
-                        <CheckIcon className="size-3.5" />
-                        <span className="tabular-nums">{c.chunk_count}</span>
-                      </span>
-                    ) : (
-                      <span className="inline-flex items-center gap-0.5 text-red-400 text-[11px] justify-center">
-                        <XIcon className="size-3.5" />
-                      </span>
-                    )}
-                  </td>
-                </tr>
-              ))}
+
+              {/* Top padding row */}
+              {virtualItems.length > 0 && virtualItems[0]!.start > 0 && (
+                <tr style={{ height: `${virtualItems[0]!.start}px` }} />
+              )}
+
+              {virtualItems.map((virtualRow) => {
+                const c = sorted[virtualRow.index];
+                if (!c) return null;
+                return (
+                  <tr
+                    key={c.candidate_id}
+                    className={`hover:bg-border-subtle/10 transition-colors ${
+                      !c.has_website || !c.has_manifesto ? "bg-red-500/[0.03]" : ""
+                    }`}
+                  >
+                    <td className="px-5 py-3 text-xs text-muted-foreground tabular-nums">{virtualRow.index + 1}.</td>
+                    <td className="px-3 py-3">
+                      <span className="font-medium text-foreground">{c.name}</span>
+                    </td>
+                    <td className="px-3 py-3 text-muted-foreground">
+                      {c.commune_name || "—"}
+                      {c.commune_code && (
+                        <span className="ml-1.5 text-[10px] font-mono text-muted-foreground/60">{c.commune_code}</span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-muted-foreground text-xs">{c.party_label || "—"}</td>
+                    <td className="px-3 py-3 text-center">
+                      {c.has_website ? (
+                        <CheckIcon className="size-4 text-green-500 mx-auto" />
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-red-400 text-[11px] justify-center">
+                          <XIcon className="size-3.5" />
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {c.has_manifesto ? (
+                        <CheckIcon className="size-4 text-green-500 mx-auto" />
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-red-400 text-[11px] justify-center">
+                          <XIcon className="size-3.5" />
+                        </span>
+                      )}
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      {c.chunk_count > 0 ? (
+                        <span className="inline-flex items-center gap-1 text-green-500 text-[11px]">
+                          <CheckIcon className="size-3.5" />
+                          <span className="tabular-nums">{c.chunk_count}</span>
+                        </span>
+                      ) : (
+                        <span className="inline-flex items-center gap-0.5 text-red-400 text-[11px] justify-center">
+                          <XIcon className="size-3.5" />
+                        </span>
+                      )}
+                    </td>
+                  </tr>
+                );
+              })}
+
+              {/* Bottom padding row */}
+              {virtualItems.length > 0 && (() => {
+                const last = virtualItems[virtualItems.length - 1]!;
+                const pad = rowVirtualizer.getTotalSize() - last.end;
+                return pad > 0 ? <tr style={{ height: `${pad}px` }} /> : null;
+              })()}
             </tbody>
           </table>
         </div>
@@ -883,14 +831,16 @@ export default function CoverageTablesClient({
   communes,
   parties,
   candidates,
+  coverageByCommune,
 }: {
   communes: CommuneCoverage[];
   parties: PartyCoverage[];
   candidates: CandidateCoverage[];
+  coverageByCommune: ChartAggregations["coverageByCommune"];
 }) {
   return (
     <div className="space-y-8">
-      <CommunesTable communes={communes} candidates={candidates} />
+      <CommunesTable communes={communes} coverageByCommune={coverageByCommune} />
 
       <div>
         <div className="flex items-center gap-3 mb-4">

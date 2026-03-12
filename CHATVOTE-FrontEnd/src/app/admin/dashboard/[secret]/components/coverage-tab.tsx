@@ -103,7 +103,7 @@ export default function CoverageTab({ secret, apiUrl }: CoverageTabProps) {
 
   if (!data) return null;
 
-  const { summary, communes, parties, candidates } = data;
+  const { summary, communes, parties, candidates, charts } = data;
 
   return (
     <div className="space-y-6">
@@ -135,6 +135,7 @@ export default function CoverageTab({ secret, apiUrl }: CoverageTabProps) {
         communes={communes}
         parties={parties}
         candidates={candidates}
+        coverageByCommune={charts?.coverageByCommune ?? {}}
       />
     </div>
   );
