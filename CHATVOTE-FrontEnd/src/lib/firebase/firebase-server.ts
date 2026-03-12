@@ -218,15 +218,17 @@ export async function getChatSessionMessages(sessionId: string) {
 
   return snapshot.docs.map((doc) => {
     const data = doc.data();
-    return {
-      ...data,
-      id: doc.id,
-      created_at: firestoreTimestampToDate(data.created_at),
-      messages: data.messages.map((message: MessageItem) => ({
-        ...message,
-        created_at: firestoreTimestampToDate(message.created_at),
-      })),
-    } as GroupedMessage;
+    return JSON.parse(
+      JSON.stringify({
+        ...data,
+        id: doc.id,
+        created_at: firestoreTimestampToDate(data.created_at),
+        messages: data.messages.map((message: MessageItem) => ({
+          ...message,
+          created_at: firestoreTimestampToDate(message.created_at),
+        })),
+      }),
+    ) as GroupedMessage;
   });
 }
 

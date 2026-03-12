@@ -1453,16 +1453,26 @@ async def commune_dashboard(request):
                 logger.error(f"Error scrolling {col_name} for commune {commune_code}: {e}", exc_info=True)
         return _theme_data, _total
 
+    # Always include national manifesto data (relevant to all communes),
+    # then layer commune-specific candidate chunks on top.
     theme_data, total_chunks = _scroll_qdrant_themes(
-        qdrant_filter, [PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME]
+        None, [PARTY_INDEX_NAME]  # National manifesto data (no filter)
     )
-
-    # Fallback: if no commune-specific chunks, use national manifesto data
-    if total_chunks == 0:
-        logger.info(f"No commune-specific chunks for {commune_code}, falling back to national manifesto data")
-        theme_data, total_chunks = _scroll_qdrant_themes(
-            None, [PARTY_INDEX_NAME]  # No filter — all national manifesto chunks
-        )
+    # Add commune-specific candidate chunks
+    candidate_theme_data, candidate_chunks = _scroll_qdrant_themes(
+        qdrant_filter, [CANDIDATES_INDEX_NAME]
+    )
+    # Merge candidate data into theme_data
+    for theme, td in candidate_theme_data.items():
+        if theme not in theme_data:
+            theme_data[theme] = td
+        else:
+            theme_data[theme]["total_count"] += td["total_count"]
+            for list_name, count in td["by_list"].items():
+                theme_data[theme]["by_list"][list_name] = (
+                    theme_data[theme]["by_list"].get(list_name, 0) + count
+                )
+    total_chunks += candidate_chunks
 
     classified_chunks = sum(td["total_count"] for td in theme_data.values())
     taxonomy_themes = []

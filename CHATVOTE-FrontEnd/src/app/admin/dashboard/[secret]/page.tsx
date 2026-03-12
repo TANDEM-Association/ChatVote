@@ -9,7 +9,7 @@ const API_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ||
   "http://localhost:8080";
 
-const TABS = ["overview", "pipeline", "coverage", "charts", "chats", "multi-query", "consistency"] as const;
+const TABS = ["overview", "pipeline", "coverage", "charts", "chats", "multi-query", "consistency", "crawler"] as const;
 type TabId = (typeof TABS)[number];
 
 const TAB_LABELS: Record<TabId, string> = {
@@ -20,6 +20,7 @@ const TAB_LABELS: Record<TabId, string> = {
   chats: "Chat Sessions",
   "multi-query": "Multi Query",
   consistency: "Data Consistency",
+  crawler: "Crawler",
 };
 
 // Lazy load tab components
@@ -46,6 +47,9 @@ const DataConsistencyTab = dynamic(
   () => import("./components/data-consistency-tab"),
   { ssr: false },
 );
+const CrawlerTab = dynamic(() => import("./components/crawler-tab"), {
+  ssr: false,
+});
 
 export default function AdminDashboard() {
   const params = useParams<{ secret: string }>();
@@ -181,6 +185,9 @@ export default function AdminDashboard() {
           )}
           {activeTab === "consistency" && (
             <DataConsistencyTab secret={secret} apiUrl={API_URL} />
+          )}
+          {activeTab === "crawler" && (
+            <CrawlerTab secret={secret} apiUrl={API_URL} />
           )}
         </Suspense>
       </div>
