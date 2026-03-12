@@ -18,7 +18,7 @@ from src.services.data_pipeline.base import (
     should_skip,
 )
 from src.services.data_pipeline.candidatures import get_candidatures
-from src.services.data_pipeline.population import get_top_communes
+from src.services.data_pipeline.population import get_all_communes, get_top_communes
 from src.services.data_pipeline.professions import get_professions
 from src.services.data_pipeline.websites import get_websites
 
@@ -80,18 +80,26 @@ def _collection_hash(docs: dict[str, Any]) -> str:
 # Build functions (ported from generate_seed_from_csv.py)
 # ---------------------------------------------------------------------------
 def _build_municipalities(communes: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    """Build municipalities dict from population data."""
+    """Build municipalities dict from population data.
+
+    Produces documents matching the frontend ``Municipality`` TypeScript type:
+    code, nom, zone, population, surface, codesPostaux, codeRegion,
+    codeDepartement, siren, codeEpci, epci, departement, region.
+    """
     result: dict[str, Any] = {}
     for code, c in communes.items():
         result[code] = {
             "code": code,
             "nom": c["nom"],
             "population": c["population"],
+            "zone": c.get("zone", ""),
+            "surface": c.get("surface", 0),
             "codeDepartement": c["dep_code"],
             "departement": {"code": c["dep_code"], "nom": c["dep_nom"]},
             "codeRegion": c["reg_code"],
             "region": {"code": c["reg_code"], "nom": c["reg_nom"]},
-            "codesPostaux": [c["code_postal"]] if c["code_postal"] else [],
+            "codesPostaux": c.get("codes_postaux") or ([c["code_postal"]] if c.get("code_postal") else []),
+            "siren": c.get("siren", ""),
             "codeEpci": c["epci_code"],
             "epci": {"code": c["epci_code"], "nom": c["epci_nom"]},
         }
@@ -271,6 +279,13 @@ class SeedNode(DataSourceNode):
         # ------------------------------------------------------------------
         # 0. Validate upstream nodes have run
         # ------------------------------------------------------------------
+        all_communes = get_all_communes()
+        if all_communes is None:
+            raise RuntimeError(
+                "Population node must run before seed node "
+                "(get_all_communes() returned None)"
+            )
+
         top_communes = get_top_communes()
         if top_communes is None:
             raise RuntimeError(
@@ -290,7 +305,8 @@ class SeedNode(DataSourceNode):
         # ------------------------------------------------------------------
         # 1. Build the three collections
         # ------------------------------------------------------------------
-        municipalities = _build_municipalities(top_communes)
+        # ALL communes go to Firestore municipalities (not just top N)
+        municipalities = _build_municipalities(all_communes)
         electoral_lists = _build_electoral_lists(candidatures)
         candidates = _build_candidates(candidatures)
 

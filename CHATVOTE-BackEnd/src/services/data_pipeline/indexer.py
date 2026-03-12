@@ -35,6 +35,7 @@ class IndexerNode(DataSourceNode):
     default_settings: dict[str, Any] = {
         "index_manifestos": True,
         "index_candidates": True,
+        "index_professions": True,
         "classify_themes": True,
     }
 
@@ -50,6 +51,7 @@ class IndexerNode(DataSourceNode):
         settings = cfg.settings
         parties_indexed: int = 0
         candidates_indexed: int = 0
+        professions_indexed: int = 0
         errors: list[str] = []
         t0 = _time.monotonic()
         classify_themes = settings.get("classify_themes", True)
@@ -258,11 +260,117 @@ class IndexerNode(DataSourceNode):
         else:
             logger.info("[indexer] candidate indexing disabled, skipping")
 
+        # --- Profession de foi indexing -----------------------------------
+        if settings.get("index_professions", True):
+            logger.info("[indexer] starting profession de foi indexing phase...")
+            await update_status(
+                cfg.node_id, NodeStatus.RUNNING,
+                counts={
+                    "phase": "professions",
+                    "parties_indexed": parties_indexed,
+                    "candidates_chunks": candidates_indexed,
+                    "professions_chunks": 0,
+                },
+            )
+            try:
+                from src.services.profession_indexer import (
+                    index_commune_professions,
+                    _PDF_CACHE_DIR,
+                )
+
+                if not _PDF_CACHE_DIR.exists():
+                    logger.info("[indexer] no profession PDFs cached, skipping")
+                else:
+                    commune_dirs = sorted(
+                        d for d in _PDF_CACHE_DIR.iterdir() if d.is_dir()
+                    )
+                    already_indexed = (
+                        cfg.checkpoints.get("profession_indexed_communes", {})
+                        if not force
+                        else {}
+                    )
+                    to_process = [
+                        d for d in commune_dirs
+                        if d.name not in already_indexed
+                    ]
+                    logger.info(
+                        "[indexer] %d communes with profession PDFs "
+                        "(%d already indexed, %d to process, force=%s)",
+                        len(commune_dirs), len(already_indexed),
+                        len(to_process), force,
+                    )
+
+                    prof_chunks = 0
+                    prof_communes_done = 0
+                    t_prof = _time.monotonic()
+
+                    for commune_dir in to_process:
+                        commune_code = commune_dir.name
+                        try:
+                            results = await index_commune_professions(commune_code)
+                            chunks = sum(results.values())
+                            prof_chunks += chunks
+                            prof_communes_done += 1
+
+                            # Save checkpoint
+                            cfg.checkpoints.setdefault(
+                                "profession_indexed_communes", {}
+                            )[commune_code] = datetime.now(timezone.utc).isoformat()
+
+                            # Progress update every 5 communes
+                            if prof_communes_done % 5 == 0:
+                                elapsed_prof = _time.monotonic() - t_prof
+                                rate = prof_communes_done / elapsed_prof if elapsed_prof > 0 else 0
+                                remaining = (len(to_process) - prof_communes_done) / rate if rate > 0 else 0
+                                await update_status(
+                                    cfg.node_id, NodeStatus.RUNNING,
+                                    counts={
+                                        "phase": "professions",
+                                        "parties_indexed": parties_indexed,
+                                        "candidates_chunks": candidates_indexed,
+                                        "professions_chunks": prof_chunks,
+                                        "communes_done": prof_communes_done,
+                                        "communes_total": len(to_process),
+                                        "current": commune_code,
+                                        "rate_communes_per_sec": round(rate, 2),
+                                        "elapsed_s": round(elapsed_prof, 1),
+                                        "eta_s": round(remaining, 0),
+                                    },
+                                )
+                                logger.info(
+                                    "[indexer] professions: %d/%d communes, %d chunks, %.1f/s",
+                                    prof_communes_done, len(to_process), prof_chunks, rate,
+                                )
+
+                            # Yield to event loop
+                            await asyncio.sleep(0)
+
+                        except Exception as exc:
+                            logger.error(
+                                "[indexer] profession indexing failed for commune %s: %s",
+                                commune_code, exc,
+                            )
+
+                    professions_indexed = prof_chunks
+                    logger.info(
+                        "[indexer] profession de foi indexing complete: "
+                        "%d chunks across %d communes",
+                        prof_chunks, prof_communes_done,
+                    )
+
+            except Exception as exc:
+                msg = f"profession indexing failed: {exc}"
+                logger.exception("[indexer] %s", msg)
+                errors.append(msg)
+        else:
+            logger.info("[indexer] profession de foi indexing disabled, skipping")
+
         # --- Final counts -------------------------------------------------
         elapsed = _time.monotonic() - t0
         cfg.counts = {
             "parties_indexed": parties_indexed,
             "chunks_indexed": candidates_indexed,
+            "professions_indexed": professions_indexed,
             "elapsed_s": round(elapsed, 1),
         }
         cfg.checkpoints["last_indexed_at"] = datetime.now(timezone.utc).isoformat()

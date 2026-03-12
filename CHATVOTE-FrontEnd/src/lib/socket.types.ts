@@ -26,6 +26,7 @@ export type {
   CandidateProConPerspectiveRequestDto,
   VotingBehaviorRequestDto,
   VotingBehaviorSummaryChunkDto,
+  ChatResponseCompleteDto,
 } from "./generated";
 
 import type {
@@ -37,6 +38,7 @@ import type {
   RespondingPartiesDto,
   VotingBehaviorRequestDto,
   VotingBehaviorSummaryChunkDto,
+  ChatResponseCompleteDto,
 } from "./generated";
 
 // ============================================
@@ -172,6 +174,9 @@ export type StreamResetPayload = {
   party_id: string;
   reason: string;
 };
+
+/** @see ChatResponseCompleteDto */
+export type ChatResponseCompletePayload = ChatResponseCompleteDto;
 
 // ============================================
 // Frontend-only types (no backend equivalent)
