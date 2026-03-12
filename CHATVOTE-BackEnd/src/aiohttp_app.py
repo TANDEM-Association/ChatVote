@@ -1,5 +1,5 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
-# Backend v2 — commune dashboard, candidate scraping
+# Backend v2 — commune dashboard, candidate scraping, admin auth
 
 import argparse
 import asyncio
