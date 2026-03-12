@@ -123,10 +123,14 @@ def source_attribution_metric(judge_model):
         name="Source Attribution",
         criteria="""Evaluate whether the actual output properly attributes information
         to specific source documents. The response should:
-        1. Reference which party manifesto or document each claim comes from
-        2. Not present information without indicating its source
+        1. Reference which party manifesto or document each claim comes from using [id] notation
+        2. Not present factual claims without indicating their source
         3. Distinguish between direct quotes and paraphrased positions
-        4. Include document or section references when available in the context""",
+        4. Include document or section references when available in the context
+        5. EXCEPTION: If the response honestly states that the provided documents do not
+           contain information on the requested topic, this is correct behavior and should
+           score HIGH (0.8+). The chatbot is designed to avoid hallucination, so admitting
+           lack of information is preferable to fabricating sources.""",
         evaluation_params=[
             LLMTestCaseParams.ACTUAL_OUTPUT,
             LLMTestCaseParams.RETRIEVAL_CONTEXT,

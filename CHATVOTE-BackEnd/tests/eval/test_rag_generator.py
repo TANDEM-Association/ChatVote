@@ -96,7 +96,7 @@ MOCK_CONTEXTS = {
 }
 
 
-def _try_snapshot_from_qdrant(party_id: str) -> list[str] | None:
+def _try_snapshot_from_qdrant(party_id: str, rag_query: str = "programme politique") -> list[str] | None:
     """Try to get real context from Qdrant if available, for more realistic tests."""
     qdrant_url = os.environ.get("QDRANT_URL", "http://localhost:6333")
     try:
@@ -117,7 +117,7 @@ def _try_snapshot_from_qdrant(party_id: str) -> list[str] | None:
 
         loop = _get_loop()
         docs = loop.run_until_complete(
-            identify_relevant_docs(party=party, rag_query="programme politique", n_docs=3)
+            identify_relevant_docs(party=party, rag_query=rag_query, n_docs=3)
         )
         if docs:
             return [doc.page_content for doc in docs]
@@ -142,12 +142,12 @@ def llm_generator():
     return generate_streaming_chatbot_response, Party, LLMSize, Document
 
 
-def _build_docs(party_id: str) -> list:
+def _build_docs(party_id: str, rag_query: str = "programme politique") -> list:
     """Build LangChain Documents from real Qdrant data or fallback to mock contexts."""
     from langchain_core.documents import Document
 
     # Try real data first
-    real_contexts = _try_snapshot_from_qdrant(party_id)
+    real_contexts = _try_snapshot_from_qdrant(party_id, rag_query=rag_query)
     if real_contexts:
         return [
             Document(
@@ -189,7 +189,7 @@ def test_generator_faithfulness(
         description="", website_url="", candidate="", election_manifesto_url="",
     )
 
-    docs = _build_docs(party_id)
+    docs = _build_docs(party_id, rag_query=golden["input"])
     retrieval_context = [doc.page_content for doc in docs]
 
     if not retrieval_context:
