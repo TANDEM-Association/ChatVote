@@ -23,6 +23,7 @@ logger = logging.getLogger(__name__)
 GEO_API_URL = (
     "https://geo.api.gouv.fr/communes"
     "?fields=nom,code,population,codeDepartement,codeRegion,codesPostaux,codeEpci"
+    ",departement,region,epci,zone,surface,siren"
     "&boost=population"
 )
 
@@ -88,20 +89,25 @@ class PopulationNode(DataSourceNode):
 
         communes: list[dict[str, Any]] = []
         for item in data:
-            # geo.api.gouv.fr only returns actual communes (not arrondissements)
             pop = item.get("population", 0) or 0
+            dep_obj = item.get("departement") or {}
+            reg_obj = item.get("region") or {}
+            epci_obj = item.get("epci") or {}
             communes.append({
                 "code": item["code"],
                 "nom": item["nom"],
                 "population": pop,
                 "dep_code": item.get("codeDepartement", ""),
-                "dep_nom": "",  # geo API doesn't return dept names
+                "dep_nom": dep_obj.get("nom", ""),
                 "reg_code": item.get("codeRegion", ""),
-                "reg_nom": "",  # geo API doesn't return region names
+                "reg_nom": reg_obj.get("nom", ""),
                 "code_postal": (item.get("codesPostaux") or [""])[0],
+                "codes_postaux": item.get("codesPostaux") or [],
                 "epci_code": item.get("codeEpci", ""),
-                "epci_nom": "",
-                "superficie_km2": "",
+                "epci_nom": epci_obj.get("nom", ""),
+                "zone": item.get("zone", ""),
+                "surface": item.get("surface", 0) or 0,
+                "siren": item.get("siren", ""),
             })
 
         # ------------------------------------------------------------------

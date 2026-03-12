@@ -23,6 +23,7 @@ class Fiabilite(IntEnum):
 _SOURCE_FIABILITE_MAP: dict[str, Fiabilite] = {
     "justified_voting_behavior": Fiabilite.GOVERNMENT,
     "parliamentary_question": Fiabilite.GOVERNMENT,
+    "profession_de_foi": Fiabilite.GOVERNMENT,
     "election_manifesto": Fiabilite.OFFICIAL,
     "party_website": Fiabilite.OFFICIAL,
     "candidate_website_about": Fiabilite.OFFICIAL,

@@ -213,6 +213,7 @@ const MunicipalitySearch = ({
           <div className="text-muted-foreground text-base">
             {selectedMunicipality.departement?.nom} •{" "}
             {selectedMunicipality.region?.nom}
+            {selectedMunicipality.population ? ` • ${selectedMunicipality.population.toLocaleString()} hab.` : ""}
           </div>
           <MiniDashboardCard
             communeCode={selectedMunicipality.code}
@@ -264,6 +265,7 @@ const MunicipalitySearch = ({
                           ? ` +${(municipality.codesPostaux ?? []).length - 2}`
                           : ""}{" "}
                         • {municipality.departement?.nom}
+                        {municipality.population ? ` • ${municipality.population.toLocaleString()} hab.` : ""}
                       </div>
                     </button>
                   </li>

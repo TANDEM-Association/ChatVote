@@ -80,18 +80,26 @@ def _collection_hash(docs: dict[str, Any]) -> str:
 # Build functions (ported from generate_seed_from_csv.py)
 # ---------------------------------------------------------------------------
 def _build_municipalities(communes: dict[str, dict[str, Any]]) -> dict[str, Any]:
-    """Build municipalities dict from population data."""
+    """Build municipalities dict from population data.
+
+    Produces documents matching the frontend ``Municipality`` TypeScript type:
+    code, nom, zone, population, surface, codesPostaux, codeRegion,
+    codeDepartement, siren, codeEpci, epci, departement, region.
+    """
     result: dict[str, Any] = {}
     for code, c in communes.items():
         result[code] = {
             "code": code,
             "nom": c["nom"],
             "population": c["population"],
+            "zone": c.get("zone", ""),
+            "surface": c.get("surface", 0),
             "codeDepartement": c["dep_code"],
             "departement": {"code": c["dep_code"], "nom": c["dep_nom"]},
             "codeRegion": c["reg_code"],
             "region": {"code": c["reg_code"], "nom": c["reg_nom"]},
-            "codesPostaux": [c["code_postal"]] if c["code_postal"] else [],
+            "codesPostaux": c.get("codes_postaux") or ([c["code_postal"]] if c.get("code_postal") else []),
+            "siren": c.get("siren", ""),
             "codeEpci": c["epci_code"],
             "epci": {"code": c["epci_code"], "nom": c["epci_nom"]},
         }
