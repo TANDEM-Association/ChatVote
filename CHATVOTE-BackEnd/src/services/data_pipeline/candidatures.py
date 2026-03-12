@@ -22,7 +22,7 @@ from src.services.data_pipeline.base import (
     save_checkpoint,
     should_skip,
 )
-from src.services.data_pipeline.population import get_top_communes
+from src.services.data_pipeline.population import get_all_communes, get_top_communes
 
 logger = logging.getLogger(__name__)
 
@@ -49,7 +49,7 @@ def get_candidatures() -> dict[str, dict] | None:
 class CandidaturesNode(DataSourceNode):
     node_id = "candidatures"
     label = "Candidatures CSV"
-    default_settings: dict[str, Any] = {"top_communes": 287}
+    default_settings: dict[str, Any] = {}
 
     async def _load_csv(self, source: str, force: bool, cfg: NodeConfig) -> tuple[str, str, str]:
         """Load CSV to a temp file. Returns (tmp_path, source_hash, last_modified).
@@ -116,14 +116,16 @@ class CandidaturesNode(DataSourceNode):
         source = os.environ.get("DATA_GOUV_CANDIDATURES_URL", DEFAULT_CSV_URL)
 
         # ------------------------------------------------------------------
-        # 0. Get target commune codes from population node
+        # 0. Validate population node has run (needed for seed node later)
         # ------------------------------------------------------------------
-        top_communes = get_top_communes()
-        if top_communes is None:
+        all_communes = get_all_communes()
+        if all_communes is None:
             raise RuntimeError(
                 "Population node must run first — no cached commune data available"
             )
-        target_codes = set(top_communes.keys())
+        # Parse ALL communes from the CSV, not just top N.
+        # The top_communes filter only applies to scraping, not candidatures.
+        all_commune_codes = set(all_communes.keys())
 
         # ------------------------------------------------------------------
         # 1. Load CSV (remote or local)
@@ -160,7 +162,7 @@ class CandidaturesNode(DataSourceNode):
                 for row in reader:
                     total_rows += 1
                     commune_code = row["Code circonscription"]
-                    if commune_code not in target_codes:
+                    if commune_code not in all_commune_codes:
                         continue
 
                     commune_name = row["Circonscription"]
