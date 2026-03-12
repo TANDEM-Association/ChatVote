@@ -605,6 +605,27 @@ async def admin_test_rag_search(request):
         )
 
 
+@routes.get(f"{route_prefix}/admin/municipalities")
+async def admin_list_municipalities(request):
+    """List all municipalities from Firestore."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    def _fetch():
+        results = []
+        for doc in db.collection("municipalities").stream():
+            d = doc.to_dict() or {}
+            results.append({
+                "code": d.get("code") or doc.id,
+                "name": d.get("nom", d.get("name", "")),
+            })
+        results.sort(key=lambda x: x["name"])
+        return results
+
+    municipalities = await asyncio.get_event_loop().run_in_executor(None, _fetch)
+    return web.json_response({"municipalities": municipalities})
+
+
 @routes.post(f"{route_prefix}/admin/multi-query")
 async def admin_multi_query(request):
     """Run the same RAG search as the chat across multiple municipalities and report coverage."""
@@ -675,13 +696,15 @@ async def admin_multi_query(request):
                     list(local_party_ids) if local_party_ids else [p.party_id for p in all_parties]
                 )
 
-                # Run combined RAG search
+                # Run combined RAG search (manifesto by party, candidate by candidate_ids)
+                candidate_ids_list = [c.candidate_id for c in candidates]
+
                 manifesto_docs, candidate_docs = await identify_relevant_docs_combined(
                     rag_query=rag_query,
                     chat_history="",
                     user_message=query,
                     party_ids=party_ids_to_search,
-                    candidate_ids=[],
+                    candidate_ids=candidate_ids_list,
                     scope="local",
                     municipality_code=municipality_code,
                     score_threshold=score_threshold,
@@ -691,8 +714,10 @@ async def admin_multi_query(request):
                 candidate_chunk_map: dict[str, dict] = {}
                 for doc in candidate_docs:
                     meta = doc.metadata if hasattr(doc, "metadata") else {}
-                    cid = meta.get("candidate_id", "")
-                    cname = meta.get("candidate_name", "")
+                    # candidate_ids is stored as a list in metadata
+                    cids = meta.get("candidate_ids", [])
+                    cid = cids[0] if cids else meta.get("candidate_id", meta.get("namespace", ""))
+                    cname = meta.get("candidate_name", cid)
                     preview = (doc.page_content[:200] + "...") if hasattr(doc, "page_content") and doc.page_content else ""
                     if cid not in candidate_chunk_map:
                         candidate_chunk_map[cid] = {
@@ -2069,6 +2094,273 @@ async def admin_dashboard_warnings(request: web.Request) -> web.Response:
             "counts": counts,
         }
     )
+
+
+@routes.get(f"{route_prefix}/admin/dashboard/data-consistency")
+async def admin_dashboard_data_consistency(request: web.Request) -> web.Response:
+    """Cross-reference data consistency checks between Firestore and Qdrant."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    try:
+        # --- Firestore counts ---
+        parties = {
+            doc.id: doc.to_dict()
+            async for doc in async_db.collection("parties").stream()
+        }
+        candidates = {
+            doc.id: doc.to_dict()
+            async for doc in async_db.collection("candidates").stream()
+        }
+        municipalities = {
+            doc.id: doc.to_dict()
+            async for doc in async_db.collection("municipalities").stream()
+        }
+
+        party_ids_fs = set(parties.keys())
+        candidate_ids_fs = set(candidates.keys())
+        municipality_codes_fs = set(municipalities.keys())
+        candidates_with_website = [
+            c for c in candidates.values() if c.get("has_website")
+        ]
+
+        firestore_info = {
+            "parties": len(parties),
+            "candidates": len(candidates),
+            "municipalities": len(municipalities),
+            "candidates_with_website": len(candidates_with_website),
+        }
+
+        # --- Qdrant: manifesto collection ---
+        manifesto_info = qdrant_client.get_collection(PARTY_INDEX_NAME)
+        manifesto_points = manifesto_info.points_count or 0
+
+        manifesto_namespaces: set[str] = set()
+        offset = None
+        while True:
+            results, next_offset = qdrant_client.scroll(
+                collection_name=PARTY_INDEX_NAME,
+                limit=256,
+                offset=offset,
+                with_payload=["metadata.namespace"],
+                with_vectors=False,
+            )
+            if not results:
+                break
+            for p in results:
+                meta = (p.payload or {}).get("metadata", {})
+                ns = meta.get("namespace", "")
+                if ns:
+                    manifesto_namespaces.add(ns)
+            if next_offset is None:
+                break
+            offset = next_offset
+
+        # --- Qdrant: candidates collection ---
+        candidates_info = qdrant_client.get_collection(CANDIDATES_INDEX_NAME)
+        candidate_points = candidates_info.points_count or 0
+
+        candidate_namespaces: set[str] = set()
+        candidate_party_ids_qdrant: set[str] = set()
+        candidate_munis_qdrant: set[str] = set()
+
+        # Fields for metadata quality sampling
+        sample_points: list[dict] = []
+        offset = None
+        while True:
+            results, next_offset = qdrant_client.scroll(
+                collection_name=CANDIDATES_INDEX_NAME,
+                limit=256,
+                offset=offset,
+                with_payload=[
+                    "metadata.namespace",
+                    "metadata.party_ids",
+                    "metadata.municipality_code",
+                    "metadata.theme",
+                    "metadata.sub_theme",
+                    "metadata.source_document",
+                    "metadata.fiabilite",
+                ],
+                with_vectors=False,
+            )
+            if not results:
+                break
+            for p in results:
+                meta = (p.payload or {}).get("metadata", {})
+                ns = meta.get("namespace", "")
+                if ns:
+                    candidate_namespaces.add(ns)
+                for pid in meta.get("party_ids", []):
+                    if pid:
+                        candidate_party_ids_qdrant.add(pid)
+                muni = meta.get("municipality_code", "")
+                if muni:
+                    candidate_munis_qdrant.add(muni)
+                if len(sample_points) < 100:
+                    sample_points.append(meta)
+            if next_offset is None:
+                break
+            offset = next_offset
+
+        candidate_municipalities_qdrant = sorted(candidate_munis_qdrant)
+
+        qdrant_info = {
+            "manifesto_points": manifesto_points,
+            "manifesto_namespaces": sorted(manifesto_namespaces),
+            "candidate_points": candidate_points,
+            "candidate_namespaces_count": len(candidate_namespaces),
+            "candidate_municipalities": candidate_municipalities_qdrant,
+        }
+
+        # --- Cross-references ---
+        orphan_candidate_ns = sorted(
+            candidate_namespaces - candidate_ids_fs
+        )
+        orphan_manifesto_ns = sorted(
+            manifesto_namespaces - party_ids_fs
+        )
+        missing_party_ids = sorted(
+            candidate_party_ids_qdrant - party_ids_fs
+        )
+        missing_municipality_codes = sorted(
+            candidate_munis_qdrant - municipality_codes_fs
+        )
+
+        cross_references = {
+            "all_candidate_party_ids_in_firestore": len(missing_party_ids) == 0,
+            "all_candidate_munis_in_firestore": len(missing_municipality_codes) == 0,
+            "all_candidate_namespaces_in_firestore": len(orphan_candidate_ns) == 0,
+            "all_manifesto_namespaces_in_firestore": len(orphan_manifesto_ns) == 0,
+            "orphan_candidate_namespaces": orphan_candidate_ns,
+            "orphan_manifesto_namespaces": orphan_manifesto_ns,
+            "missing_party_ids": missing_party_ids,
+            "missing_municipality_codes": missing_municipality_codes,
+        }
+
+        # --- Metadata quality (sample up to 100 candidate points) ---
+        sample_size = len(sample_points)
+        if sample_size > 0:
+            party_ids_pop = sum(
+                1 for m in sample_points if m.get("party_ids")
+            )
+            muni_pop = sum(
+                1 for m in sample_points if m.get("municipality_code")
+            )
+            theme_pop = sum(
+                1 for m in sample_points if m.get("theme")
+            )
+            sub_theme_pop = sum(
+                1 for m in sample_points if m.get("sub_theme")
+            )
+            source_doc_pop = sum(
+                1 for m in sample_points if m.get("source_document")
+            )
+            fiabilite_pop = sum(
+                1 for m in sample_points if m.get("fiabilite")
+            )
+            metadata_quality = {
+                "sample_size": sample_size,
+                "party_ids_populated_pct": round(
+                    party_ids_pop / sample_size * 100
+                ),
+                "municipality_code_populated_pct": round(
+                    muni_pop / sample_size * 100
+                ),
+                "theme_populated_pct": round(
+                    theme_pop / sample_size * 100
+                ),
+                "sub_theme_populated_pct": round(
+                    sub_theme_pop / sample_size * 100
+                ),
+                "source_document_populated_pct": round(
+                    source_doc_pop / sample_size * 100
+                ),
+                "fiabilite_populated_pct": round(
+                    fiabilite_pop / sample_size * 100
+                ),
+            }
+        else:
+            metadata_quality = {"sample_size": 0}
+
+        # --- Build issues list ---
+        issues: list[dict] = []
+
+        if orphan_candidate_ns:
+            issues.append({
+                "severity": "warning",
+                "message": (
+                    f"{len(orphan_candidate_ns)} candidate namespace(s) in Qdrant "
+                    f"not found in Firestore: {orphan_candidate_ns}"
+                ),
+            })
+        if orphan_manifesto_ns:
+            issues.append({
+                "severity": "warning",
+                "message": (
+                    f"{len(orphan_manifesto_ns)} manifesto namespace(s) in Qdrant "
+                    f"not found in Firestore: {orphan_manifesto_ns}"
+                ),
+            })
+        if missing_party_ids:
+            issues.append({
+                "severity": "critical",
+                "message": (
+                    f"{len(missing_party_ids)} party_id(s) referenced in Qdrant "
+                    f"candidates not found in Firestore: {missing_party_ids}"
+                ),
+            })
+        if missing_municipality_codes:
+            issues.append({
+                "severity": "critical",
+                "message": (
+                    f"{len(missing_municipality_codes)} municipality code(s) in Qdrant "
+                    f"not found in Firestore: {missing_municipality_codes}"
+                ),
+            })
+        if candidate_points == 0:
+            issues.append({
+                "severity": "critical",
+                "message": "Qdrant candidates collection is empty",
+            })
+        if manifesto_points == 0:
+            issues.append({
+                "severity": "critical",
+                "message": "Qdrant manifesto collection is empty",
+            })
+        if sample_size > 0:
+            if metadata_quality.get("theme_populated_pct", 0) < 50:
+                issues.append({
+                    "severity": "warning",
+                    "message": (
+                        f"Only {metadata_quality['theme_populated_pct']}% of sampled "
+                        f"candidate points have theme metadata"
+                    ),
+                })
+            if metadata_quality.get("sub_theme_populated_pct", 0) < 50:
+                issues.append({
+                    "severity": "warning",
+                    "message": (
+                        f"Only {metadata_quality['sub_theme_populated_pct']}% of sampled "
+                        f"candidate points have sub_theme metadata"
+                    ),
+                })
+
+        return web.json_response({
+            "status": "ok",
+            "firestore": firestore_info,
+            "qdrant": qdrant_info,
+            "cross_references": cross_references,
+            "metadata_quality": metadata_quality,
+            "issues": issues,
+        })
+
+    except Exception as e:
+        logger.error(
+            f"Error in data-consistency check: {e}", exc_info=True
+        )
+        return web.json_response(
+            {"status": "error", "error": str(e)}, status=500
+        )
 
 
 app = web.Application(middlewares=[api_key_middleware])
