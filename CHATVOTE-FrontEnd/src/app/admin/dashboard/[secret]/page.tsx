@@ -96,7 +96,7 @@ export default function AdminDashboard() {
           <select
             value={timeRange}
             onChange={(e) => setTimeRange(Number(e.target.value))}
-            className="rounded border px-3 py-1.5 text-sm bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
+            className="rounded border border-border-subtle px-3 py-1.5 text-sm bg-card text-foreground focus:outline-none focus:ring-1 focus:ring-ring"
           >
             <option value={1}>Last 1h</option>
             <option value={24}>Last 24h</option>
@@ -116,13 +116,13 @@ export default function AdminDashboard() {
             onClick={() => switchTab(tab)}
             className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
               activeTab === tab
-                ? "border-blue-600 text-blue-600"
+                ? "border-blue-600 text-blue-400"
                 : "border-transparent text-muted-foreground hover:text-foreground"
             }`}
           >
             {TAB_LABELS[tab]}
             {tab === "overview" && warningCounts.critical > 0 && (
-              <span className="ml-2 rounded-full bg-red-500 px-1.5 py-0.5 text-xs text-white">
+              <span className="ml-2 rounded-full bg-red-500/100 px-1.5 py-0.5 text-xs text-white">
                 {warningCounts.critical}
               </span>
             )}

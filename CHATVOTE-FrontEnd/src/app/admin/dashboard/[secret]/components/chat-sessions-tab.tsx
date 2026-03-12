@@ -53,9 +53,9 @@ function StatusDot({ status }: { status?: string }) {
   if (status === "success")
     return <span className="size-2.5 rounded-full bg-green-500 shrink-0" />;
   if (status === "error")
-    return <span className="size-2.5 rounded-full bg-red-500 shrink-0" />;
+    return <span className="size-2.5 rounded-full bg-red-500/100 shrink-0" />;
   if (status === "partial")
-    return <span className="size-2.5 rounded-full bg-yellow-500 shrink-0" />;
+    return <span className="size-2.5 rounded-full bg-yellow-500/100 shrink-0" />;
   return <span className="size-2.5 rounded-full bg-gray-300 shrink-0" />;
 }
 
@@ -219,7 +219,7 @@ export default function ChatSessionsTab({
 
       {/* Error */}
       {error && (
-        <div className="rounded-md border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-700">
+        <div className="rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3 text-sm text-red-400">
           {error}
         </div>
       )}

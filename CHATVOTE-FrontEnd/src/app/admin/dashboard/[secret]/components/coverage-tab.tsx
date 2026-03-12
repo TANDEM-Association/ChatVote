@@ -89,8 +89,8 @@ export default function CoverageTab({ secret, apiUrl }: CoverageTabProps) {
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-        <p className="text-sm text-red-700">{error}</p>
+      <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-center">
+        <p className="text-sm text-red-400">{error}</p>
         <Button
           size="sm"
           variant="outline"

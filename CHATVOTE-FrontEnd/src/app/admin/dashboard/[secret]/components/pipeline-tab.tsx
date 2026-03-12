@@ -115,7 +115,7 @@ function statusDot(status: NodeConfig["status"]) {
     case "running":
       return <span className={`${base} animate-pulse bg-amber-400`} />;
     case "error":
-      return <span className={`${base} bg-red-500`} />;
+      return <span className={`${base} bg-red-500/100`} />;
     default:
       return <span className={`${base} bg-muted-foreground`} />;
   }
@@ -231,15 +231,15 @@ function NodeCard({
 
   return (
     <div
-      className={`relative flex w-full flex-col rounded-lg border bg-card shadow-sm transition-shadow hover:shadow-md ${
+      className={`relative flex w-full flex-col rounded-lg border border-border-subtle bg-card shadow-sm transition-shadow hover:shadow-md ${
         isRunning
-          ? "border-amber-300"
+          ? "border-amber-500/30"
           : node.status === "error"
             ? (node.last_error?.includes("Stopped by admin") || node.last_error?.includes("Cancelled by admin"))
-              ? "border-amber-200"
-              : "border-red-300"
+              ? "border-amber-500/30"
+              : "border-red-500/30"
             : node.status === "success"
-              ? "border-emerald-200"
+              ? "border-emerald-500/30"
               : "border-border-subtle"
       }`}
     >
@@ -349,11 +349,11 @@ function NodeCard({
                 )}
 
                 {current && (
-                  <div className="rounded-md bg-amber-50 px-2.5 py-1.5">
-                    <span className="text-[10px] font-medium text-amber-700">
+                  <div className="rounded-md bg-amber-500/10 px-2.5 py-1.5">
+                    <span className="text-[10px] font-medium text-amber-400">
                       {phase === "downloading" ? "Downloading:" : "Scraping:"}
                     </span>
-                    <span className="ml-1 text-[11px] font-semibold text-amber-900">
+                    <span className="ml-1 text-[11px] font-semibold text-amber-300">
                       {current}
                     </span>
                     {currentUrls && (
@@ -490,11 +490,11 @@ function NodeCard({
         {node.status === "error" && node.last_error && (() => {
           const isAdminStop = node.last_error.includes("Stopped by admin") || node.last_error.includes("Cancelled by admin");
           return (
-            <div className={`rounded-md p-2 ${isAdminStop ? "bg-amber-50" : "bg-red-50"}`}>
+            <div className={`rounded-md p-2 ${isAdminStop ? "bg-amber-500/10" : "bg-red-500/10"}`}>
               <button
                 type="button"
                 onClick={() => setErrorOpen(!errorOpen)}
-                className={`flex w-full items-center gap-1 text-left text-xs font-medium ${isAdminStop ? "text-amber-700" : "text-red-700"}`}
+                className={`flex w-full items-center gap-1 text-left text-xs font-medium ${isAdminStop ? "text-amber-400" : "text-red-400"}`}
               >
                 {isAdminStop ? (
                   <Square className="size-3.5 shrink-0" />
@@ -511,7 +511,7 @@ function NodeCard({
                 ))}
               </button>
               {errorOpen && !isAdminStop && (
-                <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-red-600">
+                <pre className="mt-2 max-h-40 overflow-auto whitespace-pre-wrap text-[11px] leading-relaxed text-red-400">
                   {node.last_error}
                 </pre>
               )}
@@ -527,7 +527,7 @@ function NodeCard({
                 size="sm"
                 variant="outline"
                 onClick={onStop}
-                className="h-7 gap-1.5 px-2.5 text-xs border-red-300 text-red-600 hover:bg-red-50"
+                className="h-7 gap-1.5 px-2.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/100/10"
               >
                 <Square className="size-3" />
                 Stop
@@ -537,7 +537,7 @@ function NodeCard({
                   size="sm"
                   variant="outline"
                   onClick={onTriggerCrawl}
-                  className="h-7 gap-1.5 px-2.5 text-xs border-amber-300 text-amber-700 hover:bg-amber-50"
+                  className="h-7 gap-1.5 px-2.5 text-xs border-amber-500/30 text-amber-400 hover:bg-amber-500/100/10"
                 >
                   <Zap className="size-3" />
                   Trigger Scrape
@@ -987,8 +987,8 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
     <div className="space-y-0">
       {/* Error banner */}
       {error && (
-        <div className="mb-4 rounded-md border border-red-200 bg-red-50 px-4 py-3">
-          <div className="flex items-center gap-2 text-sm text-red-700">
+        <div className="mb-4 rounded-md border border-red-500/30 bg-red-500/10 px-4 py-3">
+          <div className="flex items-center gap-2 text-sm text-red-400">
             <AlertTriangle className="size-4 shrink-0" />
             <span>{error}</span>
             <button
@@ -1009,7 +1009,7 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
             size="sm"
             variant="outline"
             onClick={stopAll}
-            className="h-8 gap-1.5 text-xs border-red-300 text-red-600 hover:bg-red-50"
+            className="h-8 gap-1.5 text-xs border-red-500/30 text-red-400 hover:bg-red-500/100/10"
           >
             <Square className="size-3.5" />
             Stop All
@@ -1067,7 +1067,7 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
 
         {bustCacheConfirm ? (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-red-600 font-medium">
+            <span className="text-xs text-red-400 font-medium">
               Reset all checkpoints?
             </span>
             <Button
@@ -1092,7 +1092,7 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
             size="sm"
             variant="outline"
             onClick={() => setBustCacheConfirm(true)}
-            className="h-8 gap-1.5 text-xs text-red-600 hover:text-red-700"
+            className="h-8 gap-1.5 text-xs text-red-400 hover:text-red-400"
           >
             <Trash2 className="size-3.5" />
             Bust Cache
@@ -1101,7 +1101,7 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
 
         {clearAllConfirm ? (
           <div className="flex items-center gap-2">
-            <span className="text-xs text-red-600 font-bold">
+            <span className="text-xs text-red-400 font-bold">
               DELETE all data?
             </span>
             <Button
@@ -1126,7 +1126,7 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
             size="sm"
             variant="outline"
             onClick={() => setClearAllConfirm(true)}
-            className="h-8 gap-1.5 text-xs text-red-600 hover:text-red-700 border-red-300"
+            className="h-8 gap-1.5 text-xs text-red-400 hover:text-red-400 border-red-500/30"
           >
             <Trash2 className="size-3.5" />
             Clear All Data
@@ -1280,7 +1280,7 @@ export default function PipelineTab({ secret, apiUrl }: PipelineTabProps) {
                   </span>
                 </div>
               ) : previewData?.error ? (
-                <div className="rounded-md bg-red-50 p-4 text-sm text-red-700">
+                <div className="rounded-md bg-red-500/10 p-4 text-sm text-red-400">
                   {previewData.error}
                 </div>
               ) : previewData?.samples?.length === 0 ? (

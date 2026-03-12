@@ -78,8 +78,8 @@ export default function OverviewTab({
 
   if (error) {
     return (
-      <div className="rounded-lg border border-red-200 bg-red-50 p-6 text-center">
-        <p className="text-sm text-red-700">{error}</p>
+      <div className="rounded-lg border border-red-500/30 bg-red-500/10 p-6 text-center">
+        <p className="text-sm text-red-400">{error}</p>
         <Button
           size="sm"
           variant="outline"
@@ -104,22 +104,22 @@ export default function OverviewTab({
         <div className="flex items-center gap-4">
           {warnings?.counts.critical !== undefined &&
             warnings.counts.critical > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-red-100 px-3 py-1 text-sm font-medium text-red-700">
-                <span className="size-2 rounded-full bg-red-500" />
+              <span className="flex items-center gap-1.5 rounded-full bg-red-500/15 px-3 py-1 text-sm font-medium text-red-400">
+                <span className="size-2 rounded-full bg-red-500/100" />
                 {warnings.counts.critical} critical
               </span>
             )}
           {warnings?.counts.warning !== undefined &&
             warnings.counts.warning > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-yellow-100 px-3 py-1 text-sm font-medium text-yellow-700">
-                <span className="size-2 rounded-full bg-yellow-500" />
+              <span className="flex items-center gap-1.5 rounded-full bg-yellow-500/15 px-3 py-1 text-sm font-medium text-yellow-400">
+                <span className="size-2 rounded-full bg-yellow-500/100" />
                 {warnings.counts.warning} warning
               </span>
             )}
           {warnings?.counts.info !== undefined &&
             warnings.counts.info > 0 && (
-              <span className="flex items-center gap-1.5 rounded-full bg-blue-100 px-3 py-1 text-sm font-medium text-blue-700">
-                <span className="size-2 rounded-full bg-blue-500" />
+              <span className="flex items-center gap-1.5 rounded-full bg-blue-500/15 px-3 py-1 text-sm font-medium text-blue-400">
+                <span className="size-2 rounded-full bg-blue-500/100" />
                 {warnings.counts.info} info
               </span>
             )}

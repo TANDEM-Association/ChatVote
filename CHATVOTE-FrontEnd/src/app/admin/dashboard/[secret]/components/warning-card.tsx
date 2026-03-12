@@ -27,17 +27,17 @@ export default function WarningCard({ warning, onView }: WarningCardProps) {
 
   const bgClass =
     severity === "critical"
-      ? "bg-red-50 border-red-200"
+      ? "bg-red-500/10 border-red-500/30"
       : severity === "warning"
-        ? "bg-yellow-50 border-yellow-200"
-        : "bg-blue-50 border-blue-200";
+        ? "bg-yellow-500/10 border-yellow-500/30"
+        : "bg-blue-500/10 border-blue-500/30";
 
   const countBgClass =
     severity === "critical"
-      ? "bg-red-500"
+      ? "bg-red-500/100"
       : severity === "warning"
-        ? "bg-yellow-500"
-        : "bg-blue-500";
+        ? "bg-yellow-500/100"
+        : "bg-blue-500/100";
 
   const Icon =
     severity === "critical"
@@ -48,7 +48,7 @@ export default function WarningCard({ warning, onView }: WarningCardProps) {
 
   return (
     <div
-      className={`flex items-start gap-3 rounded-lg border p-3 ${bgClass}`}
+      className={`flex items-start gap-3 rounded-lg border border-border-subtle p-3 ${bgClass}`}
     >
       <Icon className={`mt-0.5 size-4 shrink-0 ${iconClass}`} />
       <div className="flex-1 min-w-0">

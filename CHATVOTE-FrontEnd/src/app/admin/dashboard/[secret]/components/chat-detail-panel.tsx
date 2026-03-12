@@ -130,7 +130,7 @@ export default function ChatDetailPanel({
         )}
 
         {error && (
-          <div className="rounded-md border border-red-200 bg-red-50 p-4 text-sm text-red-700">
+          <div className="rounded-md border border-red-500/30 bg-red-500/10 p-4 text-sm text-red-400">
             {error}
           </div>
         )}
@@ -162,7 +162,7 @@ export default function ChatDetailPanel({
             {detail.debug && (
               <div className="flex flex-wrap gap-3">
                 {detail.debug.model_used && (
-                  <span className="rounded-full bg-blue-100 px-2.5 py-0.5 text-xs font-medium text-blue-700">
+                  <span className="rounded-full bg-blue-500/15 px-2.5 py-0.5 text-xs font-medium text-blue-400">
                     {detail.debug.model_used}
                   </span>
                 )}
@@ -170,10 +170,10 @@ export default function ChatDetailPanel({
                   <span
                     className={`rounded-full px-2.5 py-0.5 text-xs font-medium ${
                       detail.debug.status === "success"
-                        ? "bg-green-100 text-green-700"
+                        ? "bg-green-500/15 text-green-400"
                         : detail.debug.status === "error"
-                          ? "bg-red-100 text-red-700"
-                          : "bg-yellow-100 text-yellow-700"
+                          ? "bg-red-500/15 text-red-400"
+                          : "bg-yellow-500/15 text-yellow-400"
                     }`}
                   >
                     {detail.debug.status}
@@ -201,14 +201,14 @@ export default function ChatDetailPanel({
             {/* Error messages */}
             {detail.debug?.error_messages &&
               detail.debug.error_messages.length > 0 && (
-                <div className="rounded-md border border-red-200 bg-red-50 p-3">
-                  <p className="mb-2 text-xs font-semibold text-red-700">
+                <div className="rounded-md border border-red-500/30 bg-red-500/10 p-3">
+                  <p className="mb-2 text-xs font-semibold text-red-400">
                     Errors:
                   </p>
                   {detail.debug.error_messages.map((msg, i) => (
                     <pre
                       key={i}
-                      className="overflow-x-auto whitespace-pre-wrap text-[11px] leading-relaxed text-red-600"
+                      className="overflow-x-auto whitespace-pre-wrap text-[11px] leading-relaxed text-red-400"
                     >
                       {msg}
                     </pre>
@@ -229,9 +229,9 @@ export default function ChatDetailPanel({
               {detail.messages.map((msg) => (
                 <div
                   key={msg.id}
-                  className={`rounded-lg border p-3 ${
+                  className={`rounded-lg border border-border-subtle p-3 ${
                     msg.role === "user"
-                      ? "border-blue-200 bg-blue-50"
+                      ? "border-blue-500/30 bg-blue-500/10"
                       : "border-border-subtle bg-card"
                   }`}
                 >
@@ -239,7 +239,7 @@ export default function ChatDetailPanel({
                     <span
                       className={`text-[10px] font-bold uppercase tracking-wider ${
                         msg.role === "user"
-                          ? "text-blue-600"
+                          ? "text-blue-400"
                           : "text-muted-foreground"
                       }`}
                     >
