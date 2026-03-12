@@ -110,7 +110,7 @@ export default function CoverageTab({ secret, apiUrl }: CoverageTabProps) {
       {/* Summary stats */}
       <div className="flex items-center justify-between">
         <div className="flex gap-3 flex-wrap sm:flex-nowrap flex-1">
-          <StatCard value={summary.total_communes} label="Communes" accentColor="#7C3AED" />
+          <StatCard value={`${summary.total_communes} / ${summary.total_all_communes?.toLocaleString() ?? "?"}`} label="Scraped Communes" accentColor="#7C3AED" />
           <StatCard value={summary.total_parties} label="Parties" accentColor="#A78BFA" />
           <StatCard value={summary.total_candidates} label="Candidates" accentColor="#94A3B8" />
           <StatCard value={summary.total_lists} label="Electoral Lists" accentColor="#F59E0B" />

@@ -38,6 +38,7 @@ export type CandidateCoverage = {
 
 export type CoverageSummary = {
   total_communes: number;
+  total_all_communes: number;  // All 35k municipalities
   total_parties: number;
   total_candidates: number;
   total_lists: number;
@@ -121,14 +122,15 @@ function buildPartyChunkCounts(
 
 export async function fetchCoverage(): Promise<CoverageResponse | null> {
   try {
-    const [partiesSnap, municipalitiesSnap, sessionsSnap, electoralListsSnap, topicStats, candidateChunks] =
+    const [partiesSnap, municipalitiesSnap, sessionsSnap, electoralListsSnap, topicStats, candidateChunks, municipalityCountSnap] =
       await Promise.all([
         db.collection("parties").select("party_id", "name", "long_name", "short_name", "election_manifesto_url").get(),
-        db.collection("municipalities").select("code", "nom", "name", "population").get(),
+        db.collection("municipalities").where("has_electoral_data", "==", true).select("code", "nom", "name", "population").get(),
         db.collection("chat_sessions").select("municipality_code", "commune_code").get(),
         db.collection("electoral_lists").select("commune_code", "list_count", "lists").get(),
         fetchTopicStats(),
         fetchCandidateChunks(),
+        db.collection("municipalities").count().get(),
       ]);
 
     const questionsByCommune: Record<string, number> = {};
@@ -234,6 +236,7 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
 
     const summary: CoverageSummary = {
       total_communes: communes.length,
+      total_all_communes: municipalityCountSnap.data().count,
       total_parties: parties.length,
       total_candidates: totalCandidates,
       total_lists: communes.reduce((sum, c) => sum + c.list_count, 0),

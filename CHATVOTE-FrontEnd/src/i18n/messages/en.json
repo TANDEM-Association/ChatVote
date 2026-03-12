@@ -214,7 +214,9 @@
       "privacy": "Privacy",
       "loadingHistory": "Loading history...",
       "compareParties": "Compare parties",
-      "lists": "Lists"
+      "lists": "Lists",
+      "noElectoralData": "No electoral data for this municipality",
+      "noElectoralDataHint": "You can still ask questions about national parties"
     },
     "groupSelect": {
       "partySelection": "Party selection",

@@ -79,7 +79,7 @@ def _collection_hash(docs: dict[str, Any]) -> str:
 # ---------------------------------------------------------------------------
 # Build functions (ported from generate_seed_from_csv.py)
 # ---------------------------------------------------------------------------
-def _build_municipalities(communes: dict[str, dict[str, Any]]) -> dict[str, Any]:
+def _build_municipalities(communes: dict[str, dict[str, Any]], electoral_commune_codes: set[str] | None = None) -> dict[str, Any]:
     """Build municipalities dict from population data.
 
     Produces documents matching the frontend ``Municipality`` TypeScript type:
@@ -102,6 +102,7 @@ def _build_municipalities(communes: dict[str, dict[str, Any]]) -> dict[str, Any]
             "siren": c.get("siren", ""),
             "codeEpci": c["epci_code"],
             "epci": {"code": c["epci_code"], "nom": c["epci_nom"]},
+            "has_electoral_data": code in electoral_commune_codes if electoral_commune_codes else False,
         }
     return result
 
@@ -306,8 +307,9 @@ class SeedNode(DataSourceNode):
         # 1. Build the three collections
         # ------------------------------------------------------------------
         # ALL communes go to Firestore municipalities (not just top N)
-        municipalities = _build_municipalities(all_communes)
         electoral_lists = _build_electoral_lists(candidatures)
+        electoral_commune_codes = set(electoral_lists.keys())
+        municipalities = _build_municipalities(all_communes, electoral_commune_codes)
         candidates = _build_candidates(candidatures)
 
         # ------------------------------------------------------------------

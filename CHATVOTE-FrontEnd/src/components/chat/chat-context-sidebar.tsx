@@ -65,26 +65,40 @@ const ChatContextSidebar = () => {
   const setElectoralListsData = useChatStore((s) => s.setElectoralListsData);
   const [data, setData] = useState<ElectoralListsByCommune | null>(null);
   const [isLoading, setIsLoading] = useState(false);
+  const [hasNoData, setHasNoData] = useState(false);
 
   useEffect(() => {
     if (!municipalityCode) {
       setData(null);
+      setHasNoData(false);
       return;
     }
 
     const controller = new AbortController();
     setIsLoading(true);
+    setHasNoData(false);
 
     fetch(`/api/electoral-lists?commune_code=${municipalityCode}`, {
       signal: controller.signal,
     })
       .then((res) => {
-        if (!res.ok) throw new Error("Failed to fetch");
+        if (!res.ok) {
+          if (res.status === 404) {
+            if (!controller.signal.aborted) {
+              setHasNoData(true);
+              setIsLoading(false);
+            }
+            return null;
+          }
+          throw new Error("Failed to fetch");
+        }
         return res.json() as Promise<ElectoralListsByCommune>;
       })
       .then((result) => {
+        if (result === null) return;
         if (!controller.signal.aborted) {
           setData(result);
+          setHasNoData(false);
           setElectoralListsData(result.lists);
           setIsLoading(false);
         }
@@ -93,6 +107,7 @@ const ChatContextSidebar = () => {
         if (err instanceof Error && err.name === "AbortError") return;
         console.error("Failed to fetch electoral lists:", err);
         if (!controller.signal.aborted) {
+          setHasNoData(true);
           setIsLoading(false);
         }
       });
@@ -130,6 +145,17 @@ const ChatContextSidebar = () => {
         {isLoading && (
           <div className="flex items-center justify-center py-4">
             <div className="size-5 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+          </div>
+        )}
+
+        {hasNoData && !isLoading && (
+          <div className="flex flex-col gap-2 px-2 py-4 text-center">
+            <span className="text-sm text-muted-foreground">
+              {t("noElectoralData")}
+            </span>
+            <span className="text-xs text-muted-foreground">
+              {t("noElectoralDataHint")}
+            </span>
           </div>
         )}
 

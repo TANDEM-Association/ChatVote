@@ -63,6 +63,7 @@ export type Municipality = {
   departement: MunicipalityDepartement;
   region: MunicipalityRegion;
   _syncedAt: string;
+  has_electoral_data?: boolean;
 };
 
 export type MunicipalitiesDocument = {
