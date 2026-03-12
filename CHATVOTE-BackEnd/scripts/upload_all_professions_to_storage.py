@@ -29,7 +29,7 @@ PDF_CACHE_DIR = Path(tempfile.gettempdir()) / "chatvote_professions_pdfs"
 PDF_FILENAME_RE = re.compile(r"^1-(\d+)-(\d+)\.pdf$")
 
 env = os.getenv("ENV", "dev")
-BUCKET_NAME = f"chat-vote-{'prod' if env == 'prod' else 'dev'}.firebasestorage.app"
+BUCKET_NAME = f"chat-vote-{'prod' if env == 'prod' else 'dev'}.appspot.com"
 STORAGE_PREFIX = "public/professions_de_foi"
 
 
