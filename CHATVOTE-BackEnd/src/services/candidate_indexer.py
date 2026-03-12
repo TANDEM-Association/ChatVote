@@ -422,6 +422,8 @@ async def index_candidate_website(
         _tb = _t.monotonic()
         batch = documents[i : i + batch_size]
         await vector_store.aadd_documents(batch)
+        # Yield to event loop between batches so Socket.IO pings are not starved
+        await asyncio.sleep(0)
         logger.info(
             f"[TIMING] embed+upload batch {i // batch_size + 1} ({len(batch)} docs) "
             f"{candidate.full_name}: {_t.monotonic()-_tb:.1f}s"

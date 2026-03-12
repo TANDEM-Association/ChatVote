@@ -164,6 +164,8 @@ sio = socketio.AsyncServer(
     cors_allowed_origins=get_cors_allowed_origins(os.getenv("ENV")),
     always_connect=False,
     transports=["websocket"],
+    ping_interval=25,
+    ping_timeout=120,
 )
 
 

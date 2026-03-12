@@ -208,6 +208,8 @@ class IndexerNode(DataSourceNode):
                                 )
                                 candidates_indexed += count
                                 indexed_count += 1
+                                # Yield to event loop so Socket.IO pings are not starved
+                                await asyncio.sleep(0)
                                 dur = _time.monotonic() - t_start
                                 logger.info(
                                     "[indexer] %d/%d indexed %s (%d chunks, %.1fs)",
