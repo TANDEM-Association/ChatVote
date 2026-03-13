@@ -193,9 +193,6 @@ jobs:
           mkdir -p .vercel
           echo '{"projectId":"${{ secrets.VERCEL_PROJECT_ID }}","orgId":"${{ secrets.VERCEL_ORG_ID }}"}' > .vercel/project.json
 
-      - name: Pull Vercel environment
-        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
-
       - name: Sync env vars to Vercel
         env:
           VERCEL_TOKEN: ${{ secrets.VERCEL_TOKEN }}
@@ -213,7 +210,7 @@ jobs:
           SYNC_NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
           SYNC_NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
         run: |
-          # Sync all env vars to Vercel so vercel pull + build use correct values
+          # Sync env vars BEFORE vercel pull so pulled .env has correct values
           sync_var() {
             local name="$1" value="$2"
             vercel env rm "$name" production --yes --token="$VERCEL_TOKEN" 2>/dev/null || true
@@ -232,6 +229,9 @@ jobs:
           sync_var NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID "$SYNC_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"
           sync_var NEXT_PUBLIC_FIREBASE_APP_ID "$SYNC_NEXT_PUBLIC_FIREBASE_APP_ID"
           sync_var NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID "$SYNC_NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID"
+
+      - name: Pull Vercel environment
+        run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Cache Next.js build
         uses: actions/cache@v4
