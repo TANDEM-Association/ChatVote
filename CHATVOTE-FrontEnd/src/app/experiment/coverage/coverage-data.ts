@@ -376,7 +376,7 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
     };
 
     const summary: CoverageSummary = {
-      total_communes: communes.length,
+      total_communes: Object.values(communeAgg).filter(c => c.hasScraped > 0).length,
       total_all_communes: municipalityCountSnap.data().count,
       total_parties: parties.length,
       total_candidates: totalCandidates,
