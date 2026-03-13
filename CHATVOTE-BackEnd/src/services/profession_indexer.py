@@ -71,7 +71,7 @@ async def _extract_pages_with_gemini(pdf_content: bytes) -> list[tuple[int, str]
         from langchain_core.messages import HumanMessage
 
         llm = ChatGoogleGenerativeAI(
-            model="gemini-2.0-flash",
+            model="gemini-2.5-flash",
             google_api_key=api_key,
             temperature=0.0,
             max_output_tokens=8192,

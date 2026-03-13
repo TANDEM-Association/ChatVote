@@ -13,7 +13,7 @@ import os
 # ---------------------------------------------------------------------------
 
 # Google
-GEMINI_2_FLASH = "gemini-2.0-flash"
+GEMINI_2_FLASH = "gemini-2.5-flash"
 
 # OpenAI
 GPT_4O = "gpt-4o-2024-08-06"

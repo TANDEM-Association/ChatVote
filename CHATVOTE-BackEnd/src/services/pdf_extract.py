@@ -83,7 +83,7 @@ async def ocr_with_gemini(pdf_bytes: bytes, filename: str = "document.pdf") -> s
 
     response = await asyncio.to_thread(
         client.models.generate_content,
-        model="gemini-2.0-flash",
+        model="gemini-2.5-flash",
         contents=[
             {
                 "parts": [

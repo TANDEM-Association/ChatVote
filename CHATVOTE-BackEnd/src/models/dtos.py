@@ -300,7 +300,7 @@ class StreamResetDto(BaseModel):
     party_id: Optional[str] = Field(..., description="The ID of the party/responder")
     reason: str = Field(
         ...,
-        description="The reason for the reset (e.g., 'Rate limit on google-gemini-2.0-flash')",
+        description="The reason for the reset (e.g., 'Rate limit on google-gemini-2.5-flash')",
     )
 
 

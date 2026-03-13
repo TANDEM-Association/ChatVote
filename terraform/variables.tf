@@ -45,15 +45,28 @@ variable "qdrant_image" {
   default = "qdrant/qdrant:v1.14.0"
 }
 
-variable "qdrant_storage_size" {
+variable "qdrant_prod_storage_size" {
   type    = string
   default = "10Gi"
 }
 
+variable "qdrant_dev_storage_size" {
+  type    = string
+  default = "5Gi"
+}
+
 variable "qdrant_api_key" {
-  type      = string
-  sensitive = true
-  default   = ""
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Prod Qdrant API key"
+}
+
+variable "qdrant_dev_api_key" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Dev Qdrant API key"
 }
 
 # ──────────────────────────────────────────────

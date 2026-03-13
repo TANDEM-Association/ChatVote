@@ -1,10 +1,10 @@
 apiVersion: batch/v1
 kind: CronJob
 metadata:
-  name: indexer
-  namespace: chatvote
+  name: crawl-scraper
+  namespace: chatvote-prod
 spec:
-  schedule: "0 4 * * *"
+  schedule: "0 2 * * *"
   timeZone: "Europe/Paris"
   concurrencyPolicy: Forbid
   startingDeadlineSeconds: 3600
@@ -12,7 +12,7 @@ spec:
   failedJobsHistoryLimit: 5
   jobTemplate:
     spec:
-      activeDeadlineSeconds: 10800 # 3h max
+      activeDeadlineSeconds: 7200 # 2h max
       backoffLimit: 2
       ttlSecondsAfterFinished: 86400
       template:
@@ -23,16 +23,16 @@ spec:
           imagePullSecrets:
             - name: scaleway-registry
           containers:
-            - name: indexer
+            - name: crawl-scraper
               image: rg.fr-par.scw.cloud/chatvote/backend:latest
-              command: ["python", "-m", "src.job_runner", "indexer"]
+              command: ["python", "-m", "src.job_runner", "crawl_scraper"]
               resources:
                 requests:
-                  memory: "1Gi"
-                  cpu: "500m"
+                  memory: "512Mi"
+                  cpu: "250m"
                 limits:
-                  memory: "4Gi"
-                  cpu: "2000m"
+                  memory: "2Gi"
+                  cpu: "1000m"
               envFrom:
                 - secretRef:
                     name: chatvote-pipeline-env
