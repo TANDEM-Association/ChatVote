@@ -989,6 +989,8 @@ async def handle_combined_answer_request(
     else:
         responder_id = "chat-vote"
 
+    logger.info(f"TIMING handle_combined step=pre_emit elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
+
     responding_parties_dto = RespondingPartiesDto(
         session_id=chat_message_data.session_id,
         party_ids=[responder_id],
@@ -998,6 +1000,7 @@ async def handle_combined_answer_request(
         responding_parties_dto.model_dump(),
         to=sid,
     )
+    logger.info(f"TIMING handle_combined step=responding_parties_selected elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
 
     # Use user message directly as RAG query (will be improved internally)
     improved_rag_query = user_message.content
@@ -1007,7 +1010,9 @@ async def handle_combined_answer_request(
     local_candidates: List = []
     municipality_name = ""
     if is_local_scope and municipality_code is not None:
+        t_local = time.perf_counter()
         local_candidates = await aget_candidates_by_municipality(municipality_code)
+        logger.info(f"TIMING handle_combined step=local_candidates elapsed={time.perf_counter() - t0:.3f}s fetch={time.perf_counter() - t_local:.3f}s n={len(local_candidates)} sid={sid}")
         if local_candidates:
             municipality_name = local_candidates[0].municipality_name or ""
 
@@ -1040,6 +1045,7 @@ async def handle_combined_answer_request(
         ]
 
     # Perform combined search
+    logger.info(f"TIMING handle_combined step=pre_rag elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
     manifesto_docs, candidate_docs = await identify_relevant_docs_combined(
         rag_query=improved_rag_query,
         chat_history=chat_history_str,
@@ -1121,6 +1127,7 @@ async def handle_combined_answer_request(
         sources=sources,
     )
     await sio.emit("sources_ready", sources_dto.model_dump(), to=sid)
+    logger.info(f"TIMING handle_combined step=sources_ready elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
 
     # Generate streaming response using all available context
     try:
@@ -1152,9 +1159,12 @@ async def handle_combined_answer_request(
             selected_electoral_lists=chat_session.selected_electoral_lists,
         )
 
+        logger.info(f"TIMING handle_combined step=llm_stream_init elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
+
         # Stream the response
         full_response: Optional[BaseMessageChunk] = None
         chunk_index = 0
+        first_chunk_logged = False
         async for message_chunk in chunk_stream:
             # Check if this is a reset marker (LLM fallback occurred)
             if isinstance(message_chunk, StreamResetMarker):
@@ -1173,10 +1183,14 @@ async def handle_combined_answer_request(
                 # Reset our state for the new LLM's response
                 full_response = None
                 chunk_index = 0
+                first_chunk_logged = False
                 continue
 
             if full_response is None:
                 full_response = message_chunk
+                if not first_chunk_logged:
+                    logger.info(f"TIMING handle_combined step=first_chunk elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
+                    first_chunk_logged = True
             else:
                 full_response += message_chunk
 
@@ -1246,6 +1260,7 @@ async def handle_combined_answer_request(
         )
 
     except Exception as e:
+        logger.error(f"TIMING handle_combined step=ERROR elapsed={time.perf_counter() - t0:.3f}s sid={sid} error={e}")
         logger.error(f"Error generating combined response: {e}", exc_info=True)
         response_complete_dto = PartyResponseCompleteDto(
             session_id=chat_session.session_id,
@@ -1327,6 +1342,7 @@ async def handle_combined_answer_request(
 async def chat_answer_request(sid: str, body: dict):
     logger.info(f"Client {sid} requested chat answer with body: {body}")
     t0 = time.perf_counter()
+    _t = time.perf_counter
     try:
         chat_message_data = ChatUserMessageDto(**body)
     except ValidationError as e:
@@ -1365,6 +1381,9 @@ async def chat_answer_request(sid: str, body: dict):
         return
 
     logger.debug(f"Chat message data: {chat_message_data}")
+
+    t_validate = _t()
+    logger.info(f"TIMING chat_answer step=validate elapsed={t_validate - t0:.3f}s sid={sid}")
 
     # Extract user message
     user_message = Message(
@@ -1420,6 +1439,9 @@ async def chat_answer_request(sid: str, body: dict):
             to=sid,
         )
         return
+
+    t_session = _t()
+    logger.info(f"TIMING chat_answer step=session_lookup elapsed={t_session - t0:.3f}s sid={sid}")
 
     # Get all parties and candidates (parallel to halve cold-cache latency)
     t_fs = time.perf_counter()

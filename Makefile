@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-gemini seed-snapshots seed-firestore test-e2e check stop clean logs eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
+.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-gemini seed-snapshots seed-firestore test-e2e check stop clean logs logs-prod logs-backend logs-frontend logs-qdrant logs-k8s check-prod eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
 
 # ---------------------------------------------------------------------------
 # Setup — run once after cloning
@@ -211,6 +211,31 @@ check:
 
 logs:
 	@tail -f .logs/backend.log .logs/frontend.log
+
+# ---------------------------------------------------------------------------
+# Production logs — unified view across all services
+# ---------------------------------------------------------------------------
+
+SINCE ?= 5m
+LINES ?= 30
+
+logs-prod:
+	@bash scripts/logs-prod.sh all
+
+logs-backend:
+	@bash scripts/logs-prod.sh backend
+
+logs-frontend:
+	@bash scripts/logs-prod.sh frontend
+
+logs-qdrant:
+	@bash scripts/logs-prod.sh qdrant
+
+logs-k8s:
+	@bash scripts/logs-prod.sh k8s
+
+check-prod:
+	@bash scripts/logs-prod.sh health
 
 # ---------------------------------------------------------------------------
 # Teardown

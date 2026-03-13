@@ -71,8 +71,13 @@ async def _cached_get(key: str, fetch_fn: Any) -> Any:
     """Return cached value if fresh, else call fetch_fn() and cache the result."""
     now = time.time()
     if key in _cache and _cache_expiry.get(key, 0.0) > now:
+        ttl_remaining = _cache_expiry[key] - now
+        _fb_logger.info(f"CACHE HIT key={key} ttl_remaining={ttl_remaining:.0f}s")
         return _cache[key]
+    t0 = time.perf_counter()
     result = await fetch_fn()
+    elapsed = time.perf_counter() - t0
+    _fb_logger.info(f"CACHE MISS key={key} fetch_time={elapsed:.3f}s")
     _cache[key] = result
     _cache_expiry[key] = now + CACHE_TTL_SECONDS
     return result
