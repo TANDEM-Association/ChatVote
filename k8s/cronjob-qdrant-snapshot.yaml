@@ -1,0 +1,40 @@
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: qdrant-snapshot
+  namespace: chatvote
+spec:
+  schedule: "0 3 * * *"
+  timeZone: "Europe/Paris"
+  concurrencyPolicy: Forbid
+  startingDeadlineSeconds: 3600
+  successfulJobsHistoryLimit: 3
+  failedJobsHistoryLimit: 5
+  jobTemplate:
+    spec:
+      activeDeadlineSeconds: 3600 # 1h max
+      backoffLimit: 2
+      ttlSecondsAfterFinished: 86400
+      template:
+        spec:
+          restartPolicy: OnFailure
+          nodeSelector:
+            k8s.scaleway.com/pool-name: pool-pipeline
+          imagePullSecrets:
+            - name: scaleway-registry
+          containers:
+            - name: qdrant-snapshot
+              image: rg.fr-par.scw.cloud/chatvote/backend:latest
+              command: ["python", "-m", "scripts.qdrant_snapshot"]
+              resources:
+                requests:
+                  memory: "256Mi"
+                  cpu: "100m"
+                limits:
+                  memory: "512Mi"
+                  cpu: "500m"
+              envFrom:
+                - secretRef:
+                    name: chatvote-pipeline-env
+                - secretRef:
+                    name: qdrant-snapshot-s3
