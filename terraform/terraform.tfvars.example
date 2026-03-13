@@ -1,0 +1,40 @@
+# ──────────────────────────────────────────────
+# Copy this file to terraform.tfvars and fill in values.
+# NEVER commit terraform.tfvars — it contains secrets.
+# ──────────────────────────────────────────────
+
+# Scaleway credentials
+scw_access_key = ""
+scw_secret_key = ""
+scw_project_id = "78c3d473-15a8-46bf-9c9a-339d618c75b5"
+
+# Container registry password (same as scw_secret_key)
+registry_password = ""
+
+# S3 for Qdrant snapshots (can reuse Scaleway keys)
+s3_access_key = ""
+s3_secret_key = ""
+
+# Qdrant
+qdrant_api_key = ""
+
+# Google
+google_api_key                   = ""
+google_sheet_id                  = "15Mge7CUwsFMn5h7SVRYoo5V1SyDE2vU5h4F9OnDHWB8"
+google_sheets_credentials_base64 = ""
+
+# Firebase
+firebase_credentials_base64 = ""
+
+# Scaleway Embeddings
+scaleway_embed_api_key = ""
+
+# Firecrawl
+firecrawl_api_key = ""
+
+# Admin
+admin_secret        = ""
+admin_upload_secret = ""
+
+# Backend image (updated by CI/CD, or set manually)
+# backend_image = "rg.fr-par.scw.cloud/chatvote/backend:latest"

@@ -1,0 +1,48 @@
+# ──────────────────────────────────────────────
+# RBAC — Backend can manage batch jobs
+# ──────────────────────────────────────────────
+
+resource "kubernetes_service_account" "backend" {
+  metadata {
+    name      = "chatvote-backend-sa"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+  }
+}
+
+resource "kubernetes_role" "job_manager" {
+  metadata {
+    name      = "chatvote-backend-job-manager"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+  }
+
+  rule {
+    api_groups = ["batch"]
+    resources  = ["jobs"]
+    verbs      = ["create", "get", "list", "delete"]
+  }
+
+  rule {
+    api_groups = [""]
+    resources  = ["pods"]
+    verbs      = ["get", "list"]
+  }
+}
+
+resource "kubernetes_role_binding" "job_manager" {
+  metadata {
+    name      = "chatvote-backend-job-manager"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+  }
+
+  role_ref {
+    api_group = "rbac.authorization.k8s.io"
+    kind      = "Role"
+    name      = kubernetes_role.job_manager.metadata[0].name
+  }
+
+  subject {
+    kind      = "ServiceAccount"
+    name      = kubernetes_service_account.backend.metadata[0].name
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+  }
+}

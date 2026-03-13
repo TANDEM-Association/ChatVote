@@ -1,0 +1,11 @@
+# ──────────────────────────────────────────────
+# K8s Namespace
+# ──────────────────────────────────────────────
+
+resource "kubernetes_namespace" "chatvote" {
+  metadata {
+    name = "chatvote"
+  }
+
+  depends_on = [scaleway_k8s_pool.main]
+}

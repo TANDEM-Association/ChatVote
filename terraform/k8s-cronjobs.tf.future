@@ -1,0 +1,205 @@
+# ──────────────────────────────────────────────
+# CronJob — Scraper (2 AM Paris)
+# ──────────────────────────────────────────────
+
+resource "kubernetes_cron_job_v1" "scraper" {
+  metadata {
+    name      = "crawl-scraper"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+  }
+
+  spec {
+    schedule                      = "0 2 * * *"
+    timezone                      = "Europe/Paris"
+    concurrency_policy            = "Forbid"
+    starting_deadline_seconds     = 3600
+    successful_jobs_history_limit = 3
+    failed_jobs_history_limit     = 5
+
+    job_template {
+      metadata {}
+      spec {
+        active_deadline_seconds    = 7200 # 2h
+        backoff_limit              = 2
+        ttl_seconds_after_finished = 86400
+
+        template {
+          metadata {}
+          spec {
+            restart_policy = "OnFailure"
+
+            node_selector = {
+              "k8s.scaleway.com/pool-name" = scaleway_k8s_pool.pipeline.name
+            }
+
+            image_pull_secrets {
+              name = kubernetes_secret.registry.metadata[0].name
+            }
+
+            container {
+              name    = "crawl-scraper"
+              image   = "rg.fr-par.scw.cloud/chatvote/backend:latest"
+              command = ["python", "-m", "src.job_runner", "crawl_scraper"]
+
+              resources {
+                requests = {
+                  memory = "512Mi"
+                  cpu    = "250m"
+                }
+                limits = {
+                  memory = "2Gi"
+                  cpu    = "1000m"
+                }
+              }
+
+              env_from {
+                secret_ref {
+                  name = kubernetes_secret.pipeline_env.metadata[0].name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ──────────────────────────────────────────────
+# CronJob — Qdrant Snapshot (3 AM Paris)
+# ──────────────────────────────────────────────
+
+resource "kubernetes_cron_job_v1" "qdrant_snapshot" {
+  metadata {
+    name      = "qdrant-snapshot"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+  }
+
+  spec {
+    schedule                      = "0 3 * * *"
+    timezone                      = "Europe/Paris"
+    concurrency_policy            = "Forbid"
+    starting_deadline_seconds     = 3600
+    successful_jobs_history_limit = 3
+    failed_jobs_history_limit     = 5
+
+    job_template {
+      metadata {}
+      spec {
+        active_deadline_seconds    = 3600 # 1h
+        backoff_limit              = 2
+        ttl_seconds_after_finished = 86400
+
+        template {
+          metadata {}
+          spec {
+            restart_policy = "OnFailure"
+
+            node_selector = {
+              "k8s.scaleway.com/pool-name" = scaleway_k8s_pool.pipeline.name
+            }
+
+            image_pull_secrets {
+              name = kubernetes_secret.registry.metadata[0].name
+            }
+
+            container {
+              name    = "qdrant-snapshot"
+              image   = "rg.fr-par.scw.cloud/chatvote/backend:latest"
+              command = ["python", "-m", "scripts.qdrant_snapshot"]
+
+              resources {
+                requests = {
+                  memory = "256Mi"
+                  cpu    = "100m"
+                }
+                limits = {
+                  memory = "512Mi"
+                  cpu    = "500m"
+                }
+              }
+
+              env_from {
+                secret_ref {
+                  name = kubernetes_secret.pipeline_env.metadata[0].name
+                }
+              }
+              env_from {
+                secret_ref {
+                  name = kubernetes_secret.snapshot_s3.metadata[0].name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}
+
+# ──────────────────────────────────────────────
+# CronJob — Indexer (4 AM Paris)
+# ──────────────────────────────────────────────
+
+resource "kubernetes_cron_job_v1" "indexer" {
+  metadata {
+    name      = "indexer"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+  }
+
+  spec {
+    schedule                      = "0 4 * * *"
+    timezone                      = "Europe/Paris"
+    concurrency_policy            = "Forbid"
+    starting_deadline_seconds     = 3600
+    successful_jobs_history_limit = 3
+    failed_jobs_history_limit     = 5
+
+    job_template {
+      metadata {}
+      spec {
+        active_deadline_seconds    = 10800 # 3h
+        backoff_limit              = 2
+        ttl_seconds_after_finished = 86400
+
+        template {
+          metadata {}
+          spec {
+            restart_policy = "OnFailure"
+
+            node_selector = {
+              "k8s.scaleway.com/pool-name" = scaleway_k8s_pool.pipeline.name
+            }
+
+            image_pull_secrets {
+              name = kubernetes_secret.registry.metadata[0].name
+            }
+
+            container {
+              name    = "indexer"
+              image   = "rg.fr-par.scw.cloud/chatvote/backend:latest"
+              command = ["python", "-m", "src.job_runner", "indexer"]
+
+              resources {
+                requests = {
+                  memory = "1Gi"
+                  cpu    = "500m"
+                }
+                limits = {
+                  memory = "4Gi"
+                  cpu    = "2000m"
+                }
+              }
+
+              env_from {
+                secret_ref {
+                  name = kubernetes_secret.pipeline_env.metadata[0].name
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+  }
+}

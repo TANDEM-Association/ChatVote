@@ -1,0 +1,167 @@
+# ──────────────────────────────────────────────
+# Qdrant StatefulSet
+# ──────────────────────────────────────────────
+
+resource "kubernetes_stateful_set" "qdrant" {
+  metadata {
+    name      = "qdrant"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+    labels    = { app = "qdrant" }
+  }
+
+  spec {
+    service_name = "qdrant"
+    replicas     = 1
+
+    selector {
+      match_labels = { app = "qdrant" }
+    }
+
+    template {
+      metadata {
+        labels = { app = "qdrant" }
+      }
+
+      spec {
+        node_selector = {
+          "k8s.scaleway.com/pool-name" = scaleway_k8s_pool.main.name
+        }
+
+        container {
+          name  = "qdrant"
+          image = var.qdrant_image
+
+          port {
+            container_port = 6333
+            name           = "http"
+          }
+          port {
+            container_port = 6334
+            name           = "grpc"
+          }
+
+          env {
+            name = "QDRANT__SERVICE__API_KEY"
+            value_from {
+              secret_key_ref {
+                name = kubernetes_secret.qdrant_config.metadata[0].name
+                key  = "QDRANT__SERVICE__API_KEY"
+              }
+            }
+          }
+
+          volume_mount {
+            name       = "qdrant-storage"
+            mount_path = "/qdrant/storage"
+          }
+
+          startup_probe {
+            http_get {
+              path = "/healthz"
+              port = 6333
+            }
+            period_seconds    = 5
+            failure_threshold = 30
+            timeout_seconds   = 3
+          }
+
+          liveness_probe {
+            http_get {
+              path = "/healthz"
+              port = 6333
+            }
+            period_seconds    = 15
+            failure_threshold = 3
+            timeout_seconds   = 5
+          }
+
+          readiness_probe {
+            http_get {
+              path = "/readyz"
+              port = 6333
+            }
+            period_seconds    = 10
+            failure_threshold = 3
+            timeout_seconds   = 5
+          }
+
+          resources {
+            requests = {
+              memory = "1Gi"
+              cpu    = "500m"
+            }
+            limits = {
+              memory = "2Gi"
+              cpu    = "1000m"
+            }
+          }
+        }
+      }
+    }
+
+    volume_claim_template {
+      metadata {
+        name = "qdrant-storage"
+      }
+      spec {
+        access_modes       = ["ReadWriteOnce"]
+        storage_class_name = "scw-bssd"
+        resources {
+          requests = {
+            storage = var.qdrant_storage_size
+          }
+        }
+      }
+    }
+  }
+}
+
+# ──────────────────────────────────────────────
+# Qdrant Services
+# ──────────────────────────────────────────────
+
+resource "kubernetes_service" "qdrant_internal" {
+  metadata {
+    name      = "qdrant-internal"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+    labels    = { app = "qdrant" }
+  }
+
+  spec {
+    type     = "ClusterIP"
+    selector = { app = "qdrant" }
+
+    port {
+      name        = "http"
+      port        = 6333
+      target_port = 6333
+      protocol    = "TCP"
+    }
+    port {
+      name        = "grpc"
+      port        = 6334
+      target_port = 6334
+      protocol    = "TCP"
+    }
+  }
+}
+
+resource "kubernetes_service" "qdrant_lb" {
+  metadata {
+    name      = "qdrant-lb"
+    namespace = kubernetes_namespace.chatvote.metadata[0].name
+    labels    = { app = "qdrant" }
+  }
+
+  spec {
+    type     = "LoadBalancer"
+    selector = { app = "qdrant" }
+
+    port {
+      name        = "http"
+      port        = 6333
+      target_port = 6333
+      protocol    = "TCP"
+    }
+  }
+}
