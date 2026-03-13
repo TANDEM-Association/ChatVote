@@ -95,6 +95,7 @@ jobs:
               environment-variables.ADMIN_SECRET=${{ secrets.ADMIN_SECRET }} \
               environment-variables.FIRECRAWL_API_KEY=${{ secrets.FIRECRAWL_API_KEY }} \
               environment-variables.GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }} \
+              environment-variables.EXTRA_CORS_ORIGINS=${{ secrets.EXTRA_CORS_ORIGINS }} \
               secret-environment-variables.0.key=GOOGLE_API_KEY \
               secret-environment-variables.0.value=${{ secrets.GOOGLE_API_KEY }} \
               secret-environment-variables.1.key=FIREBASE_CREDENTIALS_BASE64 \
@@ -131,6 +132,7 @@ jobs:
               environment-variables.ADMIN_SECRET=${{ secrets.ADMIN_SECRET }} \
               environment-variables.FIRECRAWL_API_KEY=${{ secrets.FIRECRAWL_API_KEY }} \
               environment-variables.GOOGLE_SHEET_ID=${{ secrets.GOOGLE_SHEET_ID }} \
+              environment-variables.EXTRA_CORS_ORIGINS=${{ secrets.EXTRA_CORS_ORIGINS }} \
               secret-environment-variables.0.key=GOOGLE_API_KEY \
               secret-environment-variables.0.value=${{ secrets.GOOGLE_API_KEY }} \
               secret-environment-variables.1.key=FIREBASE_CREDENTIALS_BASE64 \
