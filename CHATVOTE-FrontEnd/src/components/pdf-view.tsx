@@ -30,7 +30,8 @@ function getProxiedPdfUrl(url: string | null): string | null {
 
   if (
     url.includes("firebasestorage.app") ||
-    url.includes("storage.googleapis.com")
+    url.includes("storage.googleapis.com") ||
+    url.includes("programme-candidats.interieur.gouv.fr")
   ) {
     return `/api/pdf-proxy?url=${encodeURIComponent(url)}`;
   }

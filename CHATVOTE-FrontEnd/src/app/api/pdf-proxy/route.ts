@@ -10,10 +10,11 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Only allow Firebase Storage URLs for security
+  // Only allow known safe domains for security
   if (
     url.includes("firebasestorage.app") === false &&
-    url.includes("storage.googleapis.com") === false
+    url.includes("storage.googleapis.com") === false &&
+    url.includes("programme-candidats.interieur.gouv.fr") === false
   ) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }

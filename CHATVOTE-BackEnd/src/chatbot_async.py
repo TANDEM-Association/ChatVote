@@ -4,6 +4,7 @@ import logging
 import os
 from typing import AsyncIterator, List, Tuple, Dict, Union, Optional
 from datetime import datetime
+from urllib.parse import quote
 from openai import AsyncOpenAI  # for API format
 
 from langchain_core.messages import HumanMessage, SystemMessage
@@ -127,6 +128,13 @@ perplexity_client = (
     if _perplexity_api_key
     else None
 )
+
+_VIEWER_BASE = "https://app.chatvote.org"
+
+
+def _pdf_viewer_url(raw_url: str) -> str:
+    """Wrap a PDF URL into the in-app viewer URL."""
+    return f"{_VIEWER_BASE}/pdf/view?page=1&pdf={quote(raw_url, safe='')}"
 
 
 async def rerank_documents(
@@ -1102,7 +1110,7 @@ async def generate_streaming_candidate_local_response(
                 party_names.append(party.name)
         party_str = ", ".join(party_names) if party_names else "Indépendant"
         website_part = f" - Site web : {c.website_url}" if c.website_url else ""
-        manifesto = f" - Profession de foi : {c.manifesto_pdf_url}" if c.has_manifesto and c.manifesto_pdf_url else ""
+        manifesto = f" - [Profession de foi]({_pdf_viewer_url(c.manifesto_pdf_url)})" if c.has_manifesto and c.manifesto_pdf_url else ""
         candidates_list += f"- **{c.full_name}** ({party_str}){website_part}{manifesto}\n"
 
     if not candidates_list:
@@ -1436,7 +1444,7 @@ async def generate_streaming_global_combined_response(
                     )
                     incumbent_info = " (sortant)" if candidate.is_incumbent else ""
                     manifesto_info = (
-                        f" - Profession de foi : {candidate.manifesto_pdf_url}"
+                        f" - [Profession de foi]({_pdf_viewer_url(candidate.manifesto_pdf_url)})"
                         if candidate.has_manifesto and candidate.manifesto_pdf_url
                         else ""
                     )

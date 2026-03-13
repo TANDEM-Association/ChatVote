@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useTransition } from "react";
+import React, { useEffect, useState, useTransition } from "react";
 
 import { useRouter } from "next/navigation";
 
@@ -23,6 +23,10 @@ export const LanguageSwitcher: React.FC = () => {
   const router = useRouter();
   const { locale } = useAppContext();
   const [isPending, startTransition] = useTransition();
+  // Defer rendering until client mount so Radix's generated aria-controls
+  // IDs don't mismatch between server and client (hydration error).
+  const [mounted, setMounted] = useState(false);
+  useEffect(() => setMounted(true), []);
 
   const handleLocaleChange = (newLocale: string) => {
     startTransition(async () => {
@@ -30,6 +34,16 @@ export const LanguageSwitcher: React.FC = () => {
       router.refresh();
     });
   };
+
+  if (!mounted) {
+    // Render a static placeholder with the same dimensions to avoid layout shift
+    return (
+      <button className="flex h-8 w-fit items-center gap-1 border-none bg-transparent px-2 text-sm">
+        <GlobeIcon className="size-4" />
+        <span>{locale.toUpperCase()}</span>
+      </button>
+    );
+  }
 
   return (
     <Select
