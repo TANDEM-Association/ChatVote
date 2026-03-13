@@ -29,16 +29,43 @@ import os
 from dataclasses import dataclass, field
 from typing import Any
 
+from qdrant_client import QdrantClient
 from qdrant_client.models import PointIdsList
 
 from src.services.theme_classifier import classify_chunks, ThemeResult
-from src.vector_store_helper import (
-    qdrant_client,
-    CANDIDATES_INDEX_NAME,
-    PARTY_INDEX_NAME,
-)
 
 logger = logging.getLogger(__name__)
+
+# Default collection names (without env suffix)
+_DEFAULT_CANDIDATES = "candidates_websites"
+_DEFAULT_PARTIES = "all_parties"
+
+# Module-level client holder — set by main() before any work happens
+_state: dict[str, Any] = {}
+
+
+def _get_client() -> QdrantClient:
+    return _state["qdrant_client"]
+
+
+def _make_qdrant_client(url: str) -> QdrantClient:
+    """Create a standalone QdrantClient without importing the full app stack."""
+    force_rest = url.startswith("https://")
+    return QdrantClient(
+        url=url,
+        api_key=os.getenv("QDRANT_API_KEY"),
+        prefer_grpc=False,
+        https=force_rest,
+        port=443 if force_rest else 6333,
+        timeout=30,
+        check_compatibility=False,
+    )
+
+
+def _resolve_collection_name(base: str, env: str) -> str:
+    """Compute collection name with env suffix."""
+    suffix = f"_{env}" if env in ("prod", "dev") else "_dev"
+    return f"{base}{suffix}"
 
 
 # ---------------------------------------------------------------------------
@@ -67,7 +94,7 @@ async def _scroll_all_points(collection_name: str) -> list[Any]:
     offset = None
 
     while True:
-        points, next_offset = qdrant_client.scroll(
+        points, next_offset = _get_client().scroll(
             collection_name=collection_name,
             limit=500,
             offset=offset,
@@ -142,13 +169,13 @@ async def _backfill_collection(
             if top_sub and not existing_metadata.get("sub_theme"):
                 existing_metadata["sub_theme"] = top_sub
             if not dry_run:
-                qdrant_client.set_payload(
+                _get_client().set_payload(
                     collection_name=collection_name,
                     payload={"metadata": existing_metadata},
                     points=PointIdsList(points=[point.id]),
                 )
                 # Delete the stale top-level keys
-                qdrant_client.delete_payload(
+                _get_client().delete_payload(
                     collection_name=collection_name,
                     keys=["metadata.theme", "metadata.sub_theme"],
                     points=PointIdsList(points=[point.id]),
@@ -243,7 +270,7 @@ async def _backfill_collection(
                 )
                 existing_metadata["theme"] = result.theme
                 existing_metadata["sub_theme"] = result.sub_theme or ""
-                qdrant_client.set_payload(
+                _get_client().set_payload(
                     collection_name=collection_name,
                     payload={"metadata": existing_metadata},
                     points=PointIdsList(points=[point_id]),
@@ -263,7 +290,7 @@ def _scroll_all_points_sync(collection_name: str) -> list[Any]:
     offset = None
 
     while True:
-        points, next_offset = qdrant_client.scroll(
+        points, next_offset = _get_client().scroll(
             collection_name=collection_name,
             limit=500,
             offset=offset,
@@ -300,18 +327,11 @@ def _print_summary(stats: BackfillStats, dry_run: bool) -> None:
 # ---------------------------------------------------------------------------
 
 async def main(
-    collection: str,
+    collections_to_process: list[str],
     batch_size: int,
     max_concurrent_llm: int,
     dry_run: bool,
 ) -> None:
-    collections_to_process: list[str] = []
-
-    if collection in ("candidates", "all"):
-        collections_to_process.append(CANDIDATES_INDEX_NAME)
-    if collection in ("manifestos", "all"):
-        collections_to_process.append(PARTY_INDEX_NAME)
-
     for coll_name in collections_to_process:
         logger.info(f"Starting backfill for collection: {coll_name}")
         stats = await _backfill_collection(
@@ -355,12 +375,45 @@ if __name__ == "__main__":
         action="store_true",
         help="Classify but do not write results to Qdrant",
     )
+    parser.add_argument(
+        "--qdrant-url",
+        type=str,
+        default=None,
+        help="Override QDRANT_URL (default: from env or localhost:6333)",
+    )
+    parser.add_argument(
+        "--env",
+        type=str,
+        default=None,
+        help="Override ENV for collection name suffix (dev/prod)",
+    )
 
     args = parser.parse_args()
 
+    env = args.env or os.getenv("ENV", "dev")
+    qdrant_url = args.qdrant_url or os.getenv("QDRANT_URL", "http://localhost:6333")
+
+    # Initialize standalone Qdrant client
+    _state["qdrant_client"] = _make_qdrant_client(qdrant_url)
+
+    # Resolve collection names with env suffix
+    candidates_coll = _resolve_collection_name(_DEFAULT_CANDIDATES, env)
+    parties_coll = _resolve_collection_name(_DEFAULT_PARTIES, env)
+
+    collections: list[str] = []
+    if args.collection in ("candidates", "all"):
+        collections.append(candidates_coll)
+    if args.collection in ("manifestos", "all"):
+        collections.append(parties_coll)
+
+    print(f"ENV: {env}")
+    print(f"QDRANT_URL: {qdrant_url}")
+    print(f"Collections: {collections}")
+    print(f"Mode: {'DRY RUN' if args.dry_run else 'WRITE'}")
+
     asyncio.run(
         main(
-            collection=args.collection,
+            collections_to_process=collections,
             batch_size=args.batch_size,
             max_concurrent_llm=args.max_concurrent_llm,
             dry_run=args.dry_run,

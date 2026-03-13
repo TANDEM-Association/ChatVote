@@ -61,7 +61,7 @@ _fb_logger.info("firebase_service: async client OK")
 # ---------------------------------------------------------------------------
 # In-memory TTL cache for static Firestore data (parties rarely change)
 # ---------------------------------------------------------------------------
-CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "300"))
+CACHE_TTL_SECONDS = int(os.getenv("CACHE_TTL_SECONDS", "3600"))
 
 _cache: dict[str, Any] = {}
 _cache_expiry: dict[str, float] = {}

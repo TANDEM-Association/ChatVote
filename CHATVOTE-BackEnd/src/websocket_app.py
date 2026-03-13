@@ -1421,9 +1421,14 @@ async def chat_answer_request(sid: str, body: dict):
         )
         return
 
-    # Get all parties and candidates
-    all_parties = await aget_parties()
-    all_candidates = await aget_candidates()
+    # Get all parties and candidates (parallel to halve cold-cache latency)
+    t_fs = time.perf_counter()
+    all_parties, all_candidates = await asyncio.gather(
+        aget_parties(), aget_candidates()
+    )
+    logger.info(
+        f"TIMING firestore_prefetch: {time.perf_counter() - t_fs:.3f}s (sid={sid})"
+    )
 
     # Route based on scope: combined (national/local) vs legacy party-only mode
     # The new scopes (NATIONAL, LOCAL) use combined manifesto + candidate search

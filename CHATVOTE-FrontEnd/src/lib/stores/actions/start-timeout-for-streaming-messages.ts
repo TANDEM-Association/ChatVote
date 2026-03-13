@@ -1,7 +1,6 @@
 import { type ChatStoreActionHandlerFor } from "@lib/stores/chat-store.types";
 
-const STREAMING_MESSAGE_TIMEOUT =
-  process.env.NODE_ENV === "development" ? 60000 : 30000;
+const STREAMING_MESSAGE_TIMEOUT = 120_000;
 const STREAMING_MESSAGE_CHECK_INTERVAL = 500;
 export const startTimeoutForStreamingMessages: ChatStoreActionHandlerFor<
   "startTimeoutForStreamingMessages"

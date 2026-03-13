@@ -470,7 +470,7 @@ async def admin_debug_qdrant(request):
             {
                 "collection_name": PARTY_INDEX_NAME,
                 "points_count": collection_info.points_count,
-                "vectors_count": collection_info.vectors_count,
+                "vectors_count": getattr(collection_info, "vectors_count", collection_info.points_count),
                 "sample_documents": sample_docs,
             }
         )
@@ -486,11 +486,12 @@ async def admin_debug_qdrant(request):
 async def admin_debug_candidates_qdrant(request):
     """Debug endpoint to check Qdrant candidates collection status."""
     try:
-        # Check if collection exists
-        collections = qdrant_client.get_collections().collections
-        collection_names = [c.name for c in collections]
-
-        if CANDIDATES_INDEX_NAME not in collection_names:
+        # Get collection info (get_collection resolves aliases automatically)
+        try:
+            collection_info = qdrant_client.get_collection(CANDIDATES_INDEX_NAME)
+        except Exception:
+            collections = qdrant_client.get_collections().collections
+            collection_names = [c.name for c in collections]
             return web.json_response(
                 {
                     "status": "warning",
@@ -498,9 +499,6 @@ async def admin_debug_candidates_qdrant(request):
                     "available_collections": collection_names,
                 }
             )
-
-        # Get collection info
-        collection_info = qdrant_client.get_collection(CANDIDATES_INDEX_NAME)
 
         # Get a sample of points
         points = qdrant_client.scroll(
@@ -531,7 +529,7 @@ async def admin_debug_candidates_qdrant(request):
             {
                 "collection_name": CANDIDATES_INDEX_NAME,
                 "points_count": collection_info.points_count,
-                "vectors_count": collection_info.vectors_count,
+                "vectors_count": getattr(collection_info, "vectors_count", collection_info.points_count),
                 "sample_documents": sample_docs,
             }
         )
