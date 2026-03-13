@@ -59,7 +59,7 @@ export default function CoverageTab({ secret, apiUrl }: CoverageTabProps) {
     setLoading(true);
     setError(null);
     try {
-      const res = await fetch(`/api/coverage`);
+      const res = await fetch(`/api/coverage`, { cache: "no-store" });
       if (!res.ok) throw new Error(`Status ${res.status}`);
       const json: CoverageResponse = await res.json();
       setData(json);

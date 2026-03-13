@@ -13,8 +13,8 @@ import {
 // Re-export types so existing consumers that import from this route module still work
 export type { CommuneCoverage, PartyCoverage, CandidateCoverage, CoverageSummary, CoverageResponse, ChartAggregations };
 
-// Cache this route for 10 minutes to avoid Firestore quota exhaustion
-export const revalidate = 600;
+// Always fetch fresh data — admin dashboard needs real-time accuracy
+export const dynamic = "force-dynamic";
 
 // ---------------------------------------------------------------------------
 // GET handler
