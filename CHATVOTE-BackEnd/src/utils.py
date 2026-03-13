@@ -71,6 +71,8 @@ def get_cors_allowed_origins(env: Optional[str]) -> Union[str, list[str]]:
             "https://embed.chatvote.fr",
             "https://pre-prod.chatvote.fr",
             "https://dev.chatvote.fr",
+            "https://chatvote-frontend.vercel.app",
+            "https://chatvote-frontend-chatvotes-projects.vercel.app",
             "http://localhost:3000",
             "http://localhost:8080",
         ]

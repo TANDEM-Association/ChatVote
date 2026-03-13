@@ -163,7 +163,7 @@ sio = socketio.AsyncServer(
     monitor_clients=True,
     cors_allowed_origins=get_cors_allowed_origins(os.getenv("ENV")),
     always_connect=False,
-    transports=["websocket"],
+    transports=["websocket", "polling"],
     ping_interval=25,
     ping_timeout=120,
 )

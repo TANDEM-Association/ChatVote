@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, develop]
 
+concurrency:
+  group: e2e-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   e2e:
     runs-on: ubuntu-latest
@@ -40,6 +44,15 @@ jobs:
 
       - name: Install firebase-tools
         run: npm i -g firebase-tools
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: CHATVOTE-FrontEnd/.next/cache
+          key: nextjs-${{ runner.os }}-${{ hashFiles('CHATVOTE-FrontEnd/pnpm-lock.yaml') }}-${{ hashFiles('CHATVOTE-FrontEnd/src/**') }}
+          restore-keys: |
+            nextjs-${{ runner.os }}-${{ hashFiles('CHATVOTE-FrontEnd/pnpm-lock.yaml') }}-
+            nextjs-${{ runner.os }}-
 
       - name: Cache Playwright browsers
         uses: actions/cache@v4

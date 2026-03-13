@@ -5,6 +5,10 @@ on:
   push:
     branches: [main]
 
+concurrency:
+  group: production-deploy
+  cancel-in-progress: false
+
 env:
   SCW_REGION: fr-par
   SCW_REGISTRY: rg.fr-par.scw.cloud/chatvote
@@ -79,8 +83,8 @@ jobs:
             echo "Updating existing production container..."
             scw container container update $EXISTING \
               registry-image=${{ env.SCW_REGISTRY }}/backend:${{ github.sha }} \
-              memory-limit=4096 \
-              cpu-limit=2240 \
+              memory-limit=2048 \
+              cpu-limit=1120 \
               sandbox=v1 \
               environment-variables.API_NAME=chatvote-api \
               environment-variables.ENV=prod \
@@ -108,8 +112,8 @@ jobs:
               port=8080 \
               min-scale=1 \
               max-scale=3 \
-              memory-limit=4096 \
-              cpu-limit=2240 \
+              memory-limit=2048 \
+              cpu-limit=1120 \
               sandbox=v1 \
               privacy=public \
               deploy=true \
