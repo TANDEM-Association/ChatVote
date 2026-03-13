@@ -33,7 +33,7 @@ const baseUrl = process.env.NEXT_PUBLIC_API_URL;
 
 function createSocket(locale: Locale): Socket {
   return io(baseUrl, {
-    transports: ["websocket"],
+    transports: ["polling", "websocket"],
     extraHeaders: {
       "Accept-Language": locale,
     },
