@@ -78,6 +78,19 @@ const NODE_DESCRIPTIONS: Record<string, string> = {
     "Embeds scraped content into Qdrant vector DB for RAG retrieval. Indexes party manifestos (PDFs) and candidate websites (from scraper node) using LLM embeddings.",
 };
 
+/** Output descriptions for each pipeline node — what data it produces */
+const NODE_OUTPUTS: Record<string, string[]> = {
+  population: ["Top N communes list (INSEE codes)", "All 35k communes → Autocomplete"],
+  candidatures: ["Candidate lists per commune", "Party labels → Chat sidebar"],
+  websites: ["Campaign website URLs"],
+  pourquituvotes: ["Programme URLs from pourquituvotes.fr"],
+  professions: ["Professions de foi PDFs"],
+  seed: ["Firestore candidates & parties docs"],
+  scraper: ["Scraped website content (HTML/text)"],
+  crawl_scraper: ["Crawled website content (external service)"],
+  indexer: ["Qdrant vector embeddings → RAG Search"],
+};
+
 /** DAG layout: rows of node_ids with their grid column positions */
 const DAG_ROWS: { id: string; col: number; row: number }[] = [
   { id: "population", col: 0, row: 0 },
@@ -285,6 +298,20 @@ function NodeCard({
         <p className="px-4 pt-2 text-[11px] leading-relaxed text-muted-foreground">
           {NODE_DESCRIPTIONS[node.node_id]}
         </p>
+      )}
+
+      {/* Output tags */}
+      {NODE_OUTPUTS[node.node_id] && NODE_OUTPUTS[node.node_id].length > 0 && (
+        <div className="flex flex-wrap gap-1 px-4 pt-1.5">
+          {NODE_OUTPUTS[node.node_id].map((output, i) => (
+            <span
+              key={i}
+              className="inline-flex items-center rounded-full bg-indigo-500/10 px-2 py-0.5 text-[10px] font-medium text-indigo-400"
+            >
+              → {output}
+            </span>
+          ))}
+        </div>
       )}
 
       {/* Body */}
@@ -705,7 +732,7 @@ export default function PipelineTab({ secret, apiUrl, active }: PipelineTabProps
   const pollRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const containerRef = useRef<HTMLDivElement | null>(null);
   const [arrowPositions, setArrowPositions] = useState<
-    Record<string, { cx: number; cy: number; bottom: number; top: number }>
+    Record<string, { cx: number; cy: number; bottom: number; top: number; left: number; right: number }>
   >({});
   const [previewNode, setPreviewNode] = useState<string | null>(null);
   const [previewData, setPreviewData] = useState<any>(null);
@@ -968,7 +995,7 @@ export default function PipelineTab({ secret, apiUrl, active }: PipelineTabProps
     const rect = container.getBoundingClientRect();
     const pos: Record<
       string,
-      { cx: number; cy: number; bottom: number; top: number }
+      { cx: number; cy: number; bottom: number; top: number; left: number; right: number }
     > = {};
 
     for (const item of DAG_ROWS) {
@@ -982,6 +1009,8 @@ export default function PipelineTab({ secret, apiUrl, active }: PipelineTabProps
         cy: elRect.top - rect.top + elRect.height / 2,
         bottom: elRect.bottom - rect.top,
         top: elRect.top - rect.top,
+        left: elRect.left - rect.left,
+        right: elRect.right - rect.left,
       };
     }
     setArrowPositions(pos);
@@ -1263,16 +1292,34 @@ export default function PipelineTab({ secret, apiUrl, active }: PipelineTabProps
             const toPos = arrowPositions[to];
             if (!fromPos || !toPos) return null;
 
-            const x1 = fromPos.cx;
-            const y1 = fromPos.bottom + 2;
-            const x2 = toPos.cx;
-            const y2 = toPos.top - 2;
-            const midY = (y1 + y2) / 2;
+            const fromRow = DAG_ROWS.find((r) => r.id === from)?.row ?? -1;
+            const toRow = DAG_ROWS.find((r) => r.id === to)?.row ?? -1;
+            const sameRow = fromRow === toRow;
+
+            let d: string;
+            if (sameRow) {
+              // Horizontal arrow: right edge → left edge (or left→right if target is to the left)
+              const goRight = toPos.cx > fromPos.cx;
+              const x1 = goRight ? fromPos.right + 2 : fromPos.left - 2;
+              const y1 = fromPos.cy;
+              const x2 = goRight ? toPos.left - 2 : toPos.right + 2;
+              const y2 = toPos.cy;
+              const midX = (x1 + x2) / 2;
+              d = `M${x1},${y1} C${midX},${y1} ${midX},${y2} ${x2},${y2}`;
+            } else {
+              // Vertical / diagonal arrow: bottom center → top center
+              const x1 = fromPos.cx;
+              const y1 = fromPos.bottom + 2;
+              const x2 = toPos.cx;
+              const y2 = toPos.top - 2;
+              const midY = (y1 + y2) / 2;
+              d = `M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`;
+            }
 
             return (
               <path
                 key={`${from}-${to}`}
-                d={`M${x1},${y1} C${x1},${midY} ${x2},${midY} ${x2},${y2}`}
+                d={d}
                 fill="none"
                 stroke="#d4d4d8"
                 strokeWidth="1.5"
