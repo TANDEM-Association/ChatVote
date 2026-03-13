@@ -126,6 +126,24 @@ resource "scaleway_object_bucket_acl" "public_assets_acl" {
 }
 
 # ──────────────────────────────────────────────
+# K8s Namespaces (applied via kubectl, not Terraform)
+# ──────────────────────────────────────────────
+# Two namespaces provide environment isolation:
+#   - chatvote-prod: Production Qdrant (10Gi), backend, cronjobs
+#     Manifests: k8s/prod/
+#   - chatvote-dev:  Staging Qdrant (5Gi), separate API key
+#     Manifests: k8s/dev/
+#
+# Both run on the same cluster and node pool (pool-par-2-8gb).
+# Isolation is at the namespace level — separate PVCs, secrets, services.
+#
+# Apply with:
+#   kubectl create namespace chatvote-prod
+#   kubectl create namespace chatvote-dev
+#   kubectl apply -f k8s/prod/
+#   kubectl apply -f k8s/dev/
+
+# ──────────────────────────────────────────────
 # Serverless Container — managed by CI/CD
 # ──────────────────────────────────────────────
 # The serverless container (backend-prod) and its namespace

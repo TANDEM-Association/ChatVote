@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: StatefulSet
 metadata:
   name: qdrant
-  namespace: chatvote
+  namespace: chatvote-prod
   labels:
     app: qdrant
 spec:

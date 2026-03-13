@@ -2,7 +2,7 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: chatvote-backend
-  namespace: chatvote
+  namespace: chatvote-prod
   labels:
     app: chatvote-backend
 spec:
