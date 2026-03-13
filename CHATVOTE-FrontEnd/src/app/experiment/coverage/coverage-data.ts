@@ -327,8 +327,10 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
     function computeIngestionScore(agg: CommuneAgg): number {
       if (agg.total === 0 || agg.hasWebsite === 0) return 0;
       let score = 0;
-      score += 50 * (agg.hasScraped / agg.hasWebsite);
-      score += 50 * (agg.hasIndexed / agg.hasWebsite);
+      // Cap ratios at 1.0 — hasScraped/hasIndexed can exceed hasWebsite
+      // when candidates have Qdrant chunks but no website_url in Firestore
+      score += 50 * Math.min(agg.hasScraped / agg.hasWebsite, 1);
+      score += 50 * Math.min(agg.hasIndexed / agg.hasWebsite, 1);
       return Math.round(score);
     }
 
