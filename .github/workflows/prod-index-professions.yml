@@ -28,7 +28,10 @@ jobs:
           API_NAME: chatvote-api
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           FIREBASE_CREDENTIALS_BASE64: ${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}
-          QDRANT_URL: https://chatvoteoan3waxf-qdrant-prod.functions.fnc.fr-par.scw.cloud
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          EMBEDDING_PROVIDER: scaleway
+          SCALEWAY_EMBED_API_KEY: ${{ secrets.SCALEWAY_EMBED_API_KEY }}
         run: |
           echo "=== Step 1: Download PDFs via professions pipeline node ==="
           poetry run python -c "
@@ -72,7 +75,10 @@ jobs:
           API_NAME: chatvote-api
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           FIREBASE_CREDENTIALS_BASE64: ${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}
-          QDRANT_URL: https://chatvoteoan3waxf-qdrant-prod.functions.fnc.fr-par.scw.cloud
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          EMBEDDING_PROVIDER: scaleway
+          SCALEWAY_EMBED_API_KEY: ${{ secrets.SCALEWAY_EMBED_API_KEY }}
         run: poetry run python scripts/upload_all_professions_to_storage.py
 
       - name: Index professions into Qdrant
@@ -82,5 +88,8 @@ jobs:
           API_NAME: chatvote-api
           GOOGLE_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
           FIREBASE_CREDENTIALS_BASE64: ${{ secrets.FIREBASE_CREDENTIALS_BASE64 }}
-          QDRANT_URL: https://chatvoteoan3waxf-qdrant-prod.functions.fnc.fr-par.scw.cloud
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          EMBEDDING_PROVIDER: scaleway
+          SCALEWAY_EMBED_API_KEY: ${{ secrets.SCALEWAY_EMBED_API_KEY }}
         run: poetry run python -m src.services.profession_indexer

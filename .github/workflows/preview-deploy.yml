@@ -5,6 +5,10 @@ on:
     branches: [main, develop]
     types: [opened, synchronize, reopened]
 
+concurrency:
+  group: preview-${{ github.event.number }}
+  cancel-in-progress: true
+
 env:
   SCW_REGION: fr-par
   SCW_REGISTRY: rg.fr-par.scw.cloud/chatvote
@@ -101,6 +105,8 @@ jobs:
           context: ./CHATVOTE-BackEnd/firebase
           push: true
           tags: ${{ env.SCW_REGISTRY }}/firebase-emulator:latest
+          cache-from: type=registry,ref=${{ env.SCW_REGISTRY }}/firebase-emulator:cache
+          cache-to: type=registry,ref=${{ env.SCW_REGISTRY }}/firebase-emulator:cache,mode=max
 
       # ── Deploy Qdrant ───────────────────────────────────────────────
       - name: Deploy Qdrant container
@@ -310,11 +316,21 @@ jobs:
         uses: actions/setup-python@v5
         with:
           python-version: '3.11'
+          cache: 'pip'
+
+      - name: Install Poetry
+        run: pip install poetry
+
+      - name: Cache Poetry virtualenv
+        uses: actions/cache@v4
+        with:
+          path: ~/.cache/pypoetry
+          key: poetry-${{ runner.os }}-py3.11-${{ hashFiles('CHATVOTE-BackEnd/poetry.lock') }}
+          restore-keys: poetry-${{ runner.os }}-py3.11-
 
       - name: Install backend dependencies
         working-directory: CHATVOTE-BackEnd
         run: |
-          pip install poetry
           poetry config virtualenvs.create false
           poetry install --no-root --only main
 
@@ -359,6 +375,15 @@ jobs:
 
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=preview --token=${{ secrets.VERCEL_TOKEN }}
+
+      - name: Cache Next.js build
+        uses: actions/cache@v4
+        with:
+          path: CHATVOTE-FrontEnd/.next/cache
+          key: nextjs-preview-${{ runner.os }}-${{ hashFiles('CHATVOTE-FrontEnd/pnpm-lock.yaml') }}-${{ hashFiles('CHATVOTE-FrontEnd/src/**') }}
+          restore-keys: |
+            nextjs-preview-${{ runner.os }}-${{ hashFiles('CHATVOTE-FrontEnd/pnpm-lock.yaml') }}-
+            nextjs-preview-${{ runner.os }}-
 
       - name: Build
         run: vercel build --token=${{ secrets.VERCEL_TOKEN }}

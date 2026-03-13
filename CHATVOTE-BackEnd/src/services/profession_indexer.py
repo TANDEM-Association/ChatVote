@@ -354,6 +354,25 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
 
     logger.info(f"[profession_indexer] created {len(documents)} chunks for {candidate_id}")
 
+    # Step 5.5: Classify themes (optional — degrades gracefully)
+    try:
+        from src.services.chunk_classifier import classify_chunks_themes
+
+        chunk_texts = [doc.page_content for doc in documents]
+        classifications = await classify_chunks_themes(chunk_texts)
+        for doc, cls in zip(documents, classifications):
+            if cls.theme:
+                doc.metadata["theme"] = cls.theme
+            if cls.sub_theme:
+                doc.metadata["sub_theme"] = cls.sub_theme
+        classified = sum(1 for c in classifications if c.theme)
+        logger.info(
+            f"[profession_indexer] classified {classified}/{len(documents)} "
+            f"chunks with themes for {candidate_id}"
+        )
+    except Exception as e:
+        logger.warning(f"[profession_indexer] theme classification failed for {candidate_id}: {e}")
+
     # Step 6: Delete existing profession_de_foi chunks (keep website chunks)
     await asyncio.to_thread(_delete_profession_chunks, candidate_id)
 
