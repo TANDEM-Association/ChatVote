@@ -28,7 +28,7 @@
     "messages": [
       {
         "id": "c6dcde41-1823-45c2-bca0-9ef7d633c9a2",
-        "content": "Place Publique est un mouvement politique de gauche sociale-démocrate et écologiste, fondé par Raphaël Glucksmann, mettant l'accent sur l'Europe, la justice sociale et les droits humains [].  \\nTu peux consulter leur programme électoral ici : https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf [].\n",
+        "content": "Place Publique est un mouvement politique de gauche sociale-démocrate et écologiste, fondé par Raphaël Glucksmann, mettant l'accent sur l'Europe, la justice sociale et les droits humains [].  \\nTu peux consulter leur programme électoral ici : https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf [].\n",
         "sources": [],
         "party_id": "chat-vote",
         "created_at": "2026-01-23T09:36:18.009Z",
@@ -72,7 +72,7 @@
             "source": "Place Publique - Programme électoral",
             "page": 55,
             "content_preview": "30 La condition animale est un enjeu éthique qui dépasse la  simple réponse à l’...",
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_type": "manifesto",
             "party_id": "place-publique"
           },
@@ -80,7 +80,7 @@
             "source": "Place Publique - Programme électoral",
             "page": 56,
             "content_preview": "l’élevage en cage, l’interdiction de l’élevage pour  la fourrure, ainsi que le r...",
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_type": "manifesto",
             "party_id": "place-publique"
           },
@@ -88,7 +88,7 @@
             "source": "Place Publique - Programme électoral",
             "page": 9,
             "content_preview": "6 Une France   puissante grâce   à une Europe   souveraine 1",
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_type": "manifesto",
             "party_id": "place-publique"
           },
@@ -96,7 +96,7 @@
             "source": "Place Publique - Programme électoral",
             "page": 68,
             "content_preview": "36 Un nouveau  contrat social et  démocratique  pour une France  plus juste 2",
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_type": "manifesto",
             "party_id": "place-publique"
           },
@@ -104,7 +104,7 @@
             "source": "Place Publique - Programme électoral",
             "page": 25,
             "content_preview": "15 partie 1 : Une France puisssante grâce à une Europe souveraine",
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_type": "manifesto",
             "party_id": "place-publique"
           }
@@ -160,7 +160,7 @@
             "page": 24,
             "content_preview": "exigées chez nous (mesures miroirs).    Créer un label européen pour l’épargne a...",
             "document_publish_date": null,
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_document": "election_manifesto"
           },
           {
@@ -168,7 +168,7 @@
             "page": 19,
             "content_preview": "institutionnelle, clarifiant et démocratisant le  fonctionnement de l’Union pass...",
             "document_publish_date": null,
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_document": "election_manifesto"
           },
           {
@@ -176,7 +176,7 @@
             "page": 25,
             "content_preview": "15 partie 1 : Une France puisssante grâce à une Europe souveraine",
             "document_publish_date": null,
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_document": "election_manifesto"
           },
           {
@@ -184,7 +184,7 @@
             "page": 57,
             "content_preview": "31 partie 1 : Une France puisssante grâce à une Europe souveraine   32",
             "document_publish_date": null,
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_document": "election_manifesto"
           },
           {
@@ -192,7 +192,7 @@
             "page": 68,
             "content_preview": "36 Un nouveau  contrat social et  démocratique  pour une France  plus juste 2",
             "document_publish_date": null,
-            "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/place-publique/programme.pdf",
+            "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/place-publique/programme.pdf",
             "source_document": "election_manifesto"
           }
         ],

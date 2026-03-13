@@ -24,12 +24,6 @@ const nextConfig: NextConfig = {
       },
       {
         protocol: "https",
-        hostname: "storage.googleapis.com",
-        port: "",
-        pathname: "/chat-vote-dev.firebasestorage.app/**",
-      },
-      {
-        protocol: "https",
         hostname: "chatvote-public-assets.s3.fr-par.scw.cloud",
         port: "",
         pathname: "/public/**",

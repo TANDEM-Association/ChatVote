@@ -149,7 +149,7 @@ _PDF_CACHE_DIR = Path(tempfile.gettempdir()) / "chatvote_professions_pdfs"
 
 # Firebase Storage config
 env = os.getenv("ENV", "dev")
-BUCKET_NAME = "chat-vote-dev.firebasestorage.app"
+BUCKET_NAME = os.getenv("FIREBASE_STORAGE_BUCKET", f"chat-vote-{env}.firebasestorage.app")
 STORAGE_PREFIX = "public/professions_de_foi"
 
 # Text splitter — same config as candidate_indexer and manifesto_indexer

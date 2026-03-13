@@ -55,8 +55,8 @@ FAKE_CONVERSATIONS = [
                 "party_id": "europe-ecologie-les-verts",
                 "content": "Les Écologistes proposent un plan ambitieux pour le climat avec l'objectif de neutralité carbone en 2050. Ils veulent investir massivement dans les énergies renouvelables, interdire les nouveaux forages pétroliers, et instaurer une taxe carbone aux frontières de l'UE [0].\n\nIls défendent aussi la création d'une Garantie Universelle d'Assurance Climatique pour protéger les citoyens face aux risques climatiques [1].",
                 "sources": [
-                    {"source": "Les Écologistes - Programme électoral", "page": 7, "content_preview": "Atteindre la neutralité carbone...", "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/europe-ecologie-les-verts/programme.pdf", "source_type": "manifesto", "party_id": "europe-ecologie-les-verts"},
-                    {"source": "Les Écologistes - Programme électoral", "page": 28, "content_preview": "Instaurer une Garantie Universelle...", "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/europe-ecologie-les-verts/programme.pdf", "source_type": "manifesto", "party_id": "europe-ecologie-les-verts"},
+                    {"source": "Les Écologistes - Programme électoral", "page": 7, "content_preview": "Atteindre la neutralité carbone...", "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/europe-ecologie-les-verts/programme.pdf", "source_type": "manifesto", "party_id": "europe-ecologie-les-verts"},
+                    {"source": "Les Écologistes - Programme électoral", "page": 28, "content_preview": "Instaurer une Garantie Universelle...", "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/europe-ecologie-les-verts/programme.pdf", "source_type": "manifesto", "party_id": "europe-ecologie-les-verts"},
                 ],
             },
             {
@@ -64,8 +64,8 @@ FAKE_CONVERSATIONS = [
                 "party_id": "ps",
                 "content": "Place Publique met l'écologie au cœur de son programme avec une grande loi Climat engageant tous les ministères. Ils proposent une trajectoire de -90% d'émissions en 2040 et la neutralité climat en 2050 [0].\n\nIls souhaitent aussi adopter un bouclier législatif pour la sobriété : loi contre la fast-fashion, score carbone obligatoire sur les produits, et fin des plastiques à usage unique d'ici 2030 [1].",
                 "sources": [
-                    {"source": "Place Publique - Programme électoral", "page": 28, "content_preview": "Faire une grande loi Climat...", "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/ps/programme.pdf", "source_type": "manifesto", "party_id": "ps"},
-                    {"source": "Place Publique - Programme électoral", "page": 29, "content_preview": "Adopter un bouclier législatif...", "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/ps/programme.pdf", "source_type": "manifesto", "party_id": "ps"},
+                    {"source": "Place Publique - Programme électoral", "page": 28, "content_preview": "Faire une grande loi Climat...", "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/ps/programme.pdf", "source_type": "manifesto", "party_id": "ps"},
+                    {"source": "Place Publique - Programme électoral", "page": 29, "content_preview": "Adopter un bouclier législatif...", "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/ps/programme.pdf", "source_type": "manifesto", "party_id": "ps"},
                 ],
             },
         ],
@@ -90,7 +90,7 @@ FAKE_CONVERSATIONS = [
                 "party_id": "lfi",
                 "content": "La France Insoumise propose un plan ambitieux pour le logement, incluant l'encadrement des loyers dans toutes les zones tendues, la construction de 200 000 logements sociaux par an, et la réquisition des logements vacants pour lutter contre la crise du logement [0].",
                 "sources": [
-                    {"source": "La France Insoumise - Programme électoral", "page": 15, "content_preview": "Encadrement des loyers...", "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/lfi/programme.pdf", "source_type": "manifesto", "party_id": "lfi"},
+                    {"source": "La France Insoumise - Programme électoral", "page": 15, "content_preview": "Encadrement des loyers...", "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/lfi/programme.pdf", "source_type": "manifesto", "party_id": "lfi"},
                 ],
             },
         ],
@@ -155,7 +155,7 @@ FAKE_CONVERSATIONS = [
                 "party_id": "europe-ecologie-les-verts",
                 "content": "Les Écologistes proposent un plan massif d'investissement dans les transports en commun et les mobilités douces. Ils souhaitent développer le réseau ferroviaire avec la réouverture de lignes abandonnées, instaurer un pass transport à 50€/mois, et créer des zones à faibles émissions dans toutes les grandes villes [0].",
                 "sources": [
-                    {"source": "Les Écologistes - Programme électoral", "page": 12, "content_preview": "Investir dans le ferroviaire...", "url": "https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/europe-ecologie-les-verts/programme.pdf", "source_type": "manifesto", "party_id": "europe-ecologie-les-verts"},
+                    {"source": "Les Écologistes - Programme électoral", "page": 12, "content_preview": "Investir dans le ferroviaire...", "url": "https://chatvote-public-assets.s3.fr-par.scw.cloud/public/europe-ecologie-les-verts/programme.pdf", "source_type": "manifesto", "party_id": "europe-ecologie-les-verts"},
                 ],
             },
         ],

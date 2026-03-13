@@ -28,7 +28,7 @@ logger = logging.getLogger(__name__)
 PDF_CACHE_DIR = Path(tempfile.gettempdir()) / "chatvote_professions_pdfs"
 PDF_FILENAME_RE = re.compile(r"^1-(\d+)-(\d+)\.pdf$")
 
-BUCKET_NAME = "chat-vote-dev.firebasestorage.app"
+BUCKET_NAME = os.getenv("FIREBASE_STORAGE_BUCKET", f"chat-vote-{os.getenv('ENV', 'dev')}.firebasestorage.app")
 STORAGE_PREFIX = "public/professions_de_foi"
 
 

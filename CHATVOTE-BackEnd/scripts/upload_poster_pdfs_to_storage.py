@@ -29,8 +29,8 @@ logger = logging.getLogger(__name__)
 QDRANT_URL = os.environ.get("QDRANT_URL", "https://chatvoteoan3waxf-qdrant-prod.functions.fnc.fr-par.scw.cloud")
 COLLECTION = "candidates_websites_prod"
 EXTERNAL_DOMAIN = "programme-candidats.interieur.gouv.fr"
-# Firebase Storage bucket — dev (all existing PDFs use this bucket)
-BUCKET_NAME = "chat-vote-dev.firebasestorage.app"
+# Firebase Storage bucket — env-aware
+BUCKET_NAME = os.getenv("FIREBASE_STORAGE_BUCKET", f"chat-vote-{os.getenv('ENV', 'dev')}.firebasestorage.app")
 STORAGE_PREFIX = "public/posters"  # e.g. public/posters/37261/panneau_1.pdf
 DOWNLOAD_SEMAPHORE = asyncio.Semaphore(20)  # max concurrent downloads
 
