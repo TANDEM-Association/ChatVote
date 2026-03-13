@@ -25,6 +25,10 @@ export const ChatStoreProvider = ({ children }: Props) => {
     storeRef.current = createChatStore({
       chatId,
     });
+    // Expose store for debugging in development
+    if (typeof window !== "undefined" && process.env.NODE_ENV === "development") {
+      (window as any).__chatStore = storeRef.current;
+    }
   }
 
   return (

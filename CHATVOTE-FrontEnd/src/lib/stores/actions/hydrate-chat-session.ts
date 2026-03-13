@@ -27,8 +27,18 @@ export const hydrateChatSession: ChatStoreActionHandlerFor<
 
     const partyIds = new Set(preSelectedPartyIds ?? []);
 
+    // When the first message is sent on /chat (no [chatId] route), addUserMessage
+    // sets store.chatId to the session UUID while the SSR chatId prop stays
+    // undefined.  If the useEffect re-fires later (tenant / locale dep change),
+    // we'd see chatId(undefined) !== currentChatId(UUID) → changedPage=true,
+    // which would clobber chatId back to undefined and clear messages.
+    // Guard: only treat it as a page change when the prop actually carries a
+    // *different* value, not when it's just missing.
+    const hasActiveSession =
+      currentChatId !== undefined && get().messages.length > 0;
     const changedPage =
-      chatId !== currentChatId || !areSetsEqual(partyIds, currentPartyIds);
+      (chatId !== currentChatId && !(chatId === undefined && hasActiveSession)) ||
+      !areSetsEqual(partyIds, currentPartyIds);
 
     // Determine scope based on municipality code presence
     const scope = municipalityCode !== undefined ? "local" : "national";
@@ -132,6 +142,21 @@ export const hydrateChatSession: ChatStoreActionHandlerFor<
           state.currentStreamingMessages !== undefined;
 
         if (isActivelyStreaming) {
+          return {
+            loading: {
+              ...state.loading,
+              chatSession: false,
+              initializingChatSession: false,
+            },
+          };
+        }
+
+        // Don't clear an active session's messages when the useEffect
+        // merely re-fired due to a dependency change (tenant, locale).
+        // The store already holds valid messages from addUserMessage +
+        // completeStreamingMessage; wiping them causes content to vanish
+        // the instant streaming finishes.
+        if (state.chatId && state.messages.length > 0) {
           return {
             loading: {
               ...state.loading,

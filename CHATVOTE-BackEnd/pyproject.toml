@@ -43,6 +43,7 @@ xxhash = "^3.5.0"
 qdrant-client = "^1.17.0"
 langchain-qdrant = "^0.2.0"
 apscheduler = "^3.10.4"
+boto3 = "^1.42.67"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.12.1"
