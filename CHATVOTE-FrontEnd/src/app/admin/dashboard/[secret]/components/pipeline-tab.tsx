@@ -1149,7 +1149,7 @@ export default function PipelineTab({ secret, apiUrl, active }: PipelineTabProps
         </div>
       )}
 
-      {/* Communes to scrap control */}
+      {/* Top bar: Communes control + utility buttons */}
       <div className="mb-3 flex items-center gap-3 rounded-lg border border-indigo-500/30 bg-indigo-500/5 px-4 py-3">
         <label
           htmlFor="communes-to-scrap"
@@ -1170,11 +1170,91 @@ export default function PipelineTab({ secret, apiUrl, active }: PipelineTabProps
           className="w-20 rounded-md border border-border-subtle bg-card px-2.5 py-1.5 text-sm font-mono font-semibold text-foreground outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
         />
         <span className="text-xs text-muted-foreground">
-          Top communes by population (controls scraping, indexing, professions de foi)
+          Top communes by population
         </span>
+
+        <div className="flex-1" />
+
+        {bustCacheConfirm ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-red-400 font-medium">
+              Reset all checkpoints?
+            </span>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={bustCache}
+              className="h-7 text-xs"
+            >
+              Confirm
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setBustCacheConfirm(false)}
+              className="h-7 text-xs"
+            >
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setBustCacheConfirm(true)}
+            className="h-7 gap-1.5 text-xs text-red-400 hover:text-red-400"
+          >
+            <Trash2 className="size-3" />
+            Bust Cache
+          </Button>
+        )}
+
+        {clearAllConfirm ? (
+          <div className="flex items-center gap-2">
+            <span className="text-xs text-red-400 font-bold">
+              DELETE all data?
+            </span>
+            <Button
+              size="sm"
+              variant="destructive"
+              onClick={clearAll}
+              className="h-7 text-xs"
+            >
+              Yes, Clear All
+            </Button>
+            <Button
+              size="sm"
+              variant="ghost"
+              onClick={() => setClearAllConfirm(false)}
+              className="h-7 text-xs"
+            >
+              Cancel
+            </Button>
+          </div>
+        ) : (
+          <Button
+            size="sm"
+            variant="outline"
+            onClick={() => setClearAllConfirm(true)}
+            className="h-7 gap-1.5 text-xs text-red-400 hover:text-red-400 border-red-500/30"
+          >
+            <Trash2 className="size-3" />
+            Clear All
+          </Button>
+        )}
+
+        <Button
+          size="sm"
+          variant="ghost"
+          onClick={() => fetchStatus()}
+          className="h-7 gap-1.5 text-xs"
+        >
+          <RotateCcw className="size-3" />
+          Refresh
+        </Button>
       </div>
 
-      {/* Toolbar */}
+      {/* Toolbar: Run/Stop */}
       <div className="mb-4 flex items-center gap-2 rounded-lg border border-border-subtle bg-card px-4 py-3">
         {anyRunning ? (
           <Button
@@ -1214,86 +1294,6 @@ export default function PipelineTab({ secret, apiUrl, active }: PipelineTabProps
             Running...
           </span>
         )}
-
-        <div className="flex-1" />
-
-        {bustCacheConfirm ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-red-400 font-medium">
-              Reset all checkpoints?
-            </span>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={bustCache}
-              className="h-7 text-xs"
-            >
-              Confirm
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setBustCacheConfirm(false)}
-              className="h-7 text-xs"
-            >
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setBustCacheConfirm(true)}
-            className="h-8 gap-1.5 text-xs text-red-400 hover:text-red-400"
-          >
-            <Trash2 className="size-3.5" />
-            Bust Cache
-          </Button>
-        )}
-
-        {clearAllConfirm ? (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-red-400 font-bold">
-              DELETE all data?
-            </span>
-            <Button
-              size="sm"
-              variant="destructive"
-              onClick={clearAll}
-              className="h-7 text-xs"
-            >
-              Yes, Clear All
-            </Button>
-            <Button
-              size="sm"
-              variant="ghost"
-              onClick={() => setClearAllConfirm(false)}
-              className="h-7 text-xs"
-            >
-              Cancel
-            </Button>
-          </div>
-        ) : (
-          <Button
-            size="sm"
-            variant="outline"
-            onClick={() => setClearAllConfirm(true)}
-            className="h-8 gap-1.5 text-xs text-red-400 hover:text-red-400 border-red-500/30"
-          >
-            <Trash2 className="size-3.5" />
-            Clear All Data
-          </Button>
-        )}
-
-        <Button
-          size="sm"
-          variant="ghost"
-          onClick={() => fetchStatus()}
-          className="h-8 gap-1.5 text-xs"
-        >
-          <RotateCcw className="size-3.5" />
-          Refresh
-        </Button>
       </div>
 
       {/* DAG Grid */}
