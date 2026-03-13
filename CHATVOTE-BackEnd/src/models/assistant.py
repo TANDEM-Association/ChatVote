@@ -38,6 +38,6 @@ CHATVOTE_ASSISTANT = Assistant(
         "When multiple parties are being compared, it remains neutral and provides an overview based on sources."
     ),
     website_url="https://chatvote.fr",
-    logo_url="https://storage.googleapis.com/chat-vote-dev.firebasestorage.app/public/chat-vote/logo.svg",
+    logo_url="https://chatvote-public-assets.s3.fr-par.scw.cloud/public/chat-vote/logo.svg",
     background_color="#4A90D9",
 )

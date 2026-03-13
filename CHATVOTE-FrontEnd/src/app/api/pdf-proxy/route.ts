@@ -14,6 +14,7 @@ export async function GET(request: NextRequest) {
   if (
     url.includes("firebasestorage.app") === false &&
     url.includes("storage.googleapis.com") === false &&
+    url.includes("chatvote-public-assets.s3.fr-par.scw.cloud") === false &&
     url.includes("programme-candidats.interieur.gouv.fr") === false
   ) {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });

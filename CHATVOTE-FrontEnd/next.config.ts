@@ -28,6 +28,12 @@ const nextConfig: NextConfig = {
         port: "",
         pathname: "/chat-vote-dev.firebasestorage.app/**",
       },
+      {
+        protocol: "https",
+        hostname: "chatvote-public-assets.s3.fr-par.scw.cloud",
+        port: "",
+        pathname: "/public/**",
+      },
     ],
   },
   webpack: (config: { resolve: { alias: { [key: string]: boolean } } }) => {
