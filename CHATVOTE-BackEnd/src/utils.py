@@ -65,17 +65,24 @@ def get_cors_allowed_origins(env: Optional[str]) -> Union[str, list[str]]:
     if env in ("dev", "local"):
         return "*"
     else:
-        return [
+        origins = [
             "https://chatvote.fr",
             "https://app.chatvote.org",
+            "https://prod.app.chatvote.org",
             "https://embed.chatvote.fr",
             "https://pre-prod.chatvote.fr",
             "https://dev.chatvote.fr",
             "https://chatvote-frontend.vercel.app",
             "https://chatvote-frontend-chatvotes-projects.vercel.app",
+            "https://chatvote-frontend-chatvote.vercel.app",
             "http://localhost:3000",
             "http://localhost:8080",
         ]
+        # Allow extra origins via env var (comma-separated)
+        extra = os.getenv("EXTRA_CORS_ORIGINS", "")
+        if extra:
+            origins.extend(o.strip() for o in extra.split(",") if o.strip())
+        return origins
 
 
 def build_chat_history_string(
