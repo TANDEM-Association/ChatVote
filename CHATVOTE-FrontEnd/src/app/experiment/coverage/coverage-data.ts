@@ -81,24 +81,8 @@ type TopicStatsResponse = {
   classified_chunks: number;
   themes: Array<{ by_party: Record<string, number> }>;
   collections: Record<string, { total: number; classified: number }>;
+  candidate_chunks?: Record<string, number>;
 };
-
-async function fetchCandidateChunks(): Promise<Record<string, number>> {
-  const backendUrl =
-    process.env.NEXT_PUBLIC_API_URL ||
-    process.env.NEXT_PUBLIC_SOCKET_URL ||
-    "http://localhost:8080";
-  try {
-    const res = await fetch(`${backendUrl}/api/v1/experiment/candidate-coverage`, {
-      cache: "no-store",
-    });
-    if (!res.ok) return {};
-    const data = await res.json();
-    return data.candidate_chunks ?? {};
-  } catch {
-    return {};
-  }
-}
 
 async function fetchTopicStats(): Promise<TopicStatsResponse | null> {
   const backendUrl =
@@ -145,7 +129,6 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
       sessionsSnap,
       electoralListsSnap,
       topicStats,
-      candidateChunks,
       municipalityCountSnap,
       candidatesTotalSnap,
       candidatesScrapedSnap,
@@ -157,7 +140,6 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
       db.collection("chat_sessions").select("municipality_code", "commune_code").get(),
       db.collection("electoral_lists").select("commune_code", "list_count", "lists").get(),
       fetchTopicStats(),
-      fetchCandidateChunks(),
       db.collection("municipalities").count().get(),
       // count() queries for summary stats — avoids loading all candidate docs for totals
       db.collection("candidates").count().get(),
@@ -173,6 +155,9 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
         "list_label", "nuance_label", "nuance_code", "party_name",
       ).get(),
     ]);
+
+    // candidate_chunks now comes from topic-stats (merged to eliminate redundant Qdrant scroll)
+    const candidateChunks: Record<string, number> = topicStats?.candidate_chunks ?? {};
 
     const questionsByCommune: Record<string, number> = {};
     for (const doc of sessionsSnap.docs) {

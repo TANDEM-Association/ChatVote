@@ -918,6 +918,8 @@ async def experiment_topic_stats(request):
     collection_stats = {}
     total_chunks = 0
     classified_chunks = 0
+    # Track per-candidate chunk counts (from candidates collection only)
+    candidate_chunks: dict[str, int] = {}
 
     for col_name in [PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME]:
         col_total = 0
@@ -939,6 +941,11 @@ async def experiment_topic_stats(request):
                 for p in points:
                     meta = (p.payload or {}).get("metadata", {})
                     col_total += 1
+                    # Count chunks per candidate namespace (candidates collection only)
+                    if col_name == CANDIDATES_INDEX_NAME:
+                        ns = meta.get("namespace", "")
+                        if ns:
+                            candidate_chunks[ns] = candidate_chunks.get(ns, 0) + 1
                     theme = meta.get("theme")
                     if not theme:
                         continue
@@ -1003,6 +1010,7 @@ async def experiment_topic_stats(request):
         "unclassified_chunks": total_chunks - classified_chunks,
         "themes": themes_list,
         "collections": collection_stats,
+        "candidate_chunks": candidate_chunks,
     })
 
 
