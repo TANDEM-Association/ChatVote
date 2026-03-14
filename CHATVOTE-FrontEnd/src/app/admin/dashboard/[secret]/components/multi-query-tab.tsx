@@ -1,7 +1,16 @@
 "use client";
 
 import { useState, useCallback, useEffect } from "react";
-import { Search, ChevronDown, ChevronRight, CheckCircle2, XCircle, Loader2, X } from "lucide-react";
+import {
+  Search,
+  ChevronDown,
+  ChevronRight,
+  CheckCircle2,
+  XCircle,
+  Loader2,
+  X,
+  Clock,
+} from "lucide-react";
 import { Button } from "@components/ui/button";
 
 // ---------------------------------------------------------------------------
@@ -24,17 +33,32 @@ interface CommuneResult {
   manifesto_chunks: number;
   candidate_chunks: number;
   candidate_details: CandidateDetail[];
+  elapsed_seconds?: number;
+  error?: string;
+}
+
+interface AggregateStats {
+  communes_with_manifesto: number;
+  communes_with_candidates: number;
+  communes_with_no_data: number;
+  total_manifesto_chunks: number;
+  total_candidate_chunks: number;
+  avg_manifesto_chunks: number;
+  avg_candidate_chunks: number;
+  errors: number;
 }
 
 interface MultiQueryResult {
   query: string;
   total_communes: number;
   results: CommuneResult[];
+  aggregate?: AggregateStats;
 }
 
 interface Municipality {
   code: string;
   name: string;
+  population: number;
 }
 
 interface MultiQueryTabProps {
@@ -43,24 +67,65 @@ interface MultiQueryTabProps {
 }
 
 // ---------------------------------------------------------------------------
+// Helpers
+// ---------------------------------------------------------------------------
+
+function StatCard({
+  label,
+  value,
+  color,
+}: {
+  label: string;
+  value: number | string;
+  color?: "green" | "red" | "yellow";
+}) {
+  const colorClass =
+    color === "green"
+      ? "text-green-400"
+      : color === "red"
+        ? "text-red-400"
+        : color === "yellow"
+          ? "text-yellow-400"
+          : "text-foreground";
+  return (
+    <div className="rounded-lg border border-border-subtle bg-background p-3">
+      <p className={`text-xl font-bold tabular-nums ${colorClass}`}>{value}</p>
+      <p className="text-xs uppercase text-muted-foreground mt-1">{label}</p>
+    </div>
+  );
+}
+
+function formatPop(pop: number): string {
+  if (pop >= 1_000_000) return `${(pop / 1_000_000).toFixed(1)}M`;
+  if (pop >= 1_000) return `${(pop / 1_000).toFixed(0)}k`;
+  return String(pop);
+}
+
+// ---------------------------------------------------------------------------
 // Multi Query Tab
 // ---------------------------------------------------------------------------
 
 export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
-  const [query, setQuery] = useState("quels sont les manifestos des candidat");
+  const [query, setQuery] = useState(
+    "quelles sont les propositions des candidats ?",
+  );
   const [scoreThreshold, setScoreThreshold] = useState(0.5);
   const [loading, setLoading] = useState(false);
   const [results, setResults] = useState<MultiQueryResult | null>(null);
   const [error, setError] = useState<string | null>(null);
-  const [expandedCommunes, setExpandedCommunes] = useState<Set<string>>(new Set());
+  const [expandedCommunes, setExpandedCommunes] = useState<Set<string>>(
+    new Set(),
+  );
 
   // Commune selector state
-  const [allMunicipalities, setAllMunicipalities] = useState<Municipality[]>([]);
+  const [allMunicipalities, setAllMunicipalities] = useState<Municipality[]>(
+    [],
+  );
   const [selectedCodes, setSelectedCodes] = useState<Set<string>>(new Set());
   const [communeSearch, setCommuneSearch] = useState("");
   const [loadingMunicipalities, setLoadingMunicipalities] = useState(false);
 
-  // Fetch municipalities on mount
+  // Fetch municipalities on mount (sorted by population desc from backend)
   useEffect(() => {
     setLoadingMunicipalities(true);
     fetch(`${apiUrl}/api/v1/admin/municipalities`, {
@@ -81,7 +146,14 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
     });
   };
 
-  const selectAll = () => setSelectedCodes(new Set(allMunicipalities.map((m) => m.code)));
+  const selectTopN = (n: number) => {
+    // Already sorted by population desc from backend
+    const top = allMunicipalities.slice(0, n);
+    setSelectedCodes(new Set(top.map((m) => m.code)));
+  };
+
+  const selectAll = () =>
+    setSelectedCodes(new Set(allMunicipalities.map((m) => m.code)));
   const clearSelection = () => setSelectedCodes(new Set());
 
   const filteredMunicipalities = communeSearch.trim()
@@ -98,7 +170,10 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
     setResults(null);
     setExpandedCommunes(new Set());
     try {
-      const body: Record<string, unknown> = { query, score_threshold: scoreThreshold };
+      const body: Record<string, unknown> = {
+        query,
+        score_threshold: scoreThreshold,
+      };
       if (selectedCodes.size > 0) {
         body.municipality_codes = Array.from(selectedCodes);
       }
@@ -114,7 +189,9 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
       const json: MultiQueryResult = await res.json();
       setResults(json);
     } catch (err: unknown) {
-      setError(err instanceof Error ? err.message : "Failed to run multi-query");
+      setError(
+        err instanceof Error ? err.message : "Failed to run multi-query",
+      );
     } finally {
       setLoading(false);
     }
@@ -129,13 +206,22 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
     });
   };
 
-  // Summary stats
+  // Per-candidate summary stats
   const summary = results
     ? {
         totalCommunes: results.total_communes,
-        totalCandidates: results.results.reduce((acc, c) => acc + c.total_candidates, 0),
-        withChunks: results.results.reduce((acc, c) => acc + c.candidates_with_chunks, 0),
-        withoutChunks: results.results.reduce((acc, c) => acc + c.candidates_without_chunks, 0),
+        totalCandidates: results.results.reduce(
+          (acc, c) => acc + (c.total_candidates || 0),
+          0,
+        ),
+        withChunks: results.results.reduce(
+          (acc, c) => acc + (c.candidates_with_chunks || 0),
+          0,
+        ),
+        withoutChunks: results.results.reduce(
+          (acc, c) => acc + (c.candidates_without_chunks || 0),
+          0,
+        ),
       }
     : null;
 
@@ -144,18 +230,23 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
       ? Math.round((summary.withChunks / summary.totalCandidates) * 100)
       : 0;
 
+  const agg = results?.aggregate;
+
   return (
     <div className="space-y-4">
       {/* Input section */}
       <div className="rounded-lg border border-border-subtle bg-card p-4 space-y-4">
         <h2 className="text-foreground font-semibold">Multi Query</h2>
         <p className="text-muted-foreground text-sm">
-          Run a query against selected communes to check which candidates have indexed chunks.
+          Run a RAG query against selected communes to check which candidates
+          have indexed chunks and what comes back.
         </p>
 
         <div className="flex flex-col gap-3 sm:flex-row sm:items-end">
           <div className="flex-1 space-y-1">
-            <label className="text-xs uppercase text-muted-foreground">Query</label>
+            <label className="text-xs uppercase text-muted-foreground">
+              Query
+            </label>
             <input
               type="text"
               value={query}
@@ -165,7 +256,9 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
             />
           </div>
           <div className="space-y-1 sm:w-40">
-            <label className="text-xs uppercase text-muted-foreground">Score Threshold</label>
+            <label className="text-xs uppercase text-muted-foreground">
+              Score Threshold
+            </label>
             <input
               type="number"
               value={scoreThreshold}
@@ -178,7 +271,7 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
           </div>
           <Button
             onClick={runQuery}
-            disabled={loading || !query.trim()}
+            disabled={loading || !query.trim() || selectedCodes.size === 0}
             className="flex items-center gap-2 shrink-0"
           >
             {loading ? (
@@ -199,15 +292,29 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
         <div className="space-y-2">
           <div className="flex items-center justify-between">
             <label className="text-xs uppercase text-muted-foreground">
-              Communes {selectedCodes.size > 0 ? `(${selectedCodes.size} selected)` : "(all)"}
+              Communes{" "}
+              {selectedCodes.size > 0
+                ? `(${selectedCodes.size} selected)`
+                : "(none)"}
             </label>
-            <div className="flex gap-2">
+            <div className="flex items-center gap-2">
+              {[10, 20, 50].map((n) => (
+                <button
+                  key={n}
+                  type="button"
+                  onClick={() => selectTopN(n)}
+                  className="rounded border border-border-subtle px-2.5 py-1 text-xs text-muted-foreground hover:bg-background/60 hover:text-foreground transition-colors"
+                >
+                  Top {n}
+                </button>
+              ))}
+              <span className="text-border-subtle">|</span>
               <button
                 type="button"
                 onClick={selectAll}
                 className="text-xs text-blue-400 hover:underline"
               >
-                Select all
+                All
               </button>
               <button
                 type="button"
@@ -253,7 +360,9 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
                 <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />
               </div>
             ) : filteredMunicipalities.length === 0 ? (
-              <p className="p-3 text-xs text-muted-foreground">No communes found.</p>
+              <p className="p-3 text-xs text-muted-foreground">
+                No communes found.
+              </p>
             ) : (
               filteredMunicipalities.map((m) => (
                 <button
@@ -274,7 +383,9 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
                     }`}
                   />
                   <span className="truncate">{m.name}</span>
-                  <span className="ml-auto text-xs text-muted-foreground">{m.code}</span>
+                  <span className="ml-auto text-xs text-muted-foreground">
+                    {m.population ? formatPop(m.population) : ""} · {m.code}
+                  </span>
                 </button>
               ))
             )}
@@ -294,7 +405,7 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
         <div className="rounded-lg border border-border-subtle bg-card p-6 flex items-center justify-center gap-3">
           <Loader2 className="h-5 w-5 animate-spin text-muted-foreground" />
           <span className="text-muted-foreground text-sm">
-            Querying {selectedCodes.size || "all"} communes...
+            Querying {selectedCodes.size} communes...
           </span>
         </div>
       )}
@@ -302,30 +413,74 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
       {/* Results */}
       {results && summary && (
         <div className="space-y-4">
-          {/* Summary bar */}
+          {/* Aggregate stats (from backend) */}
+          {agg && (
+            <div className="rounded-lg border border-border-subtle bg-card p-4">
+              <h3 className="text-foreground font-semibold mb-3">
+                RAG Coverage Stats
+              </h3>
+              <div className="grid grid-cols-2 gap-3 sm:grid-cols-4 lg:grid-cols-8">
+                <StatCard label="Communes" value={results.total_communes} />
+                <StatCard
+                  label="With Manifesto"
+                  value={agg.communes_with_manifesto}
+                  color="green"
+                />
+                <StatCard
+                  label="With Candidates"
+                  value={agg.communes_with_candidates}
+                  color="green"
+                />
+                <StatCard
+                  label="No Data"
+                  value={agg.communes_with_no_data}
+                  color={agg.communes_with_no_data > 0 ? "red" : undefined}
+                />
+                <StatCard
+                  label="Avg Manifesto"
+                  value={agg.avg_manifesto_chunks}
+                />
+                <StatCard
+                  label="Avg Candidate"
+                  value={agg.avg_candidate_chunks}
+                />
+                <StatCard
+                  label="Total Chunks"
+                  value={
+                    agg.total_manifesto_chunks + agg.total_candidate_chunks
+                  }
+                />
+                <StatCard
+                  label="Errors"
+                  value={agg.errors}
+                  color={agg.errors > 0 ? "red" : undefined}
+                />
+              </div>
+            </div>
+          )}
+
+          {/* Per-candidate summary */}
           <div className="rounded-lg border border-border-subtle bg-card p-4">
-            <h3 className="text-foreground font-semibold mb-3">Summary</h3>
+            <h3 className="text-foreground font-semibold mb-3">
+              Candidate Coverage
+            </h3>
             <div className="grid grid-cols-2 gap-3 sm:grid-cols-5">
-              <div className="rounded-lg border border-border-subtle bg-background p-3">
-                <p className="text-xl font-bold tabular-nums text-foreground">{summary.totalCommunes}</p>
-                <p className="text-xs uppercase text-muted-foreground mt-1">Communes</p>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-background p-3">
-                <p className="text-xl font-bold tabular-nums text-foreground">{summary.totalCandidates}</p>
-                <p className="text-xs uppercase text-muted-foreground mt-1">Total Candidates</p>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-background p-3">
-                <p className="text-xl font-bold tabular-nums text-green-400">{summary.withChunks}</p>
-                <p className="text-xs uppercase text-muted-foreground mt-1">With Chunks</p>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-background p-3">
-                <p className="text-xl font-bold tabular-nums text-red-400">{summary.withoutChunks}</p>
-                <p className="text-xs uppercase text-muted-foreground mt-1">Without Chunks</p>
-              </div>
-              <div className="rounded-lg border border-border-subtle bg-background p-3">
-                <p className="text-xl font-bold tabular-nums text-foreground">{successRate}%</p>
-                <p className="text-xs uppercase text-muted-foreground mt-1">Success Rate</p>
-              </div>
+              <StatCard label="Communes" value={summary.totalCommunes} />
+              <StatCard
+                label="Total Candidates"
+                value={summary.totalCandidates}
+              />
+              <StatCard
+                label="With Chunks"
+                value={summary.withChunks}
+                color="green"
+              />
+              <StatCard
+                label="Without Chunks"
+                value={summary.withoutChunks}
+                color={summary.withoutChunks > 0 ? "red" : undefined}
+              />
+              <StatCard label="Success Rate" value={`${successRate}%`} />
             </div>
           </div>
 
@@ -337,21 +492,44 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
               </h3>
             </div>
             {/* Table header */}
-            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-x-4 px-4 py-2 border-b border-border-subtle bg-background/50">
-              <span className="text-xs uppercase text-muted-foreground">Commune</span>
-              <span className="text-xs uppercase text-muted-foreground text-right">Candidates</span>
-              <span className="text-xs uppercase text-muted-foreground text-right">With Chunks</span>
-              <span className="text-xs uppercase text-muted-foreground text-right">Without Chunks</span>
-              <span className="text-xs uppercase text-muted-foreground text-right">Manifesto</span>
-              <span className="text-xs uppercase text-muted-foreground text-right">Candidate</span>
-              <span className="text-xs uppercase text-muted-foreground text-right"></span>
+            <div className="grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-x-4 px-4 py-2 border-b border-border-subtle bg-background/50">
+              <span className="text-xs uppercase text-muted-foreground">
+                Commune
+              </span>
+              <span className="text-xs uppercase text-muted-foreground text-right">
+                Candidates
+              </span>
+              <span className="text-xs uppercase text-muted-foreground text-right">
+                With
+              </span>
+              <span className="text-xs uppercase text-muted-foreground text-right">
+                Without
+              </span>
+              <span className="text-xs uppercase text-muted-foreground text-right">
+                Manifesto
+              </span>
+              <span className="text-xs uppercase text-muted-foreground text-right">
+                Candidate
+              </span>
+              <span className="text-xs uppercase text-muted-foreground text-right">
+                Time
+              </span>
+              <span className="text-xs uppercase text-muted-foreground text-right" />
             </div>
 
             {/* Rows */}
             <div className="divide-y divide-border-subtle">
               {results.results.map((commune) => {
-                const isExpanded = expandedCommunes.has(commune.municipality_code);
-                const hasIssues = commune.candidates_without_chunks > 0;
+                const isExpanded = expandedCommunes.has(
+                  commune.municipality_code,
+                );
+                const hasError = !!commune.error;
+                const hasNoData =
+                  !hasError &&
+                  commune.manifesto_chunks === 0 &&
+                  commune.candidate_chunks === 0;
+                const hasIssues =
+                  hasError || hasNoData || commune.candidates_without_chunks > 0;
 
                 return (
                   <div key={commune.municipality_code}>
@@ -359,35 +537,52 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
                     <button
                       type="button"
                       onClick={() => toggleCommune(commune.municipality_code)}
-                      className="w-full grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto] gap-x-4 px-4 py-3 text-left hover:bg-background/40 transition-colors items-center"
+                      className="w-full grid grid-cols-[1fr_auto_auto_auto_auto_auto_auto_auto] gap-x-4 px-4 py-3 text-left hover:bg-background/40 transition-colors items-center"
                     >
                       <div className="flex items-center gap-2 min-w-0">
-                        {hasIssues ? (
+                        {hasError ? (
+                          <XCircle className="h-4 w-4 shrink-0 text-red-400" />
+                        ) : hasNoData ? (
+                          <XCircle className="h-4 w-4 shrink-0 text-yellow-400" />
+                        ) : hasIssues ? (
                           <XCircle className="h-4 w-4 shrink-0 text-yellow-400" />
                         ) : (
                           <CheckCircle2 className="h-4 w-4 shrink-0 text-green-400" />
                         )}
                         <span className="text-sm text-foreground font-medium truncate">
-                          {commune.municipality_name}
+                          {commune.municipality_name ||
+                            commune.municipality_code}
                         </span>
                         <span className="text-xs text-muted-foreground shrink-0">
                           {commune.municipality_code}
                         </span>
                       </div>
                       <span className="text-sm text-foreground tabular-nums text-right">
-                        {commune.total_candidates}
+                        {commune.total_candidates ?? "-"}
                       </span>
                       <span className="text-sm text-green-400 tabular-nums text-right">
-                        {commune.candidates_with_chunks}
+                        {commune.candidates_with_chunks ?? "-"}
                       </span>
-                      <span className={`text-sm tabular-nums text-right ${commune.candidates_without_chunks > 0 ? "text-red-400" : "text-muted-foreground"}`}>
-                        {commune.candidates_without_chunks}
+                      <span
+                        className={`text-sm tabular-nums text-right ${(commune.candidates_without_chunks ?? 0) > 0 ? "text-red-400" : "text-muted-foreground"}`}
+                      >
+                        {commune.candidates_without_chunks ?? "-"}
                       </span>
-                      <span className="text-sm text-muted-foreground tabular-nums text-right">
-                        {commune.manifesto_chunks}
+                      <span
+                        className={`text-sm tabular-nums text-right ${commune.manifesto_chunks === 0 ? "text-yellow-400" : "text-muted-foreground"}`}
+                      >
+                        {commune.manifesto_chunks ?? "-"}
                       </span>
-                      <span className="text-sm text-muted-foreground tabular-nums text-right">
-                        {commune.candidate_chunks}
+                      <span
+                        className={`text-sm tabular-nums text-right ${commune.candidate_chunks === 0 ? "text-yellow-400" : "text-muted-foreground"}`}
+                      >
+                        {commune.candidate_chunks ?? "-"}
+                      </span>
+                      <span className="text-sm text-muted-foreground tabular-nums text-right flex items-center justify-end gap-1">
+                        <Clock className="h-3 w-3" />
+                        {commune.elapsed_seconds != null
+                          ? `${commune.elapsed_seconds.toFixed(1)}s`
+                          : "-"}
                       </span>
                       <span className="text-muted-foreground">
                         {isExpanded ? (
@@ -401,8 +596,14 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
                     {/* Expanded candidate details */}
                     {isExpanded && (
                       <div className="bg-background/30 border-t border-border-subtle px-4 py-3 space-y-2">
-                        {commune.candidate_details.length === 0 ? (
-                          <p className="text-xs text-muted-foreground">No candidate details available.</p>
+                        {hasError ? (
+                          <p className="text-xs text-red-400">
+                            Error: {commune.error}
+                          </p>
+                        ) : commune.candidate_details.length === 0 ? (
+                          <p className="text-xs text-muted-foreground">
+                            No candidate details available.
+                          </p>
                         ) : (
                           commune.candidate_details.map((candidate) => (
                             <div
@@ -427,8 +628,11 @@ export default function MultiQueryTab({ secret, apiUrl }: MultiQueryTabProps) {
                                     {candidate.candidate_id}
                                   </span>
                                 </div>
-                                <span className={`text-xs font-semibold ${candidate.chunk_count === 0 ? "text-red-400" : "text-green-400"}`}>
-                                  {candidate.chunk_count} chunk{candidate.chunk_count !== 1 ? "s" : ""}
+                                <span
+                                  className={`text-xs font-semibold ${candidate.chunk_count === 0 ? "text-red-400" : "text-green-400"}`}
+                                >
+                                  {candidate.chunk_count} chunk
+                                  {candidate.chunk_count !== 1 ? "s" : ""}
                                 </span>
                               </div>
                               {candidate.chunks_preview.length > 0 && (

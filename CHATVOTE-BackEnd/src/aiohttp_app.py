@@ -610,13 +610,14 @@ async def admin_list_municipalities(request):
         return web.json_response({"error": "Unauthorized"}, status=401)
 
     results = []
-    async for doc in async_db.collection("municipalities").select(["code", "nom", "name"]).stream():
+    async for doc in async_db.collection("municipalities").select(["code", "nom", "name", "population"]).stream():
         d = doc.to_dict() or {}
         results.append({
             "code": d.get("code") or doc.id,
             "name": d.get("nom", d.get("name", "")),
+            "population": d.get("population", 0),
         })
-    results.sort(key=lambda x: x["name"])
+    results.sort(key=lambda x: (-x["population"], x["name"]))
     return web.json_response({"municipalities": results})
 
 
@@ -636,17 +637,31 @@ async def admin_multi_query(request):
         return web.json_response({"status": "error", "message": "query is required"}, status=400)
 
     municipality_codes: list[str] = data.get("municipality_codes") or []
+    top_n: int | None = data.get("top_n")
     score_threshold: float = float(data.get("score_threshold", 0.5))
 
     # Fetch all parties once (needed to build party_ids_to_search per commune)
     all_parties = await aget_parties()
 
-    # If no municipality_codes provided, refuse — scanning all 35k docs is too expensive
+    # If top_n provided without explicit codes, auto-select top N by population
+    if not municipality_codes and top_n:
+        top_n = min(int(top_n), 100)
+        munis = []
+        async for muni_doc in (
+            async_db.collection("municipalities")
+            .order_by("population", direction=firestore.Query.DESCENDING)  # noqa: F821
+            .limit(top_n)
+            .stream()
+        ):
+            d = muni_doc.to_dict() or {}
+            munis.append(d.get("code") or muni_doc.id)
+        municipality_codes = munis
+
     if not municipality_codes:
         return web.json_response(
             {
                 "status": "error",
-                "message": "municipality_codes is required; scanning all municipalities is not supported",
+                "message": "municipality_codes or top_n is required",
             },
             status=400,
         )
@@ -660,6 +675,7 @@ async def admin_multi_query(request):
     async def _process_municipality(municipality_code: str) -> dict:
         async with semaphore:
             try:
+                t_muni = time.perf_counter()
                 # Fetch candidates for this commune
                 candidates = await aget_candidates_by_municipality(municipality_code)
 
@@ -752,6 +768,7 @@ async def admin_multi_query(request):
                     "manifesto_chunks": len(manifesto_docs),
                     "candidate_chunks": len(candidate_docs),
                     "candidate_details": sorted_details,
+                    "elapsed_seconds": round(time.perf_counter() - t_muni, 2),
                 }
             except Exception as e:
                 logger.error(f"Error processing municipality {municipality_code}: {e}", exc_info=True)
@@ -769,12 +786,31 @@ async def admin_multi_query(request):
         batch_results = await asyncio.gather(*[_process_municipality(code) for code in batch])
         results.extend(batch_results)
 
+    # Compute aggregate stats
+    successful = [r for r in results if "error" not in r]
+    communes_with_manifesto = sum(1 for r in successful if r.get("manifesto_chunks", 0) > 0)
+    communes_with_candidates = sum(1 for r in successful if r.get("candidate_chunks", 0) > 0)
+    communes_with_no_data = sum(1 for r in successful if r.get("manifesto_chunks", 0) == 0 and r.get("candidate_chunks", 0) == 0)
+    total_manifesto = sum(r.get("manifesto_chunks", 0) for r in successful)
+    total_candidate = sum(r.get("candidate_chunks", 0) for r in successful)
+    n = max(len(successful), 1)
+
     return web.json_response(
         {
             "query": query,
             "score_threshold": score_threshold,
             "total_communes": len(municipality_codes),
             "results": results,
+            "aggregate": {
+                "communes_with_manifesto": communes_with_manifesto,
+                "communes_with_candidates": communes_with_candidates,
+                "communes_with_no_data": communes_with_no_data,
+                "total_manifesto_chunks": total_manifesto,
+                "total_candidate_chunks": total_candidate,
+                "avg_manifesto_chunks": round(total_manifesto / n, 1),
+                "avg_candidate_chunks": round(total_candidate / n, 1),
+                "errors": len(results) - len(successful),
+            },
         }
     )
 
@@ -909,7 +945,6 @@ async def experiment_metadata_schema(request):
 @routes.get(f"{route_prefix}/experiment/topic-stats")
 async def experiment_topic_stats(request):
     """Aggregate theme distribution across all indexed chunks."""
-    from src.models.chunk_metadata import THEME_TAXONOMY, Fiabilite
     from collections import defaultdict
 
     theme_data: dict[str, dict] = {}
@@ -1095,7 +1130,6 @@ async def commune_dashboard(request):
     """Return aggregated dashboard data for a single commune."""
     from collections import defaultdict
     from qdrant_client.models import Filter, FieldCondition, MatchValue
-    from src.models.chunk_metadata import THEME_TAXONOMY
 
     commune_code = request.match_info["commune_code"]
 
@@ -1660,7 +1694,7 @@ async def ds_stop_node(request):
         return web.json_response({"status": "stopped", "node_id": node_id})
 
     # Also clear stale "running" state from Firestore (e.g. after server restart)
-    from src.services.data_pipeline.base import load_config, _config_ref
+    from src.services.data_pipeline.base import load_config
     from src.services.data_pipeline import PIPELINE_NODES
     node = PIPELINE_NODES.get(node_id)
     if node:
@@ -1705,7 +1739,6 @@ async def ds_trigger_crawl(request):
     from src.services.data_pipeline.crawl_scraper import (
         CrawlScraperNode,
         _get_crawl_credentials,
-        SHEET_RANGE,
         COL_CANDIDATE_ID,
         COL_WEBSITE_URL,
         COL_STATUS,
@@ -1835,7 +1868,7 @@ async def admin_list_chat_sessions(request: web.Request) -> web.Response:
     query = async_db.collection("chat_sessions")
 
     if since:
-        from datetime import datetime, timezone
+        from datetime import datetime
         since_dt = datetime.fromisoformat(since.replace("Z", "+00:00"))
         query = query.where("updated_at", ">=", since_dt)
 
