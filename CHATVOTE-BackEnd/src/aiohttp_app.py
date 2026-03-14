@@ -270,6 +270,133 @@ async def admin_index_status(request):
     return web.json_response(_indexing_status)
 
 
+# ---------------------------------------------------------------------------
+# Namespace migration: rename old national-election manifesto namespaces
+# (la-france-insoumise, renaissance, place-publique) to current Firestore
+# party_ids (lfi, union_centre, union_gauche).
+# ---------------------------------------------------------------------------
+NAMESPACE_MIGRATION_MAP: dict[str, str] = {
+    "la-france-insoumise": "lfi",
+    "renaissance": "union_centre",
+    "place-publique": "union_gauche",
+}
+
+
+@routes.post(f"{route_prefix}/admin/migrate-manifesto-namespaces")
+async def admin_migrate_manifesto_namespaces(request):
+    """Rename old manifesto namespaces in Qdrant to match current Firestore party_ids.
+
+    Body (JSON):
+      dry_run: bool (default true) — preview without modifying anything
+      only: str|null — if set, only migrate this one old namespace (e.g. "la-france-insoumise")
+      snapshot: bool (default true) — create a Qdrant snapshot before migrating
+    """
+    from qdrant_client.models import (
+        Filter, FieldCondition, MatchValue,
+    )
+
+    data = await request.json() if request.can_read_body else {}
+    dry_run = data.get("dry_run", True)
+    only = data.get("only")
+    do_snapshot = data.get("snapshot", True)
+
+    migration_map = NAMESPACE_MIGRATION_MAP
+    if only:
+        if only not in migration_map:
+            return web.json_response(
+                {"error": f"Unknown old namespace '{only}'. Valid: {list(migration_map.keys())}"},
+                status=400,
+            )
+        migration_map = {only: migration_map[only]}
+
+    report: dict = {"dry_run": dry_run, "snapshot": None, "migrations": []}
+
+    # --- Step 0: Snapshot ---
+    if do_snapshot and not dry_run:
+        try:
+            snapshot_info = qdrant_client.create_snapshot(
+                collection_name=PARTY_INDEX_NAME,
+            )
+            report["snapshot"] = {
+                "status": "created",
+                "name": snapshot_info.name,
+                "collection": PARTY_INDEX_NAME,
+            }
+            logger.info(f"Pre-migration snapshot created: {snapshot_info.name}")
+        except Exception as e:
+            logger.error(f"Snapshot failed: {e}", exc_info=True)
+            return web.json_response(
+                {"error": f"Snapshot failed — aborting migration: {e}"},
+                status=500,
+            )
+    elif dry_run:
+        report["snapshot"] = {"status": "skipped (dry_run)"}
+
+    # --- Step 1: For each old→new mapping, count and optionally rename ---
+    for old_ns, new_ns in migration_map.items():
+        ns_filter = Filter(must=[
+            FieldCondition(key="metadata.namespace", match=MatchValue(value=old_ns)),
+        ])
+
+        # Count points with old namespace
+        count = qdrant_client.count(
+            collection_name=PARTY_INDEX_NAME,
+            count_filter=ns_filter,
+            exact=True,
+        ).count
+
+        entry: dict = {
+            "old_namespace": old_ns,
+            "new_namespace": new_ns,
+            "points_found": count,
+            "status": "skipped" if count == 0 else ("would_migrate" if dry_run else "pending"),
+        }
+
+        if count > 0 and not dry_run:
+            try:
+                # Scroll matching points and update metadata in-place.
+                # After each batch, updated points no longer match the
+                # old_ns filter, so we always scroll from offset=None.
+                migrated = 0
+                while True:
+                    points, _ = qdrant_client.scroll(
+                        collection_name=PARTY_INDEX_NAME,
+                        scroll_filter=ns_filter,
+                        limit=100,
+                        with_payload=True,
+                        with_vectors=False,
+                    )
+                    if not points:
+                        break
+                    for p in points:
+                        meta = (p.payload or {}).get("metadata", {})
+                        meta["namespace"] = new_ns
+                        meta["party_ids"] = [new_ns]
+                        qdrant_client.set_payload(
+                            collection_name=PARTY_INDEX_NAME,
+                            payload={"metadata": meta},
+                            points=[p.id],
+                        )
+                    migrated += len(points)
+                entry["status"] = "migrated"
+                entry["points_migrated"] = migrated
+                logger.info(f"Migrated {migrated} points: {old_ns} → {new_ns}")
+            except Exception as e:
+                entry["status"] = f"error: {e}"
+                logger.error(f"Migration failed for {old_ns} → {new_ns}: {e}", exc_info=True)
+
+        report["migrations"].append(entry)
+
+    # --- Step 2: Invalidate namespace cache ---
+    if not dry_run:
+        from src.vector_store_helper import _manifesto_namespaces
+        import src.vector_store_helper as _vsh
+        _vsh._manifesto_namespaces = None
+        report["cache_invalidated"] = True
+
+    return web.json_response(report)
+
+
 @routes.post(route_prefix + "/admin/index-candidate-website/{candidate_id}")
 async def admin_index_candidate_website(request):
     """Admin endpoint to trigger indexation of a specific candidate's website."""
