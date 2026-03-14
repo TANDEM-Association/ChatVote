@@ -10,6 +10,8 @@ from langchain_core.documents import Document
 from langchain_core.embeddings import Embeddings
 from qdrant_client import AsyncQdrantClient, QdrantClient
 from qdrant_client.models import (
+    CreateAlias,
+    CreateAliasOperation,
     Filter,
     FieldCondition,
     MatchAny,
@@ -46,6 +48,24 @@ PARTY_INDEX_NAME = "all_parties"
 VOTING_BEHAVIOR_INDEX_NAME = "justified_voting_behavior"
 PARLIAMENTARY_QUESTIONS_INDEX_NAME = "parliamentary_questions"
 CANDIDATES_INDEX_NAME = "candidates_websites"
+
+ALL_COLLECTION_NAMES = [
+    PARTY_INDEX_NAME,
+    VOTING_BEHAVIOR_INDEX_NAME,
+    PARLIAMENTARY_QUESTIONS_INDEX_NAME,
+    CANDIDATES_INDEX_NAME,
+]
+
+
+def _env_suffix() -> str:
+    """Return the environment suffix for Qdrant collection names ('_dev' or '_prod')."""
+    env = os.getenv("ENV", "dev")
+    return "_prod" if env == "prod" else "_dev"
+
+
+def _real_collection_name(alias: str) -> str:
+    """Return the suffixed collection name for the current environment."""
+    return f"{alias}{_env_suffix()}"
 
 
 def _ensure_payload_indexes(collection_name: str) -> None:
@@ -249,51 +269,78 @@ async_qdrant_client = AsyncQdrantClient(
 _known_collections: set[str] = set()
 
 
+def _ensure_alias(alias_name: str, collection_name: str) -> None:
+    """Point ``alias_name`` → ``collection_name``, idempotent."""
+    try:
+        qdrant_client.update_collection_aliases(
+            change_aliases_operations=[
+                CreateAliasOperation(
+                    create_alias=CreateAlias(
+                        alias_name=alias_name,
+                        collection_name=collection_name,
+                    )
+                )
+            ]
+        )
+        logger.info(f"Alias '{alias_name}' → '{collection_name}'")
+    except Exception as e:
+        logger.warning(f"Failed to set alias '{alias_name}' → '{collection_name}': {e}")
+
+
 def _ensure_collection_exists(collection_name: str) -> None:
     """
     Ensure a Qdrant collection exists with correct dimensions, creating/recreating if necessary.
 
-    Uses get_collection() which resolves aliases, so ``all_parties`` correctly
-    finds ``all_parties_prod`` instead of trying to create a conflicting collection.
+    The actual collection is created with an env suffix (e.g. ``all_parties_dev``),
+    and a bare-name alias (``all_parties``) is pointed at it so all code can use
+    the unsuffixed constants regardless of environment.
     """
+    real_name = _real_collection_name(collection_name)
+
     try:
-        # get_collection resolves aliases — unlike get_collections() which only lists real names
-        collection_info = qdrant_client.get_collection(collection_name)
+        # Try the real (suffixed) name first, then fall back to bare name / existing alias
+        collection_info = None
+        for name in (real_name, collection_name):
+            try:
+                collection_info = qdrant_client.get_collection(name)
+                break
+            except Exception:
+                continue
 
-        # Collection (or alias) exists — check dimensions
-        existing_dim = None
-        if hasattr(collection_info.config.params, "vectors"):
-            vectors_config = collection_info.config.params.vectors
-            if isinstance(vectors_config, dict) and "dense" in vectors_config:
-                existing_dim = vectors_config["dense"].size
-            elif hasattr(vectors_config, "size"):
-                existing_dim = vectors_config.size
+        if collection_info is not None:
+            # Collection (or alias) exists — check dimensions
+            existing_dim = None
+            if hasattr(collection_info.config.params, "vectors"):
+                vectors_config = collection_info.config.params.vectors
+                if isinstance(vectors_config, dict) and "dense" in vectors_config:
+                    existing_dim = vectors_config["dense"].size
+                elif hasattr(vectors_config, "size"):
+                    existing_dim = vectors_config.size
 
-        if existing_dim is not None and existing_dim != EMBEDDING_DIM:
-            qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
-            raise RuntimeError(
-                f"Embedding dimension mismatch for collection '{collection_name}': "
-                f"existing={existing_dim}, expected={EMBEDDING_DIM}. "
-                f"To drop and recreate, run:\n"
-                f"  curl -X DELETE '{qdrant_url}/collections/{collection_name}'"
-            )
-        else:
-            logger.debug(
-                f"Collection {collection_name} already exists with correct dimensions"
-            )
-            return
+            if existing_dim is not None and existing_dim != EMBEDDING_DIM:
+                qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
+                raise RuntimeError(
+                    f"Embedding dimension mismatch for collection '{real_name}': "
+                    f"existing={existing_dim}, expected={EMBEDDING_DIM}. "
+                    f"To drop and recreate, run:\n"
+                    f"  curl -X DELETE '{qdrant_url}/collections/{real_name}'"
+                )
+            else:
+                logger.debug(
+                    f"Collection {real_name} already exists with correct dimensions"
+                )
+                # Ensure alias is in place even if collection already existed
+                _ensure_alias(collection_name, real_name)
+                return
 
     except RuntimeError:
         raise
-    except Exception:
-        # Collection does not exist (UnexpectedResponse 404 or similar)
-        pass
 
     logger.info(
-        f"Creating Qdrant collection: {collection_name} with {EMBEDDING_DIM} dimensions"
+        f"Creating Qdrant collection: {real_name} with {EMBEDDING_DIM} dimensions"
     )
     qdrant_client.create_collection(
-        collection_name=collection_name,
+        collection_name=real_name,
         vectors_config={
             "dense": VectorParams(
                 size=EMBEDDING_DIM,
@@ -301,7 +348,8 @@ def _ensure_collection_exists(collection_name: str) -> None:
             )
         },
     )
-    logger.info(f"Collection {collection_name} created successfully")
+    logger.info(f"Collection {real_name} created successfully")
+    _ensure_alias(collection_name, real_name)
 
 
 def _get_vector_store(
@@ -309,15 +357,18 @@ def _get_vector_store(
 ) -> QdrantVectorStore:
     """
     Get or create a Qdrant vector store for the given collection.
+
+    Accepts the bare alias name (e.g. ``candidates_websites``).
+    The alias is resolved by Qdrant to the real suffixed collection.
     """
     if force_recreate:
-        # Delete collection if it exists (get_collection resolves aliases)
+        real_name = _real_collection_name(collection_name)
         try:
-            qdrant_client.get_collection(collection_name)
+            qdrant_client.get_collection(real_name)
             logger.info(
-                f"Force recreating collection {collection_name}, deleting existing..."
+                f"Force recreating collection {real_name}, deleting existing..."
             )
-            qdrant_client.delete_collection(collection_name)
+            qdrant_client.delete_collection(real_name)
         except Exception:
             pass  # Collection doesn't exist, nothing to delete
 

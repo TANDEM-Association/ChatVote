@@ -193,24 +193,20 @@ def seed_firestore():
 def create_qdrant_collections():
     """Create the 4 Qdrant dev collections with correct dimensions."""
     from qdrant_client import QdrantClient
-    from qdrant_client.models import VectorParams, Distance
+    from qdrant_client.models import VectorParams, Distance, CreateAliasOperation, CreateAlias
 
     qdrant_url = os.environ["QDRANT_URL"]
     # Use the same embedding provider logic as the app
-    from src.vector_store_helper import _get_embeddings as get_embeddings
+    from src.vector_store_helper import _get_embeddings as get_embeddings, ALL_COLLECTION_NAMES
     _, embed_dim = get_embeddings()
     logger.info(f"Embedding dimension: {embed_dim}")
 
     logger.info(f"Connecting to Qdrant at {qdrant_url}...")
     client = QdrantClient(url=qdrant_url, check_compatibility=False)
 
-    # Use _dev suffix for local (same as ENV=local falls through to _dev in vector_store_helper.py)
-    collection_names = [
-        "all_parties_dev",
-        "candidates_websites_dev",
-        "justified_voting_behavior_dev",
-        "parliamentary_questions_dev",
-    ]
+    # Real collection names use _dev suffix; bare names become aliases
+    suffix = "_dev"
+    collection_names = [f"{name}{suffix}" for name in ALL_COLLECTION_NAMES]
 
     for name in collection_names:
         try:
@@ -248,7 +244,25 @@ def create_qdrant_collections():
             logger.error(f"  Error with collection '{name}': {e}")
             raise
 
-    logger.info("Qdrant collections ready.")
+    # Create aliases: bare name → suffixed collection (e.g. candidates_websites → candidates_websites_dev)
+    for bare_name in ALL_COLLECTION_NAMES:
+        real_name = f"{bare_name}{suffix}"
+        try:
+            client.update_collection_aliases(
+                change_aliases_operations=[
+                    CreateAliasOperation(
+                        create_alias=CreateAlias(
+                            alias_name=bare_name,
+                            collection_name=real_name,
+                        )
+                    )
+                ]
+            )
+            logger.info(f"  Alias '{bare_name}' → '{real_name}'")
+        except Exception as e:
+            logger.warning(f"  Failed to set alias '{bare_name}' → '{real_name}': {e}")
+
+    logger.info("Qdrant collections and aliases ready.")
 
 
 def seed_crawled_vectors():
@@ -506,7 +520,8 @@ def _qdrant_collections_have_data() -> bool:
         from qdrant_client import QdrantClient
 
         client = QdrantClient(url=os.environ["QDRANT_URL"], check_compatibility=False)
-        for name in ["all_parties_dev", "candidates_websites_dev"]:
+        from src.vector_store_helper import PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME
+        for name in [f"{PARTY_INDEX_NAME}_dev", f"{CANDIDATES_INDEX_NAME}_dev"]:
             try:
                 info = client.get_collection(name)
                 if info.points_count and info.points_count > 0:
