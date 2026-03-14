@@ -7,12 +7,17 @@ All tests run without external services (no LLM APIs, no Qdrant, no Firebase).
 LLM-dependent tests use unittest.mock to patch get_structured_output_from_llms.
 """
 
-import pytest
-from unittest.mock import AsyncMock, patch
+import sys
 
-from langchain_core.documents import Document
+# Evict mocks set by other test files (e.g. test_aiohttp_app.py) so real modules load
+sys.modules.pop("src.models.chunk_metadata", None)
 
-from src.services.theme_classifier import (
+import pytest  # noqa: E402
+from unittest.mock import AsyncMock, patch  # noqa: E402
+
+from langchain_core.documents import Document  # noqa: E402
+
+from src.services.theme_classifier import (  # noqa: E402
     ThemeResult,
     _keyword_scores,
     _keyword_fast_path,
@@ -21,7 +26,7 @@ from src.services.theme_classifier import (
     classify_theme_keywords,
     _llm_classify_single,
 )
-from src.models.chunk_metadata import THEME_TAXONOMY
+from src.models.chunk_metadata import THEME_TAXONOMY  # noqa: E402
 
 
 # ---------------------------------------------------------------------------

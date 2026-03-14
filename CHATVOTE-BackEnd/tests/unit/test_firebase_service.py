@@ -51,6 +51,9 @@ sys.modules.setdefault("firebase_admin.firestore_async", _stub_firestore_async)
 _stub_firestore.client.return_value = MagicMock()
 _stub_firestore_async.client.return_value = MagicMock()
 
+# Evict any mock of src.firebase_service set by other test files (e.g. test_chatbot_async.py)
+sys.modules.pop("src.firebase_service", None)
+
 # Safe to import now.
 from src import firebase_service  # noqa: E402
 

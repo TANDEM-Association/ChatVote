@@ -21,10 +21,15 @@ Groups:
   - ScrapedPage / ScrapedWebsite (src/models/scraper.py)
 """
 
-from datetime import datetime
+import sys
 
-import pytest
-from pydantic import ValidationError
+# Evict mocks set by other test files (e.g. test_aiohttp_app.py) so real modules load
+sys.modules.pop("src.models.chunk_metadata", None)
+
+from datetime import datetime  # noqa: E402
+
+import pytest  # noqa: E402
+from pydantic import ValidationError  # noqa: E402
 
 # ---------------------------------------------------------------------------
 # src/models/general.py

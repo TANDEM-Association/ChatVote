@@ -34,7 +34,7 @@ mock_chatbot.rerank_documents = AsyncMock(
     side_effect=lambda relevant_docs, **kw: relevant_docs[:5]
 )
 mock_chatbot.Responder = type("Responder", (), {"party_id": "test"})
-sys.modules["src.chatbot_async"] = mock_chatbot
+sys.modules.setdefault("src.chatbot_async", mock_chatbot)
 
 # Firebase / Firestore — not needed for filter tests
 for _mod in (
@@ -44,14 +44,14 @@ for _mod in (
     "firebase_admin.firestore_async",
     "src.firebase_service",
 ):
-    sys.modules[_mod] = MagicMock()
+    sys.modules.setdefault(_mod, MagicMock())
 
 # Embedding model — mock the langchain_google_genai import used by _get_embeddings()
 _mock_embed_instance = MagicMock()
 _mock_embed_instance.aembed_query = AsyncMock(return_value=[0.1] * 3072)
 _mock_google_genai = MagicMock()
 _mock_google_genai.GoogleGenerativeAIEmbeddings.return_value = _mock_embed_instance
-sys.modules["langchain_google_genai"] = _mock_google_genai
+sys.modules.setdefault("langchain_google_genai", _mock_google_genai)
 
 # ---------------------------------------------------------------------------
 # Import the module under test + Qdrant model types used in assertions
@@ -272,60 +272,48 @@ class TestCombineFilters:
 
 
 class TestCollectionExists:
-    def _make_collection(self, name: str):
-        c = MagicMock()
-        c.name = name
-        return c
-
     def test_returns_true_when_collection_exists(self):
-        _mock_qdrant.get_collections.return_value.collections = [
-            self._make_collection("candidates_websites"),
-            self._make_collection("all_parties"),
-        ]
+        # get_collection (singular) succeeds → collection exists
+        _mock_qdrant.get_collection.return_value = MagicMock()
         assert vector_store_helper._collection_exists("candidates_websites") is True
 
     def test_returns_false_when_collection_does_not_exist(self):
-        _mock_qdrant.get_collections.return_value.collections = [
-            self._make_collection("all_parties"),
-        ]
+        # get_collection raises → collection not found
+        _mock_qdrant.get_collection.side_effect = Exception("Not found")
         assert vector_store_helper._collection_exists("candidates_websites") is False
 
     def test_positive_result_is_cached_and_avoids_second_call(self):
-        _mock_qdrant.get_collections.return_value.collections = [
-            self._make_collection("all_parties"),
-        ]
+        _mock_qdrant.get_collection.return_value = MagicMock()
         # First call hits the client
         vector_store_helper._collection_exists("all_parties")
         # Second call should use the cache — client is called only once
         vector_store_helper._collection_exists("all_parties")
-        assert _mock_qdrant.get_collections.call_count == 1
+        assert _mock_qdrant.get_collection.call_count == 1
 
     def test_negative_result_is_not_cached(self):
-        _mock_qdrant.get_collections.return_value.collections = []
+        _mock_qdrant.get_collection.side_effect = Exception("Not found")
         vector_store_helper._collection_exists("missing_col")
         vector_store_helper._collection_exists("missing_col")
         # Both calls must hit the client since False is not cached
-        assert _mock_qdrant.get_collections.call_count == 2
+        assert _mock_qdrant.get_collection.call_count == 2
 
     def test_returns_false_on_connection_error(self):
-        _mock_qdrant.get_collections.side_effect = ConnectionError("unreachable")
+        _mock_qdrant.get_collection.side_effect = ConnectionError("unreachable")
         result = vector_store_helper._collection_exists("all_parties")
         assert result is False
 
     def test_returns_false_on_generic_exception(self):
-        _mock_qdrant.get_collections.side_effect = RuntimeError("unexpected")
+        _mock_qdrant.get_collection.side_effect = RuntimeError("unexpected")
         result = vector_store_helper._collection_exists("all_parties")
         assert result is False
 
     def test_cache_populated_after_positive_result(self):
-        _mock_qdrant.get_collections.return_value.collections = [
-            self._make_collection("all_parties"),
-        ]
+        _mock_qdrant.get_collection.return_value = MagicMock()
         vector_store_helper._collection_exists("all_parties")
         assert "all_parties" in vector_store_helper._known_collections
 
     def test_cache_not_populated_after_negative_result(self):
-        _mock_qdrant.get_collections.return_value.collections = []
+        _mock_qdrant.get_collection.side_effect = Exception("Not found")
         vector_store_helper._collection_exists("missing_col")
         assert "missing_col" not in vector_store_helper._known_collections
 
@@ -334,4 +322,4 @@ class TestCollectionExists:
         vector_store_helper._known_collections.add("all_parties")
         result = vector_store_helper._collection_exists("all_parties")
         assert result is True
-        _mock_qdrant.get_collections.assert_not_called()
+        _mock_qdrant.get_collection.assert_not_called()
