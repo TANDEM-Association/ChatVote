@@ -232,6 +232,112 @@ _LLM_PROMPT = (
 )
 
 
+_LLM_BATCH_PROMPT = (
+    "Tu es un classificateur de thèmes politiques français. "
+    "Classe chacun des textes suivants dans UN SEUL thème principal parmi cette taxonomie :\n\n"
+    "| Thème | Description |\n"
+    "|-------|-------------|\n"
+    "| economie | Fiscalité, emploi, budget, dette, pouvoir d'achat, entreprises |\n"
+    "| education | Écoles, universités, formation, petite enfance |\n"
+    "| environnement | Climat, pollution, énergie, biodiversité, déchets |\n"
+    "| sante | Hôpitaux, médecins, soins, prévention |\n"
+    "| securite | Police, délinquance, vidéoprotection, violences |\n"
+    "| immigration | Migrants, frontières, asile, intégration |\n"
+    "| culture | Musées, théâtres, patrimoine, festivals |\n"
+    "| logement | HLM, loyers, rénovation, construction |\n"
+    "| transport | Vélo, métro, train, voiture, stationnement |\n"
+    "| numerique | Internet, fibre, cybersécurité, IA |\n"
+    "| agriculture | Agriculteurs, bio, circuits courts, PAC |\n"
+    "| justice | Tribunaux, magistrats, prisons, médiation |\n"
+    "| international | Europe, OTAN, diplomatie, défense |\n"
+    "| institutions | Démocratie, élections, référendum, parlement, mairie |\n\n"
+    "Règles :\n"
+    "- Pour chaque texte, choisis le thème DOMINANT\n"
+    "- Le sous-thème doit être en 2-4 mots en français\n"
+    "- Si un texte n'est pas politique, renvoie theme=null et sub_theme=null\n"
+    "- Renvoie EXACTEMENT une classification par texte, dans le même ordre\n\n"
+    "Textes à classifier :\n{chunks_text}"
+)
+
+_BATCH_SIZE = 5  # chunks per LLM call — keeps total input under ~4K tokens
+
+
+async def _llm_classify_batch(chunk_texts: list[str]) -> list[ThemeResult]:
+    """Classify a batch of chunks in a single LLM call."""
+    import os
+    import time as _t
+    _debug = os.getenv("DEBUG_INDEXER", "").lower() in ("1", "true", "yes")
+    _ts = _t.monotonic()
+
+    # Format numbered chunks
+    numbered = []
+    for i, text in enumerate(chunk_texts, 1):
+        numbered.append(f"--- Texte {i} ---\n{text[:600]}\n")
+    chunks_text = "\n".join(numbered)
+
+    try:
+        from langchain_core.messages import HumanMessage
+        from src.llms import DETERMINISTIC_LLMS, get_structured_output_from_llms
+        from src.models.structured_outputs import BatchChunkThemeClassification, ChunkThemeClassification
+
+        prompt = _LLM_BATCH_PROMPT.format(chunks_text=chunks_text)
+        messages = [HumanMessage(content=prompt)]
+        result = await get_structured_output_from_llms(
+            DETERMINISTIC_LLMS,
+            messages,
+            BatchChunkThemeClassification,
+        )
+        elapsed = _t.monotonic() - _ts
+
+        if isinstance(result, BatchChunkThemeClassification):
+            classifications = result.classifications
+        elif isinstance(result, dict):
+            classifications = [
+                ChunkThemeClassification(**c) if isinstance(c, dict) else c
+                for c in result.get("classifications", [])
+            ]
+        else:
+            if _debug:
+                logger.info(f"[DEBUG][LLM_BATCH] {elapsed:.2f}s → bad result type: {type(result).__name__}")
+            return [ThemeResult(method="none") for _ in chunk_texts]
+
+        # Validate and convert
+        theme_results = []
+        for i, c in enumerate(classifications):
+            theme = c.theme
+            sub_theme = c.sub_theme
+
+            if theme and theme not in THEME_TAXONOMY:
+                if _debug:
+                    logger.info(f"[DEBUG][LLM_BATCH] item {i}: invalid theme '{theme}'")
+                theme = None
+
+            theme_results.append(ThemeResult(
+                theme=theme,
+                sub_theme=sub_theme,
+                method="llm",
+                confidence=1.0,
+            ))
+
+        # If LLM returned fewer results than chunks, pad with "none"
+        while len(theme_results) < len(chunk_texts):
+            theme_results.append(ThemeResult(method="none"))
+
+        # If LLM returned more, truncate
+        theme_results = theme_results[:len(chunk_texts)]
+
+        if _debug:
+            classified = sum(1 for r in theme_results if r.theme)
+            logger.info(f"[DEBUG][LLM_BATCH] {elapsed:.2f}s → {classified}/{len(chunk_texts)} classified")
+
+        return theme_results
+
+    except Exception as e:
+        elapsed = _t.monotonic() - _ts
+        logger.warning(f"LLM batch classification failed after {elapsed:.2f}s: {e}")
+        return [ThemeResult(method="none") for _ in chunk_texts]
+
+
 async def _llm_classify_single(chunk_text: str) -> ThemeResult:
     """Classify a single chunk using LLM structured output."""
     import os
@@ -350,34 +456,44 @@ async def classify_chunks(
     if not use_llm or not llm_indices:
         return results
 
-    # Step 2: LLM classification for everything else (the main classifier)
+    # Step 2: Batched LLM classification
+    num_batches = (len(llm_indices) + _BATCH_SIZE - 1) // _BATCH_SIZE
     logger.info(
-        f"LLM classification: {len(llm_indices)} chunks "
-        f"(concurrency={max_concurrent_llm})..."
+        f"LLM classification: {len(llm_indices)} chunks in {num_batches} batches "
+        f"(batch_size={_BATCH_SIZE}, concurrency={max_concurrent_llm})..."
     )
 
     semaphore = asyncio.Semaphore(max_concurrent_llm)
     _llm_start = _t.monotonic()
 
-    async def _bounded_classify(text: str) -> ThemeResult:
-        async with semaphore:
-            return await _llm_classify_single(text)
+    # Group into batches
+    batches: list[list[int]] = []
+    for i in range(0, len(llm_indices), _BATCH_SIZE):
+        batches.append(llm_indices[i:i + _BATCH_SIZE])
 
-    llm_tasks = [_bounded_classify(chunks[i]) for i in llm_indices]
-    llm_results = await asyncio.gather(*llm_tasks)
+    async def _bounded_batch(batch_indices: list[int]) -> list[ThemeResult]:
+        async with semaphore:
+            texts = [chunks[i] for i in batch_indices]
+            return await _llm_classify_batch(texts)
+
+    batch_tasks = [_bounded_batch(batch) for batch in batches]
+    batch_results = await asyncio.gather(*batch_tasks)
     _llm_elapsed = _t.monotonic() - _llm_start
 
-    for idx, llm_result in zip(llm_indices, llm_results):
-        results[idx] = llm_result
+    # Map results back
+    llm_classified_count = 0
+    for batch_indices, batch_result in zip(batches, batch_results):
+        for idx, result in zip(batch_indices, batch_result):
+            results[idx] = result
+            if result.theme is not None:
+                llm_classified_count += 1
 
     total_classified = sum(1 for r in results if r.theme is not None)
-    llm_classified = sum(1 for r in llm_results if r.theme is not None)
     total_elapsed = _t.monotonic() - _t0
     logger.info(
         f"Theme classification complete: {total_classified}/{len(chunks)} "
-        f"({keyword_classified} keyword fast-path, {llm_classified} LLM) "
-        f"total={total_elapsed:.1f}s llm_batch={_llm_elapsed:.1f}s "
-        f"({len(llm_indices) / _llm_elapsed:.1f} chunks/s LLM throughput)"
+        f"({keyword_classified} keyword, {llm_classified_count} LLM in {num_batches} batches) "
+        f"total={total_elapsed:.1f}s llm={_llm_elapsed:.1f}s"
     )
 
     return results

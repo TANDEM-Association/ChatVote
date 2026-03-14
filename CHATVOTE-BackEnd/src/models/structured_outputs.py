@@ -118,3 +118,11 @@ class ChunkThemeClassification(BaseModel):
             "Use null if no specific sub-theme applies."
         ),
     )
+
+
+class BatchChunkThemeClassification(BaseModel):
+    """LLM classification of multiple chunks' political themes."""
+
+    classifications: list[ChunkThemeClassification] = Field(
+        description="List of theme classifications, one per input chunk, in the same order as the input chunks."
+    )
