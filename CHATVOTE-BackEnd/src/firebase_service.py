@@ -69,15 +69,20 @@ _cache_expiry: dict[str, float] = {}
 
 async def _cached_get(key: str, fetch_fn: Any) -> Any:
     """Return cached value if fresh, else call fetch_fn() and cache the result."""
+    from src.observability.metrics import metrics as obs_metrics
     now = time.time()
     if key in _cache and _cache_expiry.get(key, 0.0) > now:
         ttl_remaining = _cache_expiry[key] - now
         _fb_logger.info(f"CACHE HIT key={key} ttl_remaining={ttl_remaining:.0f}s")
+        obs_metrics.inc_counter("rag_cache_hits_total", labels={"key": key})
         return _cache[key]
     t0 = time.perf_counter()
     result = await fetch_fn()
     elapsed = time.perf_counter() - t0
     _fb_logger.info(f"CACHE MISS key={key} fetch_time={elapsed:.3f}s")
+    obs_metrics.inc_counter("rag_cache_misses_total", labels={"key": key})
+    obs_metrics.record_histogram("cache_fetch_time_ms", elapsed * 1000, labels={"key": key})
+    obs_metrics.set_gauge("cache_size", len(_cache) + 1)
     _cache[key] = result
     _cache_expiry[key] = now + CACHE_TTL_SECONDS
     return result

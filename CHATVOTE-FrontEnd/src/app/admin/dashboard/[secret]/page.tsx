@@ -9,7 +9,7 @@ const API_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ||
   "http://localhost:8080";
 
-const TABS = ["overview", "pipeline", "coverage", "charts", "chats", "multi-query", "consistency", "crawler"] as const;
+const TABS = ["overview", "pipeline", "coverage", "charts", "chats", "multi-query", "consistency", "crawler", "observability", "logs", "alerts"] as const;
 type TabId = (typeof TABS)[number];
 
 const TAB_LABELS: Record<TabId, string> = {
@@ -21,6 +21,9 @@ const TAB_LABELS: Record<TabId, string> = {
   "multi-query": "Multi Query",
   consistency: "Data Consistency",
   crawler: "Crawler",
+  observability: "Observability",
+  logs: "Logs",
+  alerts: "Alerts",
 };
 
 // Lazy load tab components
@@ -48,6 +51,16 @@ const DataConsistencyTab = dynamic(
   { ssr: false },
 );
 const CrawlerTab = dynamic(() => import("./components/crawler-tab"), {
+  ssr: false,
+});
+const ObservabilityTab = dynamic(
+  () => import("./components/observability-tab"),
+  { ssr: false },
+);
+const LogsTab = dynamic(() => import("./components/logs-tab"), {
+  ssr: false,
+});
+const AlertsTab = dynamic(() => import("./components/alerts-tab"), {
   ssr: false,
 });
 
@@ -187,13 +200,13 @@ export default function AdminDashboard() {
       </div>
 
       {/* Tab bar */}
-      <div className="border-b bg-card px-6 flex gap-0">
+      <div className="border-b bg-card px-6 flex gap-0 overflow-x-auto">
         {TABS.map((tab) => (
           <button
             key={tab}
             type="button"
             onClick={() => switchTab(tab)}
-            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors ${
+            className={`px-4 py-3 text-sm font-medium border-b-2 transition-colors whitespace-nowrap ${
               activeTab === tab
                 ? "border-blue-600 text-blue-400"
                 : "border-transparent text-muted-foreground hover:text-foreground"
@@ -266,6 +279,21 @@ export default function AdminDashboard() {
           {activatedTabs.has("crawler") && (
             <div className={activeTab !== "crawler" ? "hidden" : undefined}>
               <CrawlerTab secret={secret} apiUrl={API_URL} active={activeTab === "crawler"} />
+            </div>
+          )}
+          {activatedTabs.has("observability") && (
+            <div className={activeTab !== "observability" ? "hidden" : undefined}>
+              <ObservabilityTab secret={secret} apiUrl={API_URL} active={activeTab === "observability"} />
+            </div>
+          )}
+          {activatedTabs.has("logs") && (
+            <div className={activeTab !== "logs" ? "hidden" : undefined}>
+              <LogsTab secret={secret} apiUrl={API_URL} active={activeTab === "logs"} />
+            </div>
+          )}
+          {activatedTabs.has("alerts") && (
+            <div className={activeTab !== "alerts" ? "hidden" : undefined}>
+              <AlertsTab secret={secret} apiUrl={API_URL} active={activeTab === "alerts"} />
             </div>
           )}
         </Suspense>

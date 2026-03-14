@@ -88,6 +88,10 @@ from src.utils import (
     sanitize_references,
 )
 from src.i18n import get_text, Locale, normalize_locale
+from src.observability.metrics import metrics as obs_metrics
+from src.observability.tracer import tracer as obs_tracer
+from src.observability.structured_logger import set_correlation_id
+from src.observability.alerts import alert_manager as obs_alerts
 
 MAX_RESPONSE_CHUNK_LENGTH = 10
 CHAT_RESPONSE_TIMEOUT = int(os.getenv("CHAT_RESPONSE_TIMEOUT_SECONDS", "40"))
@@ -130,10 +134,28 @@ async def _persist_chat_debug_metadata(
 
 def _log_timing(stage: str, start: float, sid: str, extra: dict = None):
     elapsed = time.perf_counter() - start
+    elapsed_ms = round(elapsed * 1000, 1)
     info = {"stage": stage, "elapsed_s": round(elapsed, 3), "sid": sid}
     if extra:
         info.update(extra)
     logger.info(f"TIMING {json.dumps(info)}")
+
+    # Record to observability metrics
+    stage_metric_map = {
+        "cache_check": "cache_fetch_time_ms",
+        "rag_query_improvement": "rag_search_time_ms",
+        "rag_search_and_rerank": "rag_rerank_time_ms",
+        "rag_search_combined": "rag_search_time_ms",
+        "streaming_response": "llm_response_time_ms",
+        "streaming_response_combined": "llm_response_time_ms",
+        "first_chunk": "ttfb_ms",
+        "total": "chat_response_time_ms",
+    }
+    metric_name = stage_metric_map.get(stage)
+    if metric_name:
+        obs_metrics.record_histogram(metric_name, elapsed_ms)
+    obs_metrics.record_histogram("socket_event_time_ms", elapsed_ms,
+                                  labels={"stage": stage})
     return elapsed
 
 
@@ -171,6 +193,8 @@ sio = socketio.AsyncServer(
 @sio.event
 async def connect(sid: str, environ: dict, auth: Optional[dict] = None):
     logger.info(f"Client connected: {sid}")
+    obs_metrics.inc_counter("socket_connections_total")
+    obs_metrics.gauge("active_connections").inc()
 
 
 @sio.event
@@ -187,6 +211,8 @@ async def disconnect(sid: str, reason: str):
             logger.info(f"Removing chat session data for client {sid}")
             del session["chat_sessions"]
     logger.info(f"Client disconnected: {sid}")
+    obs_metrics.inc_counter("socket_disconnections_total")
+    obs_metrics.gauge("active_connections").dec()
 
 
 @sio.on("home")
@@ -961,6 +987,8 @@ async def handle_combined_answer_request(
     t0 = time.perf_counter()
     is_local_scope = chat_session.scope == ChatScope.LOCAL.value
     municipality_code = chat_session.municipality_code
+    # Observability: record combined request
+    obs_metrics.inc_counter("chat_requests_total", labels={"handler": "combined"})
 
     # Check if user has selected specific parties (not just "chat-vote" or empty)
     selected_party_ids = [
@@ -1341,6 +1369,13 @@ async def chat_answer_request(sid: str, body: dict):
     logger.info(f"Client {sid} requested chat answer with body: {body}")
     t0 = time.perf_counter()
     _t = time.perf_counter
+    # Observability: start trace and record request
+    _trace_id = set_correlation_id()
+    _trace = obs_tracer.start_trace("chat_answer_request", _trace_id, attributes={
+        "sid": sid, "session_id": body.get("session_id", ""),
+    })
+    obs_metrics.inc_counter("chat_requests_total")
+    obs_metrics.gauge("active_streams").inc()
     try:
         chat_message_data = ChatUserMessageDto(**body)
     except ValidationError as e:
@@ -1766,6 +1801,11 @@ async def chat_answer_request(sid: str, body: dict):
             status="success",
         )
     )
+
+    # Observability: end trace on success
+    obs_metrics.gauge("active_streams").dec()
+    obs_tracer.end_trace(_trace_id)
+    obs_alerts.evaluate_all()
 
     chat_response_complete_dto = ChatResponseCompleteDto(
         session_id=chat_session.session_id,

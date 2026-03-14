@@ -65,6 +65,12 @@ def _track_llm_request() -> None:
         _request_timestamps.popleft()
 
     rpm = len(_request_timestamps)
+
+    # Update observability metrics
+    from src.observability.metrics import metrics as obs_metrics
+    obs_metrics.inc_counter("llm_requests_total")
+    obs_metrics.set_gauge("llm_rpm", rpm)
+
     if rpm > LLM_RATE_LIMIT_RPM:
         logger.warning(
             "LLM_RATE_LIMIT_RPM exceeded: %d requests in last 60 s (threshold: %d)",
@@ -500,19 +506,29 @@ async def get_answer_from_llms(
     logger.debug(f"Available LLMs for answer: {[item.name for item in llms]}")
     _track_llm_request()
 
+    from src.observability.metrics import metrics as obs_metrics
+
     for i, llm in enumerate(llms):
+        _llm_t0 = time.time()
         try:
             logger.debug(f"Invoking LLM {llm.name}...")
             response = await llm.model.ainvoke(messages)
             llm.is_at_rate_limit = False
+            obs_metrics.record_histogram(
+                "llm_response_time_ms",
+                (time.time() - _llm_t0) * 1000,
+                labels={"model": llm.name},
+            )
             await handle_llm_success()  # Reset Firestore flag on success
             return response
         except Exception as e:
             logger.warning(f"Error invoking LLM {llm.name}: {e}")
             llm.is_at_rate_limit = True
+            obs_metrics.inc_counter("llm_errors_total", labels={"model": llm.name})
             remaining = [item.name for item in llms[i + 1 :]]
             if remaining:
                 logger.info(f"Falling back to next LLM. Remaining: {remaining}")
+                obs_metrics.inc_counter("llm_failovers_total", labels={"from": llm.name})
             continue
 
     await handle_rate_limit_hit_for_all_llms()
@@ -521,15 +537,22 @@ async def get_answer_from_llms(
         f"All primary LLMs failed, trying backup LLMs: {[item.name for item in back_up_llms]}"
     )
     for llm in back_up_llms:
+        _llm_t0 = time.time()
         try:
             logger.debug(f"Invoking backup LLM {llm.name}...")
             response = await llm.model.ainvoke(messages)
             llm.is_at_rate_limit = False
+            obs_metrics.record_histogram(
+                "llm_response_time_ms",
+                (time.time() - _llm_t0) * 1000,
+                labels={"model": llm.name},
+            )
             await handle_llm_success()  # Reset Firestore flag on success
             return response
         except Exception as e:
             logger.warning(f"Error invoking backup LLM {llm.name}: {e}")
             llm.is_at_rate_limit = True
+            obs_metrics.inc_counter("llm_errors_total", labels={"model": llm.name})
     raise Exception("All LLMs are at rate limit.")
 
 

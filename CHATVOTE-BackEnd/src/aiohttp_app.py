@@ -54,6 +54,14 @@ from src.models.vote import Vote
 from src.vector_store_helper import identify_relevant_parliamentary_questions
 from src.utils import get_cors_allowed_origins
 from src.websocket_app import sio
+from src.observability.structured_logger import install_structured_logging, get_log_buffer
+from src.observability.middleware import observability_middleware
+from src.observability.metrics import metrics as obs_metrics
+from src.observability.tracer import tracer as obs_tracer
+from src.observability.alerts import (
+    alert_manager as obs_alerts,
+    register_default_alerts,
+)
 
 LOGGING_FORMAT = (
     "%(asctime)s - %(name)s - %(filename)s - %(lineno)d - %(levelname)s - %(message)s"
@@ -62,6 +70,10 @@ LOGGING_FORMAT = (
 logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
 
 logger = logging.getLogger(__name__)
+
+# Install structured JSON logging (replaces plain-text format)
+if os.getenv("OBSERVABILITY_STRUCTURED_LOGS", "1") == "1":
+    install_structured_logging()
 
 app = web.Application()
 
@@ -2461,7 +2473,142 @@ async def admin_set_maintenance(request: web.Request) -> web.Response:
         return web.json_response({"error": str(e)}, status=500)
 
 
-app = web.Application(middlewares=[api_key_middleware])
+# ---------------------------------------------------------------------------
+# Observability API endpoints
+# ---------------------------------------------------------------------------
+
+
+@routes.get("/metrics")
+async def prometheus_metrics(request: web.Request) -> web.Response:
+    """Prometheus-compatible metrics endpoint for Grafana scraping."""
+    return web.Response(
+        text=obs_metrics.prometheus_export(),
+        content_type="text/plain; version=0.0.4; charset=utf-8",
+    )
+
+
+@routes.get(f"{route_prefix}/admin/observability/metrics")
+async def admin_observability_metrics(request: web.Request) -> web.Response:
+    """Full metrics snapshot for the admin dashboard."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    snapshot = obs_metrics.get_snapshot()
+
+    # Optionally include time-series data for a specific metric
+    ts_metric = request.query.get("timeseries")
+    since = request.query.get("since")
+    if ts_metric:
+        since_ts = float(since) if since else None
+        snapshot["timeseries"] = {
+            ts_metric: obs_metrics.get_timeseries(ts_metric, since=since_ts),
+        }
+
+    return web.json_response(snapshot, dumps=lambda obj: json.dumps(obj, default=str))
+
+
+@routes.get(f"{route_prefix}/admin/observability/logs")
+async def admin_observability_logs(request: web.Request) -> web.Response:
+    """Query the in-memory structured log buffer."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    limit = min(int(request.query.get("limit", "200")), 1000)
+    level = request.query.get("level")
+    logger_name = request.query.get("logger")
+    search = request.query.get("search")
+    correlation_id = request.query.get("correlation_id")
+    since = request.query.get("since")
+    since_ts = float(since) if since else None
+
+    logs = get_log_buffer(
+        limit=limit,
+        level=level,
+        logger_name=logger_name,
+        search=search,
+        correlation_id=correlation_id,
+        since=since_ts,
+    )
+
+    return web.json_response(
+        {"logs": logs, "count": len(logs)},
+        dumps=lambda obj: json.dumps(obj, default=str),
+    )
+
+
+@routes.get(f"{route_prefix}/admin/observability/traces")
+async def admin_observability_traces(request: web.Request) -> web.Response:
+    """List recent request traces."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    limit = min(int(request.query.get("limit", "50")), 200)
+    status_filter = request.query.get("status")
+    name_filter = request.query.get("name")
+    since = request.query.get("since")
+    since_ts = float(since) if since else None
+
+    traces = obs_tracer.get_traces(
+        limit=limit, status=status_filter, name=name_filter, since=since_ts,
+    )
+    active = obs_tracer.get_active_traces()
+    stats = obs_tracer.get_stats()
+
+    return web.json_response(
+        {"traces": traces, "active": active, "stats": stats},
+        dumps=lambda obj: json.dumps(obj, default=str),
+    )
+
+
+@routes.get(f"{route_prefix}/admin/observability/traces/{{trace_id}}")
+async def admin_observability_trace_detail(request: web.Request) -> web.Response:
+    """Get a single trace with full span details (waterfall view)."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    trace_id = request.match_info["trace_id"]
+    trace = obs_tracer.get_trace(trace_id)
+    if not trace:
+        return web.json_response({"error": "Trace not found"}, status=404)
+
+    return web.json_response(trace, dumps=lambda obj: json.dumps(obj, default=str))
+
+
+@routes.get(f"{route_prefix}/admin/observability/alerts")
+async def admin_observability_alerts(request: web.Request) -> web.Response:
+    """Get alert rules, current state, and fired alert history."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    limit = min(int(request.query.get("limit", "100")), 500)
+    severity = request.query.get("severity")
+    since = request.query.get("since")
+    since_ts = float(since) if since else None
+
+    return web.json_response({
+        "summary": obs_alerts.get_summary(),
+        "rules": obs_alerts.get_rules(),
+        "history": obs_alerts.get_fired_alerts(
+            limit=limit, severity=severity, since=since_ts,
+        ),
+    })
+
+
+@routes.get(f"{route_prefix}/admin/observability/timeseries/{{metric_name}}")
+async def admin_observability_timeseries(request: web.Request) -> web.Response:
+    """Get time-series data for a specific metric (for charts)."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    metric_name = request.match_info["metric_name"]
+    since = request.query.get("since")
+    since_ts = float(since) if since else None
+
+    data = obs_metrics.get_timeseries(metric_name, since=since_ts)
+    return web.json_response({"metric": metric_name, "data": data})
+
+
+app = web.Application(middlewares=[observability_middleware, api_key_middleware])
 
 # Add routes to the app
 app.router.add_routes(routes)
@@ -2566,6 +2713,8 @@ async def _deferred_init():
 async def on_startup(app):
     """Called when the application starts. Schedules init in background so server starts fast."""
     logger.info("=== on_startup: scheduling deferred init in background ===")
+    # Register default observability alert rules
+    register_default_alerts(obs_alerts, obs_metrics)
     asyncio.create_task(_deferred_init())
 
 
