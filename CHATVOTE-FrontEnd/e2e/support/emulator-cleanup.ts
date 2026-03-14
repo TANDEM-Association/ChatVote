@@ -66,6 +66,12 @@ export async function seedReferenceData(): Promise<void> {
       : Object.entries(parties);
     const batch = db.batch();
     for (const [id, data] of partyEntries) {
+      if (!data.logo_url) {
+        data.logo_url = `/images/logos/parties/${id}.svg`;
+      }
+      if (data.election_result_forecast_percent === undefined) {
+        data.election_result_forecast_percent = 0;
+      }
       batch.set(db.collection('parties').doc(id as string), data);
     }
     await batch.commit();

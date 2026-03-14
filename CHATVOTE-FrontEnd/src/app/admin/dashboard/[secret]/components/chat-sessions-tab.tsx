@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback, useRef, Fragment } from "react";
-import { Loader2, RefreshCw, ChevronDown, ChevronRight } from "lucide-react";
+import { Loader2, RefreshCw, ChevronDown, ChevronRight, ThumbsDown } from "lucide-react";
 import { Button } from "@components/ui/button";
 import ChatDetailPanel from "./chat-detail-panel";
 
@@ -23,6 +23,7 @@ interface ChatSession {
   created_at?: string;
   updated_at?: string;
   question_count?: number;
+  has_negative_feedback?: boolean;
   debug?: {
     response_time_ms?: number;
     source_count?: number;
@@ -48,7 +49,15 @@ interface SessionsResponse {
 const POLL_INTERVAL_MS = 10_000;
 const PAGE_SIZE = 50;
 
-type StatusFilter = "all" | "success" | "error" | "partial";
+type StatusFilter = "all" | "success" | "error" | "partial" | "flagged";
+
+function shouldFlagRow(session: ChatSession): boolean {
+  return (
+    session.debug?.status === "error" ||
+    session.debug?.source_count === 0 ||
+    session.has_negative_feedback === true
+  );
+}
 
 function StatusDot({ status }: { status?: string }) {
   if (status === "success")
@@ -106,7 +115,8 @@ export default function ChatSessionsTab({
           sort_by: "updated_at",
         });
         if (!reset && nextCursor) params.set("cursor_after", nextCursor);
-        if (statusFilter !== "all") params.set("status", statusFilter);
+        if (statusFilter !== "all" && statusFilter !== "flagged")
+          params.set("status", statusFilter);
         if (timeRange > 0) {
           const since = new Date(
             Date.now() - timeRange * 60 * 60 * 1000,
@@ -172,6 +182,9 @@ export default function ChatSessionsTab({
     setExpandedSession((prev) => (prev === sessionId ? null : sessionId));
   }
 
+  const displayedSessions =
+    statusFilter === "flagged" ? sessions.filter(shouldFlagRow) : sessions;
+
   return (
     <div className="space-y-4">
       {/* Toolbar */}
@@ -193,6 +206,7 @@ export default function ChatSessionsTab({
             <option value="success">Success</option>
             <option value="error">Error</option>
             <option value="partial">Partial</option>
+            <option value="flagged">Flagged</option>
           </select>
         </div>
 
@@ -201,7 +215,7 @@ export default function ChatSessionsTab({
             <Loader2 className="size-4 animate-spin text-muted-foreground" />
           )}
           <span className="text-xs text-muted-foreground">
-            {sessions.length} session{sessions.length !== 1 ? "s" : ""}
+            {displayedSessions.length} session{displayedSessions.length !== 1 ? "s" : ""}
           </span>
           <Button
             size="sm"
@@ -223,13 +237,13 @@ export default function ChatSessionsTab({
       )}
 
       {/* Table */}
-      {!loading && sessions.length === 0 && !error && (
+      {!loading && displayedSessions.length === 0 && !error && (
         <div className="rounded-xl border border-border-subtle bg-card py-16 text-center text-sm text-muted-foreground">
           No chat sessions found.
         </div>
       )}
 
-      {sessions.length > 0 && (
+      {displayedSessions.length > 0 && (
         <div className="overflow-hidden rounded-xl border border-border-subtle bg-card">
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -260,10 +274,14 @@ export default function ChatSessionsTab({
                 </tr>
               </thead>
               <tbody className="divide-y divide-border-subtle">
-                {sessions.map((session) => (
+                {displayedSessions.map((session) => (
                   <Fragment key={session.session_id}>
                     <tr
-                      className="cursor-pointer hover:bg-surface-elevated transition-colors"
+                      className={`cursor-pointer transition-colors ${
+                        shouldFlagRow(session)
+                          ? "bg-red-500/10 hover:bg-red-500/15"
+                          : "hover:bg-surface-elevated"
+                      }`}
                       onClick={() => toggleExpand(session.session_id)}
                     >
                       <td className="px-4 py-3 text-muted-foreground">
@@ -293,11 +311,22 @@ export default function ChatSessionsTab({
                         {session.debug?.source_count ?? "—"}
                       </td>
                       <td className="px-4 py-3">
-                        <div className="flex items-center justify-center gap-1.5">
+                        <div className="flex items-center justify-center gap-1.5 flex-wrap">
                           <StatusDot status={session.debug?.status} />
                           <span className="text-xs text-muted-foreground">
                             {session.debug?.status ?? "—"}
                           </span>
+                          {session.debug?.source_count === 0 && (
+                            <span className="text-[10px] font-medium text-red-400 bg-red-500/15 rounded px-1 py-0.5">
+                              0 src
+                            </span>
+                          )}
+                          {session.has_negative_feedback && (
+                            <span className="flex items-center gap-0.5 text-[10px] font-medium text-red-400 bg-red-500/15 rounded px-1 py-0.5">
+                              <ThumbsDown className="size-2.5" />
+                              dislike
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-4 py-3 text-right text-xs text-muted-foreground tabular-nums whitespace-nowrap">

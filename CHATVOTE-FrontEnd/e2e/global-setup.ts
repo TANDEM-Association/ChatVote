@@ -54,6 +54,33 @@ async function globalSetup() {
     console.log('Firebase emulators started');
   } else {
     console.log('Firebase emulators already running');
+
+    // Force-load permissive test rules even when emulators were started
+    // externally (e.g. via `make dev` with production rules).
+    const fs = await import('fs');
+    const rulesPath = path.resolve(__dirname, '../../CHATVOTE-BackEnd/firebase/firestore-test.rules');
+    if (fs.existsSync(rulesPath)) {
+      const rules = fs.readFileSync(rulesPath, 'utf-8');
+      try {
+        const resp = await fetch(
+          'http://localhost:8081/emulator/v1/projects/chat-vote-dev:securityRules',
+          {
+            method: 'PUT',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              rules: { files: [{ name: 'firestore.rules', content: rules }] },
+            }),
+          },
+        );
+        if (resp.ok) {
+          console.log('Loaded permissive test rules into running emulator');
+        } else {
+          console.warn(`Failed to load test rules: ${resp.status} ${await resp.text()}`);
+        }
+      } catch (err) {
+        console.warn('Could not upload test rules to emulator:', err);
+      }
+    }
   }
 
   // Seed test data
@@ -174,6 +201,13 @@ async function seedEmulatorData() {
 
     const batch = db.batch();
     for (const [id, data] of partyEntries) {
+      // Ensure fields required by frontend queries exist
+      if (!data.logo_url) {
+        data.logo_url = `/images/logos/parties/${id}.svg`;
+      }
+      if (data.election_result_forecast_percent === undefined) {
+        data.election_result_forecast_percent = 0;
+      }
       batch.set(db.collection('parties').doc(id as string), data);
     }
     await batch.commit();

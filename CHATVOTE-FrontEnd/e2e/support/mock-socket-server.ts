@@ -44,7 +44,15 @@ interface VotingBehaviorRequestPayload {
 
 export function startMockServer(port: number): Promise<{ close: () => Promise<void> }> {
   return new Promise((resolve, reject) => {
-    const httpServer = createServer();
+    // Return 404 for non-Socket.IO HTTP requests so SSR fetches
+    // (e.g. fetchTopicStats in coverage-data.ts) resolve immediately
+    // instead of hanging on a connection that never responds.
+    const httpServer = createServer((req, res) => {
+      if (!req.url?.startsWith('/socket.io')) {
+        res.writeHead(404, { 'Content-Type': 'application/json' });
+        res.end(JSON.stringify({ error: 'not found (mock server)' }));
+      }
+    });
     const io = new Server(httpServer, {
       cors: {
         origin: '*',
@@ -91,7 +99,7 @@ export function startMockServer(port: number): Promise<{ close: () => Promise<vo
         const party_ids: string[] =
           payload.party_ids && payload.party_ids.length > 0
             ? payload.party_ids
-            : ['renaissance', 'la-france-insoumise'];
+            : ['lfi', 'rn'];
 
         sessionState.set(session_id, {
           party_ids,
@@ -114,7 +122,7 @@ export function startMockServer(port: number): Promise<{ close: () => Promise<vo
         // chat_answer_request arrives on a different socket than chat_session_init
         // (which happens when the client replaces its socket mid-flow).
         const state = sessionState.get(session_id) ?? {
-          party_ids: ['party-a', 'party-b'],
+          party_ids: ['lfi', 'rn'],
         };
         const { party_ids } = state;
 

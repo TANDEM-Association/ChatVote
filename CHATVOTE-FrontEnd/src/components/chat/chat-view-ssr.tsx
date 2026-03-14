@@ -36,7 +36,11 @@ async function getChatSessionServer(chatId: string, partyIds?: string[]) {
     const session = await getChatSession(chatId);
 
     if (!session) {
-      throw new Error("Chat session not found");
+      // Session may not exist in Firestore yet (e.g. just created client-side
+      // via Socket.IO). Return undefined so the client can proceed with its
+      // in-memory Zustand state instead of redirecting away from the chat.
+      console.warn(`Chat session ${chatId} not found in Firestore — proceeding with client state`);
+      return undefined;
     }
 
     return session;

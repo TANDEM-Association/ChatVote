@@ -320,6 +320,11 @@ export async function updateMessageFeedback(
       return message;
     }),
   });
+
+  if (feedback.feedback === "dislike") {
+    const sessionRef = doc(db, "chat_sessions", sessionId);
+    await updateDoc(sessionRef, { has_negative_feedback: true });
+  }
 }
 
 export async function getUser(uid: string): Promise<Partial<User>> {

@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useEffect, useMemo } from "react";
-import { Loader2, X, ChevronDown, ChevronRight, ExternalLink } from "lucide-react";
+import { Loader2, X, ChevronDown, ChevronRight, ExternalLink, ThumbsUp, ThumbsDown } from "lucide-react";
 
 interface ChatDetailPanelProps {
   sessionId: string;
@@ -19,6 +19,7 @@ interface SubMessage {
   sources?: Array<{ id: string; score?: number; text?: string }>;
   party_id?: string;
   party_name?: string;
+  feedback?: { feedback: "like" | "dislike"; detail?: string };
 }
 
 /** Raw grouped-message document from Firestore */
@@ -41,6 +42,7 @@ interface FlatMessage {
   sources?: Array<{ id: string; score?: number; text?: string }>;
   party_id?: string;
   party_name?: string;
+  feedback?: { feedback: "like" | "dislike"; detail?: string };
 }
 
 interface SessionDetail {
@@ -74,6 +76,7 @@ function flattenMessages(docs: GroupedMessageDoc[]): FlatMessage[] {
           sources: sub.sources,
           party_id: sub.party_id,
           party_name: sub.party_name,
+          feedback: sub.feedback,
         });
       }
     } else if (doc.content) {
@@ -320,6 +323,21 @@ export default function ChatDetailPanel({
                       {msg.party_name && (
                         <span className="rounded bg-purple-500/15 px-1.5 py-0.5 text-[10px] font-medium text-purple-400">
                           {msg.party_name}
+                        </span>
+                      )}
+                      {msg.feedback?.feedback === "like" && (
+                        <span className="flex items-center gap-0.5 rounded bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-400">
+                          <ThumbsUp className="size-2.5" />
+                          like
+                        </span>
+                      )}
+                      {msg.feedback?.feedback === "dislike" && (
+                        <span className="flex items-center gap-0.5 rounded bg-red-500/15 px-1.5 py-0.5 text-[10px] font-medium text-red-400">
+                          <ThumbsDown className="size-2.5" />
+                          dislike
+                          {msg.feedback.detail && (
+                            <span className="ml-1 text-red-300">— {msg.feedback.detail}</span>
+                          )}
                         </span>
                       )}
                     </div>

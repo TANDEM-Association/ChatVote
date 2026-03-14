@@ -142,24 +142,31 @@ export default function DemographicBubble({ question, messageNumber }: Props) {
       return;
     }
 
-    setUserDemographic(question.field, value);
+    // Show "Merci !" feedback first, then persist to store after a short
+    // delay.  Without this, the Zustand update triggers a parent re-render
+    // that unmounts this component before "Merci !" is visible.
+    setAnswered(true);
     trackDemographicAnswered({
       field: question.field,
       value,
       message_number: messageNumber,
     });
-    setAnswered(true);
+    setTimeout(() => {
+      setUserDemographic(question.field, value);
+    }, 1500);
   };
 
   const handleValidateTopics = () => {
     if (selectedTopics.length === 0) return;
-    setUserDemographic(question.field, selectedTopics);
+    setAnswered(true);
     trackDemographicAnswered({
       field: question.field,
       value: selectedTopics.join(","),
       message_number: messageNumber,
     });
-    setAnswered(true);
+    setTimeout(() => {
+      setUserDemographic(question.field, selectedTopics);
+    }, 1500);
   };
 
   const handleSkip = () => {

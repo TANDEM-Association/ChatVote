@@ -66,7 +66,7 @@ test.describe('Chat Input Extended', () => {
 
     // The disclaimer has a "learn more" button: EN "Learn more here." / FR "En savoir plus ici."
     const learnMoreButton = page.locator('button').filter({
-      hasText: /en savoir plus|learn more/i,
+      hasText: /en savoir plus ici|learn more here/i,
     });
     await expect(learnMoreButton).toBeVisible({ timeout: 10000 });
     await learnMoreButton.click();
@@ -74,7 +74,7 @@ test.describe('Chat Input Extended', () => {
     // Clicking opens a custom Modal (no role="dialog") with AI disclaimer details.
     // EN title: "AI Notice" / FR title: "Avertissement IA"
     await expect(
-      page.getByRole('heading', { name: /AI Notice|Avertissement IA/i })
+      page.getByRole('heading', { name: /AI Notice|Avis IA/i })
     ).toBeVisible({ timeout: 5000 });
   });
 });

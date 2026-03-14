@@ -6,7 +6,7 @@ test.describe('Responsive Layout', () => {
     await page.setViewportSize({ width: 390, height: 844 });
     await goToChat(page);
     // On mobile, the sidebar trigger button in the header is visible (block md:hidden)
-    await expect(page.getByRole('button', { name: /toggle sidebar/i }).first()).toBeVisible();
+    await expect(page.getByRole('button', { name: /toggle sidebar|afficher.*panneau/i }).first()).toBeVisible();
   });
 
   test('Desktop viewport shows sidebar', async ({ page }) => {

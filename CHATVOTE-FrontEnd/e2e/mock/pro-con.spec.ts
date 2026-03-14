@@ -2,7 +2,8 @@ import { test, expect } from '../support/base-test';
 import { setupChat, sendMessage, waitForResponseComplete } from '../support/test-helpers';
 
 test.describe('Pro/Con Position Evaluation', () => {
-  test('Evaluate position button appears on assistant messages', async ({ page }) => {
+  // Pro/con feature is disabled (showProConButton = false in chat-single-message-actions.tsx)
+  test.fixme('Evaluate position button appears on assistant messages', async ({ page }) => {
     await setupChat(page);
     await sendMessage(page, 'Education policy?');
     await waitForResponseComplete(page);
@@ -14,7 +15,7 @@ test.describe('Pro/Con Position Evaluation', () => {
     await expect(evaluateButton).toBeVisible({ timeout: 10000 });
   });
 
-  test('Clicking evaluate position triggers pro/con streaming', async ({ page }) => {
+  test.fixme('Clicking evaluate position triggers pro/con streaming', async ({ page }) => {
     await setupChat(page);
     await sendMessage(page, 'Education policy?');
     await waitForResponseComplete(page);

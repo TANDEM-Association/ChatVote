@@ -7,7 +7,7 @@ test.describe('Responsive Layout Extended', () => {
     await goToChat(page);
 
     // On mobile the header renders a sidebar trigger button (block md:hidden)
-    const toggleButton = page.getByRole('button', { name: /toggle sidebar/i }).first();
+    const toggleButton = page.getByRole('button', { name: /toggle sidebar|afficher.*panneau/i }).first();
     await expect(toggleButton).toBeVisible({ timeout: 10000 });
   });
 
@@ -16,7 +16,7 @@ test.describe('Responsive Layout Extended', () => {
     await goToChat(page);
 
     // Sidebar starts collapsed on mobile — open it via the trigger button
-    const toggleButton = page.getByRole('button', { name: /toggle sidebar/i }).first();
+    const toggleButton = page.getByRole('button', { name: /toggle sidebar|afficher.*panneau/i }).first();
     await expect(toggleButton).toBeVisible({ timeout: 10000 });
     await toggleButton.click({ force: true });
 
