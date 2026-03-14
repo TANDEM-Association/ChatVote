@@ -42,7 +42,6 @@ from src.firebase_service import (
     awrite_cached_answer_for_party,
     # Candidate functions
     aget_candidates_by_municipality,
-    aget_candidates,
     aget_candidate_by_id,
 )
 from src.models.chat import CachedResponse, GroupChatSession, Message, Role
@@ -950,7 +949,6 @@ async def handle_combined_answer_request(
     chat_history: List[Message],
     user_message: Message,
     all_parties: List[Party],
-    all_candidates: list,
 ):
     """
     Handle chat answer request using combined manifesto + candidate website search.
@@ -1443,11 +1441,9 @@ async def chat_answer_request(sid: str, body: dict):
     t_session = _t()
     logger.info(f"TIMING chat_answer step=session_lookup elapsed={t_session - t0:.3f}s sid={sid}")
 
-    # Get all parties and candidates (parallel to halve cold-cache latency)
+    # Get all parties (candidates are fetched on-demand where needed)
     t_fs = time.perf_counter()
-    all_parties, all_candidates = await asyncio.gather(
-        aget_parties(), aget_candidates()
-    )
+    all_parties = await aget_parties()
     logger.info(
         f"TIMING firestore_prefetch: {time.perf_counter() - t_fs:.3f}s (sid={sid})"
     )
@@ -1463,7 +1459,6 @@ async def chat_answer_request(sid: str, body: dict):
             chat_history=chat_history,
             user_message=user_message,
             all_parties=all_parties,
-            all_candidates=all_candidates,
         )
         return
 
