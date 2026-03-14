@@ -20,8 +20,9 @@ make check                         # Health-check all services
 make logs                          # Tail all service logs
 make stop                          # Stop everything
 make clean                         # Stop + remove Docker volumes
-make seed                          # Re-seed Firestore + Qdrant collections
-make seed-vectors                  # Same + generate sample embeddings via Ollama
+make seed                          # Re-seed Firestore + Qdrant collections + embeddings (uses .env provider)
+make seed-qwen                     # Same but force Scaleway qwen embeddings (4096d)
+make seed-local                    # Same but force Ollama embeddings (768d)
 make dev-backend                   # Start backend in foreground (debugging)
 make dev-frontend                  # Start frontend in foreground (debugging)
 ```

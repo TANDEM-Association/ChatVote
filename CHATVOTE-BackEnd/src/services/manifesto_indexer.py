@@ -25,7 +25,7 @@ from pypdf import PdfReader
 
 from src.models.party import Party
 from src.firebase_service import aget_parties, aget_party_by_id
-from src.services.chunk_classifier import classify_chunks_themes
+from src.services.theme_classifier import classify_chunks, apply_themes_to_documents
 from src.vector_store_helper import (
     get_qdrant_vector_store,
     qdrant_client,
@@ -200,12 +200,8 @@ async def index_party_manifesto(party: Party) -> int:
     # Step 4: Classify themes (optional — degrades gracefully)
     try:
         chunk_texts = [doc.page_content for doc in documents]
-        classifications = await classify_chunks_themes(chunk_texts)
-        for doc, cls in zip(documents, classifications, strict=True):
-            if cls.theme:
-                doc.metadata["theme"] = cls.theme
-            if cls.sub_theme:
-                doc.metadata["sub_theme"] = cls.sub_theme
+        classifications = await classify_chunks(chunk_texts, max_concurrent_llm=5)
+        apply_themes_to_documents(documents, classifications)
         logger.info(f"Theme classification complete for {party.party_id}")
     except Exception as e:
         logger.warning(f"Theme classification skipped for {party.party_id}: {e}")

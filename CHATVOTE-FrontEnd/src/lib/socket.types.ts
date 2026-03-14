@@ -74,7 +74,7 @@ export type SourcesReadyPayload = {
   session_id: string;
   sources: Source[];
   party_id: string;
-  rag_query: string;
+  rag_query: string[] | null;
 };
 
 /** Backend: PartyResponseCompleteDto. FE drops status field. */

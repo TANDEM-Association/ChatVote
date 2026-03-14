@@ -256,9 +256,9 @@ class SourcesDto(BaseModel):
     sources: List[dict] = Field(
         ..., description="The sources for the response that will be generated"
     )
-    party_id: Optional[str] = Field(
+    party_id: str = Field(
         ...,
-        description="The ID of the party for which the sources were retrieved. None for general Perplexity chat",
+        description="The ID of the party for which the sources were retrieved.",
     )
     rag_query: Optional[List[str]] = Field(
         ..., description="The RAG query that was used to get the sources if any"

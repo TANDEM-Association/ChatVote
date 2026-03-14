@@ -270,17 +270,21 @@ def _ensure_collection_exists(collection_name: str) -> None:
                 existing_dim = vectors_config.size
 
         if existing_dim is not None and existing_dim != EMBEDDING_DIM:
-            logger.warning(
-                f"Collection {collection_name} has {existing_dim} dimensions but expected {EMBEDDING_DIM}. "
-                f"Recreating collection..."
+            qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
+            raise RuntimeError(
+                f"Embedding dimension mismatch for collection '{collection_name}': "
+                f"existing={existing_dim}, expected={EMBEDDING_DIM}. "
+                f"To drop and recreate, run:\n"
+                f"  curl -X DELETE '{qdrant_url}/collections/{collection_name}'"
             )
-            qdrant_client.delete_collection(collection_name)
         else:
             logger.debug(
                 f"Collection {collection_name} already exists with correct dimensions"
             )
             return
 
+    except RuntimeError:
+        raise
     except Exception:
         # Collection does not exist (UnexpectedResponse 404 or similar)
         pass

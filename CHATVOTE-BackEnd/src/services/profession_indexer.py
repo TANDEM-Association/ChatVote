@@ -356,15 +356,11 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
 
     # Step 5.5: Classify themes (optional — degrades gracefully)
     try:
-        from src.services.chunk_classifier import classify_chunks_themes
+        from src.services.theme_classifier import classify_chunks, apply_themes_to_documents
 
         chunk_texts = [doc.page_content for doc in documents]
-        classifications = await classify_chunks_themes(chunk_texts)
-        for doc, cls in zip(documents, classifications):
-            if cls.theme:
-                doc.metadata["theme"] = cls.theme
-            if cls.sub_theme:
-                doc.metadata["sub_theme"] = cls.sub_theme
+        classifications = await classify_chunks(chunk_texts, max_concurrent_llm=5)
+        apply_themes_to_documents(documents, classifications)
         classified = sum(1 for c in classifications if c.theme)
         logger.info(
             f"[profession_indexer] classified {classified}/{len(documents)} "

@@ -41,8 +41,6 @@ os.environ.setdefault("QDRANT_URL", "http://localhost:6333")
 # Model defaults — see src/model_config.py for the central registry
 os.environ.setdefault("OLLAMA_BASE_URL", "http://localhost:11434")
 os.environ.setdefault("OLLAMA_MODEL", "qwen3:32b")
-os.environ.setdefault("OLLAMA_EMBED_MODEL", "nomic-embed-text")
-os.environ.setdefault("OLLAMA_EMBED_DIM", "768")
 
 FIREBASE_DATA_DIR = PROJECT_ROOT / "firebase" / "firestore_data" / "dev"
 

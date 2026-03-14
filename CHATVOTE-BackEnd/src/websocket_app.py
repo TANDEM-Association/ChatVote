@@ -1082,6 +1082,8 @@ async def handle_combined_answer_request(
             "fiabilite": source_doc.metadata.get("fiabilite"),
             "theme": source_doc.metadata.get("theme"),
             "sub_theme": source_doc.metadata.get("sub_theme"),
+            "document_publish_date": source_doc.metadata.get("document_publish_date"),
+            "source_document": source_doc.metadata.get("source_document"),
         }
         sources.append(source)
 
@@ -1115,6 +1117,8 @@ async def handle_combined_answer_request(
             "fiabilite": source_doc.metadata.get("fiabilite"),
             "theme": source_doc.metadata.get("theme"),
             "sub_theme": source_doc.metadata.get("sub_theme"),
+            "document_publish_date": source_doc.metadata.get("document_publish_date"),
+            "source_document": source_doc.metadata.get("source_document"),
         }
         sources.append(source)
 

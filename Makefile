@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-gemini seed-snapshots seed-firestore test-e2e check stop clean logs logs-prod logs-backend logs-frontend logs-qdrant logs-k8s check-prod eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
+.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-qwen seed-snapshots seed-firestore test-e2e check stop clean logs logs-prod logs-backend logs-frontend logs-qdrant logs-k8s check-prod eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
 
 # ---------------------------------------------------------------------------
 # Setup — run once after cloning
@@ -16,19 +16,28 @@ setup:
 	@echo "==> Installing Firebase emulator tooling..."
 	cd CHATVOTE-BackEnd/firebase && npm install
 	@echo ""
-	@echo "==> Setting up Ollama (LLM engine)..."
+	@echo "==> Setting up LLM engine..."
 	@PROVIDER=$$(grep -E '^EMBEDDING_PROVIDER=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
 	CHAT_MODEL=$$(grep -E '^OLLAMA_MODEL=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
-	EMBED_MODEL=$$(grep -E '^OLLAMA_EMBED_MODEL=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
-	CHAT_MODEL=$${CHAT_MODEL:-llama3.2}; \
-	EMBED_MODEL=$${EMBED_MODEL:-nomic-embed-text}; \
-	if [ "$$PROVIDER" = "google" ]; then \
+	CHAT_MODEL=$${CHAT_MODEL:-qwen3:32b}; \
+	if [ "$$PROVIDER" = "scaleway" ]; then \
+		echo "     Using Scaleway qwen for embeddings (cloud mode, 4096d)."; \
+		echo "     Ollama chat model still needed for local LLM."; \
+		if command -v ollama > /dev/null 2>&1; then \
+			echo "     Pulling chat model: $$CHAT_MODEL"; \
+			ollama pull $$CHAT_MODEL || true; \
+		else \
+			echo "     Ollama not found. Install for local chat: brew install ollama && ollama serve"; \
+		fi; \
+	elif [ "$$PROVIDER" = "google" ]; then \
 		echo "     Using Gemini for chat + embeddings (cloud mode)."; \
 		echo "     Ollama models will NOT be pulled (not needed)."; \
 		if command -v ollama > /dev/null 2>&1; then \
 			echo "     (Ollama is available as fallback if needed)"; \
 		fi; \
 	elif command -v ollama > /dev/null 2>&1; then \
+		EMBED_MODEL=$$(grep -E '^OLLAMA_EMBED_MODEL=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
+		EMBED_MODEL=$${EMBED_MODEL:-nomic-embed-text}; \
 		echo "     Ollama is installed natively (GPU accelerated)."; \
 		echo "     Pulling models (this may take a few minutes on first run)..."; \
 		echo "     Chat: $$CHAT_MODEL, Embed: $$EMBED_MODEL"; \
@@ -141,13 +150,13 @@ seed:
 seed-local:
 	cd CHATVOTE-BackEnd && EMBEDDING_PROVIDER=ollama poetry run python scripts/seed_local.py --with-vectors
 
-seed-gemini:
-	@if [ -z "$$(grep -E '^GOOGLE_API_KEY=' CHATVOTE-BackEnd/.env 2>/dev/null | cut -d= -f2)" ]; then \
-		echo "Error: GOOGLE_API_KEY not set in CHATVOTE-BackEnd/.env"; \
-		echo "Run 'make setup' and choose Gemini, or add the key manually."; \
+seed-qwen:
+	@if [ -z "$$(grep -E '^SCALEWAY_EMBED_API_KEY=' CHATVOTE-BackEnd/.env 2>/dev/null | cut -d= -f2)" ]; then \
+		echo "Error: SCALEWAY_EMBED_API_KEY not set in CHATVOTE-BackEnd/.env"; \
+		echo "Add your Scaleway API key to CHATVOTE-BackEnd/.env"; \
 		exit 1; \
 	fi
-	cd CHATVOTE-BackEnd && EMBEDDING_PROVIDER=google poetry run python scripts/seed_local.py --with-vectors
+	cd CHATVOTE-BackEnd && EMBEDDING_PROVIDER=scaleway poetry run python scripts/seed_local.py --with-vectors
 
 seed-snapshots:
 	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py --restore-snapshots
