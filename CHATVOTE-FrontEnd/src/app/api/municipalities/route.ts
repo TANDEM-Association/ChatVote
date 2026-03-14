@@ -23,7 +23,7 @@ function getAdminApp(): FirebaseApp {
   if (useEmulators) {
     process.env.FIRESTORE_EMULATOR_HOST ??= "localhost:8081";
     return initializeAdminApp({
-      projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID || "chat-vote-dev",
+      projectId: "chat-vote-dev",
     });
   }
 

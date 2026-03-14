@@ -99,25 +99,37 @@ dev: dev-infra
 
 dev-infra:
 	@PROFILES=""; \
-	if curl -sf http://localhost:11434/ > /dev/null 2>&1; then \
-		echo "Native Ollama detected on :11434 — skipping Docker Ollama (GPU accelerated)."; \
-	elif command -v ollama > /dev/null 2>&1; then \
-		echo "Native Ollama found but not serving — starting it..."; \
-		ollama serve > .logs/ollama.log 2>&1 & \
-		for i in 1 2 3 4 5 6 7 8 9 10; do \
-			if curl -sf http://localhost:11434/ > /dev/null 2>&1; then break; fi; \
-			sleep 1; \
-		done; \
+	EMBED_PROV=$$(grep -E '^EMBEDDING_PROVIDER=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
+	HAS_GOOGLE_KEY=$$(grep -E '^GOOGLE_API_KEY=.+' CHATVOTE-BackEnd/.env 2>/dev/null | head -1); \
+	NEEDS_OLLAMA=true; \
+	if [ "$$EMBED_PROV" = "google" ] && [ -n "$$HAS_GOOGLE_KEY" ]; then \
+		echo "Using Gemini for chat + embeddings (cloud mode) — Ollama not needed."; \
+		NEEDS_OLLAMA=false; \
+	elif [ "$$EMBED_PROV" = "scaleway" ] && [ -n "$$HAS_GOOGLE_KEY" ]; then \
+		echo "Using Scaleway embeddings + Gemini chat (cloud mode) — Ollama not needed."; \
+		NEEDS_OLLAMA=false; \
+	fi; \
+	if [ "$$NEEDS_OLLAMA" = "true" ]; then \
 		if curl -sf http://localhost:11434/ > /dev/null 2>&1; then \
-			echo "Native Ollama started on :11434 (GPU accelerated)."; \
+			echo "Native Ollama detected on :11434 — skipping Docker Ollama (GPU accelerated)."; \
+		elif command -v ollama > /dev/null 2>&1; then \
+			echo "Native Ollama found but not serving — starting it..."; \
+			ollama serve > .logs/ollama.log 2>&1 & \
+			for i in 1 2 3 4 5 6 7 8 9 10; do \
+				if curl -sf http://localhost:11434/ > /dev/null 2>&1; then break; fi; \
+				sleep 1; \
+			done; \
+			if curl -sf http://localhost:11434/ > /dev/null 2>&1; then \
+				echo "Native Ollama started on :11434 (GPU accelerated)."; \
+			else \
+				echo "Failed to start native Ollama — falling back to Docker (CPU only)."; \
+				PROFILES="$$PROFILES --profile ollama"; \
+			fi; \
 		else \
-			echo "Failed to start native Ollama — falling back to Docker (CPU only)."; \
+			echo "No native Ollama found — starting Ollama in Docker (CPU only, slow on macOS)."; \
+			echo "TIP: For Apple Silicon, install natively: brew install ollama && ollama serve"; \
 			PROFILES="$$PROFILES --profile ollama"; \
 		fi; \
-	else \
-		echo "No native Ollama found — starting Ollama in Docker (CPU only, slow on macOS)."; \
-		echo "TIP: For Apple Silicon, install natively: brew install ollama && ollama serve"; \
-		PROFILES="$$PROFILES --profile ollama"; \
 	fi; \
 	if curl -sf http://localhost:8081/ > /dev/null 2>&1 && curl -sf http://localhost:9099/ > /dev/null 2>&1; then \
 		echo "Native Firebase emulators detected on :8081/:9099 — skipping Docker emulators."; \
@@ -203,8 +215,14 @@ check:
 	@echo "Checking services..."
 	@printf "  Qdrant    (:6333)  ... " && \
 		(curl -sf http://localhost:6333/healthz > /dev/null 2>&1 && echo "OK" || echo "FAIL")
-	@printf "  Ollama    (:11434) ... " && \
-		(curl -sf http://localhost:11434/ > /dev/null 2>&1 && echo "OK" || echo "FAIL")
+	@EMBED_PROV=$$(grep -E '^EMBEDDING_PROVIDER=' CHATVOTE-BackEnd/.env 2>/dev/null | tail -1 | cut -d= -f2); \
+	HAS_GOOGLE_KEY=$$(grep -E '^GOOGLE_API_KEY=.+' CHATVOTE-BackEnd/.env 2>/dev/null | head -1); \
+	if [ "$$EMBED_PROV" != "google" ] || [ -z "$$HAS_GOOGLE_KEY" ]; then \
+		if [ "$$EMBED_PROV" != "scaleway" ] || [ -z "$$HAS_GOOGLE_KEY" ]; then \
+			printf "  Ollama    (:11434) ... " && \
+			(curl -sf http://localhost:11434/ > /dev/null 2>&1 && echo "OK" || echo "FAIL"); \
+		fi; \
+	fi
 	@printf "  Firestore (:8081)  ... " && \
 		(curl -sf http://localhost:8081/ > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 	@printf "  Auth      (:9099)  ... " && \
