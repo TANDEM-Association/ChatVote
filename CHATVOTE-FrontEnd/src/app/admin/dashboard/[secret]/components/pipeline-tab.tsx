@@ -842,6 +842,7 @@ export default function PipelineTab({
   const [previewData, setPreviewData] = useState<PreviewData | null>(null);
   const [previewLoading, setPreviewLoading] = useState(false);
   const [communesToScrap, setCommunesToScrap] = useState<number>(287);
+  const [communesInput, setCommunesInput] = useState<string>("287");
   const [execMode, setExecMode] = useState<"in-process" | "k8s">("in-process");
   const [k8sStatus, setK8sStatus] = useState<K8sStatus | null>(null);
 
@@ -888,7 +889,9 @@ export default function PipelineTab({
       // Sync communesToScrap from population node settings
       const popSettings = data?.population?.settings;
       if (popSettings?.communes_to_scrap) {
-        setCommunesToScrap(Number(popSettings.communes_to_scrap) || 287);
+        const v = Number(popSettings.communes_to_scrap) || 287;
+        setCommunesToScrap(v);
+        setCommunesInput(String(v));
       }
       setError(null);
     } catch (err: unknown) {
@@ -1270,11 +1273,19 @@ export default function PipelineTab({
           type="number"
           min={1}
           max={35000}
-          value={communesToScrap}
-          onChange={(e) =>
-            setCommunesToScrap(Math.max(1, parseInt(e.target.value) || 1))
-          }
-          onBlur={() => saveCommunesToScrap(communesToScrap)}
+          value={communesInput}
+          onChange={(e) => setCommunesInput(e.target.value)}
+          onBlur={() => {
+            const v = Math.max(1, parseInt(communesInput) || 1);
+            setCommunesToScrap(v);
+            setCommunesInput(String(v));
+            saveCommunesToScrap(v);
+          }}
+          onKeyDown={(e) => {
+            if (e.key === "Enter") {
+              (e.target as HTMLInputElement).blur();
+            }
+          }}
           className="border-border-subtle bg-card text-foreground w-20 rounded-md border px-2.5 py-1.5 font-mono text-sm font-semibold outline-none focus:border-indigo-500 focus:ring-1 focus:ring-indigo-500"
         />
         <span className="text-muted-foreground text-xs">

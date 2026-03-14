@@ -6,7 +6,7 @@ import { Button } from "@components/ui/button";
 import { Loader2, RefreshCw } from "lucide-react";
 
 import { type CoverageResponse } from "../../../../api/coverage/route";
-import CoverageTablesClient from "../../../../experiment/coverage/coverage-tables-client";
+import CoverageTablesClient from "./coverage-tables-client";
 
 // ---------------------------------------------------------------------------
 // Types

@@ -34,9 +34,16 @@ const app = initializeApp(firebaseConfig);
 export const auth = getAuth(app);
 const db = getFirestore(app);
 
-if (process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true") {
+if (
+  process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true" &&
+  // Guard against HMR re-evaluation — emulator can only be connected once
+  // @ts-expect-error global flag
+  !globalThis.__FIREBASE_EMULATORS_CONNECTED__
+) {
   connectFirestoreEmulator(db, "localhost", 8081);
   connectAuthEmulator(auth, "http://localhost:9099", { disableWarnings: true });
+  // @ts-expect-error global flag
+  globalThis.__FIREBASE_EMULATORS_CONNECTED__ = true;
 }
 
 export async function createChatSession(

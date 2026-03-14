@@ -1,6 +1,14 @@
 "use client";
 
-import { Fragment, useCallback, useMemo, useRef, useState } from "react";
+import {
+  Fragment,
+  memo,
+  useCallback,
+  useEffect,
+  useMemo,
+  useRef,
+  useState,
+} from "react";
 
 import { useVirtualizer } from "@tanstack/react-virtual";
 import {
@@ -8,7 +16,9 @@ import {
   ArrowUpDownIcon,
   CheckIcon,
   ChevronRightIcon,
+  ExternalLinkIcon,
   FilterIcon,
+  Loader2Icon,
   SearchIcon,
   XIcon,
 } from "lucide-react";
@@ -18,7 +28,7 @@ import {
   type ChartAggregations,
   type CommuneCoverage,
   type PartyCoverage,
-} from "../../api/coverage/route";
+} from "../../../../api/coverage/route";
 
 type CommuneAggEntry = ChartAggregations["coverageByCommune"][string];
 
@@ -48,6 +58,51 @@ type PartySortKey = "name" | "chunk_count";
 type CandidateSortKey = "name" | "commune_name" | "party_label";
 type SortDir = "asc" | "desc";
 type CompletenessFilter = "all" | "complete" | "partial" | "missing";
+
+// ---------------------------------------------------------------------------
+// Candidate chunks types (per-commune detail panel)
+// ---------------------------------------------------------------------------
+
+type CandidateChunkDetail = {
+  candidate_id: string;
+  name: string;
+  party_label: string;
+  is_tete_de_liste: boolean;
+  website_url: string;
+  manifesto_url: string;
+  manifesto_pdf_path: string;
+  has_manifesto: boolean;
+  has_scraped: boolean;
+  scrape_chars: number;
+  total_chunks: number;
+  manifesto_chunks: number;
+  website_chunks: number;
+  good_count: number;
+  junk_count: number;
+  themes: Record<string, number>;
+  sources: Record<string, number>;
+  urls: string[];
+  junk_samples: Array<{ reason: string; preview: string }>;
+  debug_links: {
+    qdrant_collection: string;
+    qdrant_points: string;
+    firestore_doc: string;
+    drive_folder: string;
+  };
+};
+
+type CandidateChunksResponse = {
+  commune_code: string;
+  candidates: CandidateChunkDetail[];
+  summary: {
+    total_candidates: number;
+    total_chunks: number;
+    manifesto_chunks: number;
+    website_chunks: number;
+    good_chunks: number;
+    junk_chunks: number;
+  };
+};
 
 // ---------------------------------------------------------------------------
 // Helpers
@@ -302,6 +357,519 @@ function ScoreBreakdown({
   );
 }
 
+// ---------------------------------------------------------------------------
+// CandidateChunksPanel — fetches & renders per-commune candidate details
+// ---------------------------------------------------------------------------
+
+const BACKEND_URL =
+  process.env.NEXT_PUBLIC_API_URL ||
+  process.env.NEXT_PUBLIC_SOCKET_URL ||
+  "http://localhost:8080";
+
+const CandidateSubRow = memo(function CandidateSubRow({
+  candidate,
+  index,
+}: {
+  candidate: CandidateChunkDetail;
+  index: number;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const junkPct =
+    candidate.total_chunks > 0
+      ? Math.round((candidate.junk_count / candidate.total_chunks) * 100)
+      : 0;
+
+  const manifestoTotal =
+    candidate.manifesto_chunks + candidate.website_chunks > 0
+      ? candidate.manifesto_chunks + candidate.website_chunks
+      : 1;
+  const manifestoPct = Math.round(
+    (candidate.manifesto_chunks / manifestoTotal) * 100,
+  );
+  const websitePct = 100 - manifestoPct;
+
+  return (
+    <Fragment>
+      <tr
+        className="cursor-pointer transition-colors select-none hover:bg-violet-500/5"
+        onClick={() => setExpanded((v) => !v)}
+      >
+        {/* # */}
+        <td className="text-muted-foreground px-3 py-2 text-xs tabular-nums">
+          <div className="flex items-center gap-1">
+            <ChevronRightIcon
+              className={`size-3 transition-transform duration-150 ${expanded ? "rotate-90" : ""}`}
+            />
+            {index + 1}.
+          </div>
+        </td>
+        {/* Candidate */}
+        <td className="px-3 py-2">
+          <span className="text-foreground text-xs font-medium">
+            {candidate.is_tete_de_liste && (
+              <span className="mr-1 text-amber-400">★</span>
+            )}
+            {candidate.name}
+          </span>
+          <span className="text-muted-foreground/60 ml-1.5 font-mono text-[10px]">
+            {candidate.candidate_id.slice(0, 8)}
+          </span>
+        </td>
+        {/* Party */}
+        <td className="text-muted-foreground px-3 py-2 text-xs">
+          {candidate.party_label || "—"}
+        </td>
+        {/* Website */}
+        <td className="px-3 py-2 text-center">
+          {candidate.website_url ? (
+            <a
+              href={candidate.website_url}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-0.5 text-[11px] text-green-500 hover:underline"
+            >
+              <CheckIcon className="size-3" />
+              <ExternalLinkIcon className="size-2.5" />
+            </a>
+          ) : (
+            <XIcon className="mx-auto size-3.5 text-red-400" />
+          )}
+        </td>
+        {/* Manifesto */}
+        <td className="px-3 py-2 text-center">
+          {candidate.has_manifesto ? (
+            candidate.manifesto_url ? (
+              <a
+                href={candidate.manifesto_url}
+                target="_blank"
+                rel="noopener noreferrer"
+                onClick={(e) => e.stopPropagation()}
+                className="inline-flex items-center gap-0.5 text-[11px] text-green-500 hover:underline"
+              >
+                <CheckIcon className="size-3" />
+                <ExternalLinkIcon className="size-2.5" />
+              </a>
+            ) : (
+              <CheckIcon className="mx-auto size-3.5 text-green-500" />
+            )
+          ) : (
+            <XIcon className="mx-auto size-3.5 text-red-400" />
+          )}
+        </td>
+        {/* Chunks */}
+        <td className="px-3 py-2">
+          <div className="flex items-center gap-2">
+            <div className="bg-border-subtle/40 h-2 w-16 overflow-hidden rounded-full">
+              <div className="flex h-full">
+                <div
+                  className="h-full bg-green-500/70"
+                  style={{ width: `${manifestoPct}%` }}
+                />
+                <div
+                  className="h-full bg-blue-500/70"
+                  style={{ width: `${websitePct}%` }}
+                />
+              </div>
+            </div>
+            <span className="text-foreground text-[11px] tabular-nums">
+              {candidate.total_chunks}
+            </span>
+          </div>
+        </td>
+        {/* Good */}
+        <td className="px-3 py-2 text-center">
+          <span className="text-[11px] text-green-500 tabular-nums">
+            {candidate.good_count}
+          </span>
+        </td>
+        {/* Junk */}
+        <td className="px-3 py-2 text-center">
+          {candidate.junk_count > 0 ? (
+            <span
+              className={`text-[11px] tabular-nums ${junkPct > 30 ? "text-red-400" : "text-amber-400"}`}
+            >
+              {candidate.junk_count}
+              <span className="text-muted-foreground/60 ml-0.5">
+                ({junkPct}%)
+              </span>
+            </span>
+          ) : (
+            <span className="text-muted-foreground/40 text-[11px]">0</span>
+          )}
+        </td>
+      </tr>
+
+      {expanded && (
+        <tr className="bg-violet-500/[0.03]">
+          <td colSpan={8} className="py-3 pr-6 pl-10">
+            <div className="space-y-3 border-l-2 border-violet-500/15 pl-4 text-xs">
+              {/* Links */}
+              <div className="flex flex-wrap gap-x-4 gap-y-1">
+                {candidate.website_url && (
+                  <a
+                    href={candidate.website_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-400 hover:underline"
+                  >
+                    <ExternalLinkIcon className="size-3" /> Website
+                  </a>
+                )}
+                {candidate.manifesto_url && (
+                  <a
+                    href={candidate.manifesto_url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="inline-flex items-center gap-1 text-blue-400 hover:underline"
+                  >
+                    <ExternalLinkIcon className="size-3" /> Manifesto PDF
+                  </a>
+                )}
+                <a
+                  href={candidate.debug_links.qdrant_points}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-orange-400 hover:underline"
+                >
+                  <ExternalLinkIcon className="size-3" /> Qdrant
+                </a>
+                <a
+                  href={candidate.debug_links.firestore_doc}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-yellow-400 hover:underline"
+                >
+                  <ExternalLinkIcon className="size-3" /> Firestore
+                </a>
+                <a
+                  href={candidate.debug_links.drive_folder}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="inline-flex items-center gap-1 text-emerald-400 hover:underline"
+                >
+                  <ExternalLinkIcon className="size-3" /> Drive
+                </a>
+                {candidate.has_scraped && (
+                  <span className="text-green-500/70">
+                    Scraped ({(candidate.scrape_chars / 1000).toFixed(1)}k
+                    chars)
+                  </span>
+                )}
+              </div>
+
+              {/* Chunks breakdown */}
+              <div className="flex gap-4">
+                <span className="text-muted-foreground">
+                  Manifesto:{" "}
+                  <span className="text-green-400">
+                    {candidate.manifesto_chunks}
+                  </span>
+                </span>
+                <span className="text-muted-foreground">
+                  Website:{" "}
+                  <span className="text-blue-400">
+                    {candidate.website_chunks}
+                  </span>
+                </span>
+              </div>
+
+              {/* Themes */}
+              {Object.keys(candidate.themes).length > 0 && (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-[10px] font-semibold tracking-wider uppercase">
+                    Themes
+                  </p>
+                  <div className="flex flex-wrap gap-1.5">
+                    {Object.entries(candidate.themes)
+                      .sort((a, b) => b[1] - a[1])
+                      .map(([theme, count]) => (
+                        <span
+                          key={theme}
+                          className="rounded border border-violet-500/20 bg-violet-500/10 px-1.5 py-0.5 text-[10px] text-violet-300"
+                        >
+                          {theme}
+                          <span className="text-muted-foreground/60 ml-1">
+                            {count}
+                          </span>
+                        </span>
+                      ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Sources */}
+              {Object.keys(candidate.sources).length > 0 && (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-[10px] font-semibold tracking-wider uppercase">
+                    Sources
+                  </p>
+                  <div className="flex flex-wrap gap-3">
+                    {Object.entries(candidate.sources).map(([src, count]) => (
+                      <span key={src} className="text-muted-foreground">
+                        {src}:{" "}
+                        <span className="text-foreground tabular-nums">
+                          {count}
+                        </span>
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* URLs from chunks */}
+              {candidate.urls.length > 0 && (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-[10px] font-semibold tracking-wider uppercase">
+                    Indexed URLs ({candidate.urls.length})
+                  </p>
+                  <div className="space-y-0.5">
+                    {candidate.urls.slice(0, 5).map((url) => (
+                      <a
+                        key={url}
+                        href={url}
+                        target="_blank"
+                        rel="noopener noreferrer"
+                        className="text-muted-foreground/70 block truncate text-[10px] hover:text-blue-400 hover:underline"
+                      >
+                        {url}
+                      </a>
+                    ))}
+                    {candidate.urls.length > 5 && (
+                      <span className="text-muted-foreground/40 text-[10px]">
+                        +{candidate.urls.length - 5} more
+                      </span>
+                    )}
+                  </div>
+                </div>
+              )}
+
+              {/* Junk samples */}
+              {candidate.junk_samples.length > 0 && (
+                <div>
+                  <p className="text-muted-foreground mb-1 text-[10px] font-semibold tracking-wider uppercase">
+                    Junk samples
+                  </p>
+                  <div className="space-y-1">
+                    {candidate.junk_samples.slice(0, 3).map((s, i) => (
+                      <div key={i} className="flex gap-2">
+                        <span className="shrink-0 rounded border border-red-500/20 bg-red-500/10 px-1 py-0.5 text-[10px] text-red-400">
+                          {s.reason}
+                        </span>
+                        <span className="text-muted-foreground/60 truncate text-[10px]">
+                          {s.preview}
+                        </span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
+            </div>
+          </td>
+        </tr>
+      )}
+    </Fragment>
+  );
+});
+
+type PanelState =
+  | { status: "loading" }
+  | { status: "error"; message: string }
+  | { status: "done"; data: CandidateChunksResponse };
+
+function CandidateChunksPanel({ communeCode }: { communeCode: string }) {
+  const [state, setState] = useState<PanelState>({ status: "loading" });
+
+  useEffect(() => {
+    let cancelled = false;
+
+    fetch(
+      `${BACKEND_URL}/api/v1/commune/${encodeURIComponent(communeCode)}/candidate-chunks`,
+    )
+      .then((res) => {
+        if (!res.ok) throw new Error(`HTTP ${res.status}: ${res.statusText}`);
+        return res.json() as Promise<CandidateChunksResponse>;
+      })
+      .then((json) => {
+        if (!cancelled) setState({ status: "done", data: json });
+      })
+      .catch((err: unknown) => {
+        if (!cancelled)
+          setState({
+            status: "error",
+            message: err instanceof Error ? err.message : String(err),
+          });
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [communeCode]);
+
+  if (state.status === "loading") {
+    return (
+      <div className="text-muted-foreground flex items-center gap-2 px-8 py-4 text-xs">
+        <Loader2Icon className="size-3.5 animate-spin" />
+        Loading candidate chunks…
+      </div>
+    );
+  }
+
+  if (state.status === "error") {
+    return (
+      <div className="px-8 py-3 text-xs text-red-400">
+        Failed to load candidate chunks: {state.message}
+      </div>
+    );
+  }
+
+  const { data } = state;
+
+  if (data.candidates.length === 0) {
+    return (
+      <div className="text-muted-foreground/60 px-8 py-3 text-xs">
+        No candidate chunk data available for this commune.
+      </div>
+    );
+  }
+
+  const { summary } = data;
+
+  return (
+    <div className="border-border-subtle/30 ml-6 border-l-2 border-t border-l-violet-500/20 pl-4 pr-4 py-3">
+      <p className="text-muted-foreground mb-2 text-[11px] font-semibold tracking-wider uppercase">
+        Candidates — Chunk Details
+      </p>
+
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="border-border-subtle/30 border-b text-left">
+              <th className="text-muted-foreground w-12 px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase">
+                #
+              </th>
+              <th className="text-muted-foreground px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase">
+                Candidate
+              </th>
+              <th className="text-muted-foreground px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase">
+                Party
+              </th>
+              <th className="text-muted-foreground w-16 px-3 py-1.5 text-center text-[10px] font-semibold tracking-wider uppercase">
+                Website
+              </th>
+              <th className="text-muted-foreground w-16 px-3 py-1.5 text-center text-[10px] font-semibold tracking-wider uppercase">
+                Manifesto
+              </th>
+              <th className="text-muted-foreground min-w-[120px] px-3 py-1.5 text-[10px] font-semibold tracking-wider uppercase">
+                Chunks
+              </th>
+              <th className="text-muted-foreground w-14 px-3 py-1.5 text-center text-[10px] font-semibold tracking-wider uppercase">
+                Good
+              </th>
+              <th className="text-muted-foreground w-20 px-3 py-1.5 text-center text-[10px] font-semibold tracking-wider uppercase">
+                Junk
+              </th>
+            </tr>
+          </thead>
+          <tbody className="divide-border-subtle/20 divide-y">
+            {data.candidates.map((candidate, i) => (
+              <CandidateSubRow
+                key={candidate.candidate_id}
+                candidate={candidate}
+                index={i}
+              />
+            ))}
+          </tbody>
+          {/* Summary row */}
+          <tfoot>
+            <tr className="border-border-subtle/30 border-t">
+              <td
+                colSpan={5}
+                className="text-muted-foreground px-3 py-1.5 text-[10px]"
+              >
+                Total — {summary.total_candidates} candidates
+              </td>
+              <td className="px-3 py-1.5">
+                <span className="text-foreground text-[11px] font-medium tabular-nums">
+                  {summary.total_chunks}
+                </span>
+                <span className="text-muted-foreground/60 ml-1 text-[10px]">
+                  ({summary.manifesto_chunks} manifesto +{" "}
+                  {summary.website_chunks} web)
+                </span>
+              </td>
+              <td className="px-3 py-1.5 text-center">
+                <span className="text-[11px] font-medium text-green-500 tabular-nums">
+                  {summary.good_chunks}
+                </span>
+              </td>
+              <td className="px-3 py-1.5 text-center">
+                <span
+                  className={`text-[11px] font-medium tabular-nums ${summary.junk_chunks > 0 ? "text-amber-400" : "text-muted-foreground/40"}`}
+                >
+                  {summary.junk_chunks}
+                </span>
+              </td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// CandidatesStatusCell — compact status line for the Candidates column
+// ---------------------------------------------------------------------------
+
+function CandidatesStatusCell({
+  agg,
+  candidateCount,
+  maxCandidates,
+}: {
+  agg: CommuneAggEntry | undefined;
+  candidateCount: number;
+  maxCandidates: number;
+}) {
+  if (!agg || candidateCount === 0) {
+    return <span className="text-xs text-red-400/70">missing</span>;
+  }
+
+  const { total, hasManifesto, hasWebsite } = agg;
+
+  const manifestoPct = total > 0 ? Math.round((hasManifesto / total) * 100) : 0;
+  const websitePct = total > 0 ? Math.round((hasWebsite / total) * 100) : 0;
+
+  const manifestoColor =
+    manifestoPct === 100
+      ? "text-green-500"
+      : manifestoPct > 0
+        ? "text-amber-400"
+        : "text-red-400";
+  const websiteColor =
+    websitePct === 100
+      ? "text-green-500"
+      : websitePct > 0
+        ? "text-amber-400"
+        : "text-red-400";
+
+  return (
+    <div className="space-y-0.5">
+      <div className="flex items-center gap-1.5">
+        <CoverageBar value={candidateCount} max={maxCandidates} />
+      </div>
+      <div className="flex gap-2 text-[10px]">
+        <span className={manifestoColor}>
+          ✓{hasManifesto}/{total} manifesto
+        </span>
+        <span className={websiteColor}>
+          ✓{hasWebsite}/{total} web
+        </span>
+      </div>
+    </div>
+  );
+}
+
 function CommunesTable({
   communes,
   coverageByCommune,
@@ -392,7 +960,7 @@ function CommunesTable({
       (index: number) => {
         const commune = sorted[index];
         if (!commune) return 48;
-        return expandedCode === commune.code ? 400 : 48;
+        return expandedCode === commune.code ? 600 : 48;
       },
 
       [sorted, expandedCode],
@@ -521,7 +1089,7 @@ function CommunesTable({
               <th className="text-muted-foreground w-20 px-3 py-2.5 text-right text-xs font-semibold tracking-wider uppercase">
                 Lists
               </th>
-              <th className="text-muted-foreground min-w-[120px] px-3 py-2.5 text-xs font-semibold tracking-wider uppercase">
+              <th className="text-muted-foreground min-w-[160px] px-3 py-2.5 text-xs font-semibold tracking-wider uppercase">
                 Candidates
               </th>
               <th className="text-muted-foreground min-w-[180px] px-3 py-2.5 text-xs font-semibold tracking-wider uppercase">
@@ -596,14 +1164,11 @@ function CommunesTable({
                       )}
                     </td>
                     <td className="px-3 py-3">
-                      {commune.candidate_count > 0 ? (
-                        <CoverageBar
-                          value={commune.candidate_count}
-                          max={maxCandidates}
-                        />
-                      ) : (
-                        <span className="text-xs text-red-400/70">missing</span>
-                      )}
+                      <CandidatesStatusCell
+                        agg={coverageByCommune[commune.code]}
+                        candidateCount={commune.candidate_count}
+                        maxCandidates={maxCandidates}
+                      />
                     </td>
                     <td className="px-3 py-3">
                       {commune.question_count > 0 ? (
@@ -622,6 +1187,13 @@ function CommunesTable({
                         <ScoreBreakdown
                           commune={commune}
                           agg={coverageByCommune[commune.code]}
+                        />
+                        <CandidateChunksPanel
+                          communeCode={commune.code}
+                          // Pass cache ref down via a key trick — the cache lives
+                          // in the parent so it persists across expand/collapse.
+                          // The panel itself manages loading state internally.
+                          key={commune.code}
                         />
                       </td>
                     </tr>

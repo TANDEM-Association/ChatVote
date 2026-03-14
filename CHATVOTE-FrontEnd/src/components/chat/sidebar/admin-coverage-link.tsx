@@ -24,10 +24,13 @@ const AdminCoverageLink = () => {
     }
   }, []);
 
-  // Dev: link to the experiment coverage page (no secret needed)
+  // Dev: link to admin dashboard coverage (use env secret or default)
   if (isDev) {
+    const devSecret =
+      process.env.NEXT_PUBLIC_ADMIN_SECRET ??
+      "a2072a50e6375c384b073a3ef8459492560ec1406c69238f98da86c4331d5a79";
     return (
-      <Link href="/experiment/coverage">
+      <Link href={`/admin/dashboard/${devSecret}?tab=coverage`}>
         <Button
           data-sidebar="coverage"
           variant="ghost"

@@ -4,10 +4,16 @@ importScripts(
 );
 
 const urlParams = new URLSearchParams(location.search);
+const useEmulators = urlParams.get("useEmulators") === "true";
+urlParams.delete("useEmulators");
 const config = Object.fromEntries(urlParams);
 
 // Initialize the Firebase app in the service worker script.
 firebase.initializeApp(config);
+
+if (useEmulators) {
+  firebase.auth().useEmulator("http://localhost:9099", { disableWarnings: true });
+}
 
 /**
  * Returns a promise that resolves with an ID token if available.

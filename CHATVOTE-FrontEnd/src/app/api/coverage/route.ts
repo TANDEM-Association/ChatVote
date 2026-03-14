@@ -8,7 +8,7 @@ import {
   type CoverageSummary,
   fetchCoverage,
   type PartyCoverage,
-} from "../../experiment/coverage/coverage-data";
+} from "../../admin/dashboard/[secret]/components/coverage-data";
 
 // Re-export types so existing consumers that import from this route module still work
 export type {

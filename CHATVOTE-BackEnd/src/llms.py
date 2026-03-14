@@ -167,6 +167,20 @@ anthropic_claude_haiku = (
     else None
 )
 
+# Scaleway Generative API (OpenAI-compatible)
+_scaleway_api_key = safe_load_api_key("SCALEWAY_EMBED_API_KEY")
+_scaleway_llm_model = os.getenv("SCALEWAY_LLM_MODEL", "llama-3.3-70b-instruct")
+scaleway_chat = (
+    ChatOpenAI(
+        model=_scaleway_llm_model,
+        api_key=_scaleway_api_key,
+        base_url="https://api.scaleway.ai/v1",
+        max_retries=0,
+    )
+    if _scaleway_api_key
+    else None
+)
+
 # Ollama local model (conditionally initialized)
 ollama_chat = (
     ChatOllama(
@@ -267,6 +281,18 @@ if anthropic_claude_haiku is not None:
         )
     )
 
+if scaleway_chat is not None:
+    _base_non_deterministic_llms.append(
+        LLM(
+            name=f"scaleway-{_scaleway_llm_model}",
+            model=scaleway_chat,
+            sizes=[LLMSize.SMALL, LLMSize.LARGE],
+            priority=80,
+            user_capacity_per_minute=60,
+            is_at_rate_limit=False,
+        )
+    )
+
 if ollama_chat is not None:
     _base_non_deterministic_llms.append(
         LLM(
@@ -345,6 +371,18 @@ anthropic_claude_haiku_det = (
     else None
 )
 
+scaleway_chat_det = (
+    ChatOpenAI(
+        model=_scaleway_llm_model,
+        api_key=_scaleway_api_key,
+        base_url="https://api.scaleway.ai/v1",
+        temperature=0.0,
+        max_retries=0,
+    )
+    if _scaleway_api_key
+    else None
+)
+
 ollama_chat_det = (
     ChatOllama(
         model=_ollama_model_name,
@@ -415,6 +453,18 @@ if anthropic_claude_haiku_det is not None:
             sizes=[LLMSize.SMALL],
             priority=85,
             user_capacity_per_minute=CAPACITY_CLAUDE_HAIKU,
+            is_at_rate_limit=False,
+        )
+    )
+
+if scaleway_chat_det is not None:
+    _base_deterministic_llms.append(
+        LLM(
+            name=f"scaleway-{_scaleway_llm_model}-det",
+            model=scaleway_chat_det,
+            sizes=[LLMSize.SMALL, LLMSize.LARGE],
+            priority=80,
+            user_capacity_per_minute=60,
             is_at_rate_limit=False,
         )
     )

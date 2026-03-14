@@ -85,6 +85,8 @@ export default function AdminDashboard() {
     null,
   );
   const [maintenanceLoading, setMaintenanceLoading] = useState(false);
+  const [resettingRateLimit, setResettingRateLimit] = useState(false);
+  const [rateLimitMsg, setRateLimitMsg] = useState<string | null>(null);
 
   // Validate secret on mount
   useEffect(() => {
@@ -137,6 +139,30 @@ export default function AdminDashboard() {
     }
   }, [maintenanceEnabled, secret]);
 
+  const resetRateLimit = useCallback(async () => {
+    setResettingRateLimit(true);
+    setRateLimitMsg(null);
+    try {
+      const res = await fetch(`${API_URL}/api/v1/admin/reset-rate-limit`, {
+        method: "POST",
+        headers: { "X-Admin-Secret": secret },
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setRateLimitMsg("Rate limit reset");
+      } else {
+        setRateLimitMsg(`Error: ${data.message || res.status}`);
+      }
+    } catch (err: unknown) {
+      setRateLimitMsg(
+        `Error: ${err instanceof Error ? err.message : String(err)}`,
+      );
+    } finally {
+      setResettingRateLimit(false);
+      setTimeout(() => setRateLimitMsg(null), 5000);
+    }
+  }, [secret]);
+
   const switchTab = useCallback(
     (tab: TabId) => {
       setActiveTab(tab);
@@ -178,6 +204,26 @@ export default function AdminDashboard() {
       <div className="bg-card flex items-center justify-between border-b px-6 py-4">
         <h1 className="text-foreground text-xl font-bold">Admin Dashboard</h1>
         <div className="flex items-center gap-4">
+          {/* Reset Rate Limit */}
+          <button
+            type="button"
+            onClick={resetRateLimit}
+            disabled={resettingRateLimit}
+            title="Reset rate limit (memory + Firestore)"
+            className="flex items-center gap-1.5 rounded border border-amber-500/40 bg-amber-500/10 px-3 py-1.5 text-xs font-medium text-amber-400 transition-colors hover:bg-amber-500/20 disabled:opacity-50"
+          >
+            {resettingRateLimit ? (
+              <span className="h-3 w-3 animate-spin rounded-full border-2 border-amber-400 border-t-transparent" />
+            ) : (
+              <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className="h-3 w-3"><path d="M20 13c0 5-3.5 7.5-7.66 8.95a1 1 0 0 1-.67-.01C7.5 20.5 4 18 4 13V6a1 1 0 0 1 1-1c2 0 4.5-1.2 6.24-2.72a1.17 1.17 0 0 1 1.52 0C14.51 3.81 17 5 19 5a1 1 0 0 1 1 1z"/><path d="m14.5 9.5-5 5"/><path d="m9.5 9.5 5 5"/></svg>
+            )}
+            Reset Rate Limit
+          </button>
+          {rateLimitMsg && (
+            <span className={`text-xs ${rateLimitMsg.startsWith("Error") ? "text-red-400" : "text-green-400"}`}>
+              {rateLimitMsg}
+            </span>
+          )}
           {/* Maintenance toggle */}
           {maintenanceEnabled !== null && (
             <button

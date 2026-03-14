@@ -134,7 +134,7 @@ export default function ExperimentPlayground() {
             Topic Insights
           </Link>
           <Link
-            href="/experiment/coverage"
+            href="/admin/dashboard/a2072a50e6375c384b073a3ef8459492560ec1406c69238f98da86c4331d5a79?tab=coverage"
             className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-sm transition-colors"
           >
             <DatabaseIcon className="size-4" />

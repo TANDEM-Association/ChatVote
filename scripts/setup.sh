@@ -3,8 +3,8 @@ set -euo pipefail
 
 # ---------------------------------------------------------------------------
 # Interactive setup for ChatVote local development
-# Asks the user to choose between Local (Ollama) and Cloud (Gemini) mode,
-# then generates the appropriate .env files.
+# Asks the user to choose between Local (Ollama), Cloud (Gemini), or
+# Scaleway mode, then generates the appropriate .env files.
 # ---------------------------------------------------------------------------
 
 SCRIPT_DIR="$(cd "$(dirname "$0")" && pwd)"
@@ -53,14 +53,18 @@ echo ""
 echo -e "  ${CYAN}2)${NC} Cloud (Gemini)  — Better quality, requires a Google API key"
 echo -e "                       Chat: gemini-2.0-flash | Embeddings: gemini-embedding-001 (3072d)"
 echo ""
+echo -e "  ${CYAN}3)${NC} Scaleway        — Scaleway AI APIs, requires a Scaleway API key"
+echo -e "                       Chat: llama-3.3-70b-instruct | Embeddings: qwen3-embedding-8b (4096d)"
+echo ""
 
 while true; do
-    printf "  Enter choice [1/2]: "
+    printf "  Enter choice [1/2/3]: "
     read -r choice
     case "$choice" in
         1) MODE="local"; break ;;
         2) MODE="gemini"; break ;;
-        *) echo -e "  ${RED}Invalid choice.${NC} Please enter 1 or 2." ;;
+        3) MODE="scaleway"; break ;;
+        *) echo -e "  ${RED}Invalid choice.${NC} Please enter 1, 2, or 3." ;;
     esac
 done
 
@@ -74,6 +78,19 @@ if [ "$MODE" = "gemini" ]; then
     read -r google_key
 
     if [ -z "$google_key" ]; then
+        echo -e "  ${RED}No key provided.${NC} Falling back to Local (Ollama) mode."
+        MODE="local"
+    fi
+fi
+
+if [ "$MODE" = "scaleway" ]; then
+    echo -e "  ${BOLD}Scaleway API Key${NC}"
+    echo -e "  Get one at: ${CYAN}https://console.scaleway.com/iam/api-keys${NC}"
+    echo ""
+    printf "  Enter your SCALEWAY_EMBED_API_KEY: "
+    read -r scaleway_key
+
+    if [ -z "$scaleway_key" ]; then
         echo -e "  ${RED}No key provided.${NC} Falling back to Local (Ollama) mode."
         MODE="local"
     fi
@@ -100,6 +117,9 @@ EMBEDDING_PROVIDER=ollama
 # GOOGLE_API_KEY=
 # OPENAI_API_KEY=
 # ANTHROPIC_API_KEY=
+
+# === Firebase Storage (needed for manifesto PDF indexer) ===
+FIREBASE_STORAGE_BUCKET=chat-vote-dev.appspot.com
 ENVEOF
 
     echo -e "  ${GREEN}✓${NC} Created CHATVOTE-BackEnd/.env (Local / Ollama)"
@@ -107,7 +127,7 @@ ENVEOF
     echo -e "  Embeddings: ${CYAN}nomic-embed-text (768d)${NC} via Ollama"
     echo -e "  Chat model: ${CYAN}llama3.2${NC} via Ollama"
 
-else
+elif [ "$MODE" = "gemini" ]; then
     cat > "$BACKEND_ENV" << ENVEOF
 API_NAME=chatvote-api
 ENV=local
@@ -123,12 +143,46 @@ OLLAMA_BASE_URL=http://localhost:11434
 OLLAMA_MODEL=llama3.2
 OLLAMA_EMBED_MODEL=nomic-embed-text
 OLLAMA_EMBED_DIM=768
+
+# === Firebase Storage (needed for manifesto PDF indexer) ===
+FIREBASE_STORAGE_BUCKET=chat-vote-dev.appspot.com
 ENVEOF
 
     echo -e "  ${GREEN}✓${NC} Created CHATVOTE-BackEnd/.env (Cloud / Gemini)"
     echo ""
     echo -e "  Embeddings: ${CYAN}gemini-embedding-001 (3072d)${NC} via Google AI"
     echo -e "  Chat model: ${CYAN}gemini-2.0-flash${NC} via Google AI"
+
+else
+    cat > "$BACKEND_ENV" << ENVEOF
+API_NAME=chatvote-api
+ENV=local
+LANGCHAIN_TRACING_V2=false
+
+# === SCALEWAY DEVELOPMENT ===
+QDRANT_URL=http://localhost:6333
+SCALEWAY_EMBED_API_KEY=${scaleway_key}
+EMBEDDING_PROVIDER=scaleway
+
+# === Ollama fallback (kept for optional local use) ===
+OLLAMA_BASE_URL=http://localhost:11434
+OLLAMA_MODEL=llama3.2
+OLLAMA_EMBED_MODEL=nomic-embed-text
+OLLAMA_EMBED_DIM=768
+
+# === Cloud API keys (optional — uncomment for Gemini/OpenAI chat) ===
+# GOOGLE_API_KEY=
+# OPENAI_API_KEY=
+# ANTHROPIC_API_KEY=
+
+# === Firebase Storage (needed for manifesto PDF indexer) ===
+FIREBASE_STORAGE_BUCKET=chat-vote-dev.appspot.com
+ENVEOF
+
+    echo -e "  ${GREEN}✓${NC} Created CHATVOTE-BackEnd/.env (Scaleway)"
+    echo ""
+    echo -e "  Embeddings: ${CYAN}qwen3-embedding-8b (4096d)${NC} via Scaleway AI"
+    echo -e "  Chat model: ${CYAN}llama-3.3-70b-instruct${NC} via Scaleway AI"
 fi
 
 echo ""

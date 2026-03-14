@@ -392,13 +392,20 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
     }
 
     function computeIngestionScore(agg: CommuneAgg): number {
-      if (agg.total === 0 || agg.hasWebsite === 0) return 0;
-      let score = 0;
-      // Cap ratios at 1.0 — hasScraped/hasIndexed can exceed hasWebsite
-      // when candidates have Qdrant chunks but no website_url in Firestore
-      score += 50 * Math.min(agg.hasScraped / agg.hasWebsite, 1);
-      score += 50 * Math.min(agg.hasIndexed / agg.hasWebsite, 1);
-      return Math.round(score);
+      if (agg.total === 0) return 0;
+      // Two axes: manifesto indexing (50%) + website scraping/indexing (50%)
+      // If no candidates have websites, manifesto axis gets full 100%
+      const hasWeb = agg.hasWebsite > 0;
+      if (hasWeb) {
+        const manifestoRatio = Math.min(agg.hasManifesto / agg.total, 1);
+        const scrapedRatio = Math.min(agg.hasScraped / agg.hasWebsite, 1);
+        const indexedRatio = Math.min(agg.hasIndexed / agg.hasWebsite, 1);
+        return Math.round(
+          50 * manifestoRatio + 25 * scrapedRatio + 25 * indexedRatio,
+        );
+      }
+      // Manifesto-only commune: score based entirely on manifesto coverage
+      return Math.round(100 * Math.min(agg.hasManifesto / agg.total, 1));
     }
 
     const coverageByCommune: ChartAggregations["coverageByCommune"] = {};

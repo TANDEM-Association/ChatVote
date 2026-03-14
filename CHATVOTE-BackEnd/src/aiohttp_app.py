@@ -1173,6 +1173,220 @@ async def experiment_topic_stats(request):
     })
 
 
+LEGAL_BOILERPLATE = [
+    "mentions légales", "mention légale", "politique de confidentialité",
+    "cookies", "rgpd", "cgu", "conditions générales",
+    "protection des données", "données personnelles",
+    "informations légales", "copyright", "tous droits réservés",
+]
+
+
+@routes.get(f"{route_prefix}/commune/{{code}}/candidate-chunks")
+async def commune_candidate_chunks(request):
+    """Return per-candidate chunk detail for a given commune (lazy-loaded)."""
+    from collections import defaultdict
+    from qdrant_client.models import Filter, FieldCondition, MatchValue
+
+    code = request.match_info["code"]
+    loop = asyncio.get_event_loop()
+
+    qdrant_filter = Filter(
+        must=[
+            FieldCondition(
+                key="metadata.municipality_code",
+                match=MatchValue(value=code),
+            )
+        ]
+    )
+
+    # ── 1. Scroll Qdrant for candidates_websites + all_parties ───────────────
+    def _scroll_chunks():
+        """Scroll both Qdrant collections and group by namespace."""
+        chunks_by_ns: dict[str, list[dict]] = defaultdict(list)
+
+        for col_name in [CANDIDATES_INDEX_NAME, PARTY_INDEX_NAME]:
+            try:
+                offset = None
+                while True:
+                    points, next_offset = qdrant_client.scroll(
+                        collection_name=col_name,
+                        scroll_filter=qdrant_filter,
+                        limit=250,
+                        offset=offset,
+                        with_payload=True,
+                        with_vectors=False,
+                    )
+                    for p in points:
+                        payload = p.payload or {}
+                        meta = payload.get("metadata", {})
+                        ns = meta.get("namespace")
+                        if not ns:
+                            continue
+                        chunks_by_ns[ns].append({
+                            "page_content": payload.get("page_content", ""),
+                            "source_document": meta.get("source_document", ""),
+                            "theme": meta.get("theme"),
+                            "fiabilite": meta.get("fiabilite"),
+                            "url": meta.get("url", ""),
+                            "collection": col_name,
+                        })
+                    if next_offset is None:
+                        break
+                    offset = next_offset
+            except Exception as exc:
+                logger.warning(
+                    f"Failed to scroll {col_name} for commune {code}: "
+                    f"{type(exc).__name__}: {exc!r}"
+                )
+
+        return dict(chunks_by_ns)
+
+    # ── 2. Fetch Firestore candidates for this commune ────────────────────────
+    def _fetch_candidates():
+        result: dict[str, dict] = {}
+        try:
+            for doc in db.collection("candidates").where("commune_code", "==", code).stream():
+                d = doc.to_dict() or {}
+                result[doc.id] = d
+        except Exception as exc:
+            logger.warning(
+                f"Failed to fetch candidates for commune {code}: "
+                f"{type(exc).__name__}: {exc!r}"
+            )
+        return result
+
+    chunks_by_ns, fs_candidates = await asyncio.gather(
+        loop.run_in_executor(None, _scroll_chunks),
+        loop.run_in_executor(None, _fetch_candidates),
+    )
+
+    # ── 3. Compute per-candidate stats ────────────────────────────────────────
+    manifesto_keywords = ("profession_de_foi", "election_manifesto")
+
+    def _is_junk(chunk: dict) -> str | None:
+        """Return a junk reason string, or None if the chunk is good."""
+        fiabilite = chunk.get("fiabilite")
+        if fiabilite is not None and int(fiabilite) >= 4:
+            return "low_fiabilite"
+        if not chunk.get("theme"):
+            return "no_theme"
+        content = chunk.get("page_content", "")
+        if len(content) < 100:
+            return "too_short"
+        content_lower = content.lower()
+        if any(kw in content_lower for kw in LEGAL_BOILERPLATE):
+            return "legal_boilerplate"
+        return None
+
+    candidates_out: list[dict] = []
+    summary_total_chunks = 0
+    summary_manifesto_chunks = 0
+    summary_website_chunks = 0
+    summary_good_chunks = 0
+    summary_junk_chunks = 0
+
+    # Union of all namespaces seen in Qdrant + Firestore
+    all_ns: set[str] = set(chunks_by_ns.keys()) | set(fs_candidates.keys())
+
+    for ns in sorted(all_ns):
+        chunks = chunks_by_ns.get(ns, [])
+        fs = fs_candidates.get(ns, {})
+
+        manifesto_chunks = sum(
+            1 for c in chunks
+            if any(kw in c.get("source_document", "") for kw in manifesto_keywords)
+        )
+        website_chunks = len(chunks) - manifesto_chunks
+
+        themes: dict[str, int] = defaultdict(int)
+        sources: dict[str, int] = defaultdict(int)
+        urls: list[str] = []
+        junk_samples: list[dict] = []
+        junk_count = 0
+
+        for chunk in chunks:
+            theme = chunk.get("theme")
+            if theme:
+                themes[theme] += 1
+            src = chunk.get("source_document")
+            if src:
+                sources[src] += 1
+            url = chunk.get("url", "")
+            if url and url not in urls:
+                urls.append(url)
+
+            reason = _is_junk(chunk)
+            if reason:
+                junk_count += 1
+                if len(junk_samples) < 3:
+                    junk_samples.append({
+                        "reason": reason,
+                        "preview": chunk.get("page_content", "")[:200],
+                    })
+
+        good_count = len(chunks) - junk_count
+
+        first_name = fs.get("first_name", "")
+        last_name = fs.get("last_name", "")
+        name = f"{first_name} {last_name}".strip() or ns
+
+        # Build debug links
+        qdrant_url = os.environ["QDRANT_URL"]
+        env = os.environ.get("ENV", "dev")
+        firebase_project = "chat-vote-prod" if env == "prod" else "chat-vote-dev"
+        qdrant_dashboard = f"{qdrant_url}/dashboard#/collections/{CANDIDATES_INDEX_NAME}"
+        qdrant_query = f"{qdrant_url}/dashboard#/collections/{CANDIDATES_INDEX_NAME}/points?filter=metadata.namespace%3D%3D{ns}"
+        firestore_url = f"https://console.firebase.google.com/project/{firebase_project}/firestore/databases/-default-/data/~2Fcandidates~2F{ns}"
+        drive_folder_url = "https://drive.google.com/drive/folders/1rLVC3BTVKhOxxGu2GzIfq9BOexleIcRE"
+
+        candidates_out.append({
+            "candidate_id": ns,
+            "name": name,
+            "party_label": fs.get("list_label") or fs.get("nuance_label", ""),
+            "is_tete_de_liste": fs.get("is_tete_de_liste", False),
+            "website_url": fs.get("website_url") or "",
+            "manifesto_url": fs.get("manifesto_url") or fs.get("election_manifesto_url") or "",
+            "manifesto_pdf_path": fs.get("manifesto_pdf_path") or "",
+            "has_manifesto": fs.get("has_manifesto", False),
+            "has_scraped": fs.get("has_scraped", False),
+            "scrape_chars": fs.get("scrape_chars") or 0,
+            "total_chunks": len(chunks),
+            "manifesto_chunks": manifesto_chunks,
+            "website_chunks": website_chunks,
+            "good_count": good_count,
+            "junk_count": junk_count,
+            "themes": dict(themes),
+            "sources": dict(sources),
+            "urls": urls,
+            "junk_samples": junk_samples,
+            "debug_links": {
+                "qdrant_collection": qdrant_dashboard,
+                "qdrant_points": qdrant_query,
+                "firestore_doc": firestore_url,
+                "drive_folder": drive_folder_url,
+            },
+        })
+
+        summary_total_chunks += len(chunks)
+        summary_manifesto_chunks += manifesto_chunks
+        summary_website_chunks += website_chunks
+        summary_good_chunks += good_count
+        summary_junk_chunks += junk_count
+
+    return web.json_response({
+        "commune_code": code,
+        "candidates": candidates_out,
+        "summary": {
+            "total_candidates": len(candidates_out),
+            "total_chunks": summary_total_chunks,
+            "manifesto_chunks": summary_manifesto_chunks,
+            "website_chunks": summary_website_chunks,
+            "good_chunks": summary_good_chunks,
+            "junk_chunks": summary_junk_chunks,
+        },
+    })
+
+
 async def _collect_user_messages(
     municipality_code: str | None = None,
 ) -> tuple[list[dict], set[str]]:
