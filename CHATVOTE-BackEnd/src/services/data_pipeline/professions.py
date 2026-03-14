@@ -137,7 +137,6 @@ class ProfessionsNode(DataSourceNode):
     async def run(self, cfg: NodeConfig, *, force: bool = False) -> NodeConfig:
         global _cached_pdfs
 
-        top_n: int = int(cfg.settings.get("top_communes", 287))
         max_pdfs: int = int(cfg.settings.get("max_pdfs_per_commune", 50))
         tour: int = int(cfg.settings.get("tour", 1))
         concurrency: int = int(cfg.settings.get("concurrency", 10))
@@ -148,6 +147,8 @@ class ProfessionsNode(DataSourceNode):
         from src.services.data_pipeline.population import get_top_communes
 
         communes = get_top_communes()
+        # Respect top_communes setting; default to however many the population node provided
+        top_n: int = int(cfg.settings.get("top_communes", len(communes) if communes else 287))
         if not communes:
             raise RuntimeError(
                 "Population node must run first — no communes data available"

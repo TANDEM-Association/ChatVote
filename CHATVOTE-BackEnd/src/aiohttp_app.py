@@ -1337,7 +1337,19 @@ async def commune_candidate_chunks(request):
         qdrant_dashboard = f"{qdrant_url}/dashboard#/collections/{CANDIDATES_INDEX_NAME}"
         qdrant_query = f"{qdrant_url}/dashboard#/collections/{CANDIDATES_INDEX_NAME}/points?filter=metadata.namespace%3D%3D{ns}"
         firestore_url = f"https://console.firebase.google.com/project/{firebase_project}/firestore/databases/-default-/data/~2Fcandidates~2F{ns}"
-        drive_folder_url = "https://drive.google.com/drive/folders/1rLVC3BTVKhOxxGu2GzIfq9BOexleIcRE"
+        # Build candidate-level Drive folder link using website URL slug
+        _drive_root = "1rLVC3BTVKhOxxGu2GzIfq9BOexleIcRE"
+        website_url = fs.get("website_url") or ""
+        if website_url:
+            from src.services.data_pipeline.crawl_scraper import _slugify_url
+            from urllib.parse import quote
+            _slug = _slugify_url(website_url)
+            drive_folder_url = (
+                f"https://drive.google.com/drive/search"
+                f"?q=type%3Afolder%20{quote(_slug)}"
+            )
+        else:
+            drive_folder_url = f"https://drive.google.com/drive/folders/{_drive_root}"
 
         candidates_out.append({
             "candidate_id": ns,
@@ -1966,6 +1978,7 @@ async def ds_run_all(request):
 
     body = await request.json() if request.content_length else {}
     force = body.get("force", False)
+    settings_overrides: dict = body.get("settings", {})
 
     from src.services.data_pipeline import PIPELINE_NODES, clear_context
     from src.services.data_pipeline.base import load_config
@@ -1986,9 +1999,11 @@ async def ds_run_all(request):
                 logger.info("[data-sources] run-all: skipping disabled node %s", node_id)
                 continue
             try:
-                logger.info("[data-sources] run-all: executing %s", node_id)
+                node_overrides = settings_overrides.get(node_id)
+                logger.info("[data-sources] run-all: executing %s%s", node_id,
+                            f" (overrides: {node_overrides})" if node_overrides else "")
                 # Register each node as its own task so it can be stopped individually
-                node_task = asyncio.create_task(node.execute(force=force))
+                node_task = asyncio.create_task(node.execute(force=force, settings_override=node_overrides))
                 _pipeline_tasks[node_id] = node_task
                 await node_task
             except asyncio.CancelledError:

@@ -176,6 +176,7 @@ scaleway_chat = (
         api_key=_scaleway_api_key,
         base_url="https://api.scaleway.ai/v1",
         max_retries=0,
+        request_timeout=30,
     )
     if _scaleway_api_key
     else None
@@ -378,6 +379,7 @@ scaleway_chat_det = (
         base_url="https://api.scaleway.ai/v1",
         temperature=0.0,
         max_retries=0,
+        request_timeout=15,
     )
     if _scaleway_api_key
     else None
@@ -551,6 +553,8 @@ async def get_answer_from_llms(
     _track_llm_request()
 
     for i, llm in enumerate(llms):
+        if llm.is_at_rate_limit:
+            continue
         try:
             logger.debug(f"Invoking LLM {llm.name}...")
             response = await llm.model.ainvoke(messages)
@@ -560,7 +564,7 @@ async def get_answer_from_llms(
         except Exception as e:
             logger.warning(f"Error invoking LLM {llm.name}: {e}")
             llm.is_at_rate_limit = True
-            remaining = [item.name for item in llms[i + 1 :]]
+            remaining = [item.name for item in llms[i + 1 :] if not item.is_at_rate_limit]
             if remaining:
                 logger.info(f"Falling back to next LLM. Remaining: {remaining}")
             continue
@@ -595,6 +599,8 @@ async def get_structured_output_from_llms(
     )
 
     for i, llm in enumerate(llms):
+        if llm.is_at_rate_limit:
+            continue
         try:
             logger.debug(f"Invoking LLM {llm.name} for structured output...")
             prepared_model = llm.model.with_structured_output(schema)
@@ -605,10 +611,21 @@ async def get_structured_output_from_llms(
         except Exception as e:
             logger.warning(f"Error invoking LLM {llm.name}: {e}")
             llm.is_at_rate_limit = True
-            remaining = [item.name for item in llms[i + 1 :]]
+            remaining = [item.name for item in llms[i + 1 :] if not item.is_at_rate_limit]
             if remaining:
                 logger.info(f"Falling back to next LLM. Remaining: {remaining}")
             continue
+
+    # All primary LLMs rate-limited — retry them once (rate limit may have expired)
+    for llm in llms:
+        try:
+            prepared_model = llm.model.with_structured_output(schema)
+            response = await prepared_model.ainvoke(messages)
+            llm.is_at_rate_limit = False
+            await handle_llm_success()
+            return response
+        except Exception:
+            llm.is_at_rate_limit = True
 
     await handle_rate_limit_hit_for_all_llms()
 

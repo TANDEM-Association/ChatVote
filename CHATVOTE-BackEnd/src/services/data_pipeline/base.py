@@ -152,9 +152,12 @@ class DataSourceNode(ABC):
             settings={**self.default_settings},
         )
 
-    async def execute(self, *, force: bool = False) -> NodeConfig:
+    async def execute(self, *, force: bool = False, settings_override: dict | None = None) -> NodeConfig:
         """Run the node with status tracking and error handling."""
         cfg = await load_config(self.node_id, self.default_config())
+        if settings_override:
+            cfg.settings.update(settings_override)
+            logger.info(f"[{self.node_id}] settings override applied: {settings_override}")
 
         if not cfg.enabled and not force:
             logger.info(f"[{self.node_id}] disabled, skipping")

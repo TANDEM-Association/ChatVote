@@ -294,9 +294,23 @@ class IndexerNode(DataSourceNode):
                 if not _PDF_CACHE_DIR.exists():
                     logger.info("[indexer] no profession PDFs cached, skipping")
                 else:
+                    from src.services.data_pipeline.population import get_top_communes
+
+                    top = get_top_communes()
+                    allowed_codes = set(top.keys()) if top else None
+
                     commune_dirs = sorted(
                         d for d in _PDF_CACHE_DIR.iterdir() if d.is_dir()
                     )
+                    if allowed_codes:
+                        filtered = [d for d in commune_dirs if d.name in allowed_codes]
+                        if len(filtered) < len(commune_dirs):
+                            logger.info(
+                                "[indexer] filtered profession communes: %d → %d (respecting top_communes)",
+                                len(commune_dirs), len(filtered),
+                            )
+                        commune_dirs = filtered
+
                     already_indexed = (
                         cfg.checkpoints.get("profession_indexed_communes", {})
                         if not force
@@ -317,52 +331,58 @@ class IndexerNode(DataSourceNode):
                     prof_communes_done = 0
                     t_prof = _time.monotonic()
 
-                    for commune_dir in to_process:
+                    prof_sem = asyncio.Semaphore(3)
+
+                    async def _index_one_commune(commune_dir: Any) -> None:
+                        nonlocal prof_chunks, prof_communes_done
                         commune_code = commune_dir.name
-                        try:
-                            results = await index_commune_professions(commune_code)
-                            chunks = sum(results.values())
-                            prof_chunks += chunks
-                            prof_communes_done += 1
+                        async with prof_sem:
+                            try:
+                                results = await index_commune_professions(commune_code)
+                                chunks = sum(results.values())
+                                prof_chunks += chunks
+                                prof_communes_done += 1
 
-                            # Save checkpoint
-                            cfg.checkpoints.setdefault(
-                                "profession_indexed_communes", {}
-                            )[commune_code] = datetime.now(timezone.utc).isoformat()
+                                # Save checkpoint
+                                cfg.checkpoints.setdefault(
+                                    "profession_indexed_communes", {}
+                                )[commune_code] = datetime.now(timezone.utc).isoformat()
 
-                            # Progress update every 5 communes
-                            if prof_communes_done % 5 == 0:
-                                elapsed_prof = _time.monotonic() - t_prof
-                                rate = prof_communes_done / elapsed_prof if elapsed_prof > 0 else 0
-                                remaining = (len(to_process) - prof_communes_done) / rate if rate > 0 else 0
-                                await update_status(
-                                    cfg.node_id, NodeStatus.RUNNING,
-                                    counts={
-                                        "phase": "professions",
-                                        "parties_indexed": parties_indexed,
-                                        "candidates_chunks": candidates_indexed,
-                                        "professions_chunks": prof_chunks,
-                                        "communes_done": prof_communes_done,
-                                        "communes_total": len(to_process),
-                                        "current": commune_code,
-                                        "rate_communes_per_sec": round(rate, 2),
-                                        "elapsed_s": round(elapsed_prof, 1),
-                                        "eta_s": round(remaining, 0),
-                                    },
+                                # Progress update every 5 communes
+                                if prof_communes_done % 5 == 0:
+                                    elapsed_prof = _time.monotonic() - t_prof
+                                    rate = prof_communes_done / elapsed_prof if elapsed_prof > 0 else 0
+                                    remaining = (len(to_process) - prof_communes_done) / rate if rate > 0 else 0
+                                    await update_status(
+                                        cfg.node_id, NodeStatus.RUNNING,
+                                        counts={
+                                            "phase": "professions",
+                                            "parties_indexed": parties_indexed,
+                                            "candidates_chunks": candidates_indexed,
+                                            "professions_chunks": prof_chunks,
+                                            "communes_done": prof_communes_done,
+                                            "communes_total": len(to_process),
+                                            "current": commune_code,
+                                            "rate_communes_per_sec": round(rate, 2),
+                                            "elapsed_s": round(elapsed_prof, 1),
+                                            "eta_s": round(remaining, 0),
+                                        },
+                                    )
+                                    logger.info(
+                                        "[indexer] professions: %d/%d communes, %d chunks, %.1f/s",
+                                        prof_communes_done, len(to_process), prof_chunks, rate,
+                                    )
+
+                                # Yield to event loop
+                                await asyncio.sleep(0)
+
+                            except Exception as exc:
+                                logger.error(
+                                    "[indexer] profession indexing failed for commune %s: %s",
+                                    commune_code, exc,
                                 )
-                                logger.info(
-                                    "[indexer] professions: %d/%d communes, %d chunks, %.1f/s",
-                                    prof_communes_done, len(to_process), prof_chunks, rate,
-                                )
 
-                            # Yield to event loop
-                            await asyncio.sleep(0)
-
-                        except Exception as exc:
-                            logger.error(
-                                "[indexer] profession indexing failed for commune %s: %s",
-                                commune_code, exc,
-                            )
+                    await asyncio.gather(*[_index_one_commune(d) for d in to_process])
 
                     professions_indexed = prof_chunks
                     logger.info(
