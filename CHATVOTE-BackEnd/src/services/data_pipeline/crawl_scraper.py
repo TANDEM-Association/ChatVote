@@ -346,8 +346,11 @@ COL_POSITION = 7
 COL_WEBSITE_URL = 8
 COL_NA = 9
 COL_STATUS = 10
+COL_DRIVE_FOLDER = 16   # column Q
+COL_CRAWL_STATUS = 17   # column R
 
 SHEET_RANGE = "Feuil1!A:K"
+SHEET_RANGE_WIDE = "Feuil1!A:R"
 
 
 # ---------------------------------------------------------------------------
@@ -542,6 +545,106 @@ class CrawlScraperNode(DataSourceNode):
         async with session.post(url, headers=headers, json={"values": new_rows}) as resp:
             resp.raise_for_status()
 
+    async def _batch_update_cells(
+        self,
+        session: aiohttp.ClientSession,
+        sheet_id: str,
+        token: str,
+        updates: list[dict],
+    ) -> int:
+        """Batch update arbitrary cells. Each item: {"range": "Feuil1!R2", "values": [["val"]]}."""
+        if not updates:
+            return 0
+        url = f"{SHEETS_API_URL}/{sheet_id}/values:batchUpdate"
+        headers = {
+            "Authorization": f"Bearer {token}",
+            "Content-Type": "application/json",
+        }
+        body = {"valueInputOption": "RAW", "data": updates}
+        async with session.post(url, headers=headers, json=body) as resp:
+            resp.raise_for_status()
+            data = await resp.json()
+        return data.get("totalUpdatedCells", 0)
+
+    async def _sync_crawl_status_to_sheet(
+        self,
+        session: aiohttp.ClientSession,
+        sheet_id: str,
+        token: str,
+        *,
+        processed_ids: set[str],
+        downloaded_ids: set[str],
+        drive_folder_map: dict[str, tuple[str, str]],
+    ) -> None:
+        """Write crawl_status (col R) and drive_folder (col Q) for tracked candidates.
+
+        drive_folder_map: {candidate_id: (folder_name, folder_id)}
+        """
+        try:
+            rows = await self._fetch_sheet_rows_wide(session, sheet_id, token)
+        except Exception as exc:
+            logger.debug("[crawl_scraper] status sync sheet read failed: %s", exc)
+            return
+
+        SOCIAL_DOMAINS = (
+            "facebook.com", "fb.com", "instagram.com", "twitter.com",
+            "x.com", "tiktok.com", "linkedin.com", "youtube.com",
+        )
+        updates: list[dict] = []
+
+        for i, row in enumerate(rows[1:], 2):  # sheet row 2+
+            cid = _row_get(row, COL_CANDIDATE_ID)
+            website = _row_get(row, COL_WEBSITE_URL)
+            status_col = _row_get(row, COL_STATUS)
+            current_q = _row_get(row, COL_DRIVE_FOLDER)
+            current_r = _row_get(row, COL_CRAWL_STATUS)
+
+            if status_col.upper() != "PROCESSED" or not cid:
+                continue
+
+            # Determine crawl status
+            if not website or not website.startswith(("http://", "https://")):
+                domain = ""
+            else:
+                domain = website.split("//", 1)[-1].split("/", 1)[0].lower().removeprefix("www.")
+
+            if any(domain == d or domain.endswith("." + d) for d in SOCIAL_DOMAINS):
+                crawl_status = "SOCIAL_MEDIA"
+            elif not website:
+                crawl_status = "NO_WEBSITE"
+            elif cid in downloaded_ids:
+                crawl_status = "DONE"
+            elif cid in drive_folder_map:
+                crawl_status = "DONE"
+            elif cid in processed_ids:
+                crawl_status = "CRAWLED"
+            else:
+                crawl_status = "CRAWLING"
+
+            if crawl_status != current_r:
+                updates.append({"range": f"Feuil1!R{i}", "values": [[crawl_status]]})
+
+            # Also fill drive_folder (col Q) if we have it
+            if cid in drive_folder_map and not current_q:
+                _fname, fid = drive_folder_map[cid]
+                drive_url = f"https://drive.google.com/drive/folders/{fid}"
+                updates.append({"range": f"Feuil1!Q{i}", "values": [[drive_url]]})
+
+        if updates:
+            updated = await self._batch_update_cells(session, sheet_id, token, updates)
+            logger.info("[crawl_scraper] synced %d cells to sheet (Q+R)", updated)
+
+    async def _fetch_sheet_rows_wide(
+        self, session: aiohttp.ClientSession, sheet_id: str, token: str
+    ) -> list[list[str]]:
+        """Fetch sheet with columns A through R."""
+        url = f"{SHEETS_API_URL}/{sheet_id}/values/{SHEET_RANGE_WIDE}"
+        headers = {"Authorization": f"Bearer {token}"}
+        async with session.get(url, headers=headers) as resp:
+            resp.raise_for_status()
+            data = await resp.json()
+        return data.get("values", [])
+
     # -----------------------------------------------------------------------
     # Drive helpers (Shared Drive / Team Drive compatible)
     # -----------------------------------------------------------------------
@@ -679,7 +782,14 @@ class CrawlScraperNode(DataSourceNode):
                     title = f["name"].replace(".md", "").replace("-", " ").title()
                     if title_prefix:
                         title = f"{title_prefix} {title}"
-                    source_url = url_map.get(f["name"], f["name"])
+                    source_url = url_map.get(f["name"], "")
+                    if not source_url:
+                        # Fallback: extract from "> Source: <url>" line in markdown
+                        m = re.search(r">\s*Source:\s*(https?://\S+)", text)
+                        if m:
+                            source_url = m.group(1)
+                        else:
+                            source_url = f["name"]
                     return ScrapedPage(
                         url=source_url, title=title,
                         content=text, page_type=page_type,
@@ -940,6 +1050,7 @@ class CrawlScraperNode(DataSourceNode):
             drive_matched_ids: set[str] = set()
             downloaded_ids: set[str] = set()
             scraped_map: dict[str, ScrapedWebsite] = {}
+            drive_folder_map: dict[str, tuple[str, str]] = {}  # cid → (name, id)
             download_pages_total = 0
             download_chars_total = 0
             subfolders: list[dict[str, Any]] = []
@@ -1047,6 +1158,7 @@ class CrawlScraperNode(DataSourceNode):
                             if cid not in processed_ids:
                                 drive_matched_ids.add(cid)
                             processed_ids.add(cid)
+                            drive_folder_map[cid] = (folder["name"], folder["id"])
                             download_tasks.append(_download_candidate(cid, folder))
 
                     # Download up to 5 candidates concurrently
@@ -1085,6 +1197,18 @@ class CrawlScraperNode(DataSourceNode):
                         "phase": phase,
                     },
                 )
+
+                # Sync crawl status + drive_folder to sheet columns Q & R
+                try:
+                    token = self._ensure_token(creds)
+                    await self._sync_crawl_status_to_sheet(
+                        session, sheet_id, token,
+                        processed_ids=processed_ids,
+                        downloaded_ids=downloaded_ids,
+                        drive_folder_map=drive_folder_map,
+                    )
+                except Exception as exc:
+                    logger.debug("[crawl_scraper] status sync failed: %s", exc)
 
                 if downloaded_ids >= tracked_ids:
                     logger.info("[crawl_scraper] all %d candidates downloaded", len(downloaded_ids))

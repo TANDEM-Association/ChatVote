@@ -486,7 +486,11 @@ function NodeCard({
                 {current && (
                   <div className="rounded-md bg-amber-500/10 px-2.5 py-1.5">
                     <span className="text-[10px] font-medium text-amber-400">
-                      {phase === "downloading" ? "Downloading:" : "Scraping:"}
+                      {phase === "downloading"
+                        ? "Downloading:"
+                        : node.node_id === "indexer"
+                          ? "Indexing:"
+                          : "Scraping:"}
                     </span>
                     <span className="ml-1 text-[11px] font-semibold text-amber-300">
                       {current}
