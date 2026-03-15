@@ -447,7 +447,7 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
     try:
         candidate = await aget_candidate_by_id(candidate_id)
     except Exception:
-        candidate = None  # incomplete Firestore doc (e.g. only has_manifesto fields)
+        candidate = None  # incomplete Firestore doc (e.g. only manifesto_pdf_url field)
     if candidate is None:
         logger.warning(
             f"[profession_indexer] skipping {candidate_id} — "
@@ -565,13 +565,19 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
     return len(documents)
 
 
-async def _update_firestore_url(candidate_id: str, storage_url: str) -> None:
-    """Update Firestore candidate doc with the Firebase Storage URL."""
+async def _update_firestore_url(candidate_id: str, storage_url: str | None) -> None:
+    """Update Firestore candidate doc with the Firebase Storage URL.
+
+    Skips the write when ``storage_url`` is None (upload failed) so we don't
+    overwrite the original PDF URL that the populate node already stored.
+    """
+    if not storage_url:
+        logger.debug(f"[profession_indexer] no storage URL for {candidate_id}, skipping Firestore update")
+        return
     try:
         ref = async_db.collection("candidates").document(candidate_id)
         await ref.set(
             {
-                "has_manifesto": True,
                 "manifesto_pdf_url": storage_url,
             },
             merge=True,
