@@ -32,7 +32,7 @@ def _register_builtin_nodes() -> None:
     from src.services.data_pipeline import professions  # noqa: F401
     from src.services.data_pipeline import scraper  # noqa: F401
     from src.services.data_pipeline import crawl_scraper  # noqa: F401
-    from src.services.data_pipeline import indexer  # noqa: F401
+    from src.services.data_pipeline import indexer  # noqa: F401 (now a package)
 
 
 _register_builtin_nodes()

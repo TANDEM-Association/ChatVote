@@ -13,14 +13,11 @@ This service:
 """
 
 import asyncio
-import hashlib
 import logging
 import os
-import re
 from typing import List, Optional
 
 from langchain_core.documents import Document
-from langchain_text_splitters import RecursiveCharacterTextSplitter
 from qdrant_client.models import (
     Distance,
     FieldCondition,
@@ -39,6 +36,12 @@ from src.firebase_service import (
 from src.services.candidate_website_scraper import (
     ScrapedWebsite,
 )
+from src.services.content_processing import (
+    filter_chunks,
+    split_page_content,
+    infer_source_document,
+    FilterStats,
+)
 from src.vector_store_helper import qdrant_client, embed, EMBEDDING_DIM
 
 logger = logging.getLogger(__name__)
@@ -48,144 +51,6 @@ env = os.getenv("ENV", "dev")
 env_suffix = f"_{env}" if env in ["prod", "dev"] else "_dev"
 CANDIDATES_INDEX_NAME = f"candidates_websites{env_suffix}"
 
-# Text splitter configuration — adaptive based on content length
-CHUNK_SIZE = 1000
-CHUNK_OVERLAP = 200
-LARGE_PAGE_THRESHOLD = 50_000  # pages > 50KB get larger chunks
-LARGE_CHUNK_SIZE = 2000
-LARGE_CHUNK_OVERLAP = 300
-MAX_CHUNKS_PER_PAGE = 80  # cap to avoid one page dominating the index
-
-text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=CHUNK_SIZE,
-    chunk_overlap=CHUNK_OVERLAP,
-    length_function=len,
-    separators=["\n\n", "\n", ". ", "? ", "! ", "; ", " ", ""],
-)
-
-_large_text_splitter = RecursiveCharacterTextSplitter(
-    chunk_size=LARGE_CHUNK_SIZE,
-    chunk_overlap=LARGE_CHUNK_OVERLAP,
-    length_function=len,
-    separators=["\n\n", "\n", ". ", "? ", "! ", "; ", " ", ""],
-)
-
-
-# ---------------------------------------------------------------------------
-# Chunk-level content filtering (runs AFTER splitting, before embedding)
-# ---------------------------------------------------------------------------
-
-# Consent / cookie banner boilerplate — strip from chunks that also have real content.
-# These are French GDPR cookie consent blocks scraped from every page.
-_CONSENT_BLOCK = re.compile(
-    r"(?:Gérer le consentement|Gestion des cookies|Politique d'utilisation des cookies)"
-    r".*?"
-    r"(?:Toujours activ|Enregistrer les préférences|Accepter|Refuser|Tout accepter)",
-    re.I | re.DOTALL,
-)
-
-# Accessibility widget boilerplate — entire chunk is widget UI text
-_A11Y_WIDGET_PATTERNS = [
-    re.compile(r"Disability profiles supported", re.I),
-    re.compile(r"(WCAG|ADA|Section 508)\s+(2\.\d|compliance)", re.I),
-    re.compile(r"screen.reader\s+adjustments", re.I),
-    re.compile(r"Seizure Safe Profile", re.I),
-    re.compile(r"keyboard navigation\s+(optimization|motor)", re.I),
-    re.compile(r"shortcuts such as .M.\s*\(menus\)", re.I),
-    re.compile(r"Accessible website.*UserWay", re.I),
-]
-
-
-def _strip_consent_boilerplate(text: str) -> str:
-    """Remove GDPR consent blocks from a chunk while keeping surrounding content."""
-    cleaned = _CONSENT_BLOCK.sub("", text).strip()
-    # Also strip trailing "Gérer le consentement" that appears as a footer link
-    cleaned = re.sub(r"\s*Gérer le consentement\s*$", "", cleaned, flags=re.I).strip()
-    return cleaned
-
-
-def _is_a11y_widget_chunk(text: str) -> bool:
-    """Return True if the chunk is entirely accessibility widget boilerplate."""
-    hits = sum(1 for pat in _A11Y_WIDGET_PATTERNS if pat.search(text))
-    # Need at least 2 matches to be confident it's widget text, not a mention
-    return hits >= 2
-
-
-# URL path segments → source_document type (checked left to right, first match wins)
-_PROGRAMME_KEYWORDS = frozenset(
-    ["programme", "projet", "propositions", "mesures", "priorites", "engagements"]
-)
-_ABOUT_KEYWORDS = frozenset(
-    [
-        "bilan",
-        "realisations",
-        "about",
-        "qui-sommes",
-        "equipe",
-        "liste",
-        "biographie",
-        "candidat",
-    ]
-)
-_ACTUALITE_KEYWORDS = frozenset(
-    ["actualite", "actualites", "actu", "news", "blog", "communique", "presse"]
-)
-_LEGAL_KEYWORDS = frozenset(
-    ["mentions-legales", "politique-confidentialite", "cgu", "rgpd", "cookies"]
-)
-
-
-def _infer_source_document(page) -> str:  # page: ScrapedPage
-    """
-    Infer a specific source_document type from the page URL, title, and depth.
-
-    Maps to the keys recognised by _SOURCE_FIABILITE_MAP in chunk_metadata.py:
-      candidate_website_programme  → OFFICIAL (2)
-      candidate_website_about      → OFFICIAL (2)
-      candidate_website_actualite  → PRESS    (3)
-      candidate_website_html       → PRESS    (3) fallback
-    PDFs keep their original page_type suffix (e.g. pdf_transcription).
-    """
-    # Social media pages get their own source_document prefix (not "website")
-    if page.page_type in ("social_bio", "social_post"):
-        return f"candidate_{page.page_type}"
-
-    # Non-HTML pages (pdf, sitemap, …) keep the original type suffix as-is.
-    if page.page_type != "html":
-        return f"candidate_website_{page.page_type}"
-
-    # Normalise the URL path for keyword matching.
-    url_lower = page.url.lower()
-    # Strip scheme + host so we only look at path segments.
-    try:
-        from urllib.parse import urlparse as _urlparse
-
-        path = _urlparse(url_lower).path
-    except Exception:
-        path = url_lower
-
-    # Check legal / boilerplate pages first so we can fall through to html.
-    for kw in _LEGAL_KEYWORDS:
-        if kw in path:
-            return "candidate_website_html"  # legal pages → generic fallback
-
-    for kw in _PROGRAMME_KEYWORDS:
-        if kw in path:
-            return "candidate_website_programme"
-
-    for kw in _ABOUT_KEYWORDS:
-        if kw in path:
-            return "candidate_website_about"
-
-    for kw in _ACTUALITE_KEYWORDS:
-        if kw in path:
-            return "candidate_website_actualite"
-
-    # Homepage (depth 0) is treated as "about".
-    if page.depth == 0:
-        return "candidate_website_about"
-
-    return "candidate_website_html"
 
 
 def _ensure_candidates_collection_exists() -> None:
@@ -270,7 +135,10 @@ def create_documents_from_scraped_website(
     candidate: Candidate,
     scraped_website: ScrapedWebsite,
 ) -> List[Document]:
-    """Create LangChain documents from scraped website content using ChunkMetadata."""
+    """Create LangChain documents from scraped website content using ChunkMetadata.
+
+    Uses pure functions from content_processing for splitting and filtering.
+    """
     from src.models.chunk_metadata import ChunkMetadata
 
     documents = []
@@ -283,72 +151,25 @@ def create_documents_from_scraped_website(
             f"party-based filtering will not find this candidate's chunks"
         )
 
-    _debug = os.getenv("DEBUG_INDEXER", "").lower() in ("1", "true", "yes")
-    _dropped_short = 0
-    _dropped_a11y = 0
-    _dropped_dedup = 0
-    _dropped_consent_stripped = 0
+    total_stats = FilterStats()
 
     for page in scraped_website.pages:
-        # Adaptive chunking: large pages get bigger chunks + cap
-        splitter = _large_text_splitter if len(page.content) > LARGE_PAGE_THRESHOLD else text_splitter
-        chunks = splitter.split_text(page.content)
-        if len(chunks) > MAX_CHUNKS_PER_PAGE:
-            logger.info(
-                f"[CHUNK_CAP] page {page.url}: {len(chunks)} chunks → capped to {MAX_CHUNKS_PER_PAGE}"
-            )
-            chunks = chunks[:MAX_CHUNKS_PER_PAGE]
-        if _debug:
-            logger.info(
-                f"[DEBUG] page url={page.url} type={page.page_type} "
-                f"content_len={len(page.content)} raw_chunks={len(chunks)}"
-                f"{' (large splitter)' if splitter is _large_text_splitter else ''}"
-            )
+        # Split page content (adaptive sizing, capped)
+        raw_chunks = split_page_content(page.content)
 
-        for chunk in chunks:
-            original_chunk = chunk
-            # Strip consent boilerplate (keeps surrounding content)
-            chunk = _strip_consent_boilerplate(chunk)
-            if chunk != original_chunk:
-                _dropped_consent_stripped += 1
-                if _debug:
-                    logger.info(
-                        f"[DEBUG][CONSENT_STRIPPED] removed={len(original_chunk)-len(chunk)} chars "
-                        f"preview_before='{original_chunk[:80]}...' preview_after='{chunk[:80]}...'"
-                    )
+        # Filter chunks (consent, short, a11y, dedup)
+        filtered, stats = filter_chunks(raw_chunks, seen_hashes=seen_hashes)
+        total_stats.dropped_short += stats.dropped_short
+        total_stats.dropped_a11y += stats.dropped_a11y
+        total_stats.dropped_dedup += stats.dropped_dedup
+        total_stats.consent_stripped += stats.consent_stripped
 
-            if len(chunk.strip()) < 30:
-                _dropped_short += 1
-                if _debug:
-                    logger.info(f"[DEBUG][DROPPED_SHORT] len={len(chunk.strip())} text='{chunk.strip()}'")
-                continue
+        source_doc = infer_source_document(page.url, page.page_type, getattr(page, "depth", 1))
 
-            # Drop accessibility widget chunks
-            if _is_a11y_widget_chunk(chunk):
-                _dropped_a11y += 1
-                if _debug:
-                    logger.info(f"[DEBUG][DROPPED_A11Y] text='{chunk[:120]}...'")
-                continue
-
-            # Deduplicate — skip chunks we've already seen for this candidate
-            chunk_hash = hashlib.md5(chunk.strip().encode()).hexdigest()
-            if chunk_hash in seen_hashes:
-                _dropped_dedup += 1
-                if _debug:
-                    logger.info(f"[DEBUG][DROPPED_DEDUP] hash={chunk_hash} text='{chunk[:80]}...'")
-                continue
-            seen_hashes.add(chunk_hash)
-
-            if _debug:
-                source_doc = _infer_source_document(page)
-                logger.info(
-                    f"[DEBUG][KEPT] chunk#{chunk_index} source={source_doc} "
-                    f"len={len(chunk)} text='{chunk[:150]}...'"
-                )
-
+        for chunk in filtered:
             cm = ChunkMetadata(
                 namespace=candidate.candidate_id,
-                source_document=_infer_source_document(page),
+                source_document=source_doc,
                 party_ids=candidate.party_ids or [],
                 candidate_ids=[candidate.candidate_id],
                 candidate_name=candidate.full_name,
@@ -371,8 +192,10 @@ def create_documents_from_scraped_website(
 
     logger.info(
         f"[FILTER_STATS] {candidate.full_name}: "
-        f"kept={len(documents)} dropped_short={_dropped_short} dropped_a11y={_dropped_a11y} "
-        f"dropped_dedup={_dropped_dedup} consent_stripped={_dropped_consent_stripped} "
+        f"kept={len(documents)} dropped_short={total_stats.dropped_short} "
+        f"dropped_a11y={total_stats.dropped_a11y} "
+        f"dropped_dedup={total_stats.dropped_dedup} "
+        f"consent_stripped={total_stats.consent_stripped} "
         f"pages={len(scraped_website.pages)}"
     )
 
@@ -402,6 +225,100 @@ async def delete_candidate_documents(candidate_id: str) -> None:
         logger.info(f"Deleted existing documents for candidate {candidate_id}")
     except Exception as e:
         logger.error(f"Error deleting documents for candidate {candidate_id}: {e}")
+
+
+async def _select_important_pages(
+    pages: list,
+    max_pages: int,
+    candidate_name: str,
+) -> list:
+    """Use LLM to read page titles/headers and select the most politically relevant pages.
+
+    Builds a numbered summary of each page (URL + first 150 chars) and asks the LLM
+    to pick the indices of the most important pages for a political candidate profile.
+    Falls back to longest-content selection if LLM fails.
+    """
+    import time as _t
+    _ts = _t.monotonic()
+
+    # Build a compact summary: index, URL, title/first lines
+    summaries = []
+    for i, page in enumerate(pages):
+        # Extract title from first heading or first line
+        lines = page.content.strip().split("\n")
+        title = ""
+        for line in lines[:5]:
+            stripped = line.strip()
+            if stripped.startswith("#"):
+                title = stripped.lstrip("# ").strip()
+                break
+            if stripped and not title:
+                title = stripped[:100]
+        url = getattr(page, "url", "") or ""
+        preview = page.content[:150].replace("\n", " ").strip()
+        summaries.append(f"{i}. [{url}] {title} — {preview}")
+
+    prompt = (
+        f"You are selecting the most important web pages from candidate {candidate_name}'s website "
+        f"to index for a political information chatbot.\n\n"
+        f"Below are {len(pages)} pages with their URL, title, and preview.\n"
+        f"Select the {max_pages} most politically relevant pages — prioritize:\n"
+        f"- Political program / proposals / manifesto\n"
+        f"- Biography / about the candidate\n"
+        f"- Key policy positions (housing, transport, security, environment, etc.)\n"
+        f"- Team / electoral list\n"
+        f"Exclude: event announcements, donation pages, legal notices, archives/pagination, press releases.\n\n"
+        + "\n".join(summaries)
+        + f"\n\nReturn ONLY a JSON array of the {max_pages} selected page indices, e.g. [0, 3, 5, 12, ...]"
+    )
+
+    try:
+        from src.llms import DETERMINISTIC_LLMS, get_answer_from_llms
+        from langchain_core.messages import HumanMessage
+        import json
+
+        response = await asyncio.wait_for(
+            get_answer_from_llms(DETERMINISTIC_LLMS, [HumanMessage(content=prompt)]),
+            timeout=15.0,
+        )
+        content = response.content if hasattr(response, "content") else str(response)
+
+        # Parse JSON array from response
+        # Handle markdown code blocks
+        if "```" in content:
+            content = content.split("```")[1]
+            if content.startswith("json"):
+                content = content[4:]
+        indices = json.loads(content.strip())
+
+        if not isinstance(indices, list):
+            raise ValueError(f"Expected list, got {type(indices)}")
+
+        # Filter valid indices
+        indices = [int(idx) for idx in indices if 0 <= int(idx) < len(pages)][:max_pages]
+
+        if len(indices) >= max_pages // 2:  # Accept if we got at least half
+            selected = [pages[i] for i in indices]
+            logger.info(
+                f"[indexer:timing] _select_important_pages({candidate_name}) LLM took %.2fs, "
+                f"selected {len(selected)}/{len(pages)} pages",
+                _t.monotonic() - _ts,
+            )
+            return selected
+
+        logger.warning(
+            f"[indexer] LLM returned only {len(indices)} valid indices, falling back to content-length"
+        )
+    except Exception as exc:
+        logger.warning(f"[indexer] LLM page selection failed for {candidate_name}: {exc}, falling back")
+
+    # Fallback: sort by content length (most content = most substance)
+    pages_sorted = sorted(pages, key=lambda p: len(p.content), reverse=True)
+    logger.info(
+        "[indexer:timing] _select_important_pages(%s) fallback took %.2fs",
+        candidate_name, _t.monotonic() - _ts,
+    )
+    return pages_sorted[:max_pages]
 
 
 async def index_candidate_website(
@@ -441,6 +358,18 @@ async def index_candidate_website(
         f"Scraped {len(scraped_website.pages)} pages "
         f"({scraped_website.total_content_length} chars) for {candidate.full_name}"
     )
+
+    # Smart page selection: LLM reads titles/headers to pick the most relevant pages
+    max_pages = int(os.getenv("MAX_PAGES_PER_CANDIDATE", "10"))
+    if len(scraped_website.pages) > max_pages:
+        original_count = len(scraped_website.pages)
+        scraped_website.pages = await _select_important_pages(
+            scraped_website.pages, max_pages, candidate.full_name,
+        )
+        logger.info(
+            f"[indexer] smart-selected {candidate.full_name} pages: {original_count} → {len(scraped_website.pages)} "
+            f"(kept {sum(len(p.content) for p in scraped_website.pages)} chars)"
+        )
 
     # Create documents from scraped content
     _ts = _t.monotonic()

@@ -20,9 +20,7 @@ Pipeline:
 import asyncio
 import logging
 import os
-import re
 from pathlib import Path
-import tempfile
 
 from langchain_core.documents import Document
 from langchain_text_splitters import RecursiveCharacterTextSplitter
@@ -44,54 +42,12 @@ from src.services.candidate_indexer import (
 from src.services.manifesto_indexer import extract_pages_from_pdf
 from src.vector_store_helper import qdrant_client
 
+from src.services.content_processing import is_metadata_only, is_real_content
+
 logger = logging.getLogger(__name__)
 
-# ---------------------------------------------------------------------------
-# Content quality checks (ported from chunk_health_audit.py)
-# ---------------------------------------------------------------------------
-
-_FRENCH_WORD_RE = re.compile(r"[a-zA-ZÀ-ÿ]{2,}", re.UNICODE)
-_FILE_ARTIFACT_RE = re.compile(r"\.\w{2,4}(?:\s|$)")
-_MIN_REAL_WORDS = 10
-
-
-def _is_metadata_only(content: str) -> bool:
-    """True if content looks like a filename/InDesign artifact rather than real text."""
-    stripped = content.strip()
-    if not stripped:
-        return False
-
-    stripped_lower = stripped.lower()
-
-    # InDesign/print artefacts
-    if ".indd" in stripped_lower or "_bat." in stripped_lower or " bat." in stripped_lower:
-        return True
-
-    file_matches = _FILE_ARTIFACT_RE.findall(stripped)
-    if file_matches:
-        words = stripped.split()
-        file_ratio = len(file_matches) / max(len(words), 1)
-        if file_ratio > 0.5:
-            return True
-
-    real_words = _FRENCH_WORD_RE.findall(stripped)
-    if len(real_words) < _MIN_REAL_WORDS:
-        alpha_chars = sum(1 for c in stripped if c.isalpha())
-        if len(stripped) > 0 and alpha_chars / len(stripped) < 0.3:
-            return True
-
-    return False
-
-
-def _is_real_content(pages: list[tuple[int, str]], min_words: int = 30) -> bool:
-    """Check if extracted pages contain real French content, not just file metadata."""
-    full_text = " ".join(t for _, t in pages)
-    real_words = _FRENCH_WORD_RE.findall(full_text)
-    if len(real_words) < min_words:
-        return False
-    if _is_metadata_only(full_text):
-        return False
-    return True
+# Backward-compat alias used by scripts/test_profession_indexing.py
+_is_real_content = is_real_content
 
 
 # ---------------------------------------------------------------------------
@@ -332,8 +288,9 @@ async def _extract_pages_with_gemini(pdf_content: bytes) -> list[tuple[int, str]
         return []
 
 
-# Directory where professions pipeline saves PDFs
-_PDF_CACHE_DIR = Path(tempfile.gettempdir()) / "chatvote_professions_pdfs"
+# Directory where professions pipeline saves PDFs — project-local to survive
+# macOS /tmp cleanup between pipeline runs.
+_PDF_CACHE_DIR = Path(__file__).resolve().parents[2] / ".cache" / "professions_pdfs"
 
 # Firebase Storage config
 env = os.getenv("ENV", "dev")
@@ -513,8 +470,8 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
             f"[profession_indexer] uploaded {candidate_id} to Firebase Storage: {storage_url}"
         )
     except Exception as e:
-        logger.error(f"Failed to upload PDF to Firebase Storage for {candidate_id}: {e}")
-        return 0
+        logger.warning(f"Failed to upload PDF to Firebase Storage for {candidate_id}: {e}")
+        storage_url = None  # non-fatal — continue with OCR + indexing
 
     # Step 4: Extract PDF text — 4-tier OCR cascade with content quality checks
     # Order: pypdf (free/fast) → Scaleway (cleanest OCR) → tesseract (free/local) → Gemini (last resort)
@@ -536,7 +493,7 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
 
         total_chars = sum(len(t) for _, t in pages) if pages else 0
 
-        if pages and total_chars > 200 and _is_real_content(pages):
+        if pages and total_chars > 200 and is_real_content(pages):
             ocr_method = tier_name
             logger.info(
                 f"[profession_indexer] {tier_name}: {total_chars:,} chars from "

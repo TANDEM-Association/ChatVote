@@ -1,4 +1,4 @@
-.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-qwen seed-snapshots seed-firestore test-e2e check stop clean logs logs-prod logs-backend logs-frontend logs-qdrant logs-k8s check-prod eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
+.PHONY: setup dev dev-infra dev-emulators dev-backend dev-frontend seed seed-local seed-qwen seed-snapshots seed-firestore seed-firestore-if-empty snapshot test-e2e check stop clean logs logs-prod logs-backend logs-frontend logs-qdrant logs-k8s check-prod eval eval-static eval-e2e red-team generate-goldens optimize-prompts eval-report eval-report-static
 
 # ---------------------------------------------------------------------------
 # Setup — run once after cloning
@@ -57,12 +57,13 @@ setup:
 
 dev: dev-infra
 	@mkdir -p $(CURDIR)/.logs
-	@echo "Seeding Firestore (no vectors)..."
-	@$(MAKE) seed-firestore
+	@echo "Seeding Firestore (skipped if data exists)..."
+	@$(MAKE) seed-firestore-if-empty
 	@echo ""
 	@echo "Starting backend (logs → .logs/backend.log)..."
 	@cd CHATVOTE-BackEnd && \
-		poetry run python -m src.aiohttp_app --debug \
+		poetry run watchfiles --filter python \
+		"python -m src.aiohttp_app --debug" src/ \
 		> $(CURDIR)/.logs/backend.log 2>&1 & \
 		echo "$$!" > $(CURDIR)/.logs/backend.pid
 	@echo "Starting frontend (logs → .logs/frontend.log)..."
@@ -147,7 +148,7 @@ dev-emulators: dev-infra
 # ---------------------------------------------------------------------------
 
 dev-backend:
-	cd CHATVOTE-BackEnd && poetry run python -m src.aiohttp_app --debug
+	cd CHATVOTE-BackEnd && poetry run watchfiles --filter python "python -m src.aiohttp_app --debug" src/
 
 dev-frontend:
 	cd CHATVOTE-FrontEnd && npm run dev
@@ -175,6 +176,37 @@ seed-snapshots:
 
 seed-firestore:
 	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py
+
+seed-firestore-if-empty:
+	cd CHATVOTE-BackEnd && poetry run python scripts/seed_local.py --skip-if-exists
+
+snapshot:
+	@echo "=== Exporting current dev data as seed ==="
+	@echo "Exporting Firebase emulator data..."
+	@docker exec chatvote-firebase-emulators-1 npx firebase emulators:export /firebase/emulator-data --project chat-vote-dev --force
+	@echo "Exporting Qdrant snapshots..."
+	@mkdir -p CHATVOTE-BackEnd/qdrant_snapshots
+	@cd CHATVOTE-BackEnd && poetry run python -c "\
+	from qdrant_client import QdrantClient; \
+	import json, os; \
+	client = QdrantClient(url='http://localhost:6333'); \
+	provider = os.getenv('EMBEDDING_PROVIDER', 'unknown'); \
+	for col in client.get_collections().collections: \
+	    info = client.get_collection(col.name); \
+	    print(f'Snapshotting {col.name} ({info.points_count} points)...'); \
+	    snap = client.create_snapshot(col.name); \
+	    print(f'  → {snap.name}'); \
+	meta = { \
+	    'embedding_provider': provider, \
+	    'collections': [c.name for c in client.get_collections().collections], \
+	}; \
+	open('qdrant_snapshots/snapshot_meta.json','w').write(json.dumps(meta, indent=2)); \
+	print(f'Metadata saved (provider={provider})');"
+	@echo ""
+	@echo "=== Snapshot complete ==="
+	@echo "  Firebase: CHATVOTE-BackEnd/firebase/emulator-data/"
+	@echo "  Qdrant:   snapshots stored in Qdrant (use API to download)"
+	@echo "  Metadata: CHATVOTE-BackEnd/qdrant_snapshots/snapshot_meta.json"
 
 test-e2e:
 	@echo "Starting infrastructure..."

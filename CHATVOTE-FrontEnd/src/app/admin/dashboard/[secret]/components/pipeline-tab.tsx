@@ -114,7 +114,7 @@ const NODE_DESCRIPTIONS: Record<string, string> = {
   crawl_scraper:
     "External crawl K8s service for candidate websites. When enabled, takes over candidate site scraping from the built-in scraper. Submits to Google Sheet, polls until PROCESSED, downloads from Drive. Already-processed sites skip straight to download.",
   indexer:
-    "Embeds scraped content into Qdrant vector DB for RAG retrieval. Indexes party manifestos (PDFs) and candidate websites (from scraper node) using LLM embeddings.",
+    "Embeds content into Qdrant vector DB for RAG retrieval. Runs 4 parallel phases: party manifestos (PDFs), candidate websites (from crawler), social media profiles, and professions de foi (official candidate statements).",
 };
 
 /** Input sources for each pipeline node */
@@ -136,7 +136,7 @@ const NODE_INPUTS: Record<string, string[]> = {
   ],
   scraper: ["Seed (candidates with websites)"],
   crawl_scraper: ["Seed (candidates with websites)"],
-  indexer: ["Scraper / Crawl Scraper content", "Party manifesto PDFs"],
+  indexer: ["Scraper / Crawl Scraper content", "Party manifesto PDFs", "Professions de foi PDFs", "Social media profiles"],
 };
 
 /** Output descriptions for each pipeline node — what data it produces */
@@ -470,6 +470,25 @@ function NodeCard({
               "last_results",
               "downloaded",
               "download_total",
+              "active_phases",
+              "completed_phases",
+              "candidates_done",
+              "candidates_total",
+              "candidates_chunks",
+              "candidates_current",
+              "professions_done",
+              "professions_total",
+              "professions_chunks",
+              "professions_current",
+              "manifestos_done",
+              "manifestos_total",
+              "manifestos_chunks",
+              "manifestos_parties",
+              "manifestos_current",
+              "social_done",
+              "social_total",
+              "social_chunks",
+              "social_current",
             ]);
             const extraStats = Object.entries(c).filter(
               ([k, v]) => !metaKeys.has(k) && typeof v !== "object",
@@ -477,11 +496,64 @@ function NodeCard({
 
             return (
               <div className="flex flex-col gap-2">
-                {phase && (
+                {phase && phase === "parallel" ? (
+                  <div className="flex flex-col gap-2">
+                    <span className="text-[11px] font-medium text-amber-600">
+                      Parallel indexing
+                    </span>
+                    {c.active_phases && (
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <Loader2 className="size-3 animate-spin text-amber-400" />
+                        <span className="text-amber-400">{String(c.active_phases)}</span>
+                      </div>
+                    )}
+                    {c.completed_phases && (
+                      <div className="flex items-center gap-1.5 text-[10px]">
+                        <CheckCircle2 className="size-3 text-emerald-500" />
+                        <span className="text-emerald-400">{String(c.completed_phases)}</span>
+                      </div>
+                    )}
+                    {/* Per-phase progress rows */}
+                    {(["candidates", "professions", "manifestos", "social"] as const).map((phaseName) => {
+                      const pDone = Number(c[`${phaseName}_done`] ?? 0);
+                      const pTotal = Number(c[`${phaseName}_total`] ?? 0);
+                      const pChunks = Number(c[`${phaseName}_chunks`] ?? 0);
+                      const pCurrent = c[`${phaseName}_current`] as string | undefined;
+                      if (pTotal === 0 && pChunks === 0) return null;
+                      const pPct = pTotal > 0 ? Math.round((pDone / pTotal) * 100) : 0;
+                      return (
+                        <div key={phaseName} className="border-border-subtle rounded border p-1.5">
+                          <div className="flex items-center justify-between text-[10px]">
+                            <span className="font-medium text-slate-300 capitalize">{phaseName}</span>
+                            <span className="font-mono text-slate-400">
+                              {pTotal > 0 ? `${pDone}/${pTotal}` : ""} {pChunks > 0 ? `(${pChunks} chunks)` : ""}
+                            </span>
+                          </div>
+                          {pTotal > 0 && (
+                            <div className="mt-1 flex items-center gap-1.5">
+                              <div className="bg-surface-elevated h-1.5 flex-1 overflow-hidden rounded-full">
+                                <div
+                                  className="h-full rounded-full bg-amber-400 transition-all duration-700 ease-out"
+                                  style={{ width: `${Math.min(100, pPct)}%` }}
+                                />
+                              </div>
+                              <span className="min-w-[3ch] text-right text-[9px] font-bold text-slate-400">
+                                {pPct}%
+                              </span>
+                            </div>
+                          )}
+                          {pCurrent && (
+                            <p className="mt-0.5 truncate text-[9px] text-amber-600">{pCurrent}</p>
+                          )}
+                        </div>
+                      );
+                    })}
+                  </div>
+                ) : phase ? (
                   <span className="text-[11px] font-medium text-amber-600">
                     Phase: {phase}
                   </span>
-                )}
+                ) : null}
 
                 {current && (
                   <div className="rounded-md bg-amber-500/10 px-2.5 py-1.5">

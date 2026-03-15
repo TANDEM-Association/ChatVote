@@ -1079,6 +1079,7 @@ async def experiment_topic_stats(request):
     classified_chunks = 0
     # Track per-candidate chunk counts (from candidates collection only)
     candidate_chunks: dict[str, int] = {}
+    candidate_manifesto_chunks: dict[str, int] = {}
 
     for col_name in [PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME]:
         col_total = 0
@@ -1105,6 +1106,8 @@ async def experiment_topic_stats(request):
                         ns = meta.get("namespace", "")
                         if ns:
                             candidate_chunks[ns] = candidate_chunks.get(ns, 0) + 1
+                            if meta.get("source_document") == "profession_de_foi":
+                                candidate_manifesto_chunks[ns] = candidate_manifesto_chunks.get(ns, 0) + 1
                     theme = meta.get("theme")
                     if not theme:
                         continue
@@ -1170,6 +1173,7 @@ async def experiment_topic_stats(request):
         "themes": themes_list,
         "collections": collection_stats,
         "candidate_chunks": candidate_chunks,
+        "candidate_manifesto_chunks": candidate_manifesto_chunks,
     })
 
 
@@ -3009,4 +3013,4 @@ if __name__ == "__main__":
     else:
         socketio_logger.setLevel(logging.WARN)
         logging.basicConfig(level=logging.INFO, format=LOGGING_FORMAT)
-    web.run_app(app, host=host, port=port)
+    web.run_app(app, host=host, port=port, reuse_address=True, shutdown_timeout=5.0)
