@@ -253,7 +253,8 @@ function ScoreBreakdown({
   const withWebsite = agg?.hasWebsite ?? 0;
   const withManifesto = agg?.hasManifesto ?? 0;
   const withScraped = agg?.hasScraped ?? 0;
-  const withIndexed = agg?.hasIndexed ?? 0;
+  const withWebsiteIndexed = agg?.hasWebsiteIndexed ?? 0;
+  const withManifestoIndexed = agg?.hasManifestoIndexed ?? 0;
 
   const coverageItems = [
     {
@@ -270,7 +271,7 @@ function ScoreBreakdown({
       pct: total > 0 ? Math.round(100 * (withWebsite / total)) : 0,
     },
     {
-      label: "Candidates with profession de foi",
+      label: "Candidates with manifesto",
       ok: total > 0 && withManifesto === total,
       detail: total > 0 ? `${withManifesto} / ${total}` : "—",
       pct: total > 0 ? Math.round(100 * (withManifesto / total)) : 0,
@@ -278,23 +279,37 @@ function ScoreBreakdown({
   ];
 
   const ingestionItems = [
+    // — Manifesto pipeline —
     {
-      label: "Profession de foi indexed",
+      label: "Manifesto downloaded",
       ok: total > 0 && withManifesto === total,
       detail: total > 0 ? `${withManifesto} / ${total}` : "—",
       pct: total > 0 ? Math.round(100 * (withManifesto / total)) : 0,
     },
     {
-      label: "Scraped successfully",
+      label: "Manifesto indexed in RAG",
+      ok: total > 0 && withManifestoIndexed === total,
+      detail: total > 0 ? `${withManifestoIndexed} / ${total}` : "—",
+      pct: total > 0 ? Math.round(100 * (withManifestoIndexed / total)) : 0,
+    },
+    // — Website pipeline —
+    {
+      label: "Website scraped",
       ok: withWebsite > 0 && withScraped === withWebsite,
       detail: withWebsite > 0 ? `${withScraped} / ${withWebsite}` : "—",
-      pct: withWebsite > 0 ? Math.round(100 * (withScraped / withWebsite)) : 0,
+      pct:
+        withWebsite > 0
+          ? Math.min(Math.round(100 * (withScraped / withWebsite)), 100)
+          : 0,
     },
     {
-      label: "Indexed in RAG",
-      ok: total > 0 && withIndexed === total,
-      detail: total > 0 ? `${withIndexed} / ${total}` : "—",
-      pct: total > 0 ? Math.round(100 * (withIndexed / total)) : 0,
+      label: "Website indexed in RAG",
+      ok: withWebsite > 0 && withWebsiteIndexed === withWebsite,
+      detail: withWebsite > 0 ? `${withWebsiteIndexed} / ${withWebsite}` : "—",
+      pct:
+        withWebsite > 0
+          ? Math.min(Math.round(100 * (withWebsiteIndexed / withWebsite)), 100)
+          : 0,
     },
   ];
 
@@ -356,7 +371,7 @@ function ScoreBreakdown({
       {total > 0 && (
         <p className="text-muted-foreground/60 text-[11px]">
           {total} candidates — {withWebsite} with website · {withManifesto} with
-          manifesto · {withIndexed} indexed in RAG (manifesto + web)
+          manifesto · {withWebsiteIndexed} website indexed · {withManifestoIndexed} manifesto indexed
         </p>
       )}
     </div>
@@ -384,15 +399,6 @@ const CandidateSubRow = memo(function CandidateSubRow({
     candidate.total_chunks > 0
       ? Math.round((candidate.junk_count / candidate.total_chunks) * 100)
       : 0;
-
-  const manifestoTotal =
-    candidate.manifesto_chunks + candidate.website_chunks > 0
-      ? candidate.manifesto_chunks + candidate.website_chunks
-      : 1;
-  const manifestoPct = Math.round(
-    (candidate.manifesto_chunks / manifestoTotal) * 100,
-  );
-  const websitePct = 100 - manifestoPct;
 
   return (
     <Fragment>
@@ -434,54 +440,66 @@ const CandidateSubRow = memo(function CandidateSubRow({
               rel="noopener noreferrer"
               onClick={(e) => e.stopPropagation()}
               className="inline-flex items-center gap-0.5 text-[11px] text-green-500 hover:underline"
+              title={candidate.website_url}
             >
               <CheckIcon className="size-3" />
               <ExternalLinkIcon className="size-2.5" />
             </a>
           ) : (
-            <XIcon className="mx-auto size-3.5 text-red-400" />
+            <span className="text-muted-foreground text-[11px]">—</span>
           )}
         </td>
         {/* Manifesto */}
         <td className="px-3 py-2 text-center">
-          {candidate.has_manifesto ? (
-            candidate.manifesto_url ? (
-              <a
-                href={candidate.manifesto_url}
-                target="_blank"
-                rel="noopener noreferrer"
-                onClick={(e) => e.stopPropagation()}
-                className="inline-flex items-center gap-0.5 text-[11px] text-green-500 hover:underline"
-              >
-                <CheckIcon className="size-3" />
-                <ExternalLinkIcon className="size-2.5" />
-              </a>
-            ) : (
-              <CheckIcon className="mx-auto size-3.5 text-green-500" />
-            )
+          {candidate.manifesto_url || candidate.manifesto_pdf_path ? (
+            <a
+              href={candidate.manifesto_url || candidate.manifesto_pdf_path}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="inline-flex items-center gap-0.5 text-[11px] text-green-500 hover:underline"
+              title={candidate.manifesto_url || candidate.manifesto_pdf_path}
+            >
+              <CheckIcon className="size-3" />
+              <ExternalLinkIcon className="size-2.5" />
+            </a>
+          ) : candidate.manifesto_chunks > 0 ? (
+            <span className="text-[11px] text-green-500" title="Manifesto indexed (no URL available)">
+              <CheckIcon className="size-3 inline" />
+            </span>
           ) : (
-            <XIcon className="mx-auto size-3.5 text-red-400" />
+            <span className="text-muted-foreground text-[11px]">—</span>
           )}
         </td>
-        {/* Chunks */}
+        {/* Chunks: X site · X manifesto */}
         <td className="px-3 py-2">
-          <div className="flex items-center gap-2">
-            <div className="bg-border-subtle/40 h-2 w-16 overflow-hidden rounded-full">
-              <div className="flex h-full">
-                <div
-                  className="h-full bg-green-500/70"
-                  style={{ width: `${manifestoPct}%` }}
-                />
-                <div
-                  className="h-full bg-blue-500/70"
-                  style={{ width: `${websitePct}%` }}
-                />
-              </div>
-            </div>
-            <span className="text-foreground text-[11px] tabular-nums">
-              {candidate.total_chunks}
+          <span className="inline-flex items-center gap-1.5 text-[11px] tabular-nums">
+            <span
+              className={
+                candidate.website_url && candidate.website_chunks === 0
+                  ? "font-medium text-red-400"
+                  : candidate.website_chunks > 0
+                    ? "text-green-500"
+                    : "text-muted-foreground"
+              }
+            >
+              {candidate.website_url ? candidate.website_chunks : "—"}
             </span>
-          </div>
+            <span className="text-muted-foreground/50">site</span>
+            <span className="text-muted-foreground/30">·</span>
+            <span
+              className={
+                (candidate.has_manifesto || candidate.manifesto_chunks > 0) && candidate.manifesto_chunks === 0
+                  ? "font-medium text-red-400"
+                  : candidate.manifesto_chunks > 0
+                    ? "text-green-500"
+                    : "text-muted-foreground"
+              }
+            >
+              {candidate.has_manifesto || candidate.manifesto_chunks > 0 ? candidate.manifesto_chunks : "—"}
+            </span>
+            <span className="text-muted-foreground/50">manifesto</span>
+          </span>
         </td>
         {/* Good */}
         <td className="px-3 py-2 text-center">
@@ -841,21 +859,21 @@ function CandidatesStatusCell({
     return <span className="text-xs text-red-400/70">missing</span>;
   }
 
-  const { total, hasManifesto, hasWebsite } = agg;
+  const { total, hasWebsite, hasManifestoIndexed, hasWebsiteIndexed } = agg;
 
-  const manifestoPct = total > 0 ? Math.round((hasManifesto / total) * 100) : 0;
-  const websitePct = total > 0 ? Math.round((hasWebsite / total) * 100) : 0;
+  const manifestoIdxPct = total > 0 ? Math.round((hasManifestoIndexed / total) * 100) : 0;
+  const websiteIdxPct = hasWebsite > 0 ? Math.round((hasWebsiteIndexed / hasWebsite) * 100) : 0;
 
   const manifestoColor =
-    manifestoPct === 100
+    manifestoIdxPct === 100
       ? "text-green-500"
-      : manifestoPct > 0
+      : manifestoIdxPct > 0
         ? "text-amber-400"
         : "text-red-400";
   const websiteColor =
-    websitePct === 100
+    websiteIdxPct === 100
       ? "text-green-500"
-      : websitePct > 0
+      : websiteIdxPct > 0
         ? "text-amber-400"
         : "text-red-400";
 
@@ -866,10 +884,10 @@ function CandidatesStatusCell({
       </div>
       <div className="flex gap-2 text-[10px]">
         <span className={manifestoColor}>
-          ✓{hasManifesto}/{total} manifesto
+          {hasManifestoIndexed}/{total} manifesto
         </span>
         <span className={websiteColor}>
-          ✓{hasWebsite}/{total} web
+          {hasWebsiteIndexed}/{hasWebsite} web
         </span>
       </div>
     </div>
@@ -1540,8 +1558,8 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
                 <th className="text-muted-foreground w-24 px-3 py-2.5 text-center text-xs font-semibold tracking-wider uppercase">
                   Manifesto
                 </th>
-                <th className="text-muted-foreground w-24 px-3 py-2.5 text-center text-xs font-semibold tracking-wider uppercase">
-                  Indexed
+                <th className="text-muted-foreground w-36 px-3 py-2.5 text-center text-xs font-semibold tracking-wider uppercase">
+                  Chunks
                 </th>
               </tr>
             </thead>
@@ -1597,33 +1615,66 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
                     </td>
                     <td className="px-3 py-3 text-center">
                       {c.has_website ? (
-                        <CheckIcon className="mx-auto size-4 text-green-500" />
+                        <a
+                          href={c.website_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-400"
+                          title={c.website_url}
+                        >
+                          <CheckIcon className="mx-auto size-4" />
+                        </a>
                       ) : (
-                        <span className="inline-flex items-center justify-center gap-0.5 text-[11px] text-red-400">
-                          <XIcon className="size-3.5" />
-                        </span>
+                        <span className="text-muted-foreground text-[11px]">—</span>
                       )}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      {c.has_manifesto ? (
-                        <CheckIcon className="mx-auto size-4 text-green-500" />
-                      ) : (
-                        <span className="inline-flex items-center justify-center gap-0.5 text-[11px] text-red-400">
-                          <XIcon className="size-3.5" />
+                      {c.manifesto_pdf_url ? (
+                        <a
+                          href={c.manifesto_pdf_url}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="text-green-500 hover:text-green-400"
+                          title={c.manifesto_pdf_url}
+                        >
+                          <CheckIcon className="mx-auto size-4" />
+                        </a>
+                      ) : c.manifesto_chunks > 0 ? (
+                        <span className="text-green-500" title="Manifesto indexed (no URL available)">
+                          <CheckIcon className="mx-auto size-4" />
                         </span>
+                      ) : (
+                        <span className="text-muted-foreground text-[11px]">—</span>
                       )}
                     </td>
                     <td className="px-3 py-3 text-center">
-                      {c.chunk_count > 0 ? (
-                        <span className="inline-flex items-center gap-1 text-[11px] text-green-500">
-                          <CheckIcon className="size-3.5" />
-                          <span className="tabular-nums">{c.chunk_count}</span>
+                      <span className="inline-flex items-center gap-1.5 text-[11px] tabular-nums">
+                        <span
+                          className={
+                            c.has_website && c.website_chunks === 0
+                              ? "font-medium text-red-400"
+                              : c.website_chunks > 0
+                                ? "text-green-500"
+                                : "text-muted-foreground"
+                          }
+                        >
+                          {c.has_website ? c.website_chunks : "—"}
                         </span>
-                      ) : (
-                        <span className="inline-flex items-center justify-center gap-0.5 text-[11px] text-red-400">
-                          <XIcon className="size-3.5" />
+                        <span className="text-muted-foreground/50">site</span>
+                        <span className="text-muted-foreground/30">·</span>
+                        <span
+                          className={
+                            (c.has_manifesto || c.manifesto_chunks > 0) && c.manifesto_chunks === 0
+                              ? "font-medium text-red-400"
+                              : c.manifesto_chunks > 0
+                                ? "text-green-500"
+                                : "text-muted-foreground"
+                          }
+                        >
+                          {c.has_manifesto || c.manifesto_chunks > 0 ? c.manifesto_chunks : "—"}
                         </span>
-                      )}
+                        <span className="text-muted-foreground/50">manifesto</span>
+                      </span>
                     </td>
                   </tr>
                 );

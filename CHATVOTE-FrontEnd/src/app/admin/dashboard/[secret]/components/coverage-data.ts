@@ -32,8 +32,12 @@ export type CandidateCoverage = {
   has_manifesto: boolean;
   has_scraped: boolean;
   chunk_count: number;
+  website_chunks: number;
+  manifesto_chunks: number;
   scrape_chars: number;
   party_label: string;
+  website_url: string;
+  manifesto_pdf_url: string;
 };
 
 export type CoverageSummary = {
@@ -65,8 +69,9 @@ export type ChartAggregations = {
       ingestionScore: number;
       hasWebsite: number;
       hasManifesto: number;
+      hasWebsiteIndexed: number;
+      hasManifestoIndexed: number;
       hasScraped: number;
-      hasIndexed: number;
       total: number;
     }
   >;
@@ -75,7 +80,7 @@ export type ChartAggregations = {
 export type CoverageResponse = {
   communes: CommuneCoverage[];
   parties: PartyCoverage[];
-  candidates: CandidateCoverage[]; // Keep type for backwards compat, will be empty array
+  candidates: CandidateCoverage[];
   summary: CoverageSummary;
   charts?: ChartAggregations; // New pre-computed chart data
 };
@@ -90,6 +95,7 @@ type TopicStatsResponse = {
   themes: Array<{ by_party: Record<string, number> }>;
   collections: Record<string, { total: number; classified: number }>;
   candidate_chunks?: Record<string, number>;
+  candidate_manifesto_chunks?: Record<string, number>;
 };
 
 async function fetchTopicStats(): Promise<TopicStatsResponse | null> {
@@ -187,7 +193,7 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
           "municipality_name",
           "website_url",
           "website",
-          "has_manifesto",
+          "manifesto_pdf_url",
           "manifesto_url",
           "election_manifesto_url",
           "manifesto_pdf_path",
@@ -204,6 +210,8 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
     // candidate_chunks now comes from topic-stats (merged to eliminate redundant Qdrant scroll)
     const candidateChunks: Record<string, number> =
       topicStats?.candidate_chunks ?? {};
+    const candidateManifestoChunks: Record<string, number> =
+      topicStats?.candidate_manifesto_chunks ?? {};
 
     const questionsByCommune: Record<string, number> = {};
     for (const doc of sessionsSnap.docs) {
@@ -278,8 +286,9 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
       total: number;
       hasWebsite: number;
       hasManifesto: number;
+      hasWebsiteIndexed: number;
+      hasManifestoIndexed: number;
       hasScraped: number;
-      hasIndexed: number;
     };
     const communeAgg: Record<string, CommuneAgg> = {};
 
@@ -318,13 +327,19 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
         const chunkCount = candidateChunks[doc.id] ?? 0;
         const hasWebsite = Boolean(data.website_url || data.website);
         const hasManifesto = Boolean(
-          data.has_manifesto ||
+          data.manifesto_pdf_url ||
           data.manifesto_url ||
           data.election_manifesto_url ||
           data.manifesto_pdf_path,
         );
-        const hasScraped = Boolean(data.has_scraped) || chunkCount > 0;
-        const hasIndexed = chunkCount > 0;
+        const manifestoChunkCount = candidateManifestoChunks[doc.id] ?? 0;
+        const websiteChunkCount = chunkCount - manifestoChunkCount;
+        // "scraped" means the candidate's *website* was scraped — not just manifesto OCR
+        const hasScraped =
+          hasWebsite &&
+          (Boolean(data.has_scraped) || websiteChunkCount > 0);
+        const hasWebsiteIndexed = websiteChunkCount > 0;
+        const hasManifestoIndexed = manifestoChunkCount > 0;
         const partyLabel =
           data.list_label ??
           data.nuance_label ??
@@ -339,26 +354,28 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
               total: 0,
               hasWebsite: 0,
               hasManifesto: 0,
+              hasWebsiteIndexed: 0,
+              hasManifestoIndexed: 0,
               hasScraped: 0,
-              hasIndexed: 0,
             };
           }
           communeAgg[code].total++;
           if (hasWebsite) communeAgg[code].hasWebsite++;
           if (hasManifesto) communeAgg[code].hasManifesto++;
+          if (hasWebsiteIndexed) communeAgg[code].hasWebsiteIndexed++;
+          if (hasManifestoIndexed) communeAgg[code].hasManifestoIndexed++;
           if (hasScraped) communeAgg[code].hasScraped++;
-          if (hasIndexed) communeAgg[code].hasIndexed++;
         }
 
         // Global funnel counters
         if (hasWebsite) totalWithWebsite++;
         if (hasScraped) totalScraped++;
-        if (hasIndexed) totalIndexed++;
+        if (chunkCount > 0) totalIndexed++;
 
         // Status donut
         if (!hasWebsite) {
           totalNoWebsite++;
-        } else if (!hasIndexed) {
+        } else if (chunkCount === 0) {
           totalHasWebsiteNotIndexed++;
         }
 
@@ -375,6 +392,33 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
         else if (chunkCount <= 50) chunkBuckets[3]++;
         else if (chunkCount <= 100) chunkBuckets[4]++;
         else chunkBuckets[5]++;
+
+        // Build per-candidate row for the table
+        const communeName: string =
+          data.commune_name ?? data.municipality_name ?? "";
+        const websiteUrl: string = String(data.website_url || data.website || "");
+        const manifestoPdfUrl: string = String(
+          data.manifesto_pdf_url ||
+            data.manifesto_url ||
+            data.election_manifesto_url ||
+            "",
+        );
+        candidates.push({
+          candidate_id: doc.id,
+          name: `${data.first_name ?? ""} ${data.last_name ?? ""}`.trim() || doc.id,
+          commune_code: code,
+          commune_name: communeName,
+          has_website: hasWebsite,
+          has_manifesto: hasManifesto,
+          has_scraped: hasScraped,
+          chunk_count: chunkCount,
+          website_chunks: websiteChunkCount,
+          manifesto_chunks: manifestoChunkCount,
+          scrape_chars: data.scrape_chars ?? 0,
+          party_label: partyLabel,
+          website_url: websiteUrl,
+          manifesto_pdf_url: manifestoPdfUrl,
+        });
       }
     } catch {
       // candidates collection may not exist
@@ -393,19 +437,18 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
 
     function computeIngestionScore(agg: CommuneAgg): number {
       if (agg.total === 0) return 0;
-      // Two axes: manifesto indexing (50%) + website scraping/indexing (50%)
-      // If no candidates have websites, manifesto axis gets full 100%
+      // Three axes: manifesto indexed (40%) + website scraped (20%) + website indexed (40%)
+      const manifestoRatio = Math.min(agg.hasManifestoIndexed / agg.total, 1);
       const hasWeb = agg.hasWebsite > 0;
       if (hasWeb) {
-        const manifestoRatio = Math.min(agg.hasManifesto / agg.total, 1);
         const scrapedRatio = Math.min(agg.hasScraped / agg.hasWebsite, 1);
-        const indexedRatio = Math.min(agg.hasIndexed / agg.hasWebsite, 1);
+        const webIndexedRatio = Math.min(agg.hasWebsiteIndexed / agg.hasWebsite, 1);
         return Math.round(
-          50 * manifestoRatio + 25 * scrapedRatio + 25 * indexedRatio,
+          40 * manifestoRatio + 20 * scrapedRatio + 40 * webIndexedRatio,
         );
       }
-      // Manifesto-only commune: score based entirely on manifesto coverage
-      return Math.round(100 * Math.min(agg.hasManifesto / agg.total, 1));
+      // Manifesto-only commune
+      return Math.round(100 * manifestoRatio);
     }
 
     const coverageByCommune: ChartAggregations["coverageByCommune"] = {};
@@ -416,8 +459,9 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
         ingestionScore: computeIngestionScore(agg),
         hasWebsite: agg.hasWebsite,
         hasManifesto: agg.hasManifesto,
+        hasWebsiteIndexed: agg.hasWebsiteIndexed,
+        hasManifestoIndexed: agg.hasManifestoIndexed,
         hasScraped: agg.hasScraped,
-        hasIndexed: agg.hasIndexed,
         total: agg.total,
       };
     }

@@ -35,6 +35,12 @@ interface NodeConfig {
   counts: Record<string, number | string>;
   settings: Record<string, unknown>;
   checkpoints: Record<string, unknown>;
+  cache_info?: Array<{
+    label: string;
+    local_dir?: string;
+    source_url?: string;
+    store_url?: string;
+  }>;
 }
 
 type NodesMap = Record<string, NodeConfig>;
@@ -164,7 +170,7 @@ const DAG_ROWS: { id: string; col: number; row: number }[] = [
   // Output nodes — display-only, show what each source feeds into
   { id: "_out_autocomplete", col: 4, row: 0 },
   { id: "_out_chat_lists", col: 4, row: 1 },
-  { id: "seed", col: 1, row: 1 },
+  { id: "populate", col: 1, row: 1 },
   { id: "professions", col: 2, row: 1 },
   { id: "scraper", col: 1, row: 2 },
   { id: "crawl_scraper", col: 2, row: 2 },
@@ -190,15 +196,15 @@ const OUTPUT_NODES: Record<string, { label: string; description: string }> = {
 
 /** Edges in the DAG: [from, to] */
 const DAG_EDGES: [string, string][] = [
-  ["population", "seed"],
+  ["population", "populate"],
   ["population", "_out_autocomplete"],
-  ["candidatures", "seed"],
+  ["candidatures", "populate"],
   ["candidatures", "_out_chat_lists"],
-  ["websites", "seed"],
-  ["pourquituvotes", "seed"],
-  ["professions", "seed"],
-  ["seed", "scraper"],
-  ["seed", "crawl_scraper"],
+  ["websites", "populate"],
+  ["pourquituvotes", "populate"],
+  ["professions", "populate"],
+  ["populate", "scraper"],
+  ["populate", "crawl_scraper"],
   ["scraper", "indexer"],
   ["crawl_scraper", "indexer"],
   ["indexer", "_out_rag"],
@@ -405,6 +411,35 @@ function NodeCard({
                 <span className="text-muted-foreground">No cached data</span>
               </>
             )}
+          </div>
+        )}
+
+        {/* Cache locations */}
+        {!isRunning && node.cache_info && node.cache_info.length > 0 && (
+          <div className="flex flex-col gap-1 text-[11px]">
+            {node.cache_info.map((info, i) => (
+              <div key={i} className="text-muted-foreground flex items-center gap-1.5">
+                <span className="font-medium">{info.label}:</span>
+                {info.local_dir && (
+                  <code className="bg-surface-elevated rounded px-1 py-0.5 font-mono text-[10px]">
+                    {info.local_dir}
+                  </code>
+                )}
+                {info.local_dir && info.store_url && (
+                  <span className="text-muted-foreground">&rarr;</span>
+                )}
+                {info.store_url && (
+                  <code className="bg-surface-elevated rounded px-1 py-0.5 font-mono text-[10px]">
+                    {info.store_url}
+                  </code>
+                )}
+                {info.source_url && (
+                  <span className="text-muted-foreground ml-1 truncate" title={info.source_url}>
+                    from {new URL(info.source_url).hostname}
+                  </span>
+                )}
+              </div>
+            ))}
           </div>
         )}
 
@@ -1044,6 +1079,21 @@ export default function PipelineTab({
     }
   }, [headers, fetchStatus, apiUrl]);
 
+  const bustUrlCache = useCallback(async () => {
+    try {
+      const res = await fetch(
+        `${apiUrl}/api/v1/admin/data-sources/bust-url-cache`,
+        { method: "POST", headers: headers(), cache: "no-store" },
+      );
+      const data = await res.json();
+      const msg = `URL cache cleared: ${data.deleted ?? 0} objects (${data.backend ?? "unknown"})`;
+      console.info(`%c[Pipeline] ${msg}`, "color: #f59e0b");
+      alert(msg);
+    } catch (err: unknown) {
+      setError(err instanceof Error ? err.message : "Unknown error");
+    }
+  }, [headers, apiUrl]);
+
   const [clearAllConfirm, setClearAllConfirm] = useState(false);
   const clearAll = useCallback(async () => {
     try {
@@ -1404,6 +1454,17 @@ export default function PipelineTab({
           </Button>
         )}
 
+        <Button
+          size="sm"
+          variant="outline"
+          onClick={bustUrlCache}
+          title="Clear the URL response cache (local or S3) so the next pipeline run re-fetches all data from source. Useful after source data updates."
+          className="h-7 gap-1.5 text-xs text-amber-400 hover:text-amber-400"
+        >
+          <RotateCcw className="size-3" />
+          Bust URLs cache
+        </Button>
+
         {clearAllConfirm ? (
           <div className="flex items-center gap-2">
             <span className="text-xs font-bold text-red-400">
@@ -1743,10 +1804,10 @@ export default function PipelineTab({
         {/* Spacer for arrows */}
         <div className="h-10" />
 
-        {/* Row 1: Seed + Professions + Chat Lists output */}
+        {/* Row 1: Populate + Professions + Chat Lists output */}
         <div className="relative z-10 grid grid-cols-5 gap-4">
           <div />
-          {renderNodeCard("seed")}
+          {renderNodeCard("populate")}
           {renderNodeCard("professions")}
           <div />
           {renderNodeCard("_out_chat_lists")}
