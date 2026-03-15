@@ -204,7 +204,7 @@ def seed_firestore(*, skip_if_exists: bool = False):
 def create_qdrant_collections():
     """Create the 4 Qdrant dev collections with correct dimensions."""
     from qdrant_client import QdrantClient
-    from qdrant_client.models import VectorParams, Distance, CreateAliasOperation, CreateAlias
+    from qdrant_client.models import VectorParams, Distance
 
     qdrant_url = os.environ["QDRANT_URL"]
     # Use the same embedding provider logic as the app
@@ -215,11 +215,7 @@ def create_qdrant_collections():
     logger.info(f"Connecting to Qdrant at {qdrant_url}...")
     client = QdrantClient(url=qdrant_url, check_compatibility=False)
 
-    # Real collection names use _dev suffix; bare names become aliases
-    suffix = "_dev"
-    collection_names = [f"{name}{suffix}" for name in ALL_COLLECTION_NAMES]
-
-    for name in collection_names:
+    for name in ALL_COLLECTION_NAMES:
         try:
             existing = client.get_collections().collections
             exists = any(c.name == name for c in existing)
@@ -255,25 +251,7 @@ def create_qdrant_collections():
             logger.error(f"  Error with collection '{name}': {e}")
             raise
 
-    # Create aliases: bare name → suffixed collection (e.g. candidates_websites → candidates_websites_dev)
-    for bare_name in ALL_COLLECTION_NAMES:
-        real_name = f"{bare_name}{suffix}"
-        try:
-            client.update_collection_aliases(
-                change_aliases_operations=[
-                    CreateAliasOperation(
-                        create_alias=CreateAlias(
-                            alias_name=bare_name,
-                            collection_name=real_name,
-                        )
-                    )
-                ]
-            )
-            logger.info(f"  Alias '{bare_name}' → '{real_name}'")
-        except Exception as e:
-            logger.warning(f"  Failed to set alias '{bare_name}' → '{real_name}': {e}")
-
-    logger.info("Qdrant collections and aliases ready.")
+    logger.info("Qdrant collections ready.")
 
 
 def seed_crawled_vectors():
@@ -406,10 +384,10 @@ def seed_crawled_vectors():
                 # Upsert in batches of 50
                 for i in range(0, len(points), 50):
                     client.upsert(
-                        collection_name="all_parties_dev",
+                        collection_name="all_parties",
                         points=points[i : i + 50],
                     )
-                logger.info(f"    Indexed {len(points)} chunks into 'all_parties_dev'")
+                logger.info(f"    Indexed {len(points)} chunks into 'all_parties'")
 
     # --- Seed candidate crawled content ---
     candidates_dir = crawled_dir / "candidates"
@@ -457,10 +435,10 @@ def seed_crawled_vectors():
             if points:
                 for i in range(0, len(points), 50):
                     client.upsert(
-                        collection_name="candidates_websites_dev",
+                        collection_name="candidates_websites",
                         points=points[i : i + 50],
                     )
-                logger.info(f"    Indexed {len(points)} chunks into 'candidates_websites_dev'")
+                logger.info(f"    Indexed {len(points)} chunks into 'candidates_websites'")
 
     logger.info("Crawled content vector seeding complete.")
 
@@ -483,7 +461,7 @@ def restore_qdrant_snapshots():
         return
 
     for snapshot_file in snapshot_files:
-        # Derive collection name from filename (e.g. candidates_websites_dev.snapshot)
+        # Derive collection name from filename (e.g. candidates_websites.snapshot)
         collection_name = snapshot_file.stem
         logger.info(f"Restoring snapshot for '{collection_name}' ({snapshot_file.stat().st_size / 1024 / 1024:.0f} MB)...")
 
@@ -532,7 +510,7 @@ def _qdrant_collections_have_data() -> bool:
 
         client = QdrantClient(url=os.environ["QDRANT_URL"], check_compatibility=False)
         from src.vector_store_helper import PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME
-        for name in [f"{PARTY_INDEX_NAME}_dev", f"{CANDIDATES_INDEX_NAME}_dev"]:
+        for name in [PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME]:
             try:
                 info = client.get_collection(name)
                 has_vectors = (info.vectors_count or 0) > 0

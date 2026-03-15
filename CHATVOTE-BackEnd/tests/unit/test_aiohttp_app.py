@@ -102,8 +102,8 @@ _mock_embed.aembed_query = AsyncMock(return_value=[0.1] * 10)
 
 _mock_vsh = MagicMock()
 _mock_vsh.qdrant_client = _mock_qdrant_client
-_mock_vsh.PARTY_INDEX_NAME = "all_parties_dev"
-_mock_vsh.CANDIDATES_INDEX_NAME = "candidates_websites_dev"
+_mock_vsh.PARTY_INDEX_NAME = "all_parties"
+_mock_vsh.CANDIDATES_INDEX_NAME = "candidates_websites"
 _mock_vsh.embed = _mock_embed
 _mock_vsh.identify_relevant_docs_combined = AsyncMock(return_value=([], []))
 _mock_vsh.identify_relevant_parliamentary_questions = AsyncMock(return_value=[])

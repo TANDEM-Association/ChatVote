@@ -18,8 +18,8 @@ _vsh_patch = patch.dict(
             qdrant_client=_mock_qdrant_client,
             embed=_mock_embed,
             EMBEDDING_DIM=_MOCK_DIM,
-            PARTY_INDEX_NAME="all_parties_dev",
-            CANDIDATES_INDEX_NAME="candidates_websites_dev",
+            PARTY_INDEX_NAME="all_parties",
+            CANDIDATES_INDEX_NAME="candidates_websites",
         ),
     },
 )
@@ -69,47 +69,47 @@ class TestEnsureCollection:
         _mock_qdrant_client.get_collections.return_value = SimpleNamespace(collections=[])
         _mock_qdrant_client.create_payload_index.return_value = None
 
-        ensure_collection("all_parties_dev")
+        ensure_collection("all_parties")
 
         _mock_qdrant_client.create_collection.assert_called_once()
         call_kwargs = _mock_qdrant_client.create_collection.call_args
-        assert call_kwargs.kwargs["collection_name"] == "all_parties_dev"
-        assert "all_parties_dev" in _ensured_collections
+        assert call_kwargs.kwargs["collection_name"] == "all_parties"
+        assert "all_parties" in _ensured_collections
 
     def test_skips_when_cached(self):
-        _ensured_collections.add("all_parties_dev")
-        ensure_collection("all_parties_dev")
+        _ensured_collections.add("all_parties")
+        ensure_collection("all_parties")
         _mock_qdrant_client.get_collections.assert_not_called()
 
     def test_skips_creation_when_exists_with_correct_dim(self):
         _mock_qdrant_client.get_collections.return_value = SimpleNamespace(
-            collections=[_collection_obj("all_parties_dev")]
+            collections=[_collection_obj("all_parties")]
         )
         _mock_qdrant_client.get_collection.return_value = _collection_info(_MOCK_DIM)
         _mock_qdrant_client.create_payload_index.return_value = None
 
-        ensure_collection("all_parties_dev")
+        ensure_collection("all_parties")
 
         _mock_qdrant_client.create_collection.assert_not_called()
         _mock_qdrant_client.delete_collection.assert_not_called()
 
     def test_recreates_on_dimension_mismatch(self):
         _mock_qdrant_client.get_collections.return_value = SimpleNamespace(
-            collections=[_collection_obj("all_parties_dev")]
+            collections=[_collection_obj("all_parties")]
         )
         _mock_qdrant_client.get_collection.return_value = _collection_info(1536)  # wrong dim
         _mock_qdrant_client.create_payload_index.return_value = None
 
-        ensure_collection("all_parties_dev")
+        ensure_collection("all_parties")
 
-        _mock_qdrant_client.delete_collection.assert_called_once_with("all_parties_dev")
+        _mock_qdrant_client.delete_collection.assert_called_once_with("all_parties")
         assert _mock_qdrant_client.create_collection.call_count == 1
 
     def test_creates_standard_payload_indexes(self):
         _mock_qdrant_client.get_collections.return_value = SimpleNamespace(collections=[])
         _mock_qdrant_client.create_payload_index.return_value = None
 
-        ensure_collection("all_parties_dev")
+        ensure_collection("all_parties")
 
         index_calls = _mock_qdrant_client.create_payload_index.call_args_list
         field_names = [c.kwargs["field_name"] for c in index_calls]
@@ -121,7 +121,7 @@ class TestEnsureCollection:
         _mock_qdrant_client.get_collections.return_value = SimpleNamespace(collections=[])
         _mock_qdrant_client.create_payload_index.return_value = None
 
-        ensure_collection("candidates_websites_dev")
+        ensure_collection("candidates_websites")
 
         index_calls = _mock_qdrant_client.create_payload_index.call_args_list
         field_names = [c.kwargs["field_name"] for c in index_calls]
@@ -135,24 +135,24 @@ class TestEnsureCollection:
         _mock_qdrant_client.create_payload_index.side_effect = Exception("Index already exists")
 
         # Should NOT raise
-        ensure_collection("all_parties_dev")
-        assert "all_parties_dev" in _ensured_collections
+        ensure_collection("all_parties")
+        assert "all_parties" in _ensured_collections
 
     def test_propagates_non_index_errors(self):
         _mock_qdrant_client.get_collections.side_effect = ConnectionError("no qdrant")
 
         with pytest.raises(ConnectionError):
-            ensure_collection("all_parties_dev")
+            ensure_collection("all_parties")
 
     def test_handles_flat_vectors_config(self):
         """When vectors_config is not a dict but a direct VectorParams object."""
         _mock_qdrant_client.get_collections.return_value = SimpleNamespace(
-            collections=[_collection_obj("all_parties_dev")]
+            collections=[_collection_obj("all_parties")]
         )
         _mock_qdrant_client.get_collection.return_value = _collection_info(_MOCK_DIM, named=False)
         _mock_qdrant_client.create_payload_index.return_value = None
 
-        ensure_collection("all_parties_dev")
+        ensure_collection("all_parties")
         _mock_qdrant_client.create_collection.assert_not_called()
 
 
@@ -162,13 +162,13 @@ class TestEnsureCollection:
 class TestDeleteByNamespace:
     def test_calls_qdrant_delete_with_correct_filter(self):
         # Ensure collection is already cached so we don't hit get_collections
-        _ensured_collections.add("all_parties_dev")
+        _ensured_collections.add("all_parties")
 
-        delete_by_namespace("all_parties_dev", "union_centre")
+        delete_by_namespace("all_parties", "union_centre")
 
         _mock_qdrant_client.delete.assert_called_once()
         call_kwargs = _mock_qdrant_client.delete.call_args.kwargs
-        assert call_kwargs["collection_name"] == "all_parties_dev"
+        assert call_kwargs["collection_name"] == "all_parties"
         selector = call_kwargs["points_selector"]
         condition = selector.filter.must[0]
         assert condition.key == "metadata.namespace"
@@ -178,7 +178,7 @@ class TestDeleteByNamespace:
         _mock_qdrant_client.get_collections.return_value = SimpleNamespace(collections=[])
         _mock_qdrant_client.create_payload_index.return_value = None
 
-        delete_by_namespace("all_parties_dev", "some_ns")
+        delete_by_namespace("all_parties", "some_ns")
 
         _mock_qdrant_client.create_collection.assert_called_once()
         _mock_qdrant_client.delete.assert_called_once()
@@ -189,20 +189,20 @@ class TestDeleteByNamespace:
 
 class TestCountByNamespace:
     def test_returns_count(self):
-        _ensured_collections.add("all_parties_dev")
+        _ensured_collections.add("all_parties")
         _mock_qdrant_client.count.return_value = SimpleNamespace(count=42)
 
-        result = count_by_namespace("all_parties_dev", "union_centre")
+        result = count_by_namespace("all_parties", "union_centre")
 
         assert result == 42
         call_kwargs = _mock_qdrant_client.count.call_args.kwargs
-        assert call_kwargs["collection_name"] == "all_parties_dev"
+        assert call_kwargs["collection_name"] == "all_parties"
 
     def test_returns_zero_on_error(self):
-        _ensured_collections.add("all_parties_dev")
+        _ensured_collections.add("all_parties")
         _mock_qdrant_client.count.side_effect = Exception("timeout")
 
-        result = count_by_namespace("all_parties_dev", "union_centre")
+        result = count_by_namespace("all_parties", "union_centre")
         assert result == 0
 
 
@@ -211,7 +211,7 @@ class TestCountByNamespace:
 
 class TestGetIndexedNamespaces:
     def test_aggregates_namespace_counts(self):
-        _ensured_collections.add("all_parties_dev")
+        _ensured_collections.add("all_parties")
 
         point_a = SimpleNamespace(payload={"metadata": {"namespace": "union_centre"}})
         point_b = SimpleNamespace(payload={"metadata": {"namespace": "union_centre"}})
@@ -222,12 +222,12 @@ class TestGetIndexedNamespaces:
             ([point_a, point_b, point_c], None),
         ]
 
-        result = get_indexed_namespaces("all_parties_dev")
+        result = get_indexed_namespaces("all_parties")
 
         assert result == {"union_centre": 2, "lfi": 1}
 
     def test_handles_pagination(self):
-        _ensured_collections.add("all_parties_dev")
+        _ensured_collections.add("all_parties")
 
         p1 = SimpleNamespace(payload={"metadata": {"namespace": "ns1"}})
         p2 = SimpleNamespace(payload={"metadata": {"namespace": "ns2"}})
@@ -237,19 +237,19 @@ class TestGetIndexedNamespaces:
             ([p2], None),
         ]
 
-        result = get_indexed_namespaces("all_parties_dev")
+        result = get_indexed_namespaces("all_parties")
         assert result == {"ns1": 1, "ns2": 1}
         assert _mock_qdrant_client.scroll.call_count == 2
 
     def test_returns_empty_on_error(self):
-        _ensured_collections.add("all_parties_dev")
+        _ensured_collections.add("all_parties")
         _mock_qdrant_client.scroll.side_effect = Exception("connection lost")
 
-        result = get_indexed_namespaces("all_parties_dev")
+        result = get_indexed_namespaces("all_parties")
         assert result == {}
 
     def test_skips_points_without_namespace(self):
-        _ensured_collections.add("all_parties_dev")
+        _ensured_collections.add("all_parties")
 
         p1 = SimpleNamespace(payload={"metadata": {"namespace": "ns1"}})
         p2 = SimpleNamespace(payload={"metadata": {}})
@@ -259,7 +259,7 @@ class TestGetIndexedNamespaces:
             ([p1, p2, p3], None),
         ]
 
-        result = get_indexed_namespaces("all_parties_dev")
+        result = get_indexed_namespaces("all_parties")
         assert result == {"ns1": 1}
 
 
@@ -268,18 +268,18 @@ class TestGetIndexedNamespaces:
 
 class TestGetVectorStore:
     def test_returns_qdrant_vector_store(self):
-        _ensured_collections.add("all_parties_dev")
+        _ensured_collections.add("all_parties")
 
         with patch("src.services.qdrant_ops.ensure_collection"):
             with patch("langchain_qdrant.QdrantVectorStore") as MockVS:
                 mock_instance = MagicMock()
                 MockVS.return_value = mock_instance
 
-                result = get_vector_store("all_parties_dev")
+                result = get_vector_store("all_parties")
 
                 MockVS.assert_called_once_with(
                     client=_mock_qdrant_client,
-                    collection_name="all_parties_dev",
+                    collection_name="all_parties",
                     embedding=_mock_embed,
                     vector_name="dense",
                     content_payload_key="page_content",

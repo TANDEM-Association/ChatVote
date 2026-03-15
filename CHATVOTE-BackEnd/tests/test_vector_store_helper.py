@@ -62,7 +62,7 @@ async def test_identify_relevant_documents_calls_query_points(vsh):
     embed_mock.aembed_query = AsyncMock(return_value=[0.1, 0.2, 0.3])
 
     vector_store_mock = MagicMock()
-    vector_store_mock.collection_name = "all_parties_dev"
+    vector_store_mock.collection_name = "all_parties"
 
     vsh.async_qdrant_client = async_client_mock
     vsh.embed = embed_mock
@@ -99,7 +99,7 @@ async def test_identify_relevant_documents_empty_results(vsh):
     embed_mock.aembed_query = AsyncMock(return_value=[0.1, 0.2, 0.3])
 
     vector_store_mock = MagicMock()
-    vector_store_mock.collection_name = "all_parties_dev"
+    vector_store_mock.collection_name = "all_parties"
 
     vsh.async_qdrant_client = async_client_mock
     vsh.embed = embed_mock
@@ -134,7 +134,7 @@ async def test_legacy_payload_fallback(vsh):
     embed_mock.aembed_query = AsyncMock(return_value=[0.1, 0.2, 0.3])
 
     vector_store_mock = MagicMock()
-    vector_store_mock.collection_name = "all_parties_dev"
+    vector_store_mock.collection_name = "all_parties"
 
     vsh.async_qdrant_client = async_client_mock
     vsh.embed = embed_mock
@@ -187,7 +187,7 @@ async def test_candidate_filter_priority(vsh):
     """When both candidate_id and municipality_code are passed, only
     candidate_id filter is used (if/elif branch)."""
     # Make the collection appear to exist
-    vsh._known_collections = {"candidates_websites_dev"}
+    vsh._known_collections = {"candidates_websites"}
 
     query_response = types.SimpleNamespace(points=[])
 
