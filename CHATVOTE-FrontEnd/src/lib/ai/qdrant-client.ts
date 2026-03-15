@@ -15,4 +15,6 @@ const env = process.env.ENV || 'dev';
 export const COLLECTIONS = {
   allParties: `all_parties_${env}`,
   candidatesWebsites: `candidates_websites_${env}`,
+  votingBehavior: `justified_voting_behavior_${env}`,
+  parliamentaryQuestions: `parliamentary_questions_${env}`,
 } as const;

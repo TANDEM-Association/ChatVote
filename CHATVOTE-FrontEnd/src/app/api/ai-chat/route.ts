@@ -8,6 +8,94 @@ import { db } from '@lib/firebase/firebase-admin';
 
 export const maxDuration = 120;
 
+// ── data.gouv.fr MCP client ──────────────────────────────────────────────────
+// Uses the official data.gouv.fr MCP server (https://github.com/datagouv/datagouv-mcp)
+// Public endpoint: mcp.data.gouv.fr — free, no API key required
+interface DataGouvDataset {
+  id: string;
+  title: string;
+  description: string;
+  url: string;
+  organization?: { name: string };
+  frequency?: string;
+  last_modified?: string;
+  resources?: Array<{ title: string; format: string; url: string }>;
+}
+
+async function searchDataGouvMcp(query: string, limit = 5): Promise<DataGouvDataset[]> {
+  // Call the MCP server's search_datasets tool via JSON-RPC over SSE/HTTP
+  // The MCP endpoint exposes standard MCP protocol at mcp.data.gouv.fr/mcp
+  // Fallback to direct REST API if MCP call fails
+  try {
+    const mcpUrl = 'https://mcp.data.gouv.fr/mcp';
+    const res = await fetch(mcpUrl, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        jsonrpc: '2.0',
+        id: 1,
+        method: 'tools/call',
+        params: {
+          name: 'search_datasets',
+          arguments: { query, page_size: limit },
+        },
+      }),
+      signal: AbortSignal.timeout(10000),
+    });
+    if (res.ok) {
+      const json = await res.json();
+      const content = json?.result?.content;
+      if (Array.isArray(content) && content.length > 0) {
+        // MCP returns content as text blocks, parse the first one
+        const text = content[0]?.text ?? '';
+        try {
+          const parsed = JSON.parse(text);
+          const datasets = Array.isArray(parsed) ? parsed : parsed.data ?? [];
+          return datasets.slice(0, limit).map((d: any) => ({
+            id: d.id ?? '',
+            title: d.title ?? '',
+            description: (d.description ?? '').slice(0, 300),
+            url: d.url ?? d.page ?? `https://www.data.gouv.fr/fr/datasets/${d.id}/`,
+            organization: d.organization ? { name: d.organization.name ?? d.organization } : undefined,
+            frequency: d.frequency,
+            last_modified: d.last_modified,
+            resources: (d.resources ?? []).slice(0, 3).map((r: any) => ({
+              title: r.title ?? '',
+              format: r.format ?? '',
+              url: r.url ?? '',
+            })),
+          }));
+        } catch {
+          // MCP returned non-JSON text, wrap it as a single result
+          return [{ id: '1', title: query, description: text.slice(0, 300), url: 'https://www.data.gouv.fr' }];
+        }
+      }
+    }
+  } catch (err) {
+    console.warn('[ai-chat] MCP data.gouv.fr call failed, falling back to REST API:', err);
+  }
+
+  // Fallback: direct REST API
+  const apiUrl = `https://www.data.gouv.fr/api/1/datasets/?q=${encodeURIComponent(query)}&page_size=${limit}`;
+  const res = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
+  if (!res.ok) throw new Error(`data.gouv.fr API returned ${res.status}`);
+  const json = await res.json();
+  return (json.data ?? []).map((d: any) => ({
+    id: d.id,
+    title: d.title,
+    description: (d.description ?? '').slice(0, 300),
+    url: d.page ?? `https://www.data.gouv.fr/fr/datasets/${d.id}/`,
+    organization: d.organization ? { name: d.organization.name } : undefined,
+    frequency: d.frequency,
+    last_modified: d.last_modified,
+    resources: (d.resources ?? []).slice(0, 3).map((r: any) => ({
+      title: r.title,
+      format: r.format,
+      url: r.url,
+    })),
+  }));
+}
+
 interface QdrantPayload {
   page_content?: string;
   metadata?: {
@@ -28,6 +116,9 @@ interface SearchResult {
   url: string;
   page: number | string;
   party_id: string;
+  candidate_name: string;
+  document_name: string;
+  source_document: string;
 }
 
 async function searchQdrant(
@@ -56,13 +147,24 @@ async function searchQdrant(
   return results.map((r, idx) => {
     const payload = (r.payload ?? {}) as QdrantPayload;
     const meta = payload.metadata ?? {};
+
+    // Resolve URL: use real URL if available, skip .md filenames
+    let url = String(meta.url ?? '');
+    if (url && !url.startsWith('http')) {
+      // .md filename or non-URL — clear it so the LLM doesn't cite it as a link
+      url = '';
+    }
+
     return {
       id: idx + 1,
       content: String(payload.page_content ?? ''),
       source: String(meta.source ?? ''),
-      url: String(meta.url ?? ''),
+      url,
       page: (meta.page as number | string) ?? '',
       party_id: String(meta.party_id ?? meta.namespace ?? ''),
+      candidate_name: String(meta.candidate_name ?? ''),
+      document_name: String(meta.document_name ?? ''),
+      source_document: String(meta.source_document ?? ''),
     };
   });
 }
@@ -127,77 +229,229 @@ function buildTools(enabledFeatures: string[] | undefined) {
         }
       : {}),
 
-    // ── Placeholder tools (feature-gated) ───────────────────────────────────
-    ...(features.includes('data-gouv')
-      ? {
-          searchDataGouv: tool({
-            description: 'Search open government data on data.gouv.fr.',
-            inputSchema: z.object({
-              query: z.string().describe('The search query'),
-            }),
-            execute: async () => ({
-              available: false,
-              message: 'Cette fonctionnalité sera bientôt disponible.',
-            }),
-          }),
-        }
-      : {}),
-
-    ...(features.includes('perplexity')
-      ? {
-          webSearch: tool({
-            description: 'Search the web for recent news and information.',
-            inputSchema: z.object({
-              query: z.string().describe('The search query'),
-            }),
-            execute: async () => ({
-              available: false,
-              message: 'Cette fonctionnalité sera bientôt disponible.',
-            }),
-          }),
-        }
-      : {}),
-
-    ...(features.includes('widgets')
-      ? {
-          renderWidget: tool({
-            description: 'Render an interactive chart or visualization widget.',
-            inputSchema: z.object({
-              query: z.string().describe('The data or topic to visualize'),
-            }),
-            execute: async () => ({
-              available: false,
-              message: 'Cette fonctionnalité sera bientôt disponible.',
-            }),
-          }),
-        }
-      : {}),
-
+    // ── Voting records (Qdrant collection) ──────────────────────────────────
     ...(features.includes('voting-records')
       ? {
           searchVotingRecords: tool({
-            description: 'Search parliamentary voting records.',
+            description:
+              'Search parliamentary voting records to find how parties voted on specific topics, bills, or laws.',
             inputSchema: z.object({
               query: z.string().describe('The topic or bill to search voting records for'),
             }),
-            execute: async () => ({
-              available: false,
-              message: 'Cette fonctionnalité sera bientôt disponible.',
-            }),
+            execute: async (input) => {
+              try {
+                const results = await searchQdrant(
+                  COLLECTIONS.votingBehavior,
+                  input.query,
+                  'metadata.namespace',
+                  'vote_summary',
+                  8,
+                );
+                return { results, count: results.length };
+              } catch (err) {
+                console.error('[ai-chat] searchVotingRecords error:', err);
+                return { results: [] as SearchResult[], count: 0, error: String(err) };
+              }
+            },
           }),
         }
       : {}),
 
+    // ── Parliamentary questions (Qdrant collection) ──────────────────────────
     ...(features.includes('parliamentary')
       ? {
           searchParliamentaryQuestions: tool({
-            description: 'Search parliamentary questions.',
+            description:
+              'Search parliamentary questions asked by members of parliament on specific topics.',
             inputSchema: z.object({
               query: z.string().describe('The topic to search parliamentary questions for'),
+              partyId: z
+                .string()
+                .optional()
+                .describe('Optional party ID to filter questions by party'),
             }),
-            execute: async () => ({
-              available: false,
-              message: 'Cette fonctionnalité sera bientôt disponible.',
+            execute: async (input) => {
+              const namespace = input.partyId
+                ? `${input.partyId}-parliamentary-questions`
+                : undefined;
+              try {
+                // If no partyId, search without namespace filter
+                const embedding = await embedQuery(input.query);
+                const filter = namespace
+                  ? {
+                      must: [{ key: 'metadata.namespace', match: { value: namespace } }],
+                    }
+                  : undefined;
+                const rawResults = await qdrantClient.search(
+                  COLLECTIONS.parliamentaryQuestions,
+                  {
+                    vector: { name: 'dense', vector: embedding },
+                    ...(filter ? { filter } : {}),
+                    limit: 8,
+                    with_payload: true,
+                  },
+                );
+                const results = rawResults.map((r, idx) => {
+                  const payload = (r.payload ?? {}) as QdrantPayload;
+                  const meta = payload.metadata ?? {};
+                  let url = String(meta.url ?? '');
+                  if (url && !url.startsWith('http')) url = '';
+                  return {
+                    id: idx + 1,
+                    content: String(payload.page_content ?? ''),
+                    source: String(meta.source ?? ''),
+                    url,
+                    page: (meta.page as number | string) ?? '',
+                    party_id: String(meta.party_id ?? meta.namespace ?? ''),
+                    candidate_name: String(meta.candidate_name ?? ''),
+                    document_name: String(meta.document_name ?? ''),
+                    source_document: String(meta.source_document ?? ''),
+                  };
+                });
+                return { partyId: input.partyId, results, count: results.length };
+              } catch (err) {
+                console.error('[ai-chat] searchParliamentaryQuestions error:', err);
+                return {
+                  partyId: input.partyId,
+                  results: [] as SearchResult[],
+                  count: 0,
+                  error: String(err),
+                };
+              }
+            },
+          }),
+        }
+      : {}),
+
+    // ── data.gouv.fr open data search ────────────────────────────────────────
+    ...(features.includes('data-gouv')
+      ? {
+          searchDataGouv: tool({
+            description:
+              'Search open government data on data.gouv.fr. Returns datasets with descriptions and download links. Use for statistics, public data, budgets, demographics, etc.',
+            inputSchema: z.object({
+              query: z.string().describe('The search query in French'),
+            }),
+            execute: async (input) => {
+              try {
+                const datasets = await searchDataGouvMcp(input.query, 5);
+                return { datasets, count: datasets.length };
+              } catch (err) {
+                console.error('[ai-chat] searchDataGouv error:', err);
+                return { datasets: [], count: 0, error: String(err) };
+              }
+            },
+          }),
+        }
+      : {}),
+
+    // ── Web search (Google Gemini grounding) ──────────────────────────────────
+    ...(features.includes('perplexity')
+      ? {
+          webSearch: tool({
+            description:
+              'Search the web for recent news and current information. Use for recent events, news articles, or facts not in the RAG database.',
+            inputSchema: z.object({
+              query: z.string().describe('The search query'),
+            }),
+            execute: async (input) => {
+              try {
+                // Use Google Custom Search JSON API if available, otherwise DuckDuckGo lite
+                const googleApiKey = process.env.GOOGLE_API_KEY;
+                const googleCseId = process.env.GOOGLE_CSE_ID;
+
+                if (googleApiKey && googleCseId) {
+                  const url = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${googleCseId}&q=${encodeURIComponent(input.query)}&num=5&lr=lang_fr`;
+                  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+                  if (res.ok) {
+                    const json = await res.json();
+                    const results = (json.items ?? []).map((item: any, idx: number) => ({
+                      id: idx + 1,
+                      title: item.title,
+                      snippet: item.snippet,
+                      url: item.link,
+                    }));
+                    return { results, count: results.length };
+                  }
+                }
+
+                // Fallback: use DuckDuckGo instant answer API
+                const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(input.query)}&format=json&no_html=1&skip_disambig=1`;
+                const ddgRes = await fetch(ddgUrl, { signal: AbortSignal.timeout(8000) });
+                if (ddgRes.ok) {
+                  const ddgJson = await ddgRes.json();
+                  const results: Array<{
+                    id: number;
+                    title: string;
+                    snippet: string;
+                    url: string;
+                  }> = [];
+                  if (ddgJson.Abstract) {
+                    results.push({
+                      id: 1,
+                      title: ddgJson.Heading ?? input.query,
+                      snippet: ddgJson.Abstract,
+                      url: ddgJson.AbstractURL ?? '',
+                    });
+                  }
+                  for (const topic of ddgJson.RelatedTopics?.slice(0, 4) ?? []) {
+                    if (topic.Text) {
+                      results.push({
+                        id: results.length + 1,
+                        title: topic.FirstURL?.split('/').pop() ?? '',
+                        snippet: topic.Text,
+                        url: topic.FirstURL ?? '',
+                      });
+                    }
+                  }
+                  return { results, count: results.length };
+                }
+
+                return { results: [], count: 0, error: 'Search API unavailable' };
+              } catch (err) {
+                console.error('[ai-chat] webSearch error:', err);
+                return { results: [], count: 0, error: String(err) };
+              }
+            },
+          }),
+        }
+      : {}),
+
+    // ── Widget / chart rendering ─────────────────────────────────────────────
+    ...(features.includes('widgets')
+      ? {
+          renderWidget: tool({
+            description:
+              'Render an interactive chart or visualization. Use to compare party positions, show voting statistics, display poll data, or visualize any structured data. Returns chart configuration that the frontend renders.',
+            inputSchema: z.object({
+              title: z.string().describe('Chart title'),
+              chartType: z
+                .enum(['bar', 'pie', 'radar', 'line'])
+                .describe('Type of chart: bar (comparison), pie (distribution), radar (multi-axis), line (trends)'),
+              data: z
+                .array(
+                  z.object({
+                    label: z.string().describe('Data point label (e.g. party name, category)'),
+                    value: z.number().describe('Numeric value'),
+                    color: z
+                      .string()
+                      .optional()
+                      .describe('Optional hex color (e.g. #FF0000)'),
+                  }),
+                )
+                .describe('Array of data points to visualize'),
+              xAxisLabel: z.string().optional().describe('X-axis label'),
+              yAxisLabel: z.string().optional().describe('Y-axis label'),
+            }),
+            execute: async (input) => ({
+              widget: {
+                type: 'chart',
+                chartType: input.chartType,
+                title: input.title,
+                data: input.data,
+                xAxisLabel: input.xAxisLabel,
+                yAxisLabel: input.yAxisLabel,
+              },
             }),
           }),
         }
@@ -228,10 +482,41 @@ function buildTools(enabledFeatures: string[] | undefined) {
           .describe('The INSEE municipality code if known'),
       }),
       execute: async (input) => {
+        let code = input.municipalityCode;
+
+        // Look up municipality code from city name if not provided
+        if (!code) {
+          try {
+            const snap = await db
+              .collection('municipalities')
+              .where('nom', '==', input.cityName)
+              .limit(1)
+              .get();
+            if (snap.empty) {
+              // Try case-insensitive by uppercasing
+              const snap2 = await db
+                .collection('municipalities')
+                .where('nom', '>=', input.cityName.charAt(0).toUpperCase() + input.cityName.slice(1).toLowerCase())
+                .where('nom', '<=', input.cityName.charAt(0).toUpperCase() + input.cityName.slice(1).toLowerCase() + '\uf8ff')
+                .limit(1)
+                .get();
+              if (!snap2.empty) {
+                const data = snap2.docs[0].data();
+                code = (data.code as string) ?? snap2.docs[0].id;
+              }
+            } else {
+              const data = snap.docs[0].data();
+              code = (data.code as string) ?? snap.docs[0].id;
+            }
+          } catch (err) {
+            console.error('[ai-chat] changeCity lookup failed:', err);
+          }
+        }
+
         return {
           action: 'changeCity',
           cityName: input.cityName,
-          municipalityCode: input.municipalityCode,
+          municipalityCode: code,
         };
       },
     }),
@@ -308,6 +593,10 @@ export async function POST(req: Request) {
         ...doc.data(),
       }));
 
+      if (process.env.NODE_ENV === 'development') {
+        console.log('[ai-chat] municipalityCode:', municipalityCode, 'partyIds:', partyIds, 'candidates found:', candidates.length);
+      }
+
       if (candidates.length > 0) {
         // Extract unique party IDs from candidates if none provided
         if (resolvedPartyIds.length === 0) {
@@ -341,8 +630,7 @@ export async function POST(req: Request) {
               if (c.position) lines.push(`- **Position**: ${c.position}`);
               if (c.bio) lines.push(`- **Bio**: ${c.bio}`);
               if (c.website_url) lines.push(`- **Site web**: ${c.website_url}`);
-              if (c.has_manifesto) lines.push(`- **Profession de foi**: disponible`);
-              if (c.manifesto_pdf_url) lines.push(`- **PDF programme**: ${c.manifesto_pdf_url}`);
+              if (c.manifesto_pdf_url) lines.push(`- **Profession de foi / PDF programme**: ${c.manifesto_pdf_url}`);
               if (c.is_incumbent) lines.push(`- **Sortant**: oui`);
               if (c.birth_year) lines.push(`- **Année de naissance**: ${c.birth_year}`);
               return lines.join('\n');
@@ -368,7 +656,8 @@ export async function POST(req: Request) {
 Pour TOUTE question politique, tu DOIS appeler searchCandidateWebsite pour CHAQUE candidat ci-dessous AVANT de répondre.
 N'utilise PAS searchPartyManifesto en mode local.
 Ne réponds JAMAIS sans avoir d'abord appelé les outils de recherche.
-Ne demande JAMAIS à l'utilisateur de préciser quel candidat — cherche dans TOUS.
+Ne demande JAMAIS à l'utilisateur de préciser quel candidat ou quel parti — cherche dans TOUS automatiquement.
+L'utilisateur a DÉJÀ choisi ses candidats via l'interface. N'interroge pas l'utilisateur sur son choix de parti ou candidat.
 
 Appelle searchCandidateWebsite avec ces candidateId (un appel par candidat) :
 ${candidateIdsList || '  (aucun candidat trouvé)'}`
@@ -407,6 +696,7 @@ ${contextLine}
    - Si aucune source n'a été utilisée pour une affirmation, écris-la en italique
    - Formate en Markdown avec des puces et des mots-clés en gras
    - Garde les réponses courtes : 1-3 phrases ou puces, sauf si l'utilisateur demande plus de détails
+   - **Sois proactif** : ne pose pas plus d'une question de clarification. Si la demande est vague, fais des choix raisonnables et agis. Montre ce que tu sais faire plutôt que de demander des précisions. Par exemple, si l'utilisateur demande un graphique sans données précises, génère-le avec les données que tu as trouvées via les outils de recherche ou avec des données d'exemple pertinentes au contexte politique.
 5. **Limites** : Signale quand l'information peut être obsolète, les faits peu clairs, ou quand une question ne peut pas être traitée neutralement
 6. **Protection des données** : Ne demande pas d'intentions de vote ni de données personnelles
 7. **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle TOUJOURS l'outil suggestFollowUps avec 3 questions de suivi pertinentes liées au sujet discuté
@@ -428,6 +718,49 @@ ${respondInLanguage}${candidateContext}`;
           finishReason,
           usage,
         });
+      }
+    },
+    async onFinish({ text, usage }) {
+      // Persist conversation to Firestore (fire-and-forget, never blocks the response)
+      if (!chatId) return;
+      try {
+        const now = new Date().toISOString();
+        const chatRef = db.collection('ai_sdk_chats').doc(chatId);
+        const doc = await chatRef.get();
+
+        // Build a slim message pair from the latest exchange
+        const lastUserMsg = uiMessages.filter((m) => m.role === 'user').at(-1);
+        const newMessages = [
+          ...(lastUserMsg ? [{ role: 'user' as const, content: lastUserMsg.parts?.map((p) => ('text' in p ? p.text : '')).join('') ?? '', timestamp: now }] : []),
+          { role: 'assistant' as const, content: text, timestamp: now },
+        ];
+
+        if (doc.exists) {
+          // Append messages to existing conversation
+          const data = doc.data()!;
+          const existing = (data.messages as any[]) ?? [];
+          await chatRef.update({
+            messages: [...existing, ...newMessages],
+            updated_at: now,
+            municipality_code: municipalityCode ?? data.municipality_code ?? null,
+            party_ids: resolvedPartyIds.length > 0 ? resolvedPartyIds : data.party_ids ?? [],
+            total_tokens: (data.total_tokens ?? 0) + (usage?.totalTokens ?? 0),
+          });
+        } else {
+          // Create new conversation document
+          await chatRef.set({
+            messages: newMessages,
+            municipality_code: municipalityCode ?? null,
+            party_ids: resolvedPartyIds,
+            locale: locale ?? 'fr',
+            enabled_features: enabledFeatures ?? [],
+            created_at: now,
+            updated_at: now,
+            total_tokens: usage?.totalTokens ?? 0,
+          });
+        }
+      } catch (err) {
+        console.error('[ai-chat] Failed to persist conversation:', err);
       }
     },
     tools: buildTools(enabledFeatures),
