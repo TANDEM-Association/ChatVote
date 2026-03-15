@@ -60,7 +60,6 @@ DIR_TO_PARTY_ID: dict[str, str] = {
 # Collections to seed and their JSON files
 FIRESTORE_COLLECTIONS = {
     "parties": "parties.json",
-    "candidates": "candidates.json",
     "election_types": "election_types.json",
     "proposed_questions": "proposed_questions.json",
     "municipalities": "municipalities.json",
@@ -116,13 +115,21 @@ _COLLECTION_LIMITS: dict[str, int | None] = {
     "election_types": None,
     "proposed_questions": None,
     "chat_sessions": None,
-    "candidates": 2000,
     "municipalities": 2000,
     "electoral_lists": 2000,
 }
 
 
-def seed_firestore():
+def _firestore_has_data(db) -> bool:
+    """Check if Firestore emulator already has seed data (parties collection non-empty)."""
+    try:
+        docs = db.collection("parties").limit(1).get()
+        return len(docs) > 0
+    except Exception:
+        return False
+
+
+def seed_firestore(*, skip_if_exists: bool = False):
     """Seed Firestore emulator with data from JSON files."""
     import firebase_admin
     from firebase_admin import firestore
@@ -138,6 +145,10 @@ def seed_firestore():
         firebase_admin.initialize_app(options={"projectId": "chat-vote-dev"})
 
     db = firestore.client()
+
+    if skip_if_exists and _firestore_has_data(db):
+        logger.info("Firestore already has data — skipping seed (use --force to override)")
+        return
 
     for collection_name, json_filename in FIRESTORE_COLLECTIONS.items():
         json_path = FIREBASE_DATA_DIR / json_filename
@@ -524,9 +535,12 @@ def _qdrant_collections_have_data() -> bool:
         for name in [f"{PARTY_INDEX_NAME}_dev", f"{CANDIDATES_INDEX_NAME}_dev"]:
             try:
                 info = client.get_collection(name)
-                if info.points_count and info.points_count > 0:
-                    logger.info(f"  Collection '{name}' has {info.points_count} points")
+                has_vectors = (info.vectors_count or 0) > 0
+                if info.points_count and info.points_count > 0 and has_vectors:
+                    logger.info(f"  Collection '{name}' has {info.points_count} points with vectors")
                     return True
+                elif info.points_count and info.points_count > 0 and not has_vectors:
+                    logger.info(f"  Collection '{name}' has {info.points_count} points but 0 vectors — needs embedding")
             except Exception:
                 continue
     except Exception:
@@ -546,6 +560,16 @@ def main():
         action="store_true",
         help="Restore Qdrant collections from snapshot files in qdrant_snapshots/",
     )
+    parser.add_argument(
+        "--skip-if-exists",
+        action="store_true",
+        help="Skip Firestore seeding if data already exists (for make dev)",
+    )
+    parser.add_argument(
+        "--force",
+        action="store_true",
+        help="Force seeding even if data exists",
+    )
     args = parser.parse_args()
 
     logger.info("=== ChatVote Local Dev Seeder ===")
@@ -554,7 +578,8 @@ def main():
 
     # Step 1: Seed Firestore
     logger.info("\n--- Seeding Firestore ---")
-    seed_firestore()
+    skip = args.skip_if_exists and not args.force
+    seed_firestore(skip_if_exists=skip)
 
     # Step 2: Create Qdrant collections
     logger.info("\n--- Creating Qdrant Collections ---")

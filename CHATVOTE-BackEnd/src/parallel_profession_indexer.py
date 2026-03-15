@@ -5,7 +5,7 @@ Each K8s pod claims items atomically and processes them independently.
 
 CLI:
     # Step 1: enqueue all communes (builds work queue from pipeline data)
-    python -m src.parallel_profession_indexer enqueue [--communes 287] [--run-id custom-id]
+    python -m src.parallel_profession_indexer enqueue --communes 1000 [--run-id custom-id]
     python -m src.parallel_profession_indexer enqueue --force  # skip already-indexed check
 
     # Step 2: run as worker (each K8s pod executes this)
@@ -28,6 +28,7 @@ import logging
 import os
 import sys
 import tempfile
+import time as _time
 from pathlib import Path
 from typing import Any
 
@@ -122,17 +123,19 @@ async def _enqueue_from_firestore(
     run_id: str | None,
     force: bool = False,
 ) -> str:
-    """Fast enqueue: query Firestore for candidates with has_manifesto=true.
+    """Fast enqueue: query Firestore for candidates with a manifesto PDF URL.
 
-    This avoids re-running the full pipeline. The CI job already marked
-    candidates with has_manifesto=true and stored the ministry PDF URL.
+    This avoids re-running the full pipeline. The CI job already stored
+    the ministry PDF URL on each candidate doc.
     We just need to find which ones are NOT yet indexed in Qdrant.
     """
     from src.firebase_service import async_db
 
-    logger.info("[enqueue] querying Firestore for candidates with has_manifesto=true...")
-    query = async_db.collection("candidates").where("has_manifesto", "==", True)
+    logger.info("[enqueue] querying Firestore for candidates with manifesto_pdf_url...")
+    _t_fsq = _time.monotonic()
+    query = async_db.collection("candidates").where("manifesto_pdf_url", "!=", "")
     docs = await query.get()
+    logger.info("[profession_worker:timing] firestore_query took %.2fs", _time.monotonic() - _t_fsq)
 
     all_candidates: list[dict[str, Any]] = []
     for doc in docs:
@@ -160,12 +163,14 @@ async def _enqueue_from_firestore(
             "pdf_url": pdf_url,
         })
 
-    logger.info("[enqueue] found %d candidates with has_manifesto=true in Firestore", len(all_candidates))
+    logger.info("[enqueue] found %d candidates with manifesto_pdf_url in Firestore", len(all_candidates))
 
     # Check which candidates are already indexed in Qdrant
     already_indexed: set[str] = set()
     if not force:
+        _t_aidx = _time.monotonic()
         already_indexed = await _get_already_indexed_candidates()
+        logger.info("[profession_worker:timing] qdrant_already_indexed took %.2fs", _time.monotonic() - _t_aidx)
 
     items: list[dict[str, Any]] = []
     skipped = 0
@@ -201,7 +206,7 @@ async def _enqueue(top_communes: int, run_id: str | None, force: bool = False) -
     """Enqueue work items for parallel indexing.
 
     Uses Firestore as source of truth (fast path): queries candidates with
-    has_manifesto=true, skips those already in Qdrant.
+    manifesto_pdf_url is set, skips those already in Qdrant.
     """
     from src.utils import load_env
     load_env()
@@ -243,15 +248,14 @@ async def _process_item(payload: dict[str, Any]) -> dict[str, Any] | None:
     Each K8s pod runs this function per claimed item.  Fully stateless —
     no shared volume or local cache needed between workers.
     """
-    import time as _t
-
     candidate_id: str = payload["candidate_id"]
     pdf_url: str = payload["pdf_url"]
-    t0 = _t.monotonic()
+    t0 = _time.monotonic()
 
     logger.info("[worker] processing %s from %s", candidate_id, pdf_url)
 
     # Step 0: Check if already indexed in Qdrant (another worker may have done it)
+    _t_qdrant_check = _time.monotonic()
     try:
         from src.vector_store_helper import qdrant_client
         from src.services.candidate_indexer import CANDIDATES_INDEX_NAME
@@ -273,6 +277,7 @@ async def _process_item(payload: dict[str, Any]) -> dict[str, Any] | None:
             ),
             exact=True,
         )
+        logger.info("[profession_worker:timing] qdrant_check(%s) took %.2fs", candidate_id, _time.monotonic() - _t_qdrant_check)
         if existing.count > 0:
             logger.info(
                 "[worker] skipping %s — already has %d chunks in Qdrant",
@@ -284,16 +289,20 @@ async def _process_item(payload: dict[str, Any]) -> dict[str, Any] | None:
         logger.debug("[worker] could not check existing chunks for %s: %s", candidate_id, exc)
 
     # Step 1: Download PDF bytes
+    _t_pdf = _time.monotonic()
     pdf_content = await _download_pdf(pdf_url)
     if pdf_content is None:
         raise RuntimeError(f"Failed to download PDF for {candidate_id} from {pdf_url}")
+    logger.info("[profession_worker:timing] pdf_download(%s) took %.2fs, %d bytes", candidate_id, _time.monotonic() - _t_pdf, len(pdf_content))
 
     # Step 2: Load candidate from Firestore
     from src.firebase_service import aget_candidate_by_id
+    _t_fs_load = _time.monotonic()
     try:
         candidate = await aget_candidate_by_id(candidate_id)
     except Exception:
         candidate = None
+    logger.info("[profession_worker:timing] firestore_load(%s) took %.2fs", candidate_id, _time.monotonic() - _t_fs_load)
     if candidate is None:
         logger.warning(
             "[worker] skipping %s — not fully seeded in Firestore (run seed pipeline first)",
@@ -317,14 +326,22 @@ async def _process_item(payload: dict[str, Any]) -> dict[str, Any] | None:
     )
     blob_path = f"{STORAGE_PREFIX}/{commune_code}/{candidate_id}.pdf"
 
+    _t_upload = _time.monotonic()
     storage_url = await asyncio.to_thread(_upload_to_storage, pdf_content, blob_path)
+    logger.info("[profession_worker:timing] storage_upload(%s) took %.2fs", candidate_id, _time.monotonic() - _t_upload)
     logger.info("[worker] uploaded %s to Firebase Storage", candidate_id)
 
     # Step 4: Extract text (page-aware), with Gemini OCR fallback
+    _t_extract = _time.monotonic()
     pages = extract_pages_from_pdf(pdf_content)
     if not pages:
         logger.info("[worker] no pypdf text for %s, trying Gemini vision...", candidate_id)
+        logger.info("[profession_worker:timing] text_extraction(%s) took %.2fs, %d pages", candidate_id, _time.monotonic() - _t_extract, 0)
+        _t_ocr = _time.monotonic()
         pages = await _extract_pages_with_gemini(pdf_content)
+        logger.info("[profession_worker:timing] gemini_ocr(%s) took %.2fs, %d pages", candidate_id, _time.monotonic() - _t_ocr, len(pages) if pages else 0)
+    else:
+        logger.info("[profession_worker:timing] text_extraction(%s) took %.2fs, %d pages", candidate_id, _time.monotonic() - _t_extract, len(pages))
 
     if not pages:
         logger.warning("[worker] no text extracted for %s — storing URL only", candidate_id)
@@ -332,7 +349,9 @@ async def _process_item(payload: dict[str, Any]) -> dict[str, Any] | None:
         return {"candidate_id": candidate_id, "chunks": 0, "skipped_no_text": True}
 
     # Step 5: Create chunked LangChain documents
+    _t_create_docs = _time.monotonic()
     documents = _create_documents_from_profession(candidate, pages, storage_url)
+    logger.info("[profession_worker:timing] create_documents(%s) took %.2fs, %d docs", candidate_id, _time.monotonic() - _t_create_docs, len(documents) if documents else 0)
     if not documents:
         logger.warning("[worker] no chunks created for %s", candidate_id)
         await _update_firestore_url(candidate_id, storage_url)
@@ -341,22 +360,28 @@ async def _process_item(payload: dict[str, Any]) -> dict[str, Any] | None:
     logger.info("[worker] %d chunks for %s", len(documents), candidate_id)
 
     # Step 6: Delete existing profession_de_foi chunks (idempotent)
+    _t_delete = _time.monotonic()
     await asyncio.to_thread(_delete_profession_chunks, candidate_id)
+    logger.info("[profession_worker:timing] delete_chunks(%s) took %.2fs", candidate_id, _time.monotonic() - _t_delete)
 
     # Step 7: Index into Qdrant
     from src.services.candidate_indexer import _get_candidates_vector_store
 
     vector_store = _get_candidates_vector_store()
     batch_size = 50
+    _t_index = _time.monotonic()
     for i in range(0, len(documents), batch_size):
         batch = documents[i : i + batch_size]
         await vector_store.aadd_documents(batch)
         await asyncio.sleep(0)
+    logger.info("[profession_worker:timing] qdrant_index(%s) took %.2fs, %d docs", candidate_id, _time.monotonic() - _t_index, len(documents))
 
     # Step 8: Update Firestore URL
+    _t_fs_url = _time.monotonic()
     await _update_firestore_url(candidate_id, storage_url)
+    logger.info("[profession_worker:timing] firestore_url_update(%s) took %.2fs", candidate_id, _time.monotonic() - _t_fs_url)
 
-    elapsed = _t.monotonic() - t0
+    elapsed = _time.monotonic() - t0
     logger.info("[worker] done %s: %d chunks in %.1fs", candidate_id, len(documents), elapsed)
     return {"candidate_id": candidate_id, "chunks": len(documents), "elapsed_s": round(elapsed, 1)}
 
@@ -534,9 +559,9 @@ def main() -> None:
     p_enqueue.add_argument(
         "--communes",
         type=int,
-        default=287,
+        required=True,
         metavar="N",
-        help="Max communes to process (default: 287)",
+        help="Number of top communes to process (required)",
     )
     p_enqueue.add_argument(
         "--run-id",

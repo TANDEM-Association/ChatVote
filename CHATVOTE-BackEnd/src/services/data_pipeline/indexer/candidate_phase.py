@@ -98,6 +98,7 @@ def _select_candidates_to_index(
         return to_index
 
     # No pipeline context — check Firestore + Qdrant
+    from src.services.candidate_indexer import _get_indexed_candidate_counts
     from src.firebase_service import async_db
 
     # Get candidates with scraped websites from Firestore

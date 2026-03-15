@@ -284,8 +284,9 @@ def _enrich_candidates_with_professions(
         if match:
             cand["manifesto_pdf_url"] = match.get("pdf_url", "")
             linked += 1
-        else:
-            cand["manifesto_pdf_url"] = ""
+            logger.debug("[seed] linked manifesto for %s-%s: %s", code, panneau, cand["manifesto_pdf_url"])
+        # Don't set manifesto_pdf_url="" here — with merge=True that would
+        # overwrite a URL previously written by the professions node.
     return linked
 
 
@@ -440,7 +441,7 @@ async def _write_collection(
             batch = async_db.batch()
             for doc_id, data in chunk:
                 ref = async_db.collection(collection_name).document(doc_id)
-                batch.set(ref, data)
+                batch.set(ref, data, merge=True)
             await batch.commit()
             return len(chunk)
 

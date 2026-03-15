@@ -51,14 +51,14 @@ async def main():
         logger.info("All communes with PDFs are already seeded!")
         return
 
-    # 3. Run pipeline: population → candidatures → seed
+    # 3. Run pipeline: population → candidatures → populate
     # We need communes_to_scrap high enough to include all missing communes
     # The API returns ~35k communes sorted by population desc
     # Set to 500 to be safe (covers all communes with >15k population)
     from src.services.data_pipeline.base import load_config
     from src.services.data_pipeline.population import PopulationNode
     from src.services.data_pipeline.candidatures import CandidaturesNode
-    from src.services.data_pipeline.seed import SeedNode
+    from src.services.data_pipeline.populate import PopulateNode
 
     target_n = 500  # should cover all 142+ communes
 
@@ -89,26 +89,26 @@ async def main():
     cand_cfg = await cand_node.run(cand_cfg, force=True)
     logger.info(f"Candidatures: {cand_cfg.counts}")
 
-    # Seed node — monkey-patch save_checkpoint to strip doc_hashes
+    # Populate node — monkey-patch save_checkpoint to strip doc_hashes
     # that bloat beyond Firestore's 4MB gRPC limit at 500+ communes
-    logger.info("=== Running seed node ===")
+    logger.info("=== Running populate node ===")
     import src.services.data_pipeline.base as base_mod
-    import src.services.data_pipeline.seed as seed_mod
+    import src.services.data_pipeline.populate as populate_mod
     _original_save_checkpoint = base_mod.save_checkpoint
 
     async def _slim_save_checkpoint(node_id, checkpoints):
         slim = {k: v for k, v in checkpoints.items() if not k.endswith("_doc_hashes")}
         return await _original_save_checkpoint(node_id, slim)
 
-    seed_mod.save_checkpoint = _slim_save_checkpoint
+    populate_mod.save_checkpoint = _slim_save_checkpoint
 
-    seed_node = SeedNode()
-    seed_cfg = await load_config("seed", seed_node.default_config())
-    seed_cfg.checkpoints = {k: v for k, v in seed_cfg.checkpoints.items() if not k.endswith("_doc_hashes")}
-    seed_cfg = await seed_node.run(seed_cfg, force=True)
-    logger.info(f"Seed: {seed_cfg.counts}")
+    populate_node = PopulateNode()
+    populate_cfg = await load_config("populate", populate_node.default_config())
+    populate_cfg.checkpoints = {k: v for k, v in populate_cfg.checkpoints.items() if not k.endswith("_doc_hashes")}
+    populate_cfg = await populate_node.run(populate_cfg, force=True)
+    logger.info(f"Populate: {populate_cfg.counts}")
 
-    seed_mod.save_checkpoint = _original_save_checkpoint
+    populate_mod.save_checkpoint = _original_save_checkpoint
 
     # Verify
     munis_after = await async_db.collection("municipalities").get()

@@ -50,6 +50,7 @@ class NodeConfig:
     counts: dict[str, Any] = field(default_factory=dict)
     settings: dict[str, Any] = field(default_factory=dict)
     checkpoints: dict[str, Any] = field(default_factory=dict)
+    cache_info: list[dict[str, str]] = field(default_factory=list)
 
     def to_dict(self) -> dict[str, Any]:
         return {
@@ -63,6 +64,7 @@ class NodeConfig:
             "counts": self.counts,
             "settings": self.settings,
             "checkpoints": self.checkpoints,
+            "cache_info": self.cache_info,
         }
 
     @classmethod
@@ -73,7 +75,7 @@ class NodeConfig:
         except ValueError:
             status = NodeStatus.IDLE
         return cls(
-            node_id=data["node_id"],
+            node_id=data.get("node_id", data.get("id", "unknown")),
             label=data.get("label", data["node_id"]),
             enabled=data.get("enabled", True),
             status=status,
@@ -83,6 +85,7 @@ class NodeConfig:
             counts=data.get("counts", {}),
             settings=data.get("settings", {}),
             checkpoints=data.get("checkpoints", {}),
+            cache_info=data.get("cache_info", []),
         )
 
 
@@ -95,11 +98,22 @@ def _config_ref(node_id: str) -> AsyncDocumentReference:
 
 
 async def load_config(node_id: str, defaults: NodeConfig) -> NodeConfig:
-    """Load node config from Firestore, creating it with *defaults* if missing."""
+    """Load node config from Firestore, creating it with *defaults* if missing.
+
+    Code defaults are used as the base — Firestore settings override them.
+    This ensures that changing a default in code takes effect even when
+    Firestore has an old config (e.g. after emulator restart).
+    """
     ref = _config_ref(node_id)
     snap = await ref.get()
     if snap.exists:
-        return NodeConfig.from_dict(snap.to_dict())
+        raw = snap.to_dict()
+        raw.setdefault("node_id", node_id)  # ensure node_id exists
+        cfg = NodeConfig.from_dict(raw)
+        # Merge code defaults into stored settings (stored values win)
+        merged = {**defaults.settings, **cfg.settings}
+        cfg.settings = merged
+        return cfg
     # First run — seed Firestore with defaults
     await ref.set(defaults.to_dict())
     return defaults
@@ -154,7 +168,9 @@ class DataSourceNode(ABC):
 
     async def execute(self, *, force: bool = False, settings_override: dict | None = None) -> NodeConfig:
         """Run the node with status tracking and error handling."""
+        _t_load = time.monotonic()
         cfg = await load_config(self.node_id, self.default_config())
+        logger.info("[pipeline:timing] load_config(%s) took %.2fs", self.node_id, time.monotonic() - _t_load)
         if settings_override:
             cfg.settings.update(settings_override)
             logger.info(f"[{self.node_id}] settings override applied: {settings_override}")
@@ -164,7 +180,9 @@ class DataSourceNode(ABC):
             return cfg
 
         logger.info(f"[{self.node_id}] starting (force={force})")
+        _t_status = time.monotonic()
         await update_status(self.node_id, NodeStatus.RUNNING)
+        logger.info("[pipeline:timing] update_status(%s, RUNNING) took %.2fs", self.node_id, time.monotonic() - _t_status)
         t0 = time.monotonic()
 
         try:
@@ -174,7 +192,9 @@ class DataSourceNode(ABC):
             cfg.last_run_at = datetime.now(timezone.utc).isoformat()
             cfg.last_duration_s = elapsed
             cfg.last_error = None
+            _t_save = time.monotonic()
             await save_config(cfg)
+            logger.info("[pipeline:timing] save_config(%s) took %.2fs", self.node_id, time.monotonic() - _t_save)
             logger.info(f"[{self.node_id}] done in {elapsed}s — counts={cfg.counts}")
         except asyncio.CancelledError:
             elapsed = round(time.monotonic() - t0, 2)

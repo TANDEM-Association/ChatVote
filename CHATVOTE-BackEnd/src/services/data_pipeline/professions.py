@@ -16,7 +16,7 @@ from __future__ import annotations
 
 import asyncio
 import logging
-import tempfile
+import time as _time
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
@@ -37,8 +37,9 @@ logger = logging.getLogger(__name__)
 BASE_URL = "https://programme-candidats.interieur.gouv.fr/elections-municipales-2026"
 PDF_URL_TPL = f"{BASE_URL}/data-pdf/{{tour}}-{{commune_code}}-{{panneau}}.pdf"
 
-# Directory to store downloaded PDFs locally
-_PDF_CACHE_DIR = Path(tempfile.gettempdir()) / "chatvote_professions_pdfs"
+# Directory to store downloaded PDFs locally — project-local so macOS /tmp cleanup
+# doesn't wipe them between pipeline runs.
+_PDF_CACHE_DIR = Path(__file__).resolve().parents[3] / ".cache" / "professions_pdfs"
 
 # Request headers
 _HEADERS = {
@@ -128,7 +129,6 @@ class ProfessionsNode(DataSourceNode):
     node_id = "professions"
     label = "Professions de foi"
     default_settings: dict[str, Any] = {
-        "top_communes": 287,
         "max_pdfs_per_commune": 50,
         "tour": 1,
         "concurrency": 10,
@@ -142,19 +142,21 @@ class ProfessionsNode(DataSourceNode):
         concurrency: int = int(cfg.settings.get("concurrency", 10))
 
         # ------------------------------------------------------------------
-        # 1. Get target communes from population node
+        # 1. Get target communes from population node (respects communes_to_scrap)
         # ------------------------------------------------------------------
         from src.services.data_pipeline.population import get_top_communes
 
+        _t_top_communes = _time.monotonic()
         communes = get_top_communes()
-        # Respect top_communes setting; default to however many the population node provided
-        top_n: int = int(cfg.settings.get("top_communes", len(communes) if communes else 287))
+        logger.info("[node:timing] [professions:timing] get_top_communes took %.2fs", _time.monotonic() - _t_top_communes)
         if not communes:
             raise RuntimeError(
                 "Population node must run first — no communes data available"
             )
 
-        target_codes = list(communes.keys())[:top_n]
+        # Use the top communes already sliced by the population node's
+        # communes_to_scrap setting — no separate top_communes override.
+        target_codes = list(communes.keys())
         logger.info(
             "[professions] targeting %d communes (tour=%d, max_pdfs=%d)",
             len(target_codes), tour, max_pdfs,
@@ -165,7 +167,9 @@ class ProfessionsNode(DataSourceNode):
         # ------------------------------------------------------------------
         from src.services.data_pipeline.candidatures import get_candidatures
 
+        _t_candidatures = _time.monotonic()
         candidatures = get_candidatures()
+        logger.info("[node:timing] [professions:timing] get_candidatures took %.2fs", _time.monotonic() - _t_candidatures)
         if not candidatures:
             logger.warning(
                 "[professions] candidatures not available — will try panneau 1-20 for each commune"
@@ -191,8 +195,8 @@ class ProfessionsNode(DataSourceNode):
 
         now_iso = datetime.now(timezone.utc).isoformat()
         started_at = datetime.now(timezone.utc).isoformat()
-        import time as _time
         t0 = _time.monotonic()
+        _t_all_download = _time.monotonic()
         sem = asyncio.Semaphore(concurrency)
         timeout = aiohttp.ClientTimeout(total=30)
 
@@ -204,6 +208,37 @@ class ProfessionsNode(DataSourceNode):
                 # Check per-commune checkpoint (skip if already done)
                 last_scraped = cfg.checkpoints.get(code)
                 if last_scraped and not force:
+                    # Reload cached PDFs from disk so populate can use them
+                    pdf_dir = _PDF_CACHE_DIR / code
+                    logger.info("[professions] commune %s checkpointed, reloading from %s (exists=%s)", code, pdf_dir, pdf_dir.exists())
+                    if pdf_dir.exists():
+                        cached = []
+                        for f in sorted(pdf_dir.glob("*.pdf")):
+                            parts = f.stem.split("-", 2)  # tour-code-panneau
+                            panneau = parts[2] if len(parts) >= 3 else f.stem
+                            cached.append({
+                                "panneau": panneau,
+                                "pdf_url": PDF_URL_TPL.format(tour=tour, commune_code=code, panneau=panneau),
+                                "pdf_local_path": str(f),
+                                "pdf_size_bytes": f.stat().st_size,
+                            })
+                        # Enrich with candidatures metadata
+                        if candidatures and code in candidatures:
+                            lists_data = candidatures[code].get("lists", {})
+                            for pdf in cached:
+                                p = pdf.get("panneau", "")
+                                if p in lists_data:
+                                    lst = lists_data[p]
+                                    pdf["list_name"] = lst.get("list_label", "")
+                                    pdf["list_short"] = lst.get("list_short_label", "")
+                                    pdf["nuance_code"] = lst.get("nuance_code", "")
+                                    pdf["tete_de_liste"] = (
+                                        f"{lst.get('head_last_name', '')} {lst.get('head_first_name', '')}"
+                                    ).strip()
+                        if cached:
+                            all_pdfs[code] = cached
+                            total_pdfs_found += len(cached)
+                            communes_with_pdfs += 1
                     communes_skipped += 1
                     continue
 
@@ -216,8 +251,15 @@ class ProfessionsNode(DataSourceNode):
                 # Download PDFs
                 async with sem:
                     try:
+                        _t_commune = _time.monotonic()
                         pdfs = await _scrape_commune(session, code, panneaux, tour)
                         pdfs = pdfs[:max_pdfs]
+                        _commune_elapsed = _time.monotonic() - _t_commune
+                        if _commune_elapsed > 2.0 or communes_scraped % 50 == 0:
+                            logger.info(
+                                "[node:timing] [professions:timing] commune %s (%d panneaux) took %.2fs, %d PDFs",
+                                code, len(panneaux), _commune_elapsed, len(pdfs),
+                            )
                     except Exception as exc:
                         logger.warning(
                             "[professions] failed to scrape %s (%s): %s",
@@ -245,19 +287,35 @@ class ProfessionsNode(DataSourceNode):
                     total_bytes += sum(p.get("pdf_size_bytes", 0) for p in pdfs)
                     communes_with_pdfs += 1
 
-                    # Persist has_manifesto to Firestore candidates immediately
+                    # Persist manifesto_pdf_url to Firestore candidates immediately
                     from src.firebase_service import async_db
+                    _t_firestore = _time.monotonic()
+                    _fs_ok = 0
+                    _fs_fail = 0
                     for pdf in pdfs:
                         panneau = pdf.get("panneau", "")
+                        pdf_url = pdf.get("pdf_url", "")
                         cand_id = f"cand-{code}-{panneau}"
                         try:
                             ref = async_db.collection("candidates").document(cand_id)
                             await ref.set({
-                                "has_manifesto": True,
-                                "manifesto_pdf_url": pdf.get("pdf_url", ""),
+                                "manifesto_pdf_url": pdf_url,
                             }, merge=True)
-                        except Exception:
-                            pass  # candidate doc may not exist yet
+                            _fs_ok += 1
+                            logger.debug(
+                                "[professions] wrote manifesto_pdf_url to %s: %s",
+                                cand_id, pdf_url,
+                            )
+                        except Exception as exc:
+                            _fs_fail += 1
+                            logger.warning(
+                                "[professions] FAILED to write manifesto_pdf_url to %s: %s (url=%s)",
+                                cand_id, exc, pdf_url,
+                            )
+                    logger.info(
+                        "[professions] firestore manifesto_pdf_url: commune=%s ok=%d fail=%d (%.2fs)",
+                        code, _fs_ok, _fs_fail, _time.monotonic() - _t_firestore,
+                    )
                 else:
                     communes_no_pdfs += 1
 
@@ -293,10 +351,19 @@ class ProfessionsNode(DataSourceNode):
                         total_bytes / (1024 * 1024), rate, remaining,
                     )
 
+        logger.info("[node:timing] [professions:timing] all_communes_download took %.2fs", _time.monotonic() - _t_all_download)
+
         # ------------------------------------------------------------------
         # 5. Update cache and save
         # ------------------------------------------------------------------
         _cached_pdfs = all_pdfs
+        cfg.cache_info = [
+            {
+                "label": "Professions de foi PDFs",
+                "local_dir": str(_PDF_CACHE_DIR),
+                "source_url": BASE_URL,
+            }
+        ]
         cfg.checkpoints["cached_at"] = datetime.now(timezone.utc).isoformat()
         await save_checkpoint(cfg.node_id, cfg.checkpoints)
 

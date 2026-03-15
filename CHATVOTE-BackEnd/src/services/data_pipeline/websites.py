@@ -17,6 +17,7 @@ from typing import Any
 
 import aiohttp
 
+from src.services.data_pipeline.url_cache import cached_fetch_text
 from src.services.data_pipeline.base import (
     DataSourceNode,
     NodeConfig,
@@ -95,9 +96,10 @@ class WebsitesNode(DataSourceNode):
         # Fetch all values from the first sheet
         url = f"{SHEETS_API_URL}/{file_id}/values/A:Z"
         async with aiohttp.ClientSession() as session:
-            async with session.get(url, headers=headers) as resp:
-                resp.raise_for_status()
-                data = await resp.json()
+            text = await cached_fetch_text(session, url, headers=headers)
+        if text is None:
+            raise RuntimeError(f"Failed to fetch Google Sheet {file_id}")
+        data = json.loads(text)
 
         all_rows: list[list[str]] = data.get("values", [])
         if not all_rows:

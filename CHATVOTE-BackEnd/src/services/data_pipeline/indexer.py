@@ -531,6 +531,23 @@ class IndexerNode(DataSourceNode):
         if errors:
             cfg.last_error = "; ".join(errors)
 
+        env = os.environ.get("ENV", "dev")
+        try:
+            from src.services.profession_indexer import _PDF_CACHE_DIR as _prof_cache_dir
+            prof_local_dir = str(_prof_cache_dir)
+        except Exception:
+            prof_local_dir = ".cache/professions_pdfs"
+        cfg.cache_info = [
+            {
+                "label": "Source: profession PDFs",
+                "local_dir": prof_local_dir,
+            },
+            {
+                "label": "Destination: Qdrant vectors",
+                "store_url": f"qdrant://candidates_websites_{env}",
+            },
+        ]
+
         return cfg
 
 
