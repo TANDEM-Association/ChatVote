@@ -359,7 +359,7 @@ def _create_documents_from_profession(
                 is_tete_de_liste=(candidate.position == "Tête de liste") or None,
                 document_name=f"{candidate.full_name} - Profession de foi",
                 url=storage_url,
-                page_type="pdf_transcription",
+                page_type="profession_de_foi",
                 page=page_num,
                 chunk_index=chunk_index,
                 total_chunks=0,  # filled below
