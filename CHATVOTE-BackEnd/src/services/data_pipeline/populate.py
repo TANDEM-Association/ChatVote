@@ -1,4 +1,4 @@
-"""Pipeline node: merge population + candidatures + websites into Firestore seed data.
+"""Pipeline node: merge population + candidatures + websites into Firestore (populate).
 
 This node builds three Firestore collections from upstream pipeline data:
 - ``municipalities`` (~35k docs — ALL French communes)
@@ -17,15 +17,19 @@ document-size limit and was the root cause of seed timeouts on Scaleway.
 from __future__ import annotations
 
 import asyncio
+import base64
 import hashlib
 import json
 import logging
+import os
 import re
 import time as _time
 import unicodedata
 from datetime import datetime, timezone
 from pathlib import Path
 from typing import Any
+
+import aiohttp
 
 from src.services.data_pipeline.base import (
     DataSourceNode,
@@ -39,6 +43,7 @@ from src.services.data_pipeline.base import (
 )
 from src.services.data_pipeline.candidatures import get_candidatures
 from src.services.data_pipeline.population import get_all_communes, get_top_communes
+from src.services.data_pipeline.pourquituvotes import get_pourquituvotes_urls
 from src.services.data_pipeline.professions import get_professions
 from src.services.data_pipeline.websites import get_websites
 
@@ -46,6 +51,35 @@ logger = logging.getLogger(__name__)
 
 REPO_ROOT = Path(__file__).resolve().parents[4]
 SEED_DIR = REPO_ROOT / "firebase" / "firestore_data" / "dev"
+
+SHEETS_API_URL = "https://sheets.googleapis.com/v4/spreadsheets"
+APP_TRUTH_SHEET_ID = os.environ.get(
+    "APP_TRUTH_SHEET_ID",
+    "15Mge7CUwsFMn5h7SVRYoo5V1SyDE2vU5h4F9OnDHWB8",
+)
+APP_TRUTH_TAB = "app_truth"
+
+# Columns for the app_truth tab
+APP_TRUTH_HEADERS = [
+    "candidate_id",
+    "first_name",
+    "last_name",
+    "commune_code",
+    "commune_name",
+    "population",
+    "population_rank",
+    "party_ids",
+    "nuance_code",
+    "nuance_label",
+    "list_label",
+    "panel_number",
+    "election_type_id",
+    "position",
+    "is_incumbent",
+    "website_url",
+    "website_source",
+    "manifesto_pdf_url",
+]
 
 # Map nuance codes from the candidatures CSV to Firestore party_ids.
 # These must match the party_id values in parties.json.
@@ -202,20 +236,33 @@ def _build_candidates(communes: dict[str, dict]) -> dict[str, Any]:
 def _enrich_candidates_with_websites(
     candidates: dict[str, Any],
     websites: dict[tuple[str, str], str],
+    pqtv_urls: dict[tuple[str, str], str] | None = None,
 ) -> int:
-    """Add website URLs to candidates. Returns count of candidates linked."""
+    """Add website URLs to candidates with source attribution. Returns count linked."""
     linked = 0
+    pqtv = pqtv_urls or {}
     for cand in candidates.values():
         code = cand["commune_code"]
         ln = _norm(cand["last_name"])
         fn = _norm(cand["first_name"])
-        url = websites.get((code, fn + ln)) or websites.get((code, ln))
+
+        sheet_url = websites.get((code, fn + ln)) or websites.get((code, ln))
+        pqtv_url = pqtv.get((code, fn + ln)) or pqtv.get((code, ln))
+
+        url = sheet_url or pqtv_url
         if url:
-            cand["has_website"] = True
             cand["website_url"] = url
+            # Track source(s)
+            sources = []
+            if sheet_url:
+                sources.append("custom-sheet")
+            if pqtv_url:
+                sources.append("pourquituvotes")
+            cand["website_source"] = ",".join(sources)
             linked += 1
         else:
-            cand["has_website"] = False
+            cand["website_url"] = ""
+            cand["website_source"] = ""
     return linked
 
 
@@ -235,11 +282,10 @@ def _enrich_candidates_with_professions(
         commune_pdfs = professions.get(code, [])
         match = next((p for p in commune_pdfs if str(p.get("panneau")) == panneau), None)
         if match:
-            cand["has_manifesto"] = True
             cand["manifesto_pdf_url"] = match.get("pdf_url", "")
             linked += 1
         else:
-            cand["has_manifesto"] = False
+            cand["manifesto_pdf_url"] = ""
     return linked
 
 
@@ -248,6 +294,119 @@ def _enrich_candidates_with_professions(
 # ---------------------------------------------------------------------------
 _BATCH_SIZE = 450  # Firestore limit is 500; leave margin
 _CONCURRENCY = 5   # Max parallel batch commits
+
+
+def _get_sheets_credentials():
+    """Build Google SA credentials with Sheets write scope."""
+    from google.auth.transport.requests import Request
+    from google.oauth2.service_account import Credentials
+
+    b64 = os.environ.get("GOOGLE_SHEETS_CREDENTIALS_BASE64", "")
+    raw = os.environ.get("GOOGLE_SHEETS_CREDENTIALS_JSON", "")
+    if b64:
+        raw = base64.b64decode(b64).decode()
+    elif not raw:
+        return None  # no credentials available — skip sheet sync
+    raw = raw.strip().strip("'\"")
+    info = json.loads(raw)
+    creds = Credentials.from_service_account_info(
+        info, scopes=["https://www.googleapis.com/auth/spreadsheets"]
+    )
+    creds.refresh(Request())
+    return creds
+
+
+async def _sync_candidates_to_sheet(
+    candidates: dict[str, Any],
+    municipalities: dict[str, Any] | None = None,
+) -> int:
+    """Write all candidates to the app_truth tab in Google Sheets.
+
+    Clears existing data then writes header + all rows in one batch.
+    Returns the number of rows written.
+    """
+    _t_creds = _time.monotonic()
+    creds = _get_sheets_credentials()
+    if creds is None:
+        logger.info("[seed] no Google Sheets credentials — skipping app_truth sync")
+        return 0
+    logger.info("[seed:timing] sheet_creds took %.2fs", _time.monotonic() - _t_creds)
+
+    # Build population lookup and rank
+    pop_lookup: dict[str, int] = {}
+    if municipalities:
+        for code, m in municipalities.items():
+            pop_lookup[code] = m.get("population", 0)
+
+    # Compute population rank per commune (1 = biggest)
+    commune_pops = sorted(set(pop_lookup.values()), reverse=True)
+    pop_rank_map = {pop: rank + 1 for rank, pop in enumerate(commune_pops)}
+
+    # Build rows sorted by candidate_id for stable ordering
+    _t_rows = _time.monotonic()
+    rows = [APP_TRUTH_HEADERS]
+    for cid in sorted(candidates.keys()):
+        c = candidates[cid]
+        commune_code = c.get("commune_code", "")
+        population = pop_lookup.get(commune_code, 0)
+        rank = pop_rank_map.get(population, "")
+        rows.append([
+            c.get("candidate_id", ""),
+            c.get("first_name", ""),
+            c.get("last_name", ""),
+            commune_code,
+            c.get("commune_name", ""),
+            population,
+            rank,
+            ",".join(c.get("party_ids", [])),
+            c.get("nuance_code", ""),
+            c.get("nuance_label", ""),
+            c.get("list_label", ""),
+            c.get("panel_number", ""),
+            c.get("election_type_id", ""),
+            c.get("position", ""),
+            str(c.get("is_incumbent", False)),
+            c.get("website_url", ""),
+            c.get("website_source", ""),
+            c.get("manifesto_pdf_url", ""),
+        ])
+    logger.info("[seed:timing] sheet_row_build took %.2fs, %d rows", _time.monotonic() - _t_rows, len(rows) - 1)
+
+    token = creds.token
+    headers = {
+        "Authorization": f"Bearer {token}",
+        "Content-Type": "application/json",
+    }
+
+    async with aiohttp.ClientSession() as session:
+        # 1. Clear the tab
+        clear_url = (
+            f"{SHEETS_API_URL}/{APP_TRUTH_SHEET_ID}/values/"
+            f"{APP_TRUTH_TAB}!A:T:clear"
+        )
+        _t_clear = _time.monotonic()
+        async with session.post(clear_url, headers=headers, json={}) as resp:
+            resp.raise_for_status()
+        logger.info("[seed:timing] sheet_clear took %.2fs", _time.monotonic() - _t_clear)
+
+        # 2. Write all rows in one update
+        update_url = (
+            f"{SHEETS_API_URL}/{APP_TRUTH_SHEET_ID}/values/"
+            f"{APP_TRUTH_TAB}!A1?valueInputOption=RAW"
+        )
+        body = {"values": rows}
+        _t_write_sheet = _time.monotonic()
+        async with session.put(update_url, headers=headers, json=body) as resp:
+            resp.raise_for_status()
+            data = await resp.json()
+        logger.info("[seed:timing] sheet_write took %.2fs", _time.monotonic() - _t_write_sheet)
+
+    written = data.get("updatedRows", 0)
+    logger.info(
+        "[seed] synced %d candidates to app_truth sheet (%d rows incl header)",
+        len(candidates), written,
+    )
+    return written
 
 
 async def _write_collection(
@@ -261,6 +420,7 @@ async def _write_collection(
     """
     from src.firebase_service import async_db
 
+    _t_wc = _time.monotonic()
     items = list(docs.items())
     total = len(items)
     if total == 0:
@@ -304,58 +464,81 @@ async def _write_collection(
         counts={"phase": collection_name, "written": written, "total": total},
     )
 
+    logger.info("[seed:timing] _write_collection(%s) total took %.2fs, %d docs", collection_name, _time.monotonic() - _t_wc, written)
     return written
 
 
 # ---------------------------------------------------------------------------
 # Node implementation
 # ---------------------------------------------------------------------------
-class SeedNode(DataSourceNode):
-    node_id = "seed"
-    label = "Seed / Merge"
+class PopulateNode(DataSourceNode):
+    node_id = "populate"
+    label = "Populate / Merge"
 
     async def run(self, cfg: NodeConfig, *, force: bool = False) -> NodeConfig:
         # ------------------------------------------------------------------
         # 0. Validate upstream nodes have run
         # ------------------------------------------------------------------
+        _t_validation = _time.monotonic()
         all_communes = get_all_communes()
         if all_communes is None:
             raise RuntimeError(
-                "Population node must run before seed node "
+                "Population node must run before populate node"
                 "(get_all_communes() returned None)"
             )
 
         top_communes = get_top_communes()
         if top_communes is None:
             raise RuntimeError(
-                "Population node must run before seed node "
+                "Population node must run before populate node"
                 "(get_top_communes() returned None)"
             )
 
         candidatures = get_candidatures()
         if candidatures is None:
             raise RuntimeError(
-                "Candidatures node must run before seed node "
+                "Candidatures node must run before populate node"
                 "(get_candidatures() returned None)"
             )
 
         websites = get_websites()  # May be None — that's OK
+        logger.info("[seed:timing] upstream_validation took %.2fs", _time.monotonic() - _t_validation)
 
         # ------------------------------------------------------------------
-        # 1. Build the three collections
+        # 1. Build the three collections (scoped to top communes only)
         # ------------------------------------------------------------------
-        # ALL communes go to Firestore municipalities (not just top N)
-        electoral_lists = _build_electoral_lists(candidatures)
+        top_commune_codes = set(top_communes.keys())
+        filtered_candidatures = {
+            code: data for code, data in candidatures.items()
+            if code in top_commune_codes
+        }
+        logger.info(
+            "[seed] filtered candidatures: %d/%d communes (top %d)",
+            len(filtered_candidatures), len(candidatures), len(top_commune_codes),
+        )
+
+        _t_el = _time.monotonic()
+        electoral_lists = _build_electoral_lists(filtered_candidatures)
+        logger.info("[seed:timing] build_electoral_lists took %.2fs, %d lists", _time.monotonic() - _t_el, len(electoral_lists))
         electoral_commune_codes = set(electoral_lists.keys())
+        _t_mun = _time.monotonic()
         municipalities = _build_municipalities(all_communes, electoral_commune_codes)
-        candidates = _build_candidates(candidatures)
+        logger.info("[seed:timing] build_municipalities took %.2fs, %d docs", _time.monotonic() - _t_mun, len(municipalities))
+        _t_cand = _time.monotonic()
+        candidates = _build_candidates(filtered_candidatures)
+        logger.info("[seed:timing] build_candidates took %.2fs, %d docs", _time.monotonic() - _t_cand, len(candidates))
 
         # ------------------------------------------------------------------
-        # 2. Enrich candidates with website URLs
+        # 2. Enrich candidates with website URLs (with source tracking)
         # ------------------------------------------------------------------
+        pqtv_urls = get_pourquituvotes_urls()  # May be None
         websites_linked = 0
         if websites:
-            websites_linked = _enrich_candidates_with_websites(candidates, websites)
+            _t_enrich_web = _time.monotonic()
+            websites_linked = _enrich_candidates_with_websites(
+                candidates, websites, pqtv_urls=pqtv_urls,
+            )
+            logger.info("[seed:timing] enrich_websites took %.2fs, %d linked", _time.monotonic() - _t_enrich_web, websites_linked)
             logger.info("[seed] enriched %d candidates with website URLs", websites_linked)
 
         # ------------------------------------------------------------------
@@ -364,10 +547,12 @@ class SeedNode(DataSourceNode):
         professions = get_professions()
         professions_linked = 0
         if professions:
+            _t_enrich_prof = _time.monotonic()
             professions_linked = _enrich_candidates_with_professions(candidates, professions)
+            logger.info("[seed:timing] enrich_professions took %.2fs, %d linked", _time.monotonic() - _t_enrich_prof, professions_linked)
             logger.info("[seed] enriched %d candidates with profession de foi", professions_linked)
 
-        with_manifesto = sum(1 for c in candidates.values() if c.get("has_manifesto"))
+        with_manifesto = sum(1 for c in candidates.values() if c.get("manifesto_pdf_url"))
 
         # ------------------------------------------------------------------
         # 3. Check collection-level hashes — skip entirely if unchanged
@@ -375,9 +560,11 @@ class SeedNode(DataSourceNode):
         #    NOT per-doc hashes.  Storing 120k per-doc hashes would exceed
         #    Firestore's 1 MB document-size limit on the config doc.
         # ------------------------------------------------------------------
+        _t_hash = _time.monotonic()
         mun_hash = _collection_hash(municipalities)
         el_hash = _collection_hash(electoral_lists)
         cand_hash = _collection_hash(candidates)
+        logger.info("[seed:timing] hash_computation took %.2fs", _time.monotonic() - _t_hash)
 
         stored_mun_hash = cfg.checkpoints.get("municipalities_hash")
         stored_el_hash = cfg.checkpoints.get("electoral_lists_hash")
@@ -423,8 +610,10 @@ class SeedNode(DataSourceNode):
                 continue
 
             logger.info("[seed] %s: hash changed, writing %d docs...", coll_name, len(docs))
+            _t_write = _time.monotonic()
             written = await _write_collection(coll_name, docs, cfg.node_id)
             total_written += written
+            logger.info("[seed:timing] write_%s took %.2fs, %d docs", coll_name, _time.monotonic() - _t_write, written)
             logger.info("[seed] %s: %d docs written", coll_name, written)
 
         # ------------------------------------------------------------------
@@ -432,6 +621,7 @@ class SeedNode(DataSourceNode):
         # ------------------------------------------------------------------
         SEED_DIR.mkdir(parents=True, exist_ok=True)
 
+        _t_json = _time.monotonic()
         for filename, data in [
             ("municipalities.json", municipalities),
             ("electoral_lists.json", electoral_lists),
@@ -442,6 +632,18 @@ class SeedNode(DataSourceNode):
                 json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
             )
             logger.info("[seed] wrote %s (%d entries)", filepath.name, len(data))
+        logger.info("[seed:timing] json_fixtures took %.2fs", _time.monotonic() - _t_json)
+
+        # ------------------------------------------------------------------
+        # 5b. Sync candidates to app_truth Google Sheet
+        # ------------------------------------------------------------------
+        sheet_rows = 0
+        try:
+            _t_sheet = _time.monotonic()
+            sheet_rows = await _sync_candidates_to_sheet(candidates, municipalities)
+            logger.info("[seed:timing] sheet_sync took %.2fs, %d rows", _time.monotonic() - _t_sheet, sheet_rows)
+        except Exception as exc:
+            logger.warning("[seed] app_truth sheet sync failed: %s", exc)
 
         # ------------------------------------------------------------------
         # 6. Update checkpoints and counts
@@ -473,6 +675,7 @@ class SeedNode(DataSourceNode):
             "with_website": websites_linked,
             "with_manifesto": with_manifesto,
             "docs_written": total_written,
+            "sheet_rows": sheet_rows,
         }
 
         logger.info(
@@ -489,4 +692,4 @@ class SeedNode(DataSourceNode):
         return cfg
 
 
-register_node(SeedNode())
+register_node(PopulateNode())

@@ -28,7 +28,7 @@ def _register_builtin_nodes() -> None:
     from src.services.data_pipeline import candidatures  # noqa: F401
     from src.services.data_pipeline import websites  # noqa: F401
     from src.services.data_pipeline import pourquituvotes  # noqa: F401
-    from src.services.data_pipeline import seed  # noqa: F401
+    from src.services.data_pipeline import populate  # noqa: F401
     from src.services.data_pipeline import professions  # noqa: F401
     from src.services.data_pipeline import scraper  # noqa: F401
     from src.services.data_pipeline import crawl_scraper  # noqa: F401

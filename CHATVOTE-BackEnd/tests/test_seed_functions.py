@@ -1,9 +1,9 @@
-"""Tests for pure helper functions in src/services/data_pipeline/seed.py.
+"""Tests for pure helper functions in src/services/data_pipeline/populate.py.
 
 All tested functions are pure Python with no I/O or async behaviour,
 so no mocking or fixtures are required.
 """
-from src.services.data_pipeline.seed import (
+from src.services.data_pipeline.populate import (
     _build_candidates,
     _build_electoral_lists,
     _build_municipalities,

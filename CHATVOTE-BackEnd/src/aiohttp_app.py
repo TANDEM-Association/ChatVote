@@ -1385,7 +1385,7 @@ async def commune_candidate_chunks(request):
             "website_url": fs.get("website_url") or "",
             "manifesto_url": fs.get("manifesto_url") or fs.get("election_manifesto_url") or "",
             "manifesto_pdf_path": fs.get("manifesto_pdf_path") or "",
-            "has_manifesto": fs.get("has_manifesto", False),
+            "has_manifesto": bool(fs.get("manifesto_pdf_url")),
             "has_scraped": fs.get("has_scraped", False),
             "scrape_chars": fs.get("scrape_chars") or 0,
             "total_chunks": len(chunks),
@@ -1835,7 +1835,7 @@ _pipeline_tasks: dict[str, asyncio.Task] = {}
 # DAG execution order for run-all
 _PIPELINE_ORDER = [
     "population", "candidatures", "websites", "pourquituvotes",
-    "professions", "seed", "scraper", "crawl_scraper", "indexer",
+    "professions", "populate", "scraper", "crawl_scraper", "indexer",
 ]
 
 
@@ -2342,9 +2342,9 @@ async def admin_dashboard_warnings(request: web.Request) -> web.Response:
         # --- Data completeness ---
         # Only fetch the fields we actually check, to minimise data transfer
         candidates_no_website_count = 0
-        async for doc in async_db.collection("candidates").select(["has_website"]).stream():
+        async for doc in async_db.collection("candidates").select(["website_url"]).stream():
             d = doc.to_dict() or {}
-            if not d.get("has_website"):
+            if not d.get("website_url"):
                 candidates_no_website_count += 1
 
         no_manifesto_count = 0
@@ -2523,13 +2523,13 @@ async def admin_dashboard_data_consistency(request: web.Request) -> web.Response
         async for doc in async_db.collection("parties").select([]).stream():
             party_ids_fs.add(doc.id)
 
-        # Candidates: need IDs + has_website for counts
+        # Candidates: need IDs + website_url for counts
         candidate_ids_fs: set[str] = set()
         candidates_with_website_count = 0
-        async for doc in async_db.collection("candidates").select(["has_website"]).stream():
+        async for doc in async_db.collection("candidates").select(["website_url"]).stream():
             candidate_ids_fs.add(doc.id)
             d = doc.to_dict() or {}
-            if d.get("has_website"):
+            if d.get("website_url"):
                 candidates_with_website_count += 1
 
         # Municipalities: only need doc IDs for cross-reference checks
