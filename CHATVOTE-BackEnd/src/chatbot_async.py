@@ -138,7 +138,8 @@ def _pdf_viewer_url(raw_url: str) -> str:
 
 
 async def rerank_documents(
-    relevant_docs: List[Document], user_message: str, chat_history: str
+    relevant_docs: List[Document], user_message: str, chat_history: str,
+    top_k: int = 5,
 ) -> List[Document]:
     # get the context and the relevant documents
     docs = [
@@ -164,16 +165,14 @@ async def rerank_documents(
     reranked_doc_indices = getattr(response, "reranked_doc_indices", [])
     logger.debug(f"Reranked document indices: {reranked_doc_indices}")
     try:
-        # only take first 5 elements of relevant indices
-        relevant_indices = reranked_doc_indices[:5]
+        relevant_indices = reranked_doc_indices[:top_k]
         reranked_relevant_docs = [relevant_docs[i] for i in relevant_indices]
-        logger.debug(f"Reranked document indices: {relevant_indices}")
+        logger.debug(f"Reranked document indices (top_k={top_k}): {relevant_indices}")
         return reranked_relevant_docs
     except Exception as e:
         logger.error(f"Error extracting reranked documents: {e}")
-        logger.warning("Returning top-5 of original relevant documents.")
-        relevant_docs = relevant_docs[:5]
-        return relevant_docs
+        logger.warning(f"Returning top-{top_k} of original relevant documents.")
+        return relevant_docs[:top_k]
 
 
 async def get_question_targets_and_type(
@@ -1110,7 +1109,7 @@ async def generate_streaming_candidate_local_response(
                 party_names.append(party.name)
         party_str = ", ".join(party_names) if party_names else "Indépendant"
         website_part = f" - Site web : {c.website_url}" if c.website_url else ""
-        manifesto = f" - [Profession de foi]({_pdf_viewer_url(c.manifesto_pdf_url)})" if c.has_manifesto and c.manifesto_pdf_url else ""
+        manifesto = f" - [Profession de foi]({_pdf_viewer_url(c.manifesto_pdf_url)})" if c.manifesto_pdf_url else ""
         candidates_list += f"- **{c.full_name}** ({party_str}){website_part}{manifesto}\n"
 
     if not candidates_list:
@@ -1433,7 +1432,7 @@ async def generate_streaming_global_combined_response(
                     incumbent_info = " (incumbent)" if candidate.is_incumbent else ""
                     manifesto_info = (
                         f" - Manifesto PDF: {candidate.manifesto_pdf_url}"
-                        if candidate.has_manifesto and candidate.manifesto_pdf_url
+                        if candidate.manifesto_pdf_url
                         else ""
                     )
                 else:
@@ -1445,7 +1444,7 @@ async def generate_streaming_global_combined_response(
                     incumbent_info = " (sortant)" if candidate.is_incumbent else ""
                     manifesto_info = (
                         f" - [Profession de foi]({_pdf_viewer_url(candidate.manifesto_pdf_url)})"
-                        if candidate.has_manifesto and candidate.manifesto_pdf_url
+                        if candidate.manifesto_pdf_url
                         else ""
                     )
                 local_candidates_info += f"- **{candidate.full_name}** ({party_str}) - {position}{incumbent_info}{website_info}{manifesto_info}\n"

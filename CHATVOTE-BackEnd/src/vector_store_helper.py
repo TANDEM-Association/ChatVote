@@ -248,6 +248,12 @@ def _ollama_embeddings() -> tuple[Embeddings, int]:
 
 embed, EMBEDDING_DIM = _get_embeddings()
 
+# Score threshold varies by embedding provider — Scaleway qwen produces lower
+# cosine similarities than Google/OpenAI, so we need a lower cutoff.
+_forced_provider = os.getenv("EMBEDDING_PROVIDER", "").lower()
+DEFAULT_SCORE_THRESHOLD: float = 0.35 if _forced_provider == "scaleway" else 0.65
+logger.info(f"Score threshold: {DEFAULT_SCORE_THRESHOLD} (provider={_forced_provider or 'auto'})")
+
 # Initialize Qdrant clients (sync for admin ops, async for hot-path searches)
 _qdrant_url = os.getenv("QDRANT_URL", "http://localhost:6333")
 _qdrant_api_key = os.getenv("QDRANT_API_KEY")
@@ -425,7 +431,7 @@ async def _identify_relevant_documents(
     namespace: Optional[str],
     rag_query: str,
     n_docs: int = 5,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     max_fiabilite: int = 3,
 ) -> list[Document]:
     """
@@ -500,7 +506,7 @@ async def identify_relevant_docs(
     party: Party,
     rag_query: str,
     n_docs: int = 5,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
 ) -> list[Document]:
     return await _identify_relevant_documents(
         vector_store=get_qdrant_vector_store(),
@@ -516,7 +522,7 @@ async def identify_relevant_docs_with_reranking(
     party: Party,
     rag_query: str,
     n_docs: int = 20,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
 ) -> list[Document]:
     relevant_docs = await _identify_relevant_documents(
         vector_store=get_qdrant_vector_store(),
@@ -537,7 +543,7 @@ async def identify_relevant_docs_with_llm_based_reranking(
     chat_history: str,
     user_message: str,
     n_docs: int = 20,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     target_party_id: Optional[str] = None,
 ) -> list[Document]:
     from src.models.assistant import ASSISTANT_ID
@@ -578,7 +584,7 @@ async def identify_relevant_docs_with_llm_based_reranking(
 
 
 async def identify_relevant_votes(
-    rag_query: str, n_docs: int = 5, score_threshold: float = 0.65
+    rag_query: str, n_docs: int = 5, score_threshold: float = DEFAULT_SCORE_THRESHOLD
 ) -> list[Document]:
     """
     Identify relevant votes based on the provided query.
@@ -624,7 +630,7 @@ async def _identify_relevant_candidate_documents(
     municipality_code: Optional[str] = None,
     candidate_id: Optional[str] = None,
     n_docs: int = 10,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     max_fiabilite: int = 3,
 ) -> list[Document]:
     """
@@ -710,7 +716,7 @@ async def identify_relevant_candidate_docs(
     candidate: Candidate,
     rag_query: str,
     n_docs: int = 10,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
 ) -> list[Document]:
     """
     Identify relevant documents for a specific candidate.
@@ -727,7 +733,7 @@ async def identify_relevant_candidate_docs_by_municipality(
     municipality_code: str,
     rag_query: str,
     n_docs: int = 15,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
 ) -> list[Document]:
     """
     Identify relevant candidate documents for all candidates in a municipality.
@@ -744,7 +750,7 @@ async def identify_relevant_candidate_docs_by_municipality(
 async def identify_relevant_candidate_docs_national(
     rag_query: str,
     n_docs: int = 15,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
 ) -> list[Document]:
     """
     Identify relevant candidate documents across all candidates (national scope).
@@ -764,7 +770,7 @@ async def identify_relevant_candidate_docs_with_reranking(
     user_message: str,
     municipality_code: Optional[str] = None,
     n_docs: int = 20,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
 ) -> list[Document]:
     """
     Identify relevant candidate documents with LLM-based reranking.
@@ -801,7 +807,7 @@ async def identify_relevant_docs_combined(
     municipality_code: Optional[str] = None,
     n_docs_manifesto: int = 10,
     n_docs_candidates: int = 10,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
 ) -> tuple[list[Document], list[Document]]:
     """
     Combined search across party manifestos and candidate websites.
@@ -828,36 +834,36 @@ async def identify_relevant_docs_combined(
     # Create tasks for parallel execution
     tasks = []
 
-    # Determine which Qdrant manifesto namespaces actually exist
-    # so we can detect mismatches (e.g., local party_ids like "lfi"
-    # vs Qdrant manifesto namespaces)
+    # Manifestos are national-level documents relevant to ALL municipalities.
+    # Always search every available manifesto namespace so that local-scope
+    # queries (e.g. Paris) still surface manifestos from parties whose IDs
+    # don't appear in the local candidate list (e.g. ps, reconquete, eelv).
     _existing_namespaces = _get_manifesto_namespaces()
 
-    party_ids_with_manifesto = [pid for pid in party_ids if pid in _existing_namespaces]
-
-    if party_ids_with_manifesto:
-        # Search manifesto for each matched party
-        for party_id in party_ids_with_manifesto:
+    if _existing_namespaces:
+        for ns in sorted(_existing_namespaces):
             tasks.append(
                 _identify_relevant_manifesto_documents(
                     rag_query=rag_query,
-                    namespace=party_id,
+                    namespace=ns,
                     n_docs=n_docs_manifesto,
                     score_threshold=score_threshold,
                 )
             )
-        manifesto_task_count = len(party_ids_with_manifesto)
-    else:
-        # No party_ids match Qdrant namespaces — search ALL manifestos
-        # (common for local-scope queries where candidate party_ids differ)
+        manifesto_task_count = len(_existing_namespaces)
         logger.info(
-            f"No manifesto namespaces match party_ids {party_ids}, "
-            f"searching all manifestos (available: {_existing_namespaces})"
+            f"Searching {manifesto_task_count} manifesto namespaces: "
+            f"{sorted(_existing_namespaces)} (requested party_ids={party_ids})"
+        )
+    else:
+        # No namespaces found at all — search unfiltered as last resort
+        logger.warning(
+            "No manifesto namespaces found in Qdrant, searching unfiltered"
         )
         tasks.append(
             _identify_relevant_manifesto_documents(
                 rag_query=rag_query,
-                namespace=None,  # unfiltered search across all parties
+                namespace=None,
                 n_docs=n_docs_manifesto * min(len(party_ids), 5),
                 score_threshold=score_threshold,
             )
@@ -934,12 +940,15 @@ async def identify_relevant_docs_combined(
             seen_candidate_contents.add(content_key)
             unique_candidate_docs.append(doc)
 
-    # Rerank each set if we have enough docs
+    # Rerank each set if we have enough docs.
+    # Keep more manifesto docs (up to 10) since they span multiple parties
+    # and truncating to 5 can drop entire parties from the context.
     if len(unique_manifesto_docs) >= 3:
         unique_manifesto_docs = await rerank_documents(
             relevant_docs=unique_manifesto_docs,
             user_message=user_message,
             chat_history=chat_history,
+            top_k=10,
         )
 
     if len(unique_candidate_docs) >= 3:
@@ -947,6 +956,7 @@ async def identify_relevant_docs_combined(
             relevant_docs=unique_candidate_docs,
             user_message=user_message,
             chat_history=chat_history,
+            top_k=10,
         )
 
     return (unique_manifesto_docs, unique_candidate_docs)
@@ -1009,7 +1019,7 @@ async def _search_candidate_docs_by_party(
     rag_query: str,
     party_ids: list[str],
     n_docs: int = 10,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     max_fiabilite: int = 3,
 ) -> list[Document]:
     """Search candidate documents filtered by party affiliation using Qdrant MatchAny."""
@@ -1060,7 +1070,7 @@ async def _search_candidate_docs_by_party_and_municipality(
     party_ids: list[str],
     municipality_code: str,
     n_docs: int = 10,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     max_fiabilite: int = 3,
 ) -> list[Document]:
     """Search candidate docs filtered by party + municipality using Qdrant filters."""
@@ -1129,7 +1139,7 @@ async def _identify_relevant_manifesto_documents(
     rag_query: str,
     namespace: Optional[str] = None,
     n_docs: int = 10,
-    score_threshold: float = 0.65,
+    score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     max_fiabilite: int = 3,
 ) -> list[Document]:
     """

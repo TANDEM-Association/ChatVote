@@ -1000,8 +1000,12 @@ async def handle_combined_answer_request(
     )
     logger.info(f"TIMING handle_combined step=responding_parties_selected elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
 
-    # Use user message directly as RAG query (will be improved internally)
-    improved_rag_query = user_message.content
+    # Improve the RAG query via LLM (same as the legacy path)
+    improved_rag_query = await generate_improvement_rag_query(
+        CHATVOTE_ASSISTANT, chat_history_str, user_message.content
+    )
+    logger.info(f"TIMING handle_combined step=rag_query_improvement elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
+    logger.debug(f"Improved RAG query: {improved_rag_query}")
 
     # For LOCAL scope, get the list of candidates in the municipality
     # This is important to KNOW which candidates exist, even if their websites aren't indexed
