@@ -1383,7 +1383,7 @@ async def commune_candidate_chunks(request):
             "party_label": fs.get("list_label") or fs.get("nuance_label", ""),
             "is_tete_de_liste": fs.get("is_tete_de_liste", False),
             "website_url": fs.get("website_url") or "",
-            "manifesto_url": fs.get("manifesto_url") or fs.get("election_manifesto_url") or "",
+            "manifesto_url": fs.get("manifesto_pdf_url") or fs.get("manifesto_url") or fs.get("election_manifesto_url") or "",
             "manifesto_pdf_path": fs.get("manifesto_pdf_path") or "",
             "has_manifesto": bool(fs.get("manifesto_pdf_url")),
             "has_scraped": fs.get("has_scraped", False),
@@ -1975,6 +1975,28 @@ async def ds_bust_cache(request):
     from src.services.data_pipeline import clear_context
     clear_context()
     return web.json_response({"status": "ok", "message": "Pipeline context cleared"})
+
+
+@routes.post(f"{route_prefix}/admin/data-sources/bust-url-cache")
+async def ds_bust_url_cache(request):
+    """Clear the URL response cache (local filesystem or S3)."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    from src.services.data_pipeline.url_cache import bust_cache
+    result = await bust_cache()
+    return web.json_response(result)
+
+
+@routes.get(f"{route_prefix}/admin/data-sources/url-cache-stats")
+async def ds_url_cache_stats(request):
+    """Return URL cache statistics."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    from src.services.data_pipeline.url_cache import cache_stats
+    result = await cache_stats()
+    return web.json_response(result)
 
 
 @routes.post(f"{route_prefix}/admin/data-sources/clear-all")

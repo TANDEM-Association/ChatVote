@@ -206,3 +206,7 @@ cython_debug/
 .deepeval/
 reports/
 prompts_optimized/
+.cache/
+
+# Firebase emulator persisted data
+firebase/emulator-data/
