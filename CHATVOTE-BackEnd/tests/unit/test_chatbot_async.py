@@ -215,7 +215,6 @@ def make_candidate(
     party_ids: list[str] | None = None,
     election_type_id: str = "municipales-2026",
     website_url: str | None = None,
-    has_manifesto: bool = False,
     manifesto_pdf_url: str | None = None,
     is_incumbent: bool = False,
 ) -> Candidate:
@@ -228,7 +227,6 @@ def make_candidate(
         party_ids=party_ids or ["test-party"],
         election_type_id=election_type_id,
         website_url=website_url,
-        has_manifesto=has_manifesto,
         manifesto_pdf_url=manifesto_pdf_url,
         is_incumbent=is_incumbent,
     )
@@ -1706,7 +1704,6 @@ class TestGenerateStreamingCandidateLocalResponse:
     async def test_candidate_with_manifesto_shows_pdf_link(self):
         candidates = [
             make_candidate(
-                has_manifesto=True,
                 manifesto_pdf_url="https://example.com/manifesto.pdf",
             )
         ]

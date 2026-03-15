@@ -225,7 +225,6 @@ class TestCandidate:
         assert cand.photo_url is None
         assert cand.contact_email is None
         assert cand.website_url is None
-        assert cand.has_manifesto is False
         assert cand.manifesto_pdf_url is None
         assert cand.created_at is None
         assert cand.updated_at is None
@@ -244,7 +243,6 @@ class TestCandidate:
             photo_url="https://photo.jpg",
             contact_email="marie@example.fr",
             website_url="https://marie.fr",
-            has_manifesto=True,
             manifesto_pdf_url="https://marie.fr/manifesto.pdf",
             created_at=now,
             updated_at=now,
@@ -260,7 +258,6 @@ class TestCandidate:
         assert cand.photo_url == "https://photo.jpg"
         assert cand.contact_email == "marie@example.fr"
         assert cand.website_url == "https://marie.fr"
-        assert cand.has_manifesto is True
         assert cand.manifesto_pdf_url == "https://marie.fr/manifesto.pdf"
         assert cand.created_at == now
         assert cand.updated_at == now
