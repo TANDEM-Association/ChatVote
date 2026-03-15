@@ -430,15 +430,32 @@ async def load_scraped_from_drive(
             logger.warning("[load_scraped_from_drive] Drive list failed: %s", exc)
             return None
 
-        # Match slug to folder name
+        # Match slug to folder name — collect all matches, prefer latest
+        candidates_folders = sorted(
+            [f for f in subfolders if f["name"] == slug or slug in f["name"]],
+            key=lambda f: f.get("createdTime", ""),
+            reverse=True,  # newest first
+        )
+
+        if not candidates_folders:
+            return None
+
+        # Try each matching folder (newest first) until we find one with content
         site_folder = None
-        for f in subfolders:
-            if f["name"] == slug or slug in f["name"]:
-                site_folder = f
+        for cf in candidates_folders:
+            token = node._ensure_token(creds)
+            cf_children = await node._drive_list(session, cf["id"], token)
+            has_content = any(
+                c["name"] in ("markdown", "pdf_markdown", "pages")
+                for c in cf_children if "folder" in c.get("mimeType", "")
+            )
+            if has_content:
+                site_folder = cf
                 break
 
         if not site_folder:
-            return None
+            # Fallback to newest folder even without expected subfolders
+            site_folder = candidates_folders[0]
 
         # Download content
         try:
