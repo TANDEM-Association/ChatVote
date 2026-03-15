@@ -9,14 +9,15 @@ type ChatPageProps = {
   searchParams: Promise<{
     ref_snapshot_id: string;
     q: string;
+    municipality_code?: string;
   }>;
 };
 
 const ChatPage: NextPage<ChatPageProps> = async ({ params, searchParams }) => {
   const { chatId } = await params;
-  const { q } = await searchParams;
+  const { q, municipality_code } = await searchParams;
 
-  return <ChatView sessionId={chatId} initialQuestion={q} />;
+  return <ChatView sessionId={chatId} initialQuestion={q} municipalityCode={municipality_code} />;
 };
 
 export default ChatPage;

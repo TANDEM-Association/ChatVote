@@ -30,6 +30,16 @@ export default function AiSdkChatView({ chatId, locale, municipalityCode: munici
 const setPartyIds = useChatStore((s) => s.setPartyIds);
   const storeApi = useContext(ChatStoreContext);
 
+  // Sync store from URL prop on mount (e.g. /chat?municipality_code=69123)
+  useEffect(() => {
+    if (municipalityCodeProp && storeApi) {
+      const { municipalityCode: current, scope: currentScope } = storeApi.getState();
+      if (current !== municipalityCodeProp || currentScope !== 'local') {
+        storeApi.setState({ municipalityCode: municipalityCodeProp, scope: 'local' });
+      }
+    }
+  }, [municipalityCodeProp, storeApi]);
+
   // Municipality search
   const router = useRouter();
   const pathname = usePathname();

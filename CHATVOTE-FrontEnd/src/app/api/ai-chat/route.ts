@@ -111,6 +111,7 @@ interface QdrantPayload {
 
 interface SearchResult {
   id: number;
+  score?: number;
   content: string;
   source: string;
   url: string;
@@ -151,12 +152,12 @@ async function searchQdrant(
     // Resolve URL: use real URL if available, skip .md filenames
     let url = String(meta.url ?? '');
     if (url && !url.startsWith('http')) {
-      // .md filename or non-URL — clear it so the LLM doesn't cite it as a link
       url = '';
     }
 
     return {
       id: idx + 1,
+      score: r.score ?? 0,
       content: String(payload.page_content ?? ''),
       source: String(meta.source ?? ''),
       url,
@@ -169,7 +170,7 @@ async function searchQdrant(
   });
 }
 
-function buildTools(enabledFeatures: string[] | undefined) {
+function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[] = []) {
   const features = enabledFeatures ?? ['rag'];
   const ragEnabled = features.includes('rag');
 
@@ -203,7 +204,7 @@ function buildTools(enabledFeatures: string[] | undefined) {
             },
           }),
           searchCandidateWebsite: tool({
-            description: "Search a candidate's website content for relevant information.",
+            description: "Search a single candidate's website content. Prefer searchAllCandidates when searching the whole commune.",
             inputSchema: z.object({
               candidateId: z.string().describe('The candidate identifier to search within'),
               query: z.string().describe('The search query to find relevant content'),
@@ -226,6 +227,55 @@ function buildTools(enabledFeatures: string[] | undefined) {
               }
             },
           }),
+          // Search ALL candidates in the commune in one call, re-ranked by relevance
+          ...(candidateIds.length > 0
+            ? {
+                searchAllCandidates: tool({
+                  description:
+                    'Search ALL candidates in the current commune for a topic. Use this for any general question about the commune. Returns results re-ranked by relevance score across all candidates.',
+                  inputSchema: z.object({
+                    query: z.string().describe('The search query (e.g. "transports", "sécurité", "écologie")'),
+                  }),
+                  execute: async (input) => {
+                    const { query } = input;
+                    try {
+                      // Search all candidates in parallel
+                      const allResults = await Promise.all(
+                        candidateIds.map(async (cid) => {
+                          const results = await searchQdrant(
+                            COLLECTIONS.candidatesWebsites,
+                            query,
+                            'metadata.namespace',
+                            cid.toLowerCase(),
+                            5,
+                          );
+                          return results.map((r) => ({ ...r, candidateId: cid }));
+                        }),
+                      );
+
+                      // Flatten, re-rank by score descending, take top 20
+                      const merged = allResults
+                        .flat()
+                        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+                        .slice(0, 20)
+                        .map((r, idx) => ({ ...r, id: idx + 1 }));
+
+                      const candidatesWithResults = new Set(merged.map((r) => r.candidateId));
+
+                      return {
+                        results: merged,
+                        count: merged.length,
+                        candidatesSearched: candidateIds.length,
+                        candidatesWithResults: candidatesWithResults.size,
+                      };
+                    } catch (err) {
+                      console.error('[ai-chat] searchAllCandidates error:', err);
+                      return { results: [] as SearchResult[], count: 0, error: String(err) };
+                    }
+                  },
+                }),
+              }
+            : {}),
         }
       : {}),
 
@@ -580,6 +630,7 @@ export async function POST(req: Request) {
   let resolvedPartyIds = partyIds ?? [];
   let candidateContext = '';
   let candidateIds: string[] = [];
+  let allCandidatesData: Array<{ id: string; [key: string]: any }> = [];
 
   if (municipalityCode) {
     try {
@@ -592,6 +643,7 @@ export async function POST(req: Request) {
         id: doc.id,
         ...doc.data(),
       }));
+      allCandidatesData = candidates;
 
       if (process.env.NODE_ENV === 'development') {
         console.log('[ai-chat] municipalityCode:', municipalityCode, 'partyIds:', partyIds, 'candidates found:', candidates.length);
@@ -649,18 +701,48 @@ export async function POST(req: Request) {
       ? 'Respond in English.'
       : "Réponds en français, en utilisant \"tu\" pour t'adresser à l'utilisateur.";
 
-  const candidateIdsList = candidateIds.map((id) => `  - candidateId: "${id}"`).join('\n');
+  // Determine which candidates to search based on user selection
+  const hasSelection = (partyIds ?? []).length > 0;
+
+  // Build selected candidate IDs from partyIds mapping (reuse already-fetched data)
+  let searchCandidateIds: string[] = [];
+  if (municipalityCode && candidateIds.length > 0) {
+    if (hasSelection) {
+      // Only search candidates whose party_ids overlap with selected partyIds
+      searchCandidateIds = allCandidatesData
+        .filter((c: any) => (c.party_ids ?? []).some((pid: string) => (partyIds ?? []).includes(pid)))
+        .map((c: any) => c.id);
+      // Fallback: if no match found, search all
+      if (searchCandidateIds.length === 0) searchCandidateIds = candidateIds;
+    } else {
+      // No selection → search all candidates
+      searchCandidateIds = candidateIds;
+    }
+  }
+
+  const candidateIdsList = searchCandidateIds.map((id) => `  - candidateId: "${id}"`).join('\n');
 
   const searchInstructions = municipalityCode
-    ? `# RÈGLE CRITIQUE — OBLIGATOIRE
-Pour TOUTE question politique, tu DOIS appeler searchCandidateWebsite pour CHAQUE candidat ci-dessous AVANT de répondre.
-N'utilise PAS searchPartyManifesto en mode local.
+    ? hasSelection && searchCandidateIds.length <= 3
+      ? `# RÈGLE CRITIQUE — OBLIGATOIRE
+Pour TOUTE question politique, tu DOIS appeler searchCandidateWebsite pour CHAQUE candidat sélectionné ci-dessous AVANT de répondre.
+N'utilise PAS searchPartyManifesto en mode commune.
 Ne réponds JAMAIS sans avoir d'abord appelé les outils de recherche.
-Ne demande JAMAIS à l'utilisateur de préciser quel candidat ou quel parti — cherche dans TOUS automatiquement.
-L'utilisateur a DÉJÀ choisi ses candidats via l'interface. N'interroge pas l'utilisateur sur son choix de parti ou candidat.
+L'utilisateur a sélectionné ces candidats via l'interface — concentre-toi sur eux.
 
 Appelle searchCandidateWebsite avec ces candidateId (un appel par candidat) :
-${candidateIdsList || '  (aucun candidat trouvé)'}`
+${candidateIdsList}`
+      : `# RÈGLE CRITIQUE — OBLIGATOIRE
+Pour TOUTE question politique, tu DOIS appeler searchAllCandidates avec ta requête AVANT de répondre.
+Cet outil recherche automatiquement dans TOUS les candidats de la commune et re-classe les résultats par pertinence.
+N'utilise PAS searchPartyManifesto en mode commune.
+Ne réponds JAMAIS sans avoir d'abord appelé searchAllCandidates.
+Ne demande JAMAIS à l'utilisateur de préciser quel candidat ou quel parti.
+
+${hasSelection ? `L'utilisateur a sélectionné des candidats — mets en avant leurs positions, mais inclus aussi les autres pour comparaison.` : `Aucun candidat sélectionné — présente les positions de TOUS les candidats de la commune.`}
+
+Candidats disponibles :
+${candidateIds.map((id) => `  - ${id}`).join('\n')}`
     : `# RÈGLE CRITIQUE — OBLIGATOIRE
 Pour TOUTE question politique, tu DOIS appeler searchPartyManifesto pour CHAQUE parti ci-dessous AVANT de répondre.
 Ne réponds JAMAIS sans avoir d'abord appelé les outils de recherche.
@@ -670,36 +752,33 @@ Appelle searchPartyManifesto avec ces partyId (un appel par parti) :
 ${resolvedPartyIds.map((id) => `  - partyId: "${id}"`).join('\n') || '  (aucun parti trouvé)'}`;
 
   const contextLine = municipalityCode
-    ? `L'utilisateur consulte les candidats de la commune ${municipalityCode}`
+    ? `L'utilisateur consulte les candidats de la commune ${municipalityCode}. ${hasSelection ? `Candidats sélectionnés : ${searchCandidateIds.join(', ')}` : 'Aucun candidat sélectionné — montre TOUS les candidats.'}`
     : `L'utilisateur a sélectionné ces partis : ${partiesList}`;
 
   const systemPrompt = `${searchInstructions}
 
-Candidats/partis disponibles pour la recherche : ${partiesList}
-
 # Rôle
-Tu es un assistant IA politiquement neutre qui aide les citoyens à se renseigner sur les partis politiques et leurs positions pour les élections françaises.
-Tu utilises les documents récupérés via les outils pour répondre aux questions de l'utilisateur avec des citations de sources.
+Tu es un assistant IA politiquement neutre spécialisé dans les élections municipales françaises.
+Tu aides les citoyens à comparer les positions des candidats de leur commune en te basant sur leurs programmes, sites web et professions de foi.
 
 # Contexte
 Date : ${currentDate}
 ${contextLine}
 
 # Instructions pour ta réponse
-1. **Basé sur les sources** : Pour les questions sur les programmes des partis, réfère-toi exclusivement aux informations des documents récupérés. Si les documents ne contiennent pas d'information sur le sujet, dis-le honnêtement. N'invente jamais de faits.
-2. **Neutralité stricte** : N'évalue pas les positions des partis. Évite les adjectifs subjectifs. Ne donne AUCUNE recommandation de vote.
-3. **Transparence** : Signale les incertitudes. Admets quand tu ne sais pas. Distingue les faits des interprétations.
+1. **Basé sur les sources** : Réfère-toi exclusivement aux documents récupérés via les outils. Si les documents ne contiennent pas d'information sur le sujet, dis-le honnêtement. N'invente jamais de faits.
+2. **Neutralité stricte** : N'évalue pas les positions. Évite les adjectifs subjectifs. Ne donne AUCUNE recommandation de vote.
+3. **Comparatif par défaut** : Quand plusieurs candidats ont des positions sur un sujet, présente-les côte à côte pour faciliter la comparaison. Utilise des tableaux ou puces par candidat.
 4. **Style de réponse** :
-   - Réponds avec des sources, de manière concrète et facile à comprendre
-   - Donne des chiffres précis quand ils sont disponibles dans les sources
-   - Cite les sources : après chaque affirmation factuelle, indique les IDs de source entre crochets [1], [2]
-   - Si aucune source n'a été utilisée pour une affirmation, écris-la en italique
+   - Concret et facile à comprendre, avec des chiffres précis quand disponibles
+   - Cite les sources : [1], [2] après chaque affirmation factuelle
+   - Si aucune source n'a été utilisée, écris l'affirmation en italique
    - Formate en Markdown avec des puces et des mots-clés en gras
-   - Garde les réponses courtes : 1-3 phrases ou puces, sauf si l'utilisateur demande plus de détails
-   - **Sois proactif** : ne pose pas plus d'une question de clarification. Si la demande est vague, fais des choix raisonnables et agis. Montre ce que tu sais faire plutôt que de demander des précisions. Par exemple, si l'utilisateur demande un graphique sans données précises, génère-le avec les données que tu as trouvées via les outils de recherche ou avec des données d'exemple pertinentes au contexte politique.
-5. **Limites** : Signale quand l'information peut être obsolète, les faits peu clairs, ou quand une question ne peut pas être traitée neutralement
+   - Réponses concises : 1-3 puces par candidat, sauf demande de détails
+   - **Sois proactif** : ne pose pas plus d'une question de clarification. Si la demande est vague, fais des choix raisonnables et agis. Montre ce que tu sais faire.
+5. **Limites** : Signale quand l'information peut être obsolète ou incomplète
 6. **Protection des données** : Ne demande pas d'intentions de vote ni de données personnelles
-7. **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle TOUJOURS l'outil suggestFollowUps avec 3 questions de suivi pertinentes liées au sujet discuté
+7. **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle TOUJOURS l'outil suggestFollowUps avec 3 questions pertinentes
 
 ${respondInLanguage}${candidateContext}`;
 
@@ -763,7 +842,7 @@ ${respondInLanguage}${candidateContext}`;
         console.error('[ai-chat] Failed to persist conversation:', err);
       }
     },
-    tools: buildTools(enabledFeatures),
+    tools: buildTools(enabledFeatures, candidateIds),
   });
 
   return result.toUIMessageStreamResponse();

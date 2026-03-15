@@ -10,11 +10,10 @@ export const qdrantClient = new QdrantClient({
   ...(qdrantUrl.startsWith('https') ? { port: 443 } : {}),
 });
 
-// Collection names with env suffix
-const env = process.env.ENV || 'dev';
+// Collection names (no env suffix — single Qdrant instance per environment)
 export const COLLECTIONS = {
-  allParties: `all_parties_${env}`,
-  candidatesWebsites: `candidates_websites_${env}`,
-  votingBehavior: `justified_voting_behavior_${env}`,
-  parliamentaryQuestions: `parliamentary_questions_${env}`,
+  allParties: 'all_parties',
+  candidatesWebsites: 'candidates_websites',
+  votingBehavior: 'justified_voting_behavior',
+  parliamentaryQuestions: 'parliamentary_questions',
 } as const;
