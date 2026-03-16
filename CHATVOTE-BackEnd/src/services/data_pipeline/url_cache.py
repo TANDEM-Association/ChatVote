@@ -172,7 +172,7 @@ async def cached_fetch(
                     logger.warning("[url_cache] %d for %s — exhausted retries", resp.status, url)
                     return None
                 if resp.status != 200:
-                    logger.debug("[url_cache] non-200 (%d) for %s", resp.status, url)
+                    logger.warning("[url_cache] non-200 (%d) for %s", resp.status, url)
                     return None
                 body = await resp.read()
                 content_type = resp.content_type or ""

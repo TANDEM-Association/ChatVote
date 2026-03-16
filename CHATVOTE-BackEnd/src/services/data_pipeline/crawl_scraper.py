@@ -781,6 +781,10 @@ class CrawlScraperNode(DataSourceNode):
             # Drive API listings are dynamic — never cache them
             raw = await cached_fetch(session, url, headers=headers, skip_cache=True)
             if raw is None:
+                logger.error(
+                    "[crawl] Drive API returned None for folder_id=%s (page=%d, url_prefix=%s)",
+                    folder_id, page_num + 1, url[:120],
+                )
                 break
             data = json.loads(raw)
             batch = data.get("files", [])
