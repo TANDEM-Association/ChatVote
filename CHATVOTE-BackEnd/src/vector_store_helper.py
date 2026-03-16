@@ -843,7 +843,7 @@ async def identify_relevant_docs_combined(
                     rag_query=rag_query,
                     party_ids=party_ids,
                     municipality_code=municipality_code,
-                    n_docs=n_docs_candidates,
+                    n_docs_per_candidate=5,
                     score_threshold=score_threshold,
                 )
             )
@@ -1022,70 +1022,77 @@ async def _search_candidate_docs_by_party_and_municipality(
     rag_query: str,
     party_ids: list[str],
     municipality_code: str,
-    n_docs: int = 10,
+    candidate_ids: list[str] | None = None,
+    n_docs_per_candidate: int = 5,
     score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     max_fiabilite: int = 3,
 ) -> list[Document]:
-    """Search candidate docs filtered by party + municipality using Qdrant filters."""
-    logger.info(
-        f"Candidate search: municipality={municipality_code}, party_ids={party_ids}, "
-        f"collection={CANDIDATES_INDEX_NAME}, n_docs={n_docs}"
-    )
+    """Search candidate docs per-candidate to ensure fair coverage.
+
+    Each candidate gets up to ``n_docs_per_candidate`` results so that
+    candidates with fewer indexed chunks are not drowned out by those
+    with many (e.g. 1 000+ website pages).
+    """
+    import asyncio as _asyncio
 
     if not _collection_exists(CANDIDATES_INDEX_NAME):
         logger.warning(f"Candidate collection {CANDIDATES_INDEX_NAME} not found")
         return []
 
     query_vector = await embed.aembed_query(rag_query)
+    fiabilite_filter = _build_fiabilite_filter(max_fiabilite)
 
-    municipality_filter = Filter(
-        must=[
-            FieldCondition(
-                key="metadata.municipality_code",
-                match=MatchValue(value=municipality_code),
-            )
-        ]
+    # If caller didn't provide candidate_ids, search per-candidate using
+    # the candidate_ids from the municipality's Firestore records.
+    if not candidate_ids:
+        from src.firebase_service import aget_candidates_by_municipality
+        local_candidates = await aget_candidates_by_municipality(municipality_code)
+        candidate_ids = [c.candidate_id for c in local_candidates]
+
+    logger.info(
+        f"Candidate search: municipality={municipality_code}, "
+        f"{len(candidate_ids)} candidates, {n_docs_per_candidate} docs each"
     )
 
-    # Municipality filter is the primary scope — party_ids filtering is skipped
-    # because candidate website metadata typically has empty party_ids arrays
-    # (the affiliation is inferred from the candidate's Firestore record, not
-    # stored in the Qdrant payload).
-    query_filter = _combine_filters(municipality_filter, _build_fiabilite_filter(max_fiabilite))
-
-    try:
-        _query_response = await async_qdrant_client.query_points(
-            collection_name=CANDIDATES_INDEX_NAME,
-            query=query_vector,
-            using="dense",
-            limit=n_docs,
-            with_payload=True,
-            query_filter=query_filter,
-            score_threshold=score_threshold,
+    async def _search_one(cid: str) -> list[Document]:
+        cid_filter = Filter(
+            must=[
+                FieldCondition(
+                    key="metadata.candidate_ids",
+                    match=MatchAny(any=[cid]),
+                )
+            ]
         )
-        search_result = _query_response.points
-        logger.info(
-            f"Candidate search by municipality: municipality={municipality_code}, "
-            f"party_ids={party_ids}, results={len(search_result)}, "
-            f"score_threshold={score_threshold}"
-        )
-    except (ConnectionError, TimeoutError) as e:
-        logger.warning(f"Qdrant unavailable for candidates search: {type(e).__name__}: {e!r}")
-        return []
-    except Exception as e:
-        logger.error(f"Unexpected error in candidates search: {type(e).__name__}: {e!r}", exc_info=True)
-        raise
+        qf = _combine_filters(cid_filter, fiabilite_filter)
+        try:
+            resp = await async_qdrant_client.query_points(
+                collection_name=CANDIDATES_INDEX_NAME,
+                query=query_vector,
+                using="dense",
+                limit=n_docs_per_candidate,
+                with_payload=True,
+                query_filter=qf,
+                score_threshold=score_threshold,
+            )
+            docs = []
+            for pt in resp.points:
+                if pt.payload is None:
+                    continue
+                metadata = pt.payload.get("metadata", {})
+                content = pt.payload.get("page_content", "")
+                docs.append(Document(page_content=content, metadata=metadata))
+            return docs
+        except Exception as e:
+            logger.warning(f"Candidate search failed for {cid}: {e}")
+            return []
 
-    documents = []
-    for point in search_result:
-        if point.payload is None:
-            continue
-        metadata = point.payload.get("metadata", {})
-        content = point.payload.get("page_content", "")
-        doc = Document(page_content=content, metadata=metadata)
-        documents.append(doc)
-
-    return documents
+    results = await _asyncio.gather(*[_search_one(cid) for cid in candidate_ids])
+    all_docs = [doc for per_cand in results for doc in per_cand]
+    logger.info(
+        f"Candidate per-candidate search: municipality={municipality_code}, "
+        f"total_docs={len(all_docs)} from {len(candidate_ids)} candidates"
+    )
+    return all_docs
 
 
 async def _identify_relevant_manifesto_documents(
