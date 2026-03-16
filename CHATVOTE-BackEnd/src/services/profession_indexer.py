@@ -591,12 +591,99 @@ async def _update_firestore_url(candidate_id: str, storage_url: str | None) -> N
 # Commune-level and full-batch functions
 # ---------------------------------------------------------------------------
 
-async def index_commune_professions(commune_code: str) -> dict[str, int]:
-    """Index all profession de foi PDFs for a commune from the local cache.
+async def _download_pdf_from_url(url: str, dest: Path) -> bool:
+    """Download a PDF from a URL to a local path. Returns True on success."""
+    import aiohttp as _aiohttp
 
-    Expects PDFs in _PDF_CACHE_DIR/{commune_code}/ with filenames
-    matching the pattern {tour}-{commune_code}-{panneau}.pdf.
-    candidate_id is derived as cand-{commune_code}-{panneau}.
+    try:
+        timeout = _aiohttp.ClientTimeout(total=30)
+        async with _aiohttp.ClientSession(timeout=timeout) as session:
+            async with session.get(url) as resp:
+                if resp.status != 200:
+                    logger.warning(
+                        f"[profession_indexer] download {url}: HTTP {resp.status}"
+                    )
+                    return False
+                content = await resp.read()
+                if not content[:4] == b"%PDF":
+                    logger.warning(
+                        f"[profession_indexer] download {url}: not a PDF"
+                    )
+                    return False
+                dest.parent.mkdir(parents=True, exist_ok=True)
+                dest.write_bytes(content)
+                return True
+    except Exception as e:
+        logger.warning(f"[profession_indexer] download {url} failed: {e}")
+        return False
+
+
+async def _fetch_commune_pdfs_from_firestore(
+    commune_code: str,
+) -> list[tuple[str, Path]]:
+    """Query Firestore for candidates with manifesto_pdf_url in a commune.
+
+    Downloads each PDF to a temp cache dir. Returns [(candidate_id, local_path), ...].
+    The professions pipeline node stores the ministry URL as manifesto_pdf_url
+    for every candidate whose profession de foi PDF exists.
+    """
+    import tempfile
+
+    try:
+        docs = (
+            async_db.collection("candidates")
+            .where("municipality_code", "==", commune_code)
+            .where("manifesto_pdf_url", "!=", "")
+            .stream()
+        )
+        candidates: list[tuple[str, str]] = []
+        async for doc in docs:
+            data = doc.to_dict() or {}
+            url = data.get("manifesto_pdf_url", "")
+            if url and "programme-candidats.interieur.gouv.fr" in url:
+                candidates.append((doc.id, url))
+
+        if not candidates:
+            logger.info(
+                f"[profession_indexer] no Firestore manifesto URLs for commune {commune_code}"
+            )
+            return []
+
+        logger.info(
+            f"[profession_indexer] found {len(candidates)} manifesto URLs in Firestore "
+            f"for commune {commune_code}, downloading..."
+        )
+
+        tmp_dir = Path(tempfile.gettempdir()) / "profession_pdfs" / commune_code
+        results: list[tuple[str, Path]] = []
+        for cand_id, url in candidates:
+            filename = url.rsplit("/", 1)[-1]  # e.g. 1-75056-5.pdf
+            dest = tmp_dir / filename
+            if dest.exists() and dest.stat().st_size > 0:
+                results.append((cand_id, dest))
+            elif await _download_pdf_from_url(url, dest):
+                results.append((cand_id, dest))
+            else:
+                logger.warning(
+                    f"[profession_indexer] could not download PDF for {cand_id}: {url}"
+                )
+
+        return results
+
+    except Exception as e:
+        logger.error(
+            f"[profession_indexer] Firestore lookup failed for commune {commune_code}: {e}"
+        )
+        return []
+
+
+async def index_commune_professions(commune_code: str) -> dict[str, int]:
+    """Index all profession de foi PDFs for a commune.
+
+    Tries local cache first (_PDF_CACHE_DIR/{commune_code}/*.pdf).
+    Falls back to downloading PDFs from the ministry URLs stored in
+    Firestore by the professions pipeline node — this allows K8s Jobs
+    to index professions without needing a local PDF cache.
 
     Args:
         commune_code: INSEE commune code, e.g. "75056"
@@ -604,37 +691,51 @@ async def index_commune_professions(commune_code: str) -> dict[str, int]:
     Returns:
         {candidate_id: chunk_count} for each PDF found.
     """
+    # --- Strategy 1: local cache (fast, in-process pipeline) ---
     commune_dir = _PDF_CACHE_DIR / commune_code
-    if not commune_dir.exists():
-        logger.warning(
-            f"[profession_indexer] no PDF cache dir for commune {commune_code}: {commune_dir}"
+    pdf_files = list(commune_dir.glob("*.pdf")) if commune_dir.exists() else []
+
+    if pdf_files:
+        logger.info(
+            f"[profession_indexer] found {len(pdf_files)} PDFs in local cache "
+            f"for commune {commune_code}"
+        )
+        results: dict[str, int] = {}
+        for pdf_path in pdf_files:
+            stem = pdf_path.stem  # e.g. "1-75056-3"
+            parts = stem.split("-")
+            if len(parts) < 3:
+                logger.warning(
+                    f"[profession_indexer] unexpected filename format: {pdf_path.name}, skipping"
+                )
+                continue
+            panneau = parts[-1]
+            candidate_id = f"cand-{commune_code}-{panneau}"
+            try:
+                count = await index_candidate_profession(candidate_id, str(pdf_path))
+                results[candidate_id] = count
+            except Exception as e:
+                logger.error(
+                    f"[profession_indexer] error indexing {candidate_id} "
+                    f"({pdf_path.name}): {e}"
+                )
+                results[candidate_id] = 0
+        return results
+
+    # --- Strategy 2: download from Firestore manifesto URLs (K8s Jobs) ---
+    logger.info(
+        f"[profession_indexer] no local cache for commune {commune_code}, "
+        f"falling back to Firestore manifesto URLs"
+    )
+    downloaded = await _fetch_commune_pdfs_from_firestore(commune_code)
+    if not downloaded:
+        logger.info(
+            f"[profession_indexer] no PDFs available for commune {commune_code}"
         )
         return {}
 
-    pdf_files = list(commune_dir.glob("*.pdf"))
-    if not pdf_files:
-        logger.info(f"[profession_indexer] no PDFs found for commune {commune_code}")
-        return {}
-
-    logger.info(
-        f"[profession_indexer] found {len(pdf_files)} PDFs for commune {commune_code}"
-    )
-
-    results: dict[str, int] = {}
-    for pdf_path in pdf_files:
-        # Filename pattern: {tour}-{commune_code}-{panneau}.pdf
-        # e.g. 1-75056-3.pdf -> panneau=3, candidate_id=cand-75056-3
-        stem = pdf_path.stem  # e.g. "1-75056-3"
-        parts = stem.split("-")
-        if len(parts) < 3:
-            logger.warning(
-                f"[profession_indexer] unexpected filename format: {pdf_path.name}, skipping"
-            )
-            continue
-
-        panneau = parts[-1]
-        candidate_id = f"cand-{commune_code}-{panneau}"
-
+    results = {}
+    for candidate_id, pdf_path in downloaded:
         try:
             count = await index_candidate_profession(candidate_id, str(pdf_path))
             results[candidate_id] = count
