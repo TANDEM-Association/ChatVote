@@ -904,12 +904,46 @@ async def identify_relevant_docs_combined(
             top_k=10,
         )
 
-    if len(unique_candidate_docs) >= 3:
-        unique_candidate_docs = await rerank_documents(
-            relevant_docs=unique_candidate_docs,
-            user_message=user_message,
-            chat_history=chat_history,
-            top_k=10,
+    # Rerank candidate docs PER CANDIDATE to preserve fair representation.
+    # Global reranking would let dominant candidates (many chunks) crowd out
+    # smaller ones. Instead, rerank within each candidate's docs and keep top 3.
+    if unique_candidate_docs:
+        from collections import defaultdict
+        per_cand: dict[str, list[Document]] = defaultdict(list)
+        for doc in unique_candidate_docs:
+            cid = (doc.metadata.get("candidate_ids") or ["unknown"])[0]
+            per_cand[cid].append(doc)
+
+        reranked_candidate_docs = []
+        rerank_tasks = []
+        cand_keys = []
+        for cid, docs in per_cand.items():
+            if len(docs) >= 3:
+                cand_keys.append(cid)
+                rerank_tasks.append(
+                    rerank_documents(
+                        relevant_docs=docs,
+                        user_message=user_message,
+                        chat_history=chat_history,
+                        top_k=5,
+                    )
+                )
+            else:
+                reranked_candidate_docs.extend(docs)
+
+        if rerank_tasks:
+            rerank_results = await asyncio.gather(*rerank_tasks, return_exceptions=True)
+            for cid, result in zip(cand_keys, rerank_results):
+                if isinstance(result, BaseException):
+                    logger.warning(f"Rerank failed for {cid}: {result}")
+                    reranked_candidate_docs.extend(per_cand[cid][:5])
+                else:
+                    reranked_candidate_docs.extend(result)
+
+        unique_candidate_docs = reranked_candidate_docs
+        logger.info(
+            f"Per-candidate reranking: {len(per_cand)} candidates, "
+            f"{len(unique_candidate_docs)} docs total"
         )
 
     return (unique_manifesto_docs, unique_candidate_docs)
