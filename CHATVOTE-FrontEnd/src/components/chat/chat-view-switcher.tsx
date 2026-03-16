@@ -1,5 +1,7 @@
 "use client";
 
+import { useSearchParams } from "next/navigation";
+
 import { AI_SDK_ENABLED } from "@lib/ai/feature-flags";
 import { useChatModeStore } from "@lib/stores/chat-mode-store";
 import { useAppContext } from "@components/providers/app-provider";
@@ -12,16 +14,23 @@ type Props = {
   children: React.ReactNode;
 };
 
+/** Returns true when AI SDK mode should be active (URL override or store). */
+export function useIsAiSdkActive(): boolean {
+  const params = useSearchParams();
+  const { chatMode } = useChatModeStore();
+  const urlOverride = params.get("mode") === "ai";
+  return urlOverride || (AI_SDK_ENABLED && chatMode === "ai-sdk");
+}
+
 /**
  * Client-side switcher between Classic (Socket.IO) and AI SDK chat modes.
- * When AI SDK mode is active, renders AiSdkChatView instead of the classic view.
- * When Classic mode is active, renders children (the existing ChatViewSsr flow).
+ * Supports ?mode=ai URL param to force AI SDK mode without env var.
  */
 export default function ChatViewSwitcher({ sessionId, municipalityCode, children }: Props) {
-  const { chatMode } = useChatModeStore();
+  const active = useIsAiSdkActive();
   const { locale } = useAppContext();
 
-  if (AI_SDK_ENABLED && chatMode === "ai-sdk") {
+  if (active) {
     return <AiSdkChatView chatId={sessionId} locale={locale} municipalityCode={municipalityCode} />;
   }
 

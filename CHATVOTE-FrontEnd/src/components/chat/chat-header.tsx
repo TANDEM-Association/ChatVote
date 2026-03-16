@@ -10,6 +10,8 @@ import { SidebarTrigger } from "@components/ui/sidebar";
 import { IS_EMBEDDED } from "@lib/utils";
 import { Heart, HelpCircleIcon, XIcon } from "lucide-react";
 
+import { useSearchParams } from "next/navigation";
+
 import { AI_SDK_ENABLED } from "@lib/ai/feature-flags";
 
 import ChatEmbedHeader from "./chat-embed-header";
@@ -20,6 +22,10 @@ import { ThemeModeToggle } from "./theme-mode-toggle";
 
 function ChatHeader() {
   const [displayBanner, setDisplayBanner] = useState(true);
+  const params = useSearchParams();
+  const urlModeOverride = params.get("mode") === "ai";
+  // Show toggle only when env-flag enabled AND not forced via URL param
+  const showToggle = AI_SDK_ENABLED && !urlModeOverride;
 
   if (IS_EMBEDDED) {
     return <ChatEmbedHeader />;
@@ -70,7 +76,7 @@ function ChatHeader() {
             </div>
             <ThemeModeToggle />
             <LanguageSwitcher />
-            {AI_SDK_ENABLED && <ChatModeToggle />}
+            {showToggle && <ChatModeToggle />}
           </div>
           {/* Right side - Help, Share, New Chat */}
           <div className="flex items-center gap-1">
