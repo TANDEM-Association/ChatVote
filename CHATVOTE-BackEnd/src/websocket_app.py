@@ -165,6 +165,7 @@ sio = socketio.AsyncServer(
     transports=["websocket", "polling"],
     ping_interval=25,
     ping_timeout=120,
+    max_http_buffer_size=10 * 1024 * 1024,  # 10 MB — large chat histories
 )
 
 
