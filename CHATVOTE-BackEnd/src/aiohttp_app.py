@@ -2242,6 +2242,24 @@ async def ds_preview(request):
     return web.json_response(preview)
 
 
+@routes.post(f"{route_prefix}/admin/data-sources/drive-cleanup")
+async def ds_drive_cleanup(request):
+    """Detect (and optionally trash) failed crawl folders on Google Drive.
+
+    Query params:
+        dry_run=true (default) — only report failed folders
+        dry_run=false — move failed folders to Drive trash (recoverable)
+    """
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    dry_run = request.query.get("dry_run", "true").lower() != "false"
+
+    from src.services.data_pipeline.crawl_scraper import detect_failed_drive_folders
+    result = await detect_failed_drive_folders(dry_run=dry_run)
+    return web.json_response(result)
+
+
 @routes.get(f"{route_prefix}/admin/data-sources/k8s-status")
 async def ds_k8s_status(request):
     """Return K8s cluster status: pods, jobs, cronjobs, statefulsets."""

@@ -464,8 +464,14 @@ async def index_candidate_website(
     return len(documents)
 
 
-def _get_indexed_candidate_counts() -> dict[str, int]:
-    """Return {candidate_id: chunk_count} for candidates already in Qdrant."""
+def _get_indexed_candidate_counts(*, exclude_manifestos: bool = True) -> dict[str, int]:
+    """Return {candidate_id: chunk_count} for candidates already in Qdrant.
+
+    Args:
+        exclude_manifestos: If True (default), skip chunks where
+            source_document == "profession_de_foi" so that candidates
+            with only manifesto chunks are not falsely marked as indexed.
+    """
     try:
         _ensure_candidates_collection_exists()
         counts: dict[str, int] = {}
@@ -475,15 +481,19 @@ def _get_indexed_candidate_counts() -> dict[str, int]:
                 collection_name=CANDIDATES_INDEX_NAME,
                 limit=256,
                 offset=offset,
-                with_payload=["metadata.namespace"],
+                with_payload=["metadata.namespace", "metadata.source_document"],
                 with_vectors=False,
             )
             if not results:
                 break
             for point in results:
-                ns = (point.payload or {}).get("metadata", {}).get("namespace", "")
-                if ns:
-                    counts[ns] = counts.get(ns, 0) + 1
+                meta = (point.payload or {}).get("metadata", {})
+                ns = meta.get("namespace", "")
+                if not ns:
+                    continue
+                if exclude_manifestos and meta.get("source_document") == "profession_de_foi":
+                    continue
+                counts[ns] = counts.get(ns, 0) + 1
             if next_offset is None:
                 break
             offset = next_offset

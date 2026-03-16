@@ -102,27 +102,12 @@ def _select_candidates_to_index(
     from src.firebase_service import async_db
 
     # Get candidates with scraped websites from Firestore
-    scraped_cids: set[str] = set()
-
-    async def _get_scraped_cids() -> set[str]:
-        result: set[str] = set()
-        async for doc in async_db.collection("candidates").stream():
-            data = doc.to_dict()
-            if data.get("has_scraped"):
-                result.add(doc.id)
-        return result
-
     t0 = _time.monotonic()
-    loop = asyncio.get_event_loop()
-    if loop.is_running():
-        # We're already in an async context — create a task
-        import concurrent.futures
-        # Can't nest event loops; use sync Qdrant check
-        scraped_cids = set()
-        # This path won't actually be hit in normal pipeline flow
-        # since scraped context is always set by crawl_scraper
-    else:
-        scraped_cids = loop.run_until_complete(_get_scraped_cids())
+    scraped_cids: set[str] = set()
+    async for doc in async_db.collection("candidates").stream():
+        data = doc.to_dict()
+        if data.get("has_scraped"):
+            scraped_cids.add(doc.id)
     logger.info("[indexer:timing] Firestore has_scraped scan took %.2fs", _time.monotonic() - t0)
 
     t0 = _time.monotonic()
@@ -189,9 +174,14 @@ async def _index_candidates(
                     logger.warning("[indexer] no Drive data for %s, skipping", candidate.full_name)
                     return 0
 
+                t_index = _time.monotonic()
                 count = await index_candidate_website(
                     candidate, scraped_website,
                     classify_themes=classify_themes,
+                )
+                logger.info(
+                    "[indexer:timing] index_candidate_website(%s) took %.2fs, %d chunks",
+                    candidate.full_name, _time.monotonic() - t_index, count,
                 )
                 candidates_indexed += count
                 indexed_count += 1

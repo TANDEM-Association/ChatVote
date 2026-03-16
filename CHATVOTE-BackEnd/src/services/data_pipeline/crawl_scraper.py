@@ -506,6 +506,11 @@ async def load_scraped_from_drive(
         )
 
         if not candidates_folders:
+            logger.warning(
+                "[load_scraped_from_drive] no slug match for %s (slug=%s, %d folders in Drive, sample=%s)",
+                candidate_id, slug, len(subfolders),
+                [f["name"] for f in subfolders[:5]],
+            )
             return None
 
         # Try each matching folder (newest first) until we find one with content
@@ -524,8 +529,11 @@ async def load_scraped_from_drive(
                 break
 
         if not site_folder:
-            # Fallback to newest folder even without expected subfolders
-            site_folder = candidates_folders[0]
+            logger.warning(
+                "[load_scraped_from_drive] no folder with content for %s (slug=%s, %d folder matches checked)",
+                candidate_id, slug, len(candidates_folders),
+            )
+            return None
 
         # Download content
         try:
@@ -765,7 +773,8 @@ class CrawlScraperNode(DataSourceNode):
             if page_token:
                 url += f"&pageToken={page_token}"
             _t_page = _time.monotonic()
-            raw = await cached_fetch(session, url, headers=headers)
+            # Drive API listings are dynamic — never cache them
+            raw = await cached_fetch(session, url, headers=headers, skip_cache=True)
             if raw is None:
                 break
             data = json.loads(raw)
@@ -1028,8 +1037,10 @@ class CrawlScraperNode(DataSourceNode):
 
     def _ensure_token(self, creds) -> str:
         if not creds.valid:
+            _t_refresh = _time.monotonic()
             from google.auth.transport.requests import Request
             creds.refresh(Request())
+            logger.info("[crawl:timing] token_refresh took %.2fs", _time.monotonic() - _t_refresh)
         return creds.token
 
     # -----------------------------------------------------------------------
@@ -1555,12 +1566,136 @@ class CrawlScraperNode(DataSourceNode):
             }
         ]
 
+        _total_elapsed = _time.monotonic() - _t_firestore_scan
         logger.info(
             "[crawl_scraper] done — %d processed, %d with content, %d pages, %d chars",
             len(processed_ids), with_content, total_pages, total_chars,
+        )
+        logger.info(
+            "[crawl:timing:summary] CRAWL_SCRAPER total=%.1fs | candidates_total=%d "
+            "submitted=%d processed=%d downloaded=%d cached=%d with_content=%d "
+            "pages=%d chars=%d",
+            _total_elapsed,
+            len(unscraped) + len(already_scraped_candidates),
+            len(to_submit), len(processed_ids), len(downloaded_ids),
+            cached_count, with_content, total_pages, total_chars,
         )
 
         return cfg
 
 
 register_node(CrawlScraperNode())
+
+
+# ---------------------------------------------------------------------------
+# Drive cleanup: detect & trash failed crawl folders
+# ---------------------------------------------------------------------------
+
+_CONTENT_SUBFOLDERS = {"markdown", "pdf_markdown", "pages"}
+
+
+async def detect_failed_drive_folders(
+    drive_folder_id: str | None = None,
+    *,
+    dry_run: bool = True,
+) -> dict:
+    """Scan Google Drive for failed crawl folders (no usable content).
+
+    A folder is considered "failed" if it has NO subfolders named
+    markdown, pdf_markdown, or pages — typically only images/ or placeholder.txt.
+
+    Args:
+        drive_folder_id: Override the default Drive folder ID.
+        dry_run: If True (default), only report. If False, trash the folders.
+
+    Returns dict with keys: failed, trashed, total_scanned, errors.
+    """
+    try:
+        creds = _get_crawl_credentials()
+    except Exception as exc:
+        return {"error": str(exc), "failed": [], "trashed": 0, "total_scanned": 0}
+
+    node = CrawlScraperNode()
+    if drive_folder_id is None:
+        drive_folder_id = node.default_settings["drive_folder_id"]
+
+    failed: list[dict] = []
+    errors: list[str] = []
+    total_scanned = 0
+    trashed = 0
+
+    async with aiohttp.ClientSession() as session:
+        token = node._ensure_token(creds)
+
+        # List all top-level subfolders
+        try:
+            subfolders = await node._drive_list(
+                session, drive_folder_id, token,
+                mime_filter="application/vnd.google-apps.folder",
+            )
+        except Exception as exc:
+            return {"error": f"Drive list failed: {exc}", "failed": [], "trashed": 0, "total_scanned": 0}
+
+        total_scanned = len(subfolders)
+        logger.info("[drive_cleanup] scanning %d folders for failed crawls", total_scanned)
+
+        for sf in subfolders:
+            token = node._ensure_token(creds)
+            try:
+                children = await node._drive_list(session, sf["id"], token)
+                child_folder_names = {
+                    c["name"] for c in children
+                    if "folder" in c.get("mimeType", "")
+                }
+
+                has_content = bool(child_folder_names & _CONTENT_SUBFOLDERS)
+                if has_content:
+                    continue
+
+                # Check for any non-trivial files (report.csv counts as content)
+                file_names = [c["name"] for c in children if "folder" not in c.get("mimeType", "")]
+                has_report = "report.csv" in file_names
+
+                entry = {
+                    "id": sf["id"],
+                    "name": sf["name"],
+                    "created": sf.get("createdTime", ""),
+                    "child_folders": sorted(child_folder_names),
+                    "files": sorted(file_names),
+                    "has_report": has_report,
+                    "empty": len(children) == 0,
+                }
+                failed.append(entry)
+
+                if not dry_run:
+                    try:
+                        token = node._ensure_token(creds)
+                        # Trash the folder (recoverable via Drive trash)
+                        async with session.patch(
+                            f"https://www.googleapis.com/drive/v3/files/{sf['id']}",
+                            headers={"Authorization": f"Bearer {token}"},
+                            json={"trashed": True},
+                            params={"supportsAllDrives": "true"},
+                        ) as resp:
+                            if resp.status == 200:
+                                trashed += 1
+                                logger.info("[drive_cleanup] trashed %s (%s)", sf["name"], sf["id"])
+                            else:
+                                errors.append(f"Trash {sf['name']}: HTTP {resp.status}")
+                    except Exception as exc:
+                        errors.append(f"Trash {sf['name']}: {exc}")
+
+            except Exception as exc:
+                errors.append(f"Scan {sf['name']}: {exc}")
+
+    logger.info(
+        "[drive_cleanup] done — %d/%d failed, %d trashed, %d errors",
+        len(failed), total_scanned, trashed, len(errors),
+    )
+    return {
+        "failed": failed,
+        "trashed": trashed,
+        "total_scanned": total_scanned,
+        "dry_run": dry_run,
+        "errors": errors,
+    }
