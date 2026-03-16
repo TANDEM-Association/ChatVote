@@ -511,6 +511,20 @@ async def load_scraped_from_drive(
             reverse=True,  # newest first
         )
 
+        # Fuzzy fallback: strip hyphens and compare (handles programme-html vs programmehtml)
+        if not candidates_folders:
+            slug_norm = slug.replace("-", "")
+            candidates_folders = sorted(
+                [f for f in subfolders if slug_norm in f["name"].replace("-", "")],
+                key=lambda f: f.get("createdTime", ""),
+                reverse=True,
+            )
+            if candidates_folders:
+                logger.info(
+                    "[load_scraped_from_drive] fuzzy slug match for %s: %s -> %s",
+                    candidate_id, slug, candidates_folders[0]["name"],
+                )
+
         if not candidates_folders:
             logger.warning(
                 "[load_scraped_from_drive] no slug match for %s (slug=%s, %d folders in Drive, sample=%s)",
