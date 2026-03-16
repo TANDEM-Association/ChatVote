@@ -4,7 +4,7 @@ import { z } from 'zod/v4';
 
 import { embedQuery } from '@lib/ai/embedding';
 import { COLLECTIONS, qdrantClient } from '@lib/ai/qdrant-client';
-import { db } from '@lib/firebase/firebase-admin';
+import { db, auth } from '@lib/firebase/firebase-admin';
 
 export const maxDuration = 120;
 export const preferredRegion = 'cdg1';
@@ -129,8 +129,9 @@ async function searchQdrant(
   filterKey: string,
   filterValue: string,
   limit: number,
+  precomputedVector?: number[],
 ): Promise<SearchResult[]> {
-  const embedding = await embedQuery(query);
+  const embedding = precomputedVector ?? (await embedQuery(query));
 
   const results = await qdrantClient.search(collection, {
     vector: { name: 'dense', vector: embedding },
@@ -141,7 +142,14 @@ async function searchQdrant(
           match: { value: filterValue },
         },
       ],
+      must_not: [
+        {
+          key: 'metadata.fiabilite',
+          range: { gt: 3 },
+        },
+      ],
     },
+    score_threshold: 0.35,
     limit,
     with_payload: true,
   });
@@ -246,9 +254,14 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   execute: async (input) => {
                     const { queries } = input;
                     try {
+                      // Pre-embed all unique queries once (avoids N×M redundant embedding calls)
+                      const vectors = await Promise.all(queries.map((q) => embedQuery(q)));
+                      const queryVectors = new Map(queries.map((q, i) => [q, vectors[i]]));
+
                       // For each query, search all candidates in parallel and re-rank independently
                       const perQueryResults = await Promise.all(
                         queries.map(async (query) => {
+                          const vec = queryVectors.get(query)!;
                           const allResults = await Promise.all(
                             candidateIds.map(async (cid) => {
                               const results = await searchQdrant(
@@ -257,6 +270,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                                 'metadata.namespace',
                                 cid.toLowerCase(),
                                 5,
+                                vec,
                               );
                               return results.map((r) => ({ ...r, candidateId: cid }));
                             }),
@@ -364,6 +378,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   {
                     vector: { name: 'dense', vector: embedding },
                     ...(filter ? { filter } : {}),
+                    score_threshold: 0.35,
                     limit: 8,
                     with_payload: true,
                   },
@@ -629,7 +644,45 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
   };
 }
 
+// ── Rate limiting (in-memory, per Vercel function instance) ────────────────
+const RATE_LIMIT_WINDOW_MS = 60_000;
+const RATE_LIMIT_MAX = 20;
+const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
+
+function checkRateLimit(uid: string): boolean {
+  const now = Date.now();
+  const entry = rateLimitMap.get(uid);
+  if (!entry || now > entry.resetAt) {
+    rateLimitMap.set(uid, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
+    return true;
+  }
+  if (entry.count >= RATE_LIMIT_MAX) return false;
+  entry.count++;
+  return true;
+}
+
+const CHAT_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
+
 export async function POST(req: Request) {
+  // ── Auth: verify Firebase ID token ──────────────────────────────────────
+  const authHeader = req.headers.get('authorization');
+  const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
+  if (!token) {
+    return new Response(JSON.stringify({ error: 'Missing authorization token' }), { status: 401 });
+  }
+  let uid: string;
+  try {
+    const decoded = await auth.verifyIdToken(token);
+    uid = decoded.uid;
+  } catch {
+    return new Response(JSON.stringify({ error: 'Invalid authorization token' }), { status: 401 });
+  }
+
+  // ── Rate limit ──────────────────────────────────────────────────────────
+  if (!checkRateLimit(uid)) {
+    return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429 });
+  }
+
   const {
     messages: uiMessages,
     partyIds,
@@ -645,6 +698,11 @@ export async function POST(req: Request) {
     municipalityCode?: string;
     enabledFeatures?: string[];
   };
+
+  // ── Validate chatId format ──────────────────────────────────────────────
+  if (chatId && !CHAT_ID_REGEX.test(chatId)) {
+    return new Response(JSON.stringify({ error: 'Invalid chatId format' }), { status: 400 });
+  }
 
   const messages = await convertToModelMessages(uiMessages ?? []);
 
@@ -806,6 +864,7 @@ ${contextLine}
 5. **Limites** : Signale quand l'information peut être obsolète ou incomplète
 6. **Protection des données** : Ne demande pas d'intentions de vote ni de données personnelles
 7. **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle TOUJOURS l'outil suggestFollowUps avec 3 questions pertinentes
+8. **Reformulation des requêtes** : Quand tu appelles un outil de recherche, ton paramètre "query" doit être AUTONOME et COMPLET. N'utilise JAMAIS de pronoms ("ça", "ce sujet", "celui-là") ni de références à des messages précédents. Inclus tout le contexte nécessaire directement dans la requête. Exemple : au lieu de "et sur ce sujet ?", écris "positions des candidats sur les transports en commun à Marseille". Garde les requêtes concises mais auto-suffisantes.
 
 ${respondInLanguage}${candidateContext}`;
 
@@ -814,7 +873,7 @@ ${respondInLanguage}${candidateContext}`;
     system: systemPrompt,
     messages,
     stopWhen: stepCountIs(5),
-    toolChoice: 'auto' as const,
+    toolChoice: 'auto',
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);
     },

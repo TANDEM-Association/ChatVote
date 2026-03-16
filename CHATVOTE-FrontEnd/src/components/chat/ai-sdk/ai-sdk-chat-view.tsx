@@ -3,12 +3,13 @@
 import { useChat } from '@ai-sdk/react';
 import { DefaultChatTransport, getToolName, isToolUIPart } from 'ai';
 import { Plus } from 'lucide-react';
-import { useCallback, useContext, useEffect, useMemo, useRef, useState } from 'react';
+import { useCallback, useContext, useEffect, useLayoutEffect, useMemo, useRef, useState } from 'react';
 import { usePathname, useRouter, useSearchParams } from 'next/navigation';
 import { ChatStoreContext, useChatStore } from '@components/providers/chat-store-provider';
 import { MunicipalitySearch } from '@components/election-flow';
 import { type Municipality } from '@lib/election/election.types';
 import { useAiSdkFeaturesStore } from '@lib/stores/ai-sdk-features-store';
+import { auth as firebaseAuth } from '@lib/firebase/firebase';
 import { generateUuid } from '@lib/utils';
 import AiSdkCandidateBar from './ai-sdk-candidate-bar';
 import AiSdkFeatureRibbon from './ai-sdk-feature-ribbon';
@@ -94,6 +95,10 @@ const setPartyIds = useChatStore((s) => s.setPartyIds);
       new DefaultChatTransport({
         api: '/api/ai-chat',
         body: () => bodyRef.current,
+        headers: async (): Promise<Record<string, string>> => {
+          const token = await firebaseAuth.currentUser?.getIdToken();
+          return token ? { Authorization: `Bearer ${token}` } : {};
+        },
       }),
     // eslint-disable-next-line react-hooks/exhaustive-deps
     [],
@@ -191,6 +196,30 @@ const setPartyIds = useChatStore((s) => s.setPartyIds);
     return () => clearTimeout(timer);
   }, [municipalityCode, messages.length]);
 
+  // ── Sticky auto-scroll ──────────────────────────────────────────────────
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const bottomRef = useRef<HTMLDivElement>(null);
+  const isAtBottomRef = useRef(true);
+
+  // Track whether the user has scrolled away from bottom
+  useEffect(() => {
+    const el = scrollRef.current;
+    if (!el) return;
+    const onScroll = () => {
+      const threshold = 40;
+      isAtBottomRef.current = el.scrollHeight - el.scrollTop - el.clientHeight < threshold;
+    };
+    el.addEventListener('scroll', onScroll, { passive: true });
+    return () => el.removeEventListener('scroll', onScroll);
+  }, []);
+
+  // Auto-scroll to bottom when new content arrives (messages or streaming)
+  useLayoutEffect(() => {
+    if (isAtBottomRef.current) {
+      bottomRef.current?.scrollIntoView({ block: 'end' });
+    }
+  }, [messages, status]);
+
   return (
     <div className="flex h-full flex-col">
       {/* Feature toggle ribbon */}
@@ -220,7 +249,7 @@ const setPartyIds = useChatStore((s) => s.setPartyIds);
       )}
 
       {/* Messages */}
-      <div className="flex-1 overflow-y-auto px-3 py-4 md:px-9">
+      <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4 md:px-9">
         <div className="mx-auto max-w-3xl space-y-6">
           {messages.length === 0 && (
             <div className="flex h-full items-center justify-center py-20">
@@ -283,8 +312,14 @@ const setPartyIds = useChatStore((s) => s.setPartyIds);
                   Réessayer
                 </button>
               </p>
+              {process.env.NODE_ENV === 'development' && (
+                <pre className="mt-2 max-h-24 overflow-auto text-xs text-red-600 opacity-70 dark:text-red-400">
+                  {error.message}
+                </pre>
+              )}
             </div>
           )}
+          <div ref={bottomRef} />
         </div>
       </div>
 

@@ -10,7 +10,7 @@ export const qdrantClient = new QdrantClient({
   ...(qdrantUrl.startsWith('https') ? { port: 443 } : {}),
 });
 
-// Collection names (no env suffix — single Qdrant instance per environment)
+// Collection names — bare names resolve via Qdrant aliases (e.g. all_parties → all_parties_prod)
 export const COLLECTIONS = {
   allParties: 'all_parties',
   candidatesWebsites: 'candidates_websites',

@@ -7,6 +7,7 @@ import {
   getApps,
   initializeApp as initializeAdminApp,
 } from "firebase-admin/app";
+import { getAuth } from "firebase-admin/auth";
 import { getFirestore } from "firebase-admin/firestore";
 
 import { type Tenant } from "./firebase.types";
@@ -54,6 +55,7 @@ function initializeApp(): FirebaseApp {
 const app = initializeApp();
 
 export const db = getFirestore(app);
+export const auth = getAuth(app);
 
 export async function getTenantImpl(tenantId?: string | null) {
   if (!tenantId) {

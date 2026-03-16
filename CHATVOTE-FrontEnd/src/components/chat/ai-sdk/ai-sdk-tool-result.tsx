@@ -55,6 +55,7 @@ type Props = {
 const TOOL_LOADING_LABELS: Record<string, string> = {
   searchPartyManifesto: 'Recherche dans le programme',
   searchCandidateWebsite: 'Recherche sur le site du candidat',
+  searchAllCandidates: 'Recherche dans tous les candidats',
   suggestFollowUps: 'Génération de suggestions',
   changeCity: 'Changement de ville',
   changeCandidates: 'Mise à jour des partis',
@@ -127,7 +128,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   // ── RAG search results (manifestos + candidate websites) ───────────────────
   if (
     part.state === 'output-available' &&
-    (toolName === 'searchPartyManifesto' || toolName === 'searchCandidateWebsite')
+    (toolName === 'searchPartyManifesto' || toolName === 'searchCandidateWebsite' || toolName === 'searchAllCandidates')
   ) {
     return (
       <SourceResultCard

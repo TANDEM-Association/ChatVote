@@ -4,8 +4,6 @@ import { ExternalLink } from 'lucide-react';
 
 type Props = {
   source: {
-    type?: string;
-    sourceType?: string;
     id?: string;
     url?: string;
     title?: string;

@@ -64,7 +64,6 @@ const DEFAULT_FEATURES: AiSdkFeature[] = [
 type AiSdkFeaturesStore = {
   features: AiSdkFeature[];
   toggleFeature: (id: string) => void;
-  getEnabledToolNames: () => string[];
   getEnabledFeatureIds: () => string[];
 };
 
@@ -78,8 +77,6 @@ export const useAiSdkFeaturesStore = create<AiSdkFeaturesStore>()(
             f.id === id ? { ...f, enabled: !f.enabled } : f,
           ),
         })),
-      getEnabledToolNames: () =>
-        get().features.filter((f) => f.enabled).flatMap((f) => f.toolNames),
       getEnabledFeatureIds: () =>
         get().features.filter((f) => f.enabled).map((f) => f.id),
     }),
