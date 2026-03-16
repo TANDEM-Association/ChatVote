@@ -31,15 +31,23 @@ async def run_profession_phase(
 
     from src.services.profession_indexer import index_commune_professions, _PDF_CACHE_DIR
 
-    if not _PDF_CACHE_DIR.exists():
-        logger.info("[indexer] no profession PDFs cached, skipping")
-        return 0
+    has_local_cache = _PDF_CACHE_DIR.exists() and any(_PDF_CACHE_DIR.iterdir())
 
-    commune_dirs = _get_commune_dirs_to_process(_PDF_CACHE_DIR, cfg, force)
-    if not commune_dirs:
-        return 0
+    if has_local_cache:
+        commune_codes = _get_commune_dirs_to_process(_PDF_CACHE_DIR, cfg, force)
+        if not commune_codes:
+            return 0
+        # Convert dir objects to code strings for _index_communes
+        code_list = [d.name for d in commune_codes]
+    else:
+        # K8s Jobs: no local cache, query Firestore for communes with manifesto URLs
+        logger.info("[indexer] no local profession PDF cache, querying Firestore for manifesto URLs")
+        code_list = await _get_commune_codes_from_firestore(cfg, force)
+        if not code_list:
+            logger.info("[indexer] no communes with manifesto URLs found in Firestore")
+            return 0
 
-    return await _index_communes(commune_dirs, cfg, tracker)
+    return await _index_communes_by_code(code_list, cfg, tracker, force)
 
 
 def _get_commune_dirs_to_process(
@@ -75,12 +83,51 @@ def _get_commune_dirs_to_process(
     return to_process
 
 
-async def _index_communes(
-    to_process: list,
+async def _get_commune_codes_from_firestore(
+    cfg: NodeConfig,
+    force: bool,
+) -> list[str]:
+    """Query Firestore for communes that have manifesto_pdf_url set."""
+    from src.firebase_service import db as _sync_db
+
+    t0 = _time.monotonic()
+    cand_docs = _sync_db.collection("candidates").where(
+        "manifesto_pdf_url", "!=", ""
+    ).stream()
+
+    commune_codes: set[str] = set()
+    for doc in cand_docs:
+        data = doc.to_dict() or {}
+        url = data.get("manifesto_pdf_url", "")
+        # Extract commune code from candidate ID (cand-{commune_code}-{panneau})
+        doc_id = doc.id
+        if doc_id.startswith("cand-"):
+            parts = doc_id.split("-", 2)  # cand, commune_code, panneau
+            if len(parts) >= 2:
+                commune_codes.add(parts[1])
+
+    logger.info(
+        "[indexer:timing] Firestore manifesto query took %.2fs, found %d communes",
+        _time.monotonic() - t0, len(commune_codes),
+    )
+
+    already_indexed = cfg.checkpoints.get("profession_indexed_communes", {}) if not force else {}
+    to_process = sorted(c for c in commune_codes if c not in already_indexed)
+    logger.info(
+        "[indexer] %d communes with Firestore manifesto URLs "
+        "(%d already indexed, %d to process, force=%s)",
+        len(commune_codes), len(already_indexed), len(to_process), force,
+    )
+    return to_process
+
+
+async def _index_communes_by_code(
+    to_process: list[str],
     cfg: NodeConfig,
     tracker: PhaseTracker,
+    force: bool = False,
 ) -> int:
-    """Concurrently index profession de foi for a list of commune directories."""
+    """Concurrently index profession de foi for a list of commune codes."""
     from src.services.profession_indexer import index_commune_professions
 
     prof_chunks = 0
@@ -89,9 +136,8 @@ async def _index_communes(
 
     sem = asyncio.Semaphore(3)
 
-    async def _index_one_commune(commune_dir: Any) -> None:
+    async def _index_one_commune(commune_code: str) -> None:
         nonlocal prof_chunks, prof_communes_done
-        commune_code = commune_dir.name
         async with sem:
             try:
                 t0 = _time.monotonic()
@@ -130,7 +176,7 @@ async def _index_communes(
                 )
 
     t0 = _time.monotonic()
-    await asyncio.gather(*[_index_one_commune(d) for d in to_process])
+    await asyncio.gather(*[_index_one_commune(c) for c in to_process])
     logger.info("[indexer:timing] all profession indexing tasks took %.2fs", _time.monotonic() - t0)
 
     logger.info(
