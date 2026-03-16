@@ -406,14 +406,16 @@ class IndexerNode(DataSourceNode):
                     _PDF_CACHE_DIR,
                 )
 
-                if not _PDF_CACHE_DIR.exists():
-                    logger.info("[indexer] no profession PDFs cached, skipping")
-                else:
-                    from src.services.data_pipeline.population import get_top_communes
+                # Determine which communes to process:
+                # Strategy 1: local cache dirs (in-process pipeline)
+                # Strategy 2: Firestore query for communes with manifesto URLs (K8s Jobs)
+                from src.services.data_pipeline.population import get_top_communes
 
-                    top = get_top_communes()
-                    allowed_codes = set(top.keys()) if top else None
+                top = get_top_communes()
+                allowed_codes = set(top.keys()) if top else None
 
+                has_local_cache = _PDF_CACHE_DIR.exists() and any(_PDF_CACHE_DIR.iterdir())
+                if has_local_cache:
                     commune_dirs = sorted(
                         d for d in _PDF_CACHE_DIR.iterdir() if d.is_dir()
                     )
@@ -425,20 +427,45 @@ class IndexerNode(DataSourceNode):
                                 len(commune_dirs), len(filtered),
                             )
                         commune_dirs = filtered
+                    commune_codes_to_process = [d.name for d in commune_dirs]
+                else:
+                    # No local cache — query Firestore for communes with manifesto URLs
+                    logger.info("[indexer] no local profession PDF cache, querying Firestore for manifesto URLs")
+                    from src.firebase_service import db as _sync_db
+                    cand_docs = _sync_db.collection("candidates").where(
+                        "manifesto_pdf_url", "!=", ""
+                    ).stream()
+                    fs_commune_codes: set[str] = set()
+                    for doc in cand_docs:
+                        data = doc.to_dict() or {}
+                        url = data.get("manifesto_pdf_url", "")
+                        mc = data.get("municipality_code", "")
+                        if url and "programme-candidats.interieur.gouv.fr" in url and mc:
+                            fs_commune_codes.add(mc)
+                    if allowed_codes:
+                        fs_commune_codes &= allowed_codes
+                    commune_codes_to_process = sorted(fs_commune_codes)
+                    logger.info(
+                        "[indexer] found %d communes with manifesto URLs in Firestore",
+                        len(commune_codes_to_process),
+                    )
 
+                if not commune_codes_to_process:
+                    logger.info("[indexer] no profession PDFs to index, skipping")
+                else:
                     already_indexed = (
                         cfg.checkpoints.get("profession_indexed_communes", {})
                         if not force
                         else {}
                     )
                     to_process = [
-                        d for d in commune_dirs
-                        if d.name not in already_indexed
+                        c for c in commune_codes_to_process
+                        if c not in already_indexed
                     ]
                     logger.info(
                         "[indexer] %d communes with profession PDFs "
                         "(%d already indexed, %d to process, force=%s)",
-                        len(commune_dirs), len(already_indexed),
+                        len(commune_codes_to_process), len(already_indexed),
                         len(to_process), force,
                     )
 
@@ -448,9 +475,8 @@ class IndexerNode(DataSourceNode):
 
                     prof_sem = asyncio.Semaphore(3)
 
-                    async def _index_one_commune(commune_dir: Any) -> None:
+                    async def _index_one_commune(commune_code: str) -> None:
                         nonlocal prof_chunks, prof_communes_done
-                        commune_code = commune_dir.name
                         async with prof_sem:
                             try:
                                 results = await index_commune_professions(commune_code)
@@ -497,7 +523,7 @@ class IndexerNode(DataSourceNode):
                                     commune_code, exc,
                                 )
 
-                    await asyncio.gather(*[_index_one_commune(d) for d in to_process])
+                    await asyncio.gather(*[_index_one_commune(c) for c in to_process])
 
                     professions_indexed = prof_chunks
                     logger.info(
