@@ -48,7 +48,7 @@ async def run_candidate_phase(
     candidates = _filter_top_communes(candidates)
 
     # Determine which candidates to index
-    to_index = _select_candidates_to_index(candidates, scraped, force)
+    to_index = await _select_candidates_to_index(candidates, scraped, force)
 
     if not to_index:
         logger.info("[indexer] no candidates to index")
@@ -82,7 +82,7 @@ def _filter_top_communes(candidates: list) -> list:
     return candidates
 
 
-def _select_candidates_to_index(
+async def _select_candidates_to_index(
     candidates: list,
     scraped: Any,
     force: bool,
