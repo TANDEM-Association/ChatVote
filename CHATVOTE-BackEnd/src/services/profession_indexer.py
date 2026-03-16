@@ -630,18 +630,18 @@ async def _fetch_commune_pdfs_from_firestore(
     import tempfile
 
     try:
-        docs = (
-            async_db.collection("candidates")
-            .where("municipality_code", "==", commune_code)
-            .where("manifesto_pdf_url", "!=", "")
-            .stream()
-        )
+        # Fetch candidate docs by known ID pattern (cand-{commune_code}-{panneau})
+        # to avoid needing a composite Firestore index.
+        coll = async_db.collection("candidates")
+        doc_refs = [coll.document(f"cand-{commune_code}-{p}") for p in range(1, 31)]
+        fetched = await asyncio.gather(*[ref.get() for ref in doc_refs])
         candidates: list[tuple[str, str]] = []
-        async for doc in docs:
-            data = doc.to_dict() or {}
-            url = data.get("manifesto_pdf_url", "")
-            if url and "programme-candidats.interieur.gouv.fr" in url:
-                candidates.append((doc.id, url))
+        for snap in fetched:
+            if snap.exists:
+                data = snap.to_dict() or {}
+                url = data.get("manifesto_pdf_url", "")
+                if url and "programme-candidats.interieur.gouv.fr" in url:
+                    candidates.append((snap.id, url))
 
         if not candidates:
             logger.info(
