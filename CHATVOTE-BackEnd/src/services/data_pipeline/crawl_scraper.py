@@ -434,6 +434,7 @@ def _get_crawl_credentials():
     info = json.loads(raw)
     creds = Credentials.from_service_account_info(info, scopes=SCOPES)
     creds.refresh(Request())
+    logger.info("[crawl] SA email=%s, token_valid=%s", creds.service_account_email, creds.valid)
     return creds
 
 
