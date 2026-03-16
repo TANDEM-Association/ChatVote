@@ -485,6 +485,11 @@ async def load_scraped_from_drive(
     if not slug:
         return None
 
+    logger.info(
+        "[load_scraped_from_drive] %s url=%s slug=%s drive_folder_id=%s",
+        candidate_id, website_url, slug, drive_folder_id,
+    )
+
     async with aiohttp.ClientSession() as session:
         token = node._ensure_token(creds)
 
@@ -493,7 +498,7 @@ async def load_scraped_from_drive(
             _t_subfolders = _time.monotonic()
             subfolders = await node._drive_list(session, drive_folder_id, token,
                 mime_filter="application/vnd.google-apps.folder")
-            logger.info("[crawl:timing] load_scraped_from_drive drive_list_subfolders took %.2fs", _time.monotonic() - _t_subfolders)
+            logger.info("[crawl:timing] load_scraped_from_drive drive_list_subfolders took %.2fs (%d folders)", _time.monotonic() - _t_subfolders, len(subfolders))
         except Exception as exc:
             logger.warning("[load_scraped_from_drive] Drive list failed: %s", exc)
             return None
@@ -910,7 +915,10 @@ class CrawlScraperNode(DataSourceNode):
             source_url = url_map.get(filename, "")
             if not source_url:
                 m = re.search(r">\s*Source:\s*(https?://\S+)", text)
-                source_url = m.group(1) if m else filename
+                source_url = m.group(1) if m else ""
+            # Only keep real HTTP(S) URLs — never store .md filenames
+            if source_url and not source_url.startswith(("http://", "https://")):
+                source_url = ""
             return source_url
 
         async def _download_md(f: dict, page_type: str, title_prefix: str) -> ScrapedPage | None:
