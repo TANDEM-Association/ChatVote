@@ -7,6 +7,7 @@ import { COLLECTIONS, qdrantClient } from '@lib/ai/qdrant-client';
 import { db } from '@lib/firebase/firebase-admin';
 
 export const maxDuration = 120;
+export const preferredRegion = 'cdg1';
 
 // ── data.gouv.fr MCP client ──────────────────────────────────────────────────
 // Uses the official data.gouv.fr MCP server (https://github.com/datagouv/datagouv-mcp)
@@ -227,35 +228,60 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
               }
             },
           }),
-          // Search ALL candidates in the commune in one call, re-ranked by relevance
+          // Search ALL candidates in the commune with multi-query support, each query re-ranked independently
           ...(candidateIds.length > 0
             ? {
                 searchAllCandidates: tool({
                   description:
-                    'Search ALL candidates in the current commune for a topic. Use this for any general question about the commune. Returns results re-ranked by relevance score across all candidates.',
+                    'Search ALL candidates in the current commune. Accepts multiple queries for broader coverage — each query is re-ranked independently then merged. Use this for any general question about the commune.',
                   inputSchema: z.object({
-                    query: z.string().describe('The search query (e.g. "transports", "sécurité", "écologie")'),
+                    queries: z
+                      .array(z.string())
+                      .min(1)
+                      .max(5)
+                      .describe(
+                        'Search queries — use 2-3 varied phrasings for better recall (e.g. ["transports en commun", "mobilité urbaine", "vélo piste cyclable"])',
+                      ),
                   }),
                   execute: async (input) => {
-                    const { query } = input;
+                    const { queries } = input;
                     try {
-                      // Search all candidates in parallel
-                      const allResults = await Promise.all(
-                        candidateIds.map(async (cid) => {
-                          const results = await searchQdrant(
-                            COLLECTIONS.candidatesWebsites,
-                            query,
-                            'metadata.namespace',
-                            cid.toLowerCase(),
-                            5,
+                      // For each query, search all candidates in parallel and re-rank independently
+                      const perQueryResults = await Promise.all(
+                        queries.map(async (query) => {
+                          const allResults = await Promise.all(
+                            candidateIds.map(async (cid) => {
+                              const results = await searchQdrant(
+                                COLLECTIONS.candidatesWebsites,
+                                query,
+                                'metadata.namespace',
+                                cid.toLowerCase(),
+                                5,
+                              );
+                              return results.map((r) => ({ ...r, candidateId: cid }));
+                            }),
                           );
-                          return results.map((r) => ({ ...r, candidateId: cid }));
+                          // Re-rank this query's results by score, take top 10 per query
+                          return allResults
+                            .flat()
+                            .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
+                            .slice(0, 10);
                         }),
                       );
 
-                      // Flatten, re-rank by score descending, take top 20
-                      const merged = allResults
-                        .flat()
+                      // Merge all queries, deduplicate by content hash, keep highest score
+                      const seen = new Map<string, (typeof perQueryResults)[0][0]>();
+                      for (const results of perQueryResults) {
+                        for (const r of results) {
+                          const key = `${r.party_id}:${r.content.slice(0, 100)}`;
+                          const existing = seen.get(key);
+                          if (!existing || (r.score ?? 0) > (existing.score ?? 0)) {
+                            seen.set(key, r);
+                          }
+                        }
+                      }
+
+                      const merged = Array.from(seen.values())
                         .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
                         .slice(0, 20)
                         .map((r, idx) => ({ ...r, id: idx + 1 }));
@@ -265,6 +291,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                       return {
                         results: merged,
                         count: merged.length,
+                        queriesUsed: queries.length,
                         candidatesSearched: candidateIds.length,
                         candidatesWithResults: candidatesWithResults.size,
                       };
@@ -788,6 +815,9 @@ ${respondInLanguage}${candidateContext}`;
     messages,
     stopWhen: stepCountIs(5),
     toolChoice: 'auto' as const,
+    onError({ error }) {
+      console.error('[ai-chat] streamText error:', error);
+    },
     onStepFinish({ stepNumber, toolCalls, finishReason, usage }) {
       if (process.env.NODE_ENV === 'development') {
         console.log('[ai-chat]', {
