@@ -1349,6 +1349,7 @@ class CrawlScraperNode(DataSourceNode):
                         logger.warning("[crawl_scraper] poll error: %s", exc)
 
                 # Check 2: Drive folders — download immediately on match
+                download_tasks = []
                 try:
                     token = self._ensure_token(creds)
                     _t_poll_drive = _time.monotonic()
@@ -1360,7 +1361,6 @@ class CrawlScraperNode(DataSourceNode):
                     logger.info("[crawl:timing] poll_drive_list took %.2fs, %d folders", _time.monotonic() - _t_poll_drive, len(subfolders))
 
                     # Match all candidates to Drive folders first
-                    download_tasks = []
                     for cid in list(tracked_ids - downloaded_ids):
                         url = poll_url_map.get(cid, "")
                         if not url:
