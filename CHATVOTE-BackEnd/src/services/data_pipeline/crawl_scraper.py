@@ -224,6 +224,97 @@ def _is_ocr_visual_description(text: str) -> bool:
     return False
 
 
+_HALLUCINATED_OCR_PATTERNS = [
+    # Visual / chart / table descriptions
+    re.compile(r"\bA\s+bar\s+chart\b", re.I),
+    re.compile(r"\bA\s+pie\s+chart\b", re.I),
+    re.compile(r"\bA\s+table\s+with\b", re.I),
+    re.compile(r"\bThe\s+image\s+shows?\b", re.I),
+    re.compile(r"\bVisible\s+Text\s*:", re.I),
+    re.compile(r"\bMeaningful\s+Visual\s+Elements\s*:", re.I),
+    re.compile(r"\bprofessional\s+setting\b", re.I),
+    # Fake / placeholder data
+    re.compile(r"\bJohn\s+Doe\b", re.I),
+    re.compile(r"\bJane\s+Doe\b", re.I),
+    re.compile(r"\bLorem\s+ipsum\b", re.I),
+    re.compile(r"\bexample\.com\b", re.I),
+    # English weather / disaster content
+    re.compile(r"\bHurricane\s+watch\b", re.I),
+    re.compile(r"\bSnowstorm\b", re.I),
+    re.compile(r"\bweather\s+forecast\b", re.I),
+    re.compile(r"\bTornado\s+warning\b", re.I),
+]
+
+# Common French words used to detect non-French (hallucinated) content
+_FRENCH_WORDS = frozenset([
+    "le", "la", "les", "des", "une", "pour", "dans", "nous", "est", "sont",
+    "avec", "cette", "qui", "que", "sur", "par", "aux", "ses", "plus", "mais",
+    "ville", "commune", "maire", "municipal", "candidat", "projet", "liste",
+])
+
+# Common English words used to detect hallucinated content
+_ENGLISH_WORDS = frozenset([
+    "the", "is", "are", "was", "were", "has", "have", "with", "this", "that",
+    "from", "for", "and", "but", "not", "will", "can", "its", "our", "their",
+    "which", "about", "been", "would", "description", "title", "content",
+])
+
+
+def _is_hallucinated_ocr(text: str) -> bool:
+    """Return True if text looks like hallucinated OCR (vision model describing images)."""
+    for pat in _HALLUCINATED_OCR_PATTERNS:
+        if pat.search(text):
+            return True
+    # Language ratio check: flag if predominantly English for content expected to be French
+    words = re.findall(r"[a-zA-Z]+", text.lower())
+    if len(words) > 20:
+        en_count = sum(1 for w in words if w in _ENGLISH_WORDS)
+        fr_count = sum(1 for w in words if w in _FRENCH_WORDS)
+        if en_count > fr_count:
+            return True
+    return False
+
+
+_PDF_HALLUCINATION_THRESHOLD = 0.60  # Discard page if >60% of paragraphs are garbage
+
+
+def _filter_pdf_transcription(page: "ScrapedPage") -> bool:
+    """Return True if the pdf_transcription page should be KEPT (clean enough).
+
+    Filters out paragraphs that are hallucinated OCR or OCR visual descriptions.
+    If more than 60% of paragraphs are garbage, the entire page is discarded.
+    Otherwise, the page content is reconstructed with only the clean paragraphs.
+    """
+    paragraphs = [p for p in page.content.split("\n\n") if p.strip()]
+    if not paragraphs:
+        return False
+
+    clean = []
+    garbage_count = 0
+    for para in paragraphs:
+        if _is_hallucinated_ocr(para) or _is_ocr_visual_description(para):
+            garbage_count += 1
+        else:
+            clean.append(para)
+
+    garbage_ratio = garbage_count / len(paragraphs)
+    if garbage_ratio > _PDF_HALLUCINATION_THRESHOLD:
+        logger.warning(
+            "[crawl_scraper] pdf_transcription '%s' has %.0f%% hallucinated paragraphs — discarding",
+            page.title, garbage_ratio * 100,
+        )
+        return False
+
+    if garbage_count:
+        logger.warning(
+            "[crawl_scraper] pdf_transcription '%s': removed %d/%d hallucinated paragraphs",
+            page.title, garbage_count, len(paragraphs),
+        )
+        page.content = "\n\n".join(clean)
+
+    return True
+
+
 _PAGINATION_PATTERN = re.compile(
     r"(?:category|categorie|tag|page|archive|actualit|evenement|event|blog|article)"
     r"[_\-].*?[_\-]?(?:page[_\-]?\d+)",
@@ -995,6 +1086,19 @@ class CrawlScraperNode(DataSourceNode):
         if all_download_tasks:
             results = await asyncio.gather(*all_download_tasks)
             pages.extend(p for p in results if p)
+
+        # Filter hallucinated OCR from pdf transcriptions
+        clean_pages: list[ScrapedPage] = []
+        for p in pages:
+            if p.page_type == "pdf_transcription":
+                if _filter_pdf_transcription(p):
+                    clean_pages.append(p)
+                else:
+                    logger.warning("[crawl_scraper] Dropped hallucinated pdf_transcription: %s", p.title)
+            else:
+                clean_pages.append(p)
+        pages = clean_pages
+
         logger.info(
             "[crawl:timing] parallel_download_all_md took %.2fs, %d tasks → %d pages",
             _time.monotonic() - _t_all_downloads, len(all_download_tasks), len(pages),
