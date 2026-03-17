@@ -206,17 +206,28 @@ function SourceSelector({
     [partyTargets, lowerQuery],
   );
 
-  const filteredCandidates = useMemo(
-    () =>
-      candidateTargets.filter(
-        (t) =>
-          !lowerQuery ||
-          t.name.toLowerCase().includes(lowerQuery) ||
-          (t.municipality && t.municipality.toLowerCase().includes(lowerQuery)) ||
-          t.id.toLowerCase().includes(lowerQuery),
-      ),
-    [candidateTargets, lowerQuery],
-  );
+  const MAX_VISIBLE_CANDIDATES = 50;
+
+  const filteredCandidates = useMemo(() => {
+    const matches = candidateTargets.filter(
+      (t) =>
+        !lowerQuery ||
+        t.name.toLowerCase().includes(lowerQuery) ||
+        (t.municipality && t.municipality.toLowerCase().includes(lowerQuery)) ||
+        t.id.toLowerCase().includes(lowerQuery),
+    );
+    return matches.slice(0, MAX_VISIBLE_CANDIDATES);
+  }, [candidateTargets, lowerQuery]);
+
+  const totalMatchingCandidates = useMemo(() => {
+    if (!lowerQuery) return candidateTargets.length;
+    return candidateTargets.filter(
+      (t) =>
+        t.name.toLowerCase().includes(lowerQuery) ||
+        (t.municipality && t.municipality.toLowerCase().includes(lowerQuery)) ||
+        t.id.toLowerCase().includes(lowerQuery),
+    ).length;
+  }, [candidateTargets, lowerQuery]);
 
   // Resolve display label for current value
   const displayLabel = useMemo(() => {
@@ -353,6 +364,11 @@ function SourceSelector({
                     </button>
                   );
                 })}
+                {totalMatchingCandidates > MAX_VISIBLE_CANDIDATES && (
+                  <div className="text-muted-foreground px-2 py-2 text-center text-xs">
+                    Showing {filteredCandidates.length} of {totalMatchingCandidates} — type to filter
+                  </div>
+                )}
               </>
             )}
 
