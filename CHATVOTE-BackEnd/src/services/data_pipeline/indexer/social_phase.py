@@ -62,13 +62,19 @@ async def run_social_phase(
 
     for cid, sw in scraped.items():
         try:
+            t_social_one = _time.monotonic()
             candidate = await aget_candidate_by_id(cid)
             if not candidate:
                 logger.warning("[indexer] social candidate %s not in Firestore", cid)
                 continue
 
+            t_idx = _time.monotonic()
             count = await index_candidate_website(
                 candidate, sw, classify_themes=classify_themes,
+            )
+            logger.info(
+                "[indexer:timing] social index_candidate_website(%s) took %.2fs, %d chunks",
+                cid, _time.monotonic() - t_idx, count,
             )
             social_indexed += count
 
@@ -78,7 +84,10 @@ async def run_social_phase(
             cfg.checkpoints.setdefault("social_indexed_candidates", {})[cid] = (
                 datetime.now(timezone.utc).isoformat()
             )
-            logger.info("[indexer] social %s: %d chunks indexed", cid, count)
+            logger.info(
+                "[indexer:timing] social candidate %s total took %.2fs, %d chunks",
+                cid, _time.monotonic() - t_social_one, count,
+            )
         except Exception as exc:
             logger.error("[indexer] social indexing failed for %s: %s", cid, exc)
 

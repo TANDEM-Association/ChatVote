@@ -21,7 +21,8 @@ function collectSources(parts: UIMessage['parts']): Source[] {
       isToolUIPart(part) &&
       (part as any).state === 'output-available' &&
       (getToolName(part) === 'searchPartyManifesto' ||
-        getToolName(part) === 'searchCandidateWebsite')
+        getToolName(part) === 'searchCandidateWebsite' ||
+        getToolName(part) === 'searchAllCandidates')
     ) {
       const result = (part as any).output as {
         results?: Array<{

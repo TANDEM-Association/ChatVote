@@ -117,6 +117,14 @@ class IndexerNode(DataSourceNode):
 
         # Final counts
         elapsed = _time.monotonic() - t0
+        logger.info(
+            "[indexer:timing:summary] INDEXER total=%.1fs | "
+            "manifestos=%d candidates=%d social=%d professions=%d | "
+            "phases_status=%s",
+            elapsed,
+            parties_indexed, candidates_indexed, social_indexed, professions_indexed,
+            {k: v for k, v in tracker.phase_status.items()},
+        )
         cfg.counts = {
             "parties_indexed": parties_indexed,
             "chunks_indexed": candidates_indexed,

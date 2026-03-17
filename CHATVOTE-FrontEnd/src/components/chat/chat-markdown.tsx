@@ -22,16 +22,20 @@ function ChatMarkdown({ message }: Props) {
     }
 
     const source = message.sources[number];
-    if (!source?.url) return;
+    if (!source) return;
 
-    const isPdfLink = source.url.includes(".pdf");
+    const url = source.url;
+    // Only open real HTTP URLs — skip .md filenames or empty values
+    if (!url || !url.startsWith("http")) return;
+
+    const isPdfLink = url.includes(".pdf");
 
     if (isPdfLink && window) {
-      const url = buildPdfUrl(source);
-      if (url) return window.open(url.toString(), "_blank");
+      const pdfUrl = buildPdfUrl(source);
+      if (pdfUrl) return window.open(pdfUrl.toString(), "_blank");
     }
 
-    window.open(source.url, "_blank");
+    window.open(url, "_blank");
   };
 
   const getReferenceTooltip = (number: number) => {

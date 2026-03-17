@@ -130,7 +130,9 @@ async def update_status(node_id: str, status: NodeStatus, **extra: Any) -> None:
 
 
 async def save_checkpoint(node_id: str, checkpoints: dict[str, Any]) -> None:
+    _t = time.monotonic()
     await _config_ref(node_id).set({"checkpoints": checkpoints}, merge=True)
+    logger.info("[pipeline:timing] save_checkpoint(%s) took %.2fs", node_id, time.monotonic() - _t)
 
 
 # ---------------------------------------------------------------------------

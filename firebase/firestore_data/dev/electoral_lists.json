@@ -69,6 +69,67 @@
       }
     ]
   },
+  "13001": {
+    "commune_code": "13001",
+    "commune_name": "Aix-en-Provence",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "PASSIONNEMENT AIXOIS",
+        "list_short_label": "PASSIONNEMENT",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Sophie",
+        "head_last_name": "JOISSAINS"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "aix vivante et populaire",
+        "list_short_label": "vivante et populaire",
+        "nuance_code": "LECO",
+        "nuance_label": "Liste écologiste",
+        "head_first_name": "Mounir",
+        "head_last_name": "BEN-AMMAR"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "AIX AVENIR",
+        "list_short_label": "AVENIR",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Marc",
+        "head_last_name": "PENA"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "AIX POUR VOUS",
+        "list_short_label": "AIX POUR VOUS",
+        "nuance_code": "LHOR",
+        "nuance_label": "Liste Horizons",
+        "head_first_name": "Philippe",
+        "head_last_name": "KLEIN"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "AGIR POUR AIX",
+        "list_short_label": "AGIR POUR AIX",
+        "nuance_code": "LUXD",
+        "nuance_label": "Liste d'union à l'extrême-droite",
+        "head_first_name": "Jean-Louis",
+        "head_last_name": "GEIGER"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "AIX EN COMMUN",
+        "list_short_label": "EN COMMUN",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Julie",
+        "head_last_name": "BORONAD"
+      }
+    ]
+  },
   "13055": {
     "commune_code": "13055",
     "commune_name": "Marseille",
@@ -145,6 +206,383 @@
         "nuance_label": "Liste d'extrême-gauche",
         "head_first_name": "Rémy",
         "head_last_name": "BAZZALI"
+      }
+    ]
+  },
+  "14118": {
+    "commune_code": "14118",
+    "commune_name": "Caen",
+    "list_count": 9,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "CAEN DYNAMIQUE!",
+        "list_short_label": "CAEN DYNAMIQUE!",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Thomas",
+        "head_last_name": "CHEVALIER"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "CAEN PASSIONNEMENT AVEC ARISTIDE OLIVIER",
+        "list_short_label": "CAEN PASSIONNEMENT AVEC ARISTIDE OLIVIER",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Aristide",
+        "head_last_name": "OLIVIER"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "CITOYENS A CAEN",
+        "list_short_label": "CITOYENS A CAEN",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Xavier",
+        "head_last_name": "LE COUTOUR"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "CAEN LA VILLE NOUS RASSEMBLE AVEC RUDY L'ORPHELIN",
+        "list_short_label": "CAEN LA VILLE NOUS RASSEMBLE AVEC RUDY L'ORPHELIN",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Rudy",
+        "head_last_name": "L'ORPHELIN"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "NPA-REVOLUTIONNAIRE-CAEN OUVRIERE ET REVOLUTIONNAIRE",
+        "list_short_label": "NPA-REVOLUTIONNAIRE-CAEN OUVRIERE ET REVOLUTIONNAIRE",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Bérangère",
+        "head_last_name": "LAREYNIE"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "FAIRE MIEUX POUR CAEN !",
+        "list_short_label": "FAIRE MIEUX POUR CAEN !",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Aurélien",
+        "head_last_name": "GUIDI"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "RASSEMBLONS CAEN",
+        "list_short_label": "RASSEMBLONS CAEN",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Chantal",
+        "head_last_name": "HENRY"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "LE CAEN DE L'ENGAGEMENT",
+        "list_short_label": "LE CAEN DE L'ENGAGEMENT",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Antoine",
+        "head_last_name": "CASINI"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "Lutte ouvrière - le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Pierre",
+        "head_last_name": "CASEVITZ"
+      }
+    ]
+  },
+  "21231": {
+    "commune_code": "21231",
+    "commune_name": "Dijon",
+    "list_count": 8,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Dijon Avenir : Bifurquer, Inspirer, Protéger",
+        "list_short_label": "Dijon Avenir : Bifurquer, Inspirer, Protéger",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Rémi",
+        "head_last_name": "GOGUEL"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Dijon change d'ère",
+        "list_short_label": "Dijon change d'ère",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Michel",
+        "head_last_name": "HABERSTRAU"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Claire",
+        "head_last_name": "ROCHER"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Dijon Populaire",
+        "list_short_label": "Dijon Populaire",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Olivier",
+        "head_last_name": "MINARD"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Pour la défense des services publics, contre l'économie de guerre",
+        "list_short_label": "Pour la défense des services publics, contre l'économie de guerre",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Camille",
+        "head_last_name": "JOYEUX"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "LE RASSEMBLEMENT DIJONNAIS",
+        "list_short_label": "LE RASSEMBLEMENT DIJONNAIS",
+        "nuance_code": "LUXD",
+        "nuance_label": "Liste d'union à l'extrême-droite",
+        "head_first_name": "Thierry",
+        "head_last_name": "COUDERT"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "AGIR POUR DIJON",
+        "list_short_label": "AGIR POUR DIJON",
+        "nuance_code": "LUD",
+        "nuance_label": "Liste d'union à droite",
+        "head_first_name": "Emmanuel",
+        "head_last_name": "BICHOT"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "Dijon. écologique sociale attractive",
+        "list_short_label": "Dijon. écologique sociale attractive",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "Nathalie",
+        "head_last_name": "KOENDERS"
+      }
+    ]
+  },
+  "25056": {
+    "commune_code": "25056",
+    "commune_name": "Besançon",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "FAIRE MIEUX POUR BESANÇON",
+        "list_short_label": "FAIRE MIEUX POUR BESANÇON",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Séverine",
+        "head_last_name": "VÉZIÈS"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "ENSEMBLE BESANCON AVANCE",
+        "list_short_label": "ENSEMBLE BESANCON AVANCE",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Ludovic",
+        "head_last_name": "FAGAUT"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "BESANCON MERITE MIEUX",
+        "list_short_label": "BESANCON MERITE MIEUX",
+        "nuance_code": "LUC",
+        "nuance_label": "Liste d'union au centre",
+        "head_first_name": "Eric",
+        "head_last_name": "DELABROUSSE"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "CHANGEONS BESANÇON",
+        "list_short_label": "CHANGEONS BESANÇON",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Jacques",
+        "head_last_name": "RICCIARDETTI"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "LUTTE OUVRIÉRE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIÉRE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Nicole",
+        "head_last_name": "FRIESS"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "BESANÇON : VIVANTE, JUSTE ET HUMAINE",
+        "list_short_label": "BESANCON : VIVANTE, JUSTE ET HUMAINE",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Anne",
+        "head_last_name": "VIGNOT"
+      }
+    ]
+  },
+  "29019": {
+    "commune_code": "29019",
+    "commune_name": "Brest",
+    "list_count": 10,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "RETROUVER BREST",
+        "list_short_label": "RETROUVER BREST",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Franck",
+        "head_last_name": "BESOMBES"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Brest Insoumise",
+        "list_short_label": "Brest Insoumise",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Cécile",
+        "head_last_name": "BEAUDOUIN"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "RESISTANCE OUVRIERE ET JEUNE",
+        "list_short_label": "RESISTANCE OUVRIERE ET JEUNE",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Mathieu",
+        "head_last_name": "LE TALLEC"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Rémy",
+        "head_last_name": "COLLARD"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Une nouvelle histoire pour Brest",
+        "list_short_label": "Une nouvelle histoire pour Brest",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Stéphane",
+        "head_last_name": "ROUDAUT"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "BREST NOUVELLE VAGUE",
+        "list_short_label": "BREST NOUVELLE VAGUE",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Sébastien",
+        "head_last_name": "MUSCAT"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "La gauche unie pour Brest",
+        "list_short_label": "La gauche unie pour Brest",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "François",
+        "head_last_name": "CUILLANDRE"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "BREST EN COMMUN",
+        "list_short_label": "BREST EN COMMUN",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Réza",
+        "head_last_name": "SALAMI"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "LA VAGUE CITOYENNE",
+        "list_short_label": "LA VAGUE CITOYENNE",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Nazim",
+        "head_last_name": "YENIER"
+      },
+      {
+        "panel_number": 10,
+        "list_label": "La Force du Changement !",
+        "list_short_label": "La Force du Changement !",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Yves",
+        "head_last_name": "PAGES"
+      }
+    ]
+  },
+  "30189": {
+    "commune_code": "30189",
+    "commune_name": "Nîmes",
+    "list_count": 5,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "L'Avenir Nîmois",
+        "list_short_label": "L'Avenir Nîmois",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Julien",
+        "head_last_name": "PLANTIER"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "NIMES ÉCOLOGIQUE ET SOLIDAIRE",
+        "list_short_label": "NIMES ÉCOLOGIQUE ET SOLIDAIRE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Pascal",
+        "head_last_name": "DUPRETZ"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "FIERS D'ÊTRE NÎMOIS !",
+        "list_short_label": "FIERS D'ÊTRE NÎMOIS !",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Julien",
+        "head_last_name": "SANCHEZ"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "TOUT NÎMES",
+        "list_short_label": "TOUT NÎMES",
+        "nuance_code": "LUD",
+        "nuance_label": "Liste d'union à droite",
+        "head_first_name": "Franck",
+        "head_last_name": "PROUST"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Nîmes en commun",
+        "list_short_label": "Nîmes en commun",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Vincent",
+        "head_last_name": "BOUGET"
       }
     ]
   },
@@ -245,6 +683,597 @@
       }
     ]
   },
+  "33063": {
+    "commune_code": "33063",
+    "commune_name": "Bordeaux",
+    "list_count": 11,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "NPA Révolutionnaires - Bordeaux Ouvrière et Révolutionnaire",
+        "list_short_label": "NPA Révolutionnaires - Bordeaux Ouvrière et Révolutionnaire",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Esteban",
+        "head_last_name": "NADAL"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Faire Gagner Bordeaux",
+        "list_short_label": "Faire Gagner Bordeaux",
+        "nuance_code": "LUC",
+        "nuance_label": "Liste d'union au centre",
+        "head_first_name": "Thomas",
+        "head_last_name": "CAZENAVE"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "ARRACHER BORDEAUX AUX RICHES ET AUX SPÉCULATEURS",
+        "list_short_label": "ARRACHER BORDEAUX AUX RICHES ET AUX SPÉCULATEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Petra",
+        "head_last_name": "BERNUS"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "BORDEAUX EN CONFIANCE",
+        "list_short_label": "BORDEAUX EN CONFIANCE",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Pierre",
+        "head_last_name": "HURMIC"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "FAIRE MIEUX POUR BORDEAUX",
+        "list_short_label": "FAIRE MIEUX POUR BORDEAUX",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Nordine",
+        "head_last_name": "RAYMOND"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "A LA RECONQUÊTE DE BORDEAUX",
+        "list_short_label": "A LA RECONQUÊTE DE BORDEAUX",
+        "nuance_code": "LREC",
+        "nuance_label": "Liste Reconquête !",
+        "head_first_name": "Virginie",
+        "head_last_name": "BONTOUX TOURNAY"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "PHILIPPE DESSERTINE- L'OPTIMISME EST UNE FORCE",
+        "list_short_label": "PHILIPPE DESSERTINE- L'OPTIMISME EST UNE FORCE",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Philippe",
+        "head_last_name": "DESSERTINE"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "Lutte ouvrière - le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Fanny",
+        "head_last_name": "QUANDALLE"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "RASSEMBLEMENT NATIONAL POUR BORDEAUX",
+        "list_short_label": "RASSEMBLEMENT NATIONAL POUR BORDEAUX",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Julie",
+        "head_last_name": "RECHAGNEUX"
+      },
+      {
+        "panel_number": 10,
+        "list_label": "UNION DE LA GAUCHE",
+        "list_short_label": "UNION DE LA GAUCHE",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Medhi",
+        "head_last_name": "SABOULARD"
+      },
+      {
+        "panel_number": 11,
+        "list_label": "ROUGE BORDEAUX ANTICAPITALISTE",
+        "list_short_label": "ROUGE BORDEAUX ANTICAPITALISTE",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Philippe",
+        "head_last_name": "POUTOU"
+      }
+    ]
+  },
+  "34172": {
+    "commune_code": "34172",
+    "commune_name": "Montpellier",
+    "list_count": 13,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "DEMAIN MONTPELLIER",
+        "list_short_label": "DEMAIN MONTPELLIER",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Michaël",
+        "head_last_name": "DELAFOSSE"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "LIBÉRER MONTPELLIER !",
+        "list_short_label": "LIBÉRER MONTPELLIER !",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "France",
+        "head_last_name": "JAMET"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "AIMER MONTPELLIER",
+        "list_short_label": "AIMER MONTPELLIER",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Isabelle",
+        "head_last_name": "PERREIN"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Morgane",
+        "head_last_name": "LACHIVER"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "LA MUNICIPALISTE",
+        "list_short_label": "LA MUNICIPALISTE",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Kadija",
+        "head_last_name": "ZBAIRI"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "MONTPELLIER NOTRE FIERTÉ",
+        "list_short_label": "MONTPELLIER NOTRE FIERTÉ",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Mohed",
+        "head_last_name": "ALTRAD"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "FAIRE MIEUX POUR MONTPELLIER",
+        "list_short_label": "FAIRE MIEUX POUR MONTPELLIER",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Nathalie",
+        "head_last_name": "OZIOL"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "LE PRINTEMPS MONTPELLIERAIN",
+        "list_short_label": "LE PRINTEMPS MONTPELLIERAIN",
+        "nuance_code": "LVEC",
+        "nuance_label": "Liste Les Ecologistes",
+        "head_first_name": "Jean-Louis",
+        "head_last_name": "ROUMEGAS"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "RÉVOLUTION PERMANENTE - MAX MULLER, LA VOIX DES TRAVAILLEURS, DE LA JEUNESSE ET DES QUARTIERS POPULAIRES",
+        "list_short_label": "RÉVOLUTION PERMANENTE - MAX MULLER, LA VOIX DES TRAVAILLEURS, DE LA JEUNESSE ET DES QUARTIERS POPULA",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Max",
+        "head_last_name": "MULLER"
+      },
+      {
+        "panel_number": 10,
+        "list_label": "YES WE CLOWN",
+        "list_short_label": "YES WE CLOWN",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Rémi",
+        "head_last_name": "GAILLARD"
+      },
+      {
+        "panel_number": 11,
+        "list_label": "L'argent pour les travailleurs et les services publics de la commune, pas pour la guerre !",
+        "list_short_label": "L'argent pour les travailleurs et les services publics de la commune, pas pour la guerre !",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Sylvie",
+        "head_last_name": "TROUSSELIER"
+      },
+      {
+        "panel_number": 12,
+        "list_label": "UNION MONTPELLIERAINE",
+        "list_short_label": "UNION MONTPELLIERAINE",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Thierry",
+        "head_last_name": "TSAGALOS"
+      },
+      {
+        "panel_number": 13,
+        "list_label": "Montpellier Citoyenne",
+        "list_short_label": "Montpellier Citoyenne",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Philippe",
+        "head_last_name": "SAUREL"
+      }
+    ]
+  },
+  "35238": {
+    "commune_code": "35238",
+    "commune_name": "Rennes",
+    "list_count": 11,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "FAIRE MIEUX POUR RENNES, UNION POPULAIRE ET ÉCOLOGISTE",
+        "list_short_label": "FAIRE MIEUX POUR RENNES, UNION POPULAIRE ET ÉCOLOGISTE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Marie",
+        "head_last_name": "MESMEUR"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Sandra",
+        "head_last_name": "CHIRAZI"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "RENNES SOLIDAIRE",
+        "list_short_label": "RENNES SOLIDAIRE",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Nathalie",
+        "head_last_name": "APPÉRÉ"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "ÉQUINOXE RENNES, POUR UNE VILLE VIVANTE, APAISÉE ET RÉSILIENTE",
+        "list_short_label": "ÉQUINOXE RENNES, POUR UNE VILLE VIVANTE, APAISÉE ET RÉSILIENTE",
+        "nuance_code": "LECO",
+        "nuance_label": "Liste écologiste",
+        "head_first_name": "Yan",
+        "head_last_name": "MÉLAN"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "NPA Révolutionnaires - Rennes, ouvrière et révolutionnaire",
+        "list_short_label": "NPA Révolutionnaires - Rennes, ouvrière et révolutionnaire",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Victor",
+        "head_last_name": "DARCISSAC"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "VIVRE RENNES AVEC CHARLES COMPAGNON",
+        "list_short_label": "VIVRE RENNES AVEC CHARLES COMPAGNON",
+        "nuance_code": "LUC",
+        "nuance_label": "Liste d'union au centre",
+        "head_first_name": "Charles",
+        "head_last_name": "COMPAGNON"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "L'ESPOIR RENNAIS",
+        "list_short_label": "L'ESPOIR RENNAIS",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Thomas",
+        "head_last_name": "ROUSSEAU"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "RENNES COMMUNE",
+        "list_short_label": "RENNES COMMUNE",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Ulysse",
+        "head_last_name": "RABATÉ"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "RASSEMBLEMENT POUR RENNES",
+        "list_short_label": "RASSEMBLEMENT POUR RENNES",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Julien",
+        "head_last_name": "MASSON"
+      },
+      {
+        "panel_number": 10,
+        "list_label": "RENNES CONTRE LA GUERRE, POUR LES TRAVAILLEURS.ES, LA JEUNESSE ET LES SERVICES PUBLICS",
+        "list_short_label": "RENNES CONTRE LA GUERRE, POUR LES TRAVAILLEURS.ES, LA JEUNESSE ET LES SERVICES PUBLICS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Morgane",
+        "head_last_name": "PERNOT--GOARVOT"
+      },
+      {
+        "panel_number": 11,
+        "list_label": "RÉVOLUTION PERMANENTE: REPRENDRE RENNES AUX POLITICIENS PROFESSIONNELS",
+        "list_short_label": "RÉVOLUTION PERMANENTE: REPRENDRE RENNES AUX POLITICIENS PROFESSIONNELS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Erell",
+        "head_last_name": "DUCLOS"
+      }
+    ]
+  },
+  "37261": {
+    "commune_code": "37261",
+    "commune_name": "Tours",
+    "list_count": 8,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Faire Mieux pour Tours",
+        "list_short_label": "Faire Mieux pour Tours",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Marie",
+        "head_last_name": "QUINTON"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Tours inspire",
+        "list_short_label": "Tours inspire",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Emmanuel",
+        "head_last_name": "DENIS"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Thomas",
+        "head_last_name": "JOUHANNAUD"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "CHANGEONS TOURS !",
+        "list_short_label": "CHANGEONS TOURS !",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Benoist",
+        "head_last_name": "PIERRE"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "À NOTRE TOURS",
+        "list_short_label": "À NOTRE TOURS",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Aleksandar",
+        "head_last_name": "NIKOLIC"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "TOURS POUR LES TRAVAILLEURS ET LES JEUNES",
+        "list_short_label": "TOURS POUR LES TRAVAILLEURS ET LES JEUNES",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Claire",
+        "head_last_name": "DELORE"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "NATURELLEMENT TOURS",
+        "list_short_label": "NATURELLEMENT TOURS",
+        "nuance_code": "LHOR",
+        "nuance_label": "Liste Horizons",
+        "head_first_name": "Henri",
+        "head_last_name": "ALFANDARI"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "TOURS POUR TOUS",
+        "list_short_label": "TOURS POUR TOUS",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Christophe",
+        "head_last_name": "BOUCHET"
+      }
+    ]
+  },
+  "38185": {
+    "commune_code": "38185",
+    "commune_name": "Grenoble",
+    "list_count": 10,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "GRENOBLE ALPES COLLECTIF",
+        "list_short_label": "GRENOBLE ALPES COLLECTIF",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Thomas",
+        "head_last_name": "SIMON"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "RASSEMBLEMENT NATIONAL - GRENOBLE CAPITALE DES ALPES",
+        "list_short_label": "RASSEMBLEMENT NATIONAL - GRENOBLE CAPITALE DES ALPES",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Valentin",
+        "head_last_name": "GABRIAC"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "GRENOBLE OUVRIERE ET REVOLUTIONNAIRE",
+        "list_short_label": "GRENOBLE OUVRIERE ET REVOLUTIONNAIRE",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Baptiste",
+        "head_last_name": "ANGLADE"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Faire mieux pour Grenoble",
+        "list_short_label": "Faire mieux pour Grenoble",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Allan",
+        "head_last_name": "BRUNON"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Catherine",
+        "head_last_name": "BRUN"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "GRENOBLE CAPITALE CITOYENNE",
+        "list_short_label": "GRENOBLE CAPITALE CITOYENNE",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Romain",
+        "head_last_name": "GENTIL"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "Réquisition des logements vacants, l'argent pour les services publics, pas pour la guerre",
+        "list_short_label": "Réquisition des logements vacants, l'argent pour les services publics, pas pour la guerre",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Geneviève",
+        "head_last_name": "KRZYZAK"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "NOUS GRENOBLE",
+        "list_short_label": "NOUS GRENOBLE",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Hervé",
+        "head_last_name": "GERBI"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "OUI Grenoble",
+        "list_short_label": "OUI Grenoble",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Laurence",
+        "head_last_name": "RUFFIN"
+      },
+      {
+        "panel_number": 10,
+        "list_label": "Réconcilier Grenoble",
+        "list_short_label": "Réconcilier Grenoble",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Alain",
+        "head_last_name": "CARIGNON"
+      }
+    ]
+  },
+  "42218": {
+    "commune_code": "42218",
+    "commune_name": "Saint-Etienne",
+    "list_count": 8,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "RETROUVER SAINTÉ !",
+        "list_short_label": "RETROUVER SAINTÉ !",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Corentin",
+        "head_last_name": "JOUSSERAND"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Coeur stéphanois",
+        "list_short_label": "Coeur stéphanois",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Siham",
+        "head_last_name": "LABICH"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Ensemble pour Saint-Etienne",
+        "list_short_label": "Ensemble pour Saint-Etienne",
+        "nuance_code": "LUD",
+        "nuance_label": "Liste d'union à droite",
+        "head_first_name": "Dino",
+        "head_last_name": "CINIERI"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "RELEVONS SAINT-ETIENNE",
+        "list_short_label": "RELEVONS SAINT-ETIENNE",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Eric",
+        "head_last_name": "LE JAOUEN"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Rassembler Saint-Etienne",
+        "list_short_label": "Rassembler Saint-Etienne",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Régis",
+        "head_last_name": "JUANICO"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Saint-Etienne insoumise",
+        "list_short_label": "Saint-Etienne insoumise",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Valentine",
+        "head_last_name": "MERCIER"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Romain",
+        "head_last_name": "BROSSARD"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "GRANDIR, VIVRE, TRANSMETTRE",
+        "list_short_label": "GRANDIR, VIVRE, TRANSMETTRE",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Marc",
+        "head_last_name": "CHASSAUBENE"
+      }
+    ]
+  },
   "44109": {
     "commune_code": "44109",
     "commune_name": "Nantes",
@@ -321,6 +1350,936 @@
         "nuance_label": "Liste de La France insoumise",
         "head_first_name": "William",
         "head_last_name": "AUCANT"
+      }
+    ]
+  },
+  "45234": {
+    "commune_code": "45234",
+    "commune_name": "Orléans",
+    "list_count": 9,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "ICI C'EST ORLEANS",
+        "list_short_label": "ICI C'EST ORLEANS",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Serge",
+        "head_last_name": "GROUARD"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "ORLEANS, NOUVEL ELAN !",
+        "list_short_label": "ORLEANS, NOUVEL ELAN !",
+        "nuance_code": "LUXD",
+        "nuance_label": "Liste d'union à l'extrême-droite",
+        "head_first_name": "Tiffanie",
+        "head_last_name": "RABAULT"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "OSE",
+        "list_short_label": "OSE",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Jean-Philippe",
+        "head_last_name": "GRAND"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "VIVONS ORLEANS",
+        "list_short_label": "VIVONS ORLEANS",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Caroline",
+        "head_last_name": "JANVIER"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "RASSEMBLER ORLEANS - L'UNION DE LA GAUCHE ET DES ECOLOGISTES",
+        "list_short_label": "RASSEMBLER ORLEANS - L'UNION DE LA GAUCHE ET DES ECOLOGISTES",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Baptiste",
+        "head_last_name": "CHAPUIS"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "A LA RECONQUÊTE ! D'ORLÉANS",
+        "list_short_label": "A LA RECONQUÊTE ! D'ORLÉANS",
+        "nuance_code": "LREC",
+        "nuance_label": "Liste Reconquête !",
+        "head_first_name": "Isabelle",
+        "head_last_name": "LAMARQUE"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "ORLEANS EN COMMUN",
+        "list_short_label": "ORLEANS EN COMMUN",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Valentin",
+        "head_last_name": "PELÉ"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "NOTRE VILLE PLUS QUE JAMAIS VIVANTE",
+        "list_short_label": "NOTRE VILLE PLUS QUE JAMAIS VIVANTE",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Grégory",
+        "head_last_name": "MEYER"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Farida",
+        "head_last_name": "MEGDOUD"
+      }
+    ]
+  },
+  "49007": {
+    "commune_code": "49007",
+    "commune_name": "Angers",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Demain Angers",
+        "list_short_label": "Demain Angers",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Romain",
+        "head_last_name": "LAVEAU"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "NPA Révolutionnaires-ANGERS ouvrière et révolutionnaire",
+        "list_short_label": "NPA Révolutionnaires-ANGERS ouvrière et révolutionnaire",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Nicolas",
+        "head_last_name": "CUISINIER"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Angers pour Vous",
+        "list_short_label": "Angers Pour Vous",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Christophe",
+        "head_last_name": "BÉCHU"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "ANGERS POPULAIRE",
+        "list_short_label": "ANGERS POPULAIRE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Arash",
+        "head_last_name": "SAEIDI"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Angers 2026",
+        "list_short_label": "Angers 2026",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Valentin",
+        "head_last_name": "RAMBAULT"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Céline",
+        "head_last_name": "L'HUILLIER"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "Rassemblement pour Angers",
+        "list_short_label": "Rassemblement pour Angers",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Aurore",
+        "head_last_name": "LAHONDÈS"
+      }
+    ]
+  },
+  "51454": {
+    "commune_code": "51454",
+    "commune_name": "Reims",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Thomas",
+        "head_last_name": "ROSE"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "REIMS INSOUMISE",
+        "list_short_label": "REIMS INSOUMISE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Patricia",
+        "head_last_name": "CORADEL"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "POUR REIMS UNE NOUVELLE ÈRE AVEC ANNE-SOPHIE FRIGOUT",
+        "list_short_label": "POUR REIMS UNE NOUVELLE ÈRE AVEC ANNE-SOPHIE FRIGOUT",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Anne-Sophie",
+        "head_last_name": "FRIGOUT"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "UNIS POUR REIMS",
+        "list_short_label": "UNIS POUR REIMS",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Eric",
+        "head_last_name": "QUÉNARD"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "VIVONS REIMS",
+        "list_short_label": "VIVONS REIMS",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Arnaud",
+        "head_last_name": "ROBINET"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "NOUS, C'EST REIMS !",
+        "list_short_label": "NOUS, C'EST REIMS !",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Sébastien",
+        "head_last_name": "MURA"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "LES RÉMOIS AU COEUR - Liste d'Union de la Droite, du Centre et des Indépendants",
+        "list_short_label": "LES RÉMOIS AU COEUR - Liste d'Union de la Droite, du Centre et des Indépendants",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Stéphane",
+        "head_last_name": "LANG"
+      }
+    ]
+  },
+  "54395": {
+    "commune_code": "54395",
+    "commune_name": "Nancy",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Nancy Insoumise",
+        "list_short_label": "Nancy Insoumise",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Sarah",
+        "head_last_name": "FARGHALY"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "NANCY EN AVANT",
+        "list_short_label": "NANCY EN AVANT",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Emmanuel",
+        "head_last_name": "LACRESSE"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Nancy avec vous",
+        "list_short_label": "Nancy avec vous",
+        "nuance_code": "LUC",
+        "nuance_label": "Liste d'union au centre",
+        "head_first_name": "Laurent",
+        "head_last_name": "HENART"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "NOUS NANCY 2026",
+        "list_short_label": "NOUS NANCY 2026",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Laurent",
+        "head_last_name": "WATRIN"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Christiane",
+        "head_last_name": "NIMSGERN"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "NANCY GRANDIT",
+        "list_short_label": "NANCY GRANDIT",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Mathieu",
+        "head_last_name": "KLEIN"
+      }
+    ]
+  },
+  "57463": {
+    "commune_code": "57463",
+    "commune_name": "Metz",
+    "list_count": 9,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Mario",
+        "head_last_name": "RINALDI"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Pour l'unité ouvrière, contre la guerre,soutenue pour le PT",
+        "list_short_label": "Pour l'unité ouvrière, contre la guerre,soutenue par le PT",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Marie-Jeanne",
+        "head_last_name": "BECHT"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "METZ EN COMMUN",
+        "list_short_label": "METZ EN COMMUN",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Charlotte",
+        "head_last_name": "LEDUC"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Un souffle nouveau pour Metz",
+        "list_short_label": "Un souffle nouveau pour Metz",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "Bertrand",
+        "head_last_name": "MERTZ"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "J'aime Metz",
+        "list_short_label": "J'aime Metz",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "François",
+        "head_last_name": "GROSDIDIER"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "MAINTENANT POUR METZ",
+        "list_short_label": "MAINTENANT POUR METZ",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Jérémy",
+        "head_last_name": "ROQUES"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "UN AVENIR A METZ",
+        "list_short_label": "UN AVENIR A METZ",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Etienne",
+        "head_last_name": "ANSTETT"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "METZ ENSEMBLE",
+        "list_short_label": "METZ ENSEMBLE",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Ludovic",
+        "head_last_name": "MENDES"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "NPA REVOLUTIONNAIRES - METZ OUVRIERE ET REVOLUTIONNAIRE",
+        "list_short_label": "NPA REVOLUTIONNAIRES - METZ OUVRIERE ET REVOLUTIONNAIRE",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Gaël",
+        "head_last_name": "DIAFERIA"
+      }
+    ]
+  },
+  "59350": {
+    "commune_code": "59350",
+    "commune_name": "Lille",
+    "list_count": 9,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "TOUT POUR LILLE",
+        "list_short_label": "TOUT POUR LILLE",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Arnaud",
+        "head_last_name": "DESLANDES"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "FAIRE RESPIRER LILLE",
+        "list_short_label": "FAIRE RESPIRER LILLE",
+        "nuance_code": "LUC",
+        "nuance_label": "Liste d'union au centre",
+        "head_first_name": "Violette",
+        "head_last_name": "SPILLEBOUT"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "LILLE AU COEUR AVEC LOUIS DELEMER",
+        "list_short_label": "LILLE AU COEUR AVEC LOUIS DELEMER",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Louis",
+        "head_last_name": "DELEMER"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Lille Demain avec Stéphane Baly",
+        "list_short_label": "Lille Demain avec Stéphane Baly",
+        "nuance_code": "LVEC",
+        "nuance_label": "Liste Les Ecologistes",
+        "head_first_name": "Stéphane",
+        "head_last_name": "BALY"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "NPA-Révolutionnaires: Lille Ouvrière et Révolutionnaire",
+        "list_short_label": "NPA-Révolutionnaires: Lille Ouvrière et Révolutionnaire",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Damien",
+        "head_last_name": "SCALI"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Pierre",
+        "head_last_name": "MADELAIN"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "UNE AUTRE LILLE",
+        "list_short_label": "UNE AUTRE LILLE",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Matthieu",
+        "head_last_name": "VALET"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "Contre leur économie de guerre - Lille pour les travailleurs",
+        "list_short_label": "Contre leur économie de guerre - Lille pour les travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Béryl",
+        "head_last_name": "BENYOUCEF"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "LILLE INSOUMISE, ÉCOLOGISTE ET POPULAIRE",
+        "list_short_label": "LILLE INSOUMISE, ÉCOLOGISTE ET POPULAIRE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Lahouaria",
+        "head_last_name": "ADDOUCHE"
+      }
+    ]
+  },
+  "59512": {
+    "commune_code": "59512",
+    "commune_name": "Roubaix",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "FIERS DE ROUBAIX",
+        "list_short_label": "FIERS DE ROUBAIX",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "David",
+        "head_last_name": "GUIRAUD"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "REDRESSER ROUBAIX ENSEMBLE",
+        "list_short_label": "REDRESSER ROUBAIX ENSEMBLE",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Céline",
+        "head_last_name": "SAYAH"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "LOCT",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Françoise",
+        "head_last_name": "DELBARRE"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "POUR ROUBAIX",
+        "list_short_label": "POUR ROUBAIX",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Nacim",
+        "head_last_name": "ZEGHLACHE-SALHI"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "ROUBAIX ENSEMBLE AVEC ALEXANDRE GARCIN",
+        "list_short_label": "ROUBAIX ENSEMBLE AVEC ALEXANDRE GARCIN",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Alexandre",
+        "head_last_name": "GARCIN"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "AGIR AU COEUR DE ROUBAIX",
+        "list_short_label": "AGIR AU COEUR DE ROUBAIX",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Karim",
+        "head_last_name": "AMROUNI"
+      }
+    ]
+  },
+  "59599": {
+    "commune_code": "59599",
+    "commune_name": "Tourcoing",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "NOUS, TOURCOING AVEC KATY VUYLSTEKER",
+        "list_short_label": "NOUS, TOURCOING AVEC KATY VUYLSTEKER",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Katy",
+        "head_last_name": "VUYLSTEKER"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Citoyennes et Citoyens pour Tourcoing",
+        "list_short_label": "Citoyennes et Citoyens pour Tourcoing",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Franck",
+        "head_last_name": "TALPAERT"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Lutte ouvrière-Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière-Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Christophe",
+        "head_last_name": "CHARLON"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "TOURCOING INSOUMISE",
+        "list_short_label": "TOURCOING INSOUMISE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Emilie",
+        "head_last_name": "CROËS"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "VIVE TOURCOING AVEC DORIANE BECUE",
+        "list_short_label": "VIVE TOURCOING AVEC DORIANE BECUE",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Doriane",
+        "head_last_name": "BECUE"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "UNIS POUR TOURCOING",
+        "list_short_label": "UNIS POUR TOURCOING",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Bastien",
+        "head_last_name": "VERBRUGGHE"
+      }
+    ]
+  },
+  "63113": {
+    "commune_code": "63113",
+    "commune_name": "Clermont-Ferrand",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "REMETTRE CLERMONT EN ORDRE",
+        "list_short_label": "REMETTRE CLERMONT EN ORDRE",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Antoine",
+        "head_last_name": "DARBOIS"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Marie",
+        "head_last_name": "SAVRE"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "LE SURSAUT CLERMONTOIS",
+        "list_short_label": "LE SURSAUT CLERMONTOIS",
+        "nuance_code": "LUD",
+        "nuance_label": "Liste d'union à droite",
+        "head_first_name": "Julien",
+        "head_last_name": "BONY"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "LE RÉVEIL CLERMONTOIS",
+        "list_short_label": "LE RÉVEIL CLERMONTOIS",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Yannick",
+        "head_last_name": "CARTAILLER"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Clermont-Ferrand Fière et Solidaire",
+        "list_short_label": "Clermont-Fd Fière et Solidaire",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Marianne",
+        "head_last_name": "MAXIMI"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "VIVRE CLERMONT !",
+        "list_short_label": "VIVRE CLERMONT !",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Olivier",
+        "head_last_name": "BIANCHI"
+      }
+    ]
+  },
+  "66136": {
+    "commune_code": "66136",
+    "commune_name": "Perpignan",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "CONTINUONS ENSEMBLE AVEC LOUIS ALIOT",
+        "list_short_label": "CONTINUONS ENSEMBLE AVEC LOUIS ALIOT",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Louis",
+        "head_last_name": "ALIOT"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "PERPIGNAN, CHANGEZ D'AIR !",
+        "list_short_label": "PERPIGNAN, CHANGEZ D'AIR !",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Mickaël",
+        "head_last_name": "IDRAC"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "SOYONS FIERS DE PERPIGNAN",
+        "list_short_label": "SOYONS FIERS DE PERPIGNAN",
+        "nuance_code": "LUD",
+        "nuance_label": "Liste d'union à droite",
+        "head_first_name": "Bruno",
+        "head_last_name": "NOUGAYRÈDE"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "LUTTE OUVRIERE-LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE-LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Pascale",
+        "head_last_name": "ADVENARD"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "PERPIGNAN AUTREMENT",
+        "list_short_label": "PERPIGNAN AUTREMENT",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Mathias",
+        "head_last_name": "BLANC"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "PLUS FORTS POUR PERPIGNAN AVEC AGNES LANGEVINE ET ANNABELLE BRUNET",
+        "list_short_label": "PLUS FORTS POUR PERPIGNAN AVEC AGNES LANGEVINE ET ANNABELLE BRUNET",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Agnès",
+        "head_last_name": "LANGEVINE"
+      }
+    ]
+  },
+  "67482": {
+    "commune_code": "67482",
+    "commune_name": "Strasbourg",
+    "list_count": 12,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "SAUVONS STRASBOURG",
+        "list_short_label": "SAUVONS STRASBOURG",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Virginie",
+        "head_last_name": "JORON"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Strasbourg fière et solidaire",
+        "list_short_label": "Strasbourg fière et solidaire",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Florian",
+        "head_last_name": "KOBRYN"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Strasbourg pour les jeunes et les travailleurs",
+        "list_short_label": "Strasbourg pour les jeunes et les travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Eva",
+        "head_last_name": "LACOTE"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Louise",
+        "head_last_name": "FÈVE"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Aimer Strasbourg",
+        "list_short_label": "Aimer Strasbourg",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Jean-Philippe",
+        "head_last_name": "VETTER"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "UTILES POUR STRASBOURG",
+        "list_short_label": "UTILES POUR STRASBOURG",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Mohamed",
+        "head_last_name": "SYLLA"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "DU NOUVEAU POUR STRASBOURG",
+        "list_short_label": "DU NOUVEAU POUR STRASBOURG",
+        "nuance_code": "LUC",
+        "nuance_label": "Liste d'union au centre",
+        "head_first_name": "Pierre",
+        "head_last_name": "JAKUBOWICZ"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "ENGAGÉ-E-S POUR STRASBOURG",
+        "list_short_label": "ENGAGÉ-E-S POUR STRASBOURG",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Neïla",
+        "head_last_name": "BOUTGHATA"
+      },
+      {
+        "panel_number": 10,
+        "list_label": "Strasbourg Juste et Vivante",
+        "list_short_label": "Strasbourg Juste et Vivante",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Jeanne",
+        "head_last_name": "BARSEGHIAN"
+      },
+      {
+        "panel_number": 11,
+        "list_label": "Pour Strasbourg",
+        "list_short_label": "Pour Strasbourg",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "Catherine",
+        "head_last_name": "TRAUTMANN"
+      },
+      {
+        "panel_number": 12,
+        "list_label": "Strasbourg sans frontières",
+        "list_short_label": "Strasbourg sans frontières",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Fahad",
+        "head_last_name": "RAJA MUHAMMAD"
+      },
+      {
+        "panel_number": 13,
+        "list_label": "NPA Révolutionnaires-STRASBOURG, ouvrière et révolutionnaire",
+        "list_short_label": "NPA Révolutionnaires-STRASBOURG, ouvrière et révolutionnaire",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Clément",
+        "head_last_name": "SOUBISE"
+      }
+    ]
+  },
+  "68224": {
+    "commune_code": "68224",
+    "commune_name": "Mulhouse",
+    "list_count": 11,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "NOTRE MULHOUSE",
+        "list_short_label": "NM",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Kadhafi",
+        "head_last_name": "DJEHAF"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Rassemblement pour Mulhouse",
+        "list_short_label": "RM",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Christelle",
+        "head_last_name": "RITZ"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "FAUT QUE CA CHANGE",
+        "list_short_label": "FQCA",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Lara",
+        "head_last_name": "MILLION"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LO LCDT",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Salah",
+        "head_last_name": "KELTOUMI"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "FIERS DE MULHOUSE AVEC MICHELE LUTZ !",
+        "list_short_label": "FDMAML",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Michèle",
+        "head_last_name": "LUTZ"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "NOUS SOMMES MULHOUSE",
+        "list_short_label": "NSM",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Annouar",
+        "head_last_name": "SASSI"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "Mulhouse Populaire et Antiraciste",
+        "list_short_label": "MPA",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Eliot",
+        "head_last_name": "GAFANESCH"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "RESTAURER MULHOUSE - UNION DES DROITES",
+        "list_short_label": "RMUDD",
+        "nuance_code": "LREC",
+        "nuance_label": "Liste Reconquête !",
+        "head_first_name": "Emmanuel",
+        "head_last_name": "TAFFARELLI"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "Des Habitants pour Mulhouse",
+        "list_short_label": "DHPM",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Cécile",
+        "head_last_name": "SORNIN"
+      },
+      {
+        "panel_number": 10,
+        "list_label": "Liste Citoyenne Pour Vous Pour Mulhouse Marquet 2026",
+        "list_short_label": "LCPVPMM2026",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Frédéric",
+        "head_last_name": "MARQUET"
+      },
+      {
+        "panel_number": 11,
+        "list_label": "Mulhouse en commun avec Loïc MINERY",
+        "list_short_label": "MCLM",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Loïc",
+        "head_last_name": "MINERY"
       }
     ]
   },
@@ -412,6 +2371,198 @@
       }
     ]
   },
+  "69266": {
+    "commune_code": "69266",
+    "commune_name": "Villeurbanne",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Nadia",
+        "head_last_name": "BOUHAMI"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "AVEC JEAN-PAUL BRET POUR VILLEURBANNE",
+        "list_short_label": "AVEC JEAN-PAUL BRET POUR VILLEURBANNE",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Jean-Paul",
+        "head_last_name": "BRET"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "COEUR VILLEURBANNE",
+        "list_short_label": "COEUR VILLEURBANNE",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Sophie",
+        "head_last_name": "CRUZ"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "ENGAGE.E.S POUR VILLEURBANNE- LA GAUCHE SOCIALE, ECOLOGISTE ET CITOYENNE RASSEMBLEE",
+        "list_short_label": "ENGAGE.E.S POUR VILLEURBANNE- LA GAUCHE SOCIALE, ECOLOGISTE ET CITOYENNE RASSEMBLEE",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Cédric",
+        "head_last_name": "VAN STYVENDAEL"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "RENDEZ-NOUS VILLEURBANNE",
+        "list_short_label": "RENDEZ-NOUS VILLEURBANNE",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Gérald",
+        "head_last_name": "CANON"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Villeurbanne Insoumise",
+        "list_short_label": "Villeurbanne Insoumise",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Mathieu",
+        "head_last_name": "GARABEDIAN"
+      }
+    ]
+  },
+  "72181": {
+    "commune_code": "72181",
+    "commune_name": "Le Mans",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "LE MANS, VILLE HUMAINE",
+        "list_short_label": "LMVH",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Maël",
+        "head_last_name": "BRILLANT"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "LE MANS NOUS RASSEMBLE",
+        "list_short_label": "LMNR",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "Stéphane",
+        "head_last_name": "LE FOLL"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Union pour Le Mans",
+        "list_short_label": "uplm",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Marietta",
+        "head_last_name": "KARAMANLI"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Lutte Ouvrière - Le Camp des Travailleurs",
+        "list_short_label": "LOLCDT",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Arnaud",
+        "head_last_name": "RABETTE"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Révolution Permanente - Reprendre Le Mans aux politiciens professionnels",
+        "list_short_label": "RPRLMPP",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Benjamin",
+        "head_last_name": "SAINTY"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "LE MANS NOUVEAU CAP",
+        "list_short_label": "LMNC",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Olivier",
+        "head_last_name": "SASSO"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "Rassemblement pour Le Mans",
+        "list_short_label": "RLM",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Victoria",
+        "head_last_name": "DE VIGNERAL"
+      }
+    ]
+  },
+  "74010": {
+    "commune_code": "74010",
+    "commune_name": "Annecy",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Lutte Ouvrière - le camp des travailleurs",
+        "list_short_label": "Lutte Ouvrière - le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Naci",
+        "head_last_name": "YILDIRIM"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Acteurs d'Annecy avec Antoine ARMAND",
+        "list_short_label": "Acteurs d'Annecy avec Antoine ARMAND",
+        "nuance_code": "LUC",
+        "nuance_label": "Liste d'union au centre",
+        "head_first_name": "Antoine",
+        "head_last_name": "ARMAND"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "UNIS PAR ANNECY avec Jean-Luc RIGAUT",
+        "list_short_label": "UNIS PAR ANNECY avec Jean-Luc RIGAUT",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Jean-Luc",
+        "head_last_name": "RIGAUT"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Vivre Annecy",
+        "list_short_label": "Vivre Annecy",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Alexandre",
+        "head_last_name": "MULATIER-GACHET"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "RETROUVONS ANNECY",
+        "list_short_label": "RETROUVONS ANNECY",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Guillaume",
+        "head_last_name": "ROIT-LEVÊQUE"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "L'AVENIR EN COMMUNE",
+        "list_short_label": "L'AVENIR EN COMMUNE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Vincent",
+        "head_last_name": "DRÊME"
+      }
+    ]
+  },
   "75056": {
     "commune_code": "75056",
     "commune_name": "Paris",
@@ -497,6 +2648,1205 @@
         "nuance_label": "Liste d'extrême-gauche",
         "head_first_name": "Mahel",
         "head_last_name": "PIEROT-GUIMBAUD"
+      }
+    ]
+  },
+  "76351": {
+    "commune_code": "76351",
+    "commune_name": "Le Havre",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Le Havre !",
+        "list_short_label": "Le Havre !",
+        "nuance_code": "LUC",
+        "nuance_label": "Liste d'union au centre",
+        "head_first_name": "Edouard",
+        "head_last_name": "PHILIPPE"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "LE HAVRE INSOUMIS",
+        "list_short_label": "LE HAVRE INSOUMIS",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Charlotte",
+        "head_last_name": "BOULOGNE"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "LE HAVRE D'ABORD, LES HAVRAIS TOUJOURS !",
+        "list_short_label": "LE HAVRE D'ABORD, LES HAVRAIS TOUJOURS !",
+        "nuance_code": "LUXD",
+        "nuance_label": "Liste d'union à l'extrême-droite",
+        "head_first_name": "Franck",
+        "head_last_name": "KELLER"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Avec Jean-Paul LECOQ, mieux vivre ensemble au Havre",
+        "list_short_label": "Avec Jean-Paul LECOQ, mieux vivre ensemble au Havre",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Jean-Paul",
+        "head_last_name": "LECOQ"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "LA VILLE EST A VOUS",
+        "list_short_label": "LA VILLE EST A VOUS",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Marie",
+        "head_last_name": "LE CIEUX"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "LE HAVRE EN DÉBAT",
+        "list_short_label": "LE HAVRE EN DÉBAT",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Sophie",
+        "head_last_name": "ZARIFIAN"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Magali",
+        "head_last_name": "CAUCHOIS"
+      }
+    ]
+  },
+  "76540": {
+    "commune_code": "76540",
+    "commune_name": "Rouen",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "LISTE OUVRIERE POUR LA RUPTURE AVEC LA POLITIQUE DE MACRON",
+        "list_short_label": "LISTE OUVRIERE POUR LA RUPTURE AVEC LA POLITIQUE DE MACRON",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Céline",
+        "head_last_name": "VITARD"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "NPA-Révolutionnaires - ROUEN ouvrière et révolutionnaire",
+        "list_short_label": "NPA-Révolutionnaires - ROUEN ouvrière et révolutionnaire",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Amaury",
+        "head_last_name": "RENAULD"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "RÉUSSIR ROUEN",
+        "list_short_label": "RÉUSSIR ROUEN",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Marine",
+        "head_last_name": "CARON"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Fiers de Rouen",
+        "list_short_label": "Fiers de Rouen",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Nicolas",
+        "head_last_name": "MAYER-ROSSIGNOL"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Rouen Conquérante",
+        "list_short_label": "Rouen Conquérante",
+        "nuance_code": "LUXD",
+        "nuance_label": "Liste d'union à l'extrême-droite",
+        "head_first_name": "Grégoire",
+        "head_last_name": "HOUDAN"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Éric",
+        "head_last_name": "MOISAN"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "FAIRE MIEUX POUR ROUEN",
+        "list_short_label": "FAIRE MIEUX POUR ROUEN",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Maxime",
+        "head_last_name": "DA SILVA"
+      }
+    ]
+  },
+  "80021": {
+    "commune_code": "80021",
+    "commune_name": "Amiens",
+    "list_count": 9,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Amiens pour Vous",
+        "list_short_label": "Amiens pour Vous",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Damien",
+        "head_last_name": "TOUMI"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Pour Amiens en mieux, la Gauche unie, écologiste et citoyenne",
+        "list_short_label": "Pour Amiens en mieux, la Gauche unie, écologiste et citoyenne",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Frédéric",
+        "head_last_name": "FAUVET"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "AMIENS VILLE D'AVENIR",
+        "list_short_label": "AMIENS VILLE D'AVENIR",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Aurélien",
+        "head_last_name": "CARON"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "AMIENS EN COMMUN",
+        "list_short_label": "AMIENS EN COMMUN",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Samy",
+        "head_last_name": "OLIVIER"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "NOUVELLE DYNAMIQUE !",
+        "list_short_label": "NOUVELLE DYNAMIQUE !",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Paul-Éric",
+        "head_last_name": "DÈCLE"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Réussir Amiens Ensemble",
+        "list_short_label": "Réussir Amiens Ensemble",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Benoit",
+        "head_last_name": "MERCUZOT"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "NOUS, LES AMIÉNOIS !",
+        "list_short_label": "NOUS, LES AMIÉNOIS !",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Hubert",
+        "head_last_name": "DE JENLIS"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "AMIENS AU COEUR",
+        "list_short_label": "AMIENS AU COEUR",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Julia",
+        "head_last_name": "BELLINA"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Jean-Patrick",
+        "head_last_name": "BAUDRY"
+      }
+    ]
+  },
+  "83137": {
+    "commune_code": "83137",
+    "commune_name": "Toulon",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "TOULON EN COMMUN",
+        "list_short_label": "TOULON EN COMMUN",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Magali",
+        "head_last_name": "BRUNEL"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Jean-Michel",
+        "head_last_name": "GHIOTTO"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Liste d'union populaire avec la France Insoumise",
+        "list_short_label": "Liste d'union populaire avec la France Insoumise",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Isaline",
+        "head_last_name": "CORNIL"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "TOULON EN GRAND !",
+        "list_short_label": "TOULON EN GRAND !",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Michel",
+        "head_last_name": "BONNUS"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "UN AVENIR POUR TOULON",
+        "list_short_label": "UN AVENIR POUR TOULON",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Laure",
+        "head_last_name": "LAVALETTE"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "TOULON MON PARTI",
+        "list_short_label": "TOULON MON PARTI",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Josée",
+        "head_last_name": "MASSI"
+      }
+    ]
+  },
+  "84007": {
+    "commune_code": "84007",
+    "commune_name": "Avignon",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "La nouvelle Avignon populaire",
+        "list_short_label": "La nouvelle Avignon populaire",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Mathilde",
+        "head_last_name": "LOUVAIN"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Entreprendre pour Avignon",
+        "list_short_label": "Entreprendre pour Avignon",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Stephan",
+        "head_last_name": "FIORI"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Avignon en avant !",
+        "list_short_label": "Avignon en avant !",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Anne-Sophie",
+        "head_last_name": "RIGAULT"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Ensemble et solidaires",
+        "list_short_label": "Ensemble et solidaires",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "David",
+        "head_last_name": "FOURNIER"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Liste ouvrière et jeune pour la défense des intérêts de la population et des services publics",
+        "list_short_label": "Liste ouvrière et jeune",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Stéphane",
+        "head_last_name": "GESLIN"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Le bon sens pour Avignon",
+        "list_short_label": "Le bon sens pour Avignon",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Olivier",
+        "head_last_name": "GALZI"
+      }
+    ]
+  },
+  "87085": {
+    "commune_code": "87085",
+    "commune_name": "Limoges",
+    "list_count": 8,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "LUTTE OUVRIERE - LE CAMPS DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE - LE CAMPS DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Elisabeth",
+        "head_last_name": "FAUCON"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "POUR LIMOGES THIERRY MIGUEL",
+        "list_short_label": "POUR LIMOGES THIERRY MIGUEL",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Thierry",
+        "head_last_name": "MIGUEL"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Avec Lombertie, soyons Fiers de Limoges",
+        "list_short_label": "Avec Lombertie, soyons Fiers de Limoges",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Emile Roger",
+        "head_last_name": "LOMBERTIE"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Limoges Front Populaire - Union de la gauche sociale et écologiste",
+        "list_short_label": "Limoges Front Populaire - Union de la gauche sociale et écologiste",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Damien",
+        "head_last_name": "MAUDET"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "LIMOGES EN GRAND",
+        "list_short_label": "LIMOGES EN GRAND",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Albin",
+        "head_last_name": "FREYCHET"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Nouveau Printemps pour Limoges",
+        "list_short_label": "Nouveau Printemps pour Limoges",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Marie",
+        "head_last_name": "DE FERLUC"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "LIMOGES EN PARTAGE",
+        "list_short_label": "LIMOGES EN PARTAGE",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Guillaume",
+        "head_last_name": "GUERIN"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "REUNIR LIMOGES",
+        "list_short_label": "REUNIR LIMOGES",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Vincent",
+        "head_last_name": "LEONIE"
+      }
+    ]
+  },
+  "92004": {
+    "commune_code": "92004",
+    "commune_name": "Asnières-sur-Seine",
+    "list_count": 5,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "100% Asnières",
+        "list_short_label": "100% Asnières",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Manuel",
+        "head_last_name": "AESCHLIMANN"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Agir pour Asnières",
+        "list_short_label": "Agir pour Asnières",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Larbi",
+        "head_last_name": "EL HADRI"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Asnières en commun",
+        "list_short_label": "Asnières en commun",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Romain",
+        "head_last_name": "JEHANIN"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Asnières 2050",
+        "list_short_label": "Asnières 2050",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Sandrine",
+        "head_last_name": "PICARD-MARCOVECCHIO"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "ASNIÈRES INSOUMISE",
+        "list_short_label": "ASNIÈRES INSOUMISE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Yoshi",
+        "head_last_name": "KON-SHARP"
+      }
+    ]
+  },
+  "92012": {
+    "commune_code": "92012",
+    "commune_name": "Boulogne-Billancourt",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "A la Reconquête de Boulogne-Billancourt",
+        "list_short_label": "A la Reconquête de Boulogne-Billancourt",
+        "nuance_code": "LREC",
+        "nuance_label": "Liste Reconquête !",
+        "head_first_name": "Yann",
+        "head_last_name": "LOUSSOUARN"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Aimer Boulogne-Billancourt",
+        "list_short_label": "Aimer Boulogne-Billancourt",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Antoine",
+        "head_last_name": "DE JERPHANION"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Vivre à Boulogne-Billancourt",
+        "list_short_label": "Vivre à Boulogne-Billancourt",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Pierre-Christophe",
+        "head_last_name": "BAGUET"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Boulogne-Billancourt Nous Rassemble",
+        "list_short_label": "Boulogne-Billancourt Nous Rassemble",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "Judith",
+        "head_last_name": "SHAN"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "L'UNION DE LA GAUCHE ET DES ECOLOGISTES POUR BOULOGNE-BILLANCOURT.",
+        "list_short_label": "L'UNION DE LA GAUCHE ET DES ECOLOGISTES POUR BOULOGNE-BILLANCOURT.",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Pauline",
+        "head_last_name": "RAPILLY-FERNIOT"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Union des patriotes pour Boulogne",
+        "list_short_label": "Union des patriotes pour Boulogne",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Matteo",
+        "head_last_name": "GIAMMARRESI"
+      }
+    ]
+  },
+  "92025": {
+    "commune_code": "92025",
+    "commune_name": "Colombes",
+    "list_count": 8,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "ENSEMBLE, REVELONS COLOMBES",
+        "list_short_label": "ENSEMBLE, REVELONS COLOMBES",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Amélie",
+        "head_last_name": "DELATTRE"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Colombes C Vous",
+        "list_short_label": "Colombes C Vous",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Nadia",
+        "head_last_name": "FRONTIGNY"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Colombes est une chance",
+        "list_short_label": "Colombes est une chance",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Joakim",
+        "head_last_name": "GIACOMONI"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIÈRE - LE CAMP DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Julien",
+        "head_last_name": "PUERTAS"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Avec vous pour Colombes, Populaire, Ecologiste et Solidaire",
+        "list_short_label": "Avec vous pour Colombes, Populaire, Ecologiste et Solidaire",
+        "nuance_code": "LVEC",
+        "nuance_label": "Liste Les Ecologistes",
+        "head_first_name": "Patrick",
+        "head_last_name": "CHAIMOVITCH"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Colombes Populaire",
+        "list_short_label": "Colombes Populaire",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Jordan",
+        "head_last_name": "ROBICHON"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "Colombes en ordre",
+        "list_short_label": "Colombes en ordre",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "René",
+        "head_last_name": "KIMBASSA"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "Colombes en mieux - La gauche démocratique, républicaine et écologiste",
+        "list_short_label": "Colombes en mieux - La gauche démocratique, républicaine et écologiste",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "Valentin",
+        "head_last_name": "NARBONNAIS"
+      }
+    ]
+  },
+  "92050": {
+    "commune_code": "92050",
+    "commune_name": "Nanterre",
+    "list_count": 10,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "A NANTERRE, CHANGEONS L'AVENIR",
+        "list_short_label": "A NANTERRE, CHANGEONS L'AVENIR",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "Thérèse",
+        "head_last_name": "NGIMBOUS BATJÔM"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Nanterre Ensemble",
+        "list_short_label": "Nanterre Ensemble",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Hélène",
+        "head_last_name": "MATOUK"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Choisir Nanterre",
+        "list_short_label": "Choisir Nanterre",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Raphaël",
+        "head_last_name": "ADAM"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "UNION CITOYENNE",
+        "list_short_label": "UNION CITOYENNE",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Mohamed",
+        "head_last_name": "GHARSSA"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "CLEAN Citoyen Libre Engagé pour l'Avenir de Nanterre",
+        "list_short_label": "CLEAN",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Mohammed",
+        "head_last_name": "AISSA"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "NPA Révolutionnaires-Nanterre ouvrière et révolutionnaire",
+        "list_short_label": "NPA Révolutionnaires-Nanterre ouvrière et révolutionnaire",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Thomas",
+        "head_last_name": "ESTEVES"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "NANTERRE-FIERTÉ(S)",
+        "list_short_label": "NANTERRE-FIERTÉ(S)",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Samia",
+        "head_last_name": "KASMI"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "Nanterre pour les travailleurs",
+        "list_short_label": "Nanterre pour les travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Julien",
+        "head_last_name": "MARCHAND"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "FAIRE MIEUX POUR NANTERRE",
+        "list_short_label": "FAIRE MIEUX POUR NANTERRE",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Nicolas",
+        "head_last_name": "HUYGHE"
+      },
+      {
+        "panel_number": 10,
+        "list_label": "Lutte Ouvrière-Le camp des travailleurs",
+        "list_short_label": "Lutte Ouvrière-Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Laurent",
+        "head_last_name": "STRUMANNE"
+      }
+    ]
+  },
+  "93048": {
+    "commune_code": "93048",
+    "commune_name": "Montreuil",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "A MONTREUIL, PRENEZ LE PARTI DES TRAVAILLEURS",
+        "list_short_label": "A MONTREUIL LE PARTI DES TRAVAILLEURS",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Christel",
+        "head_last_name": "KEISER"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Une voix pour tous",
+        "list_short_label": "Une voix pour tous",
+        "nuance_code": "LDIV",
+        "nuance_label": "Liste Divers",
+        "head_first_name": "Nora",
+        "head_last_name": "DELIBA"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "VIVE MONTREUIL !",
+        "list_short_label": "VIVE MONTREUIL !",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Patrice",
+        "head_last_name": "BESSAC"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Osez la voie citoyenne",
+        "list_short_label": "Osez la voie citoyenne",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Choukri",
+        "head_last_name": "YONIS"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "FAIRE MIEUX POUR MONTREUIL",
+        "list_short_label": "FAIRE MIEUX",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Sayna",
+        "head_last_name": "SHAHRYARI"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "LE DÉFI MONTREUILLOIS",
+        "list_short_label": "LDM",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "Emeline",
+        "head_last_name": "NOHAN"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "LUTTE OUVRIERE - LE CAMP DES TRAVAILLEURS",
+        "list_short_label": "LUTTE OUVRIERE",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Serge",
+        "head_last_name": "MERCIER"
+      }
+    ]
+  },
+  "93066": {
+    "commune_code": "93066",
+    "commune_name": "Saint-Denis",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "a.g.i.r pour saint-denis et pierrefitte-sur-seine!",
+        "list_short_label": "a.g.i.r",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Quentin",
+        "head_last_name": "GUTIERREZ"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Saint-Denis 100% Service public",
+        "list_short_label": "100% Service public",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Jérémie",
+        "head_last_name": "DAIRE"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Lutte ouvrière-le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Agnès",
+        "head_last_name": "RENAUD"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Ensemble, retrouvons l'Espoir",
+        "list_short_label": "Ensemble, retrouvons l'Espoir",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Bally",
+        "head_last_name": "BAGAYOKO"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Révolution permanente - Reprendre Saint-denis Pierrefitte aux politiciens professionnels",
+        "list_short_label": "Révolution permanente",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Elsa",
+        "head_last_name": "MARCEL"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Réussir ensemble avec Mathieu Hanotin",
+        "list_short_label": "Réussir ensemble",
+        "nuance_code": "LSOC",
+        "nuance_label": "Liste du Parti socialiste",
+        "head_first_name": "Mathieu",
+        "head_last_name": "HANOTIN"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "CHANGER SAINT-DENIS PIERREFITTE",
+        "list_short_label": "CHANGER SAINT-DENIS PIERREFITTE",
+        "nuance_code": "LUDI",
+        "nuance_label": "Liste de l'Union des Démocrates et des Indépendants",
+        "head_first_name": "Pascal",
+        "head_last_name": "KOUPPÉ DE K MARTIN"
+      }
+    ]
+  },
+  "94028": {
+    "commune_code": "94028",
+    "commune_name": "Créteil",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Lutte ouvrière - Le camps des Travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camps des Travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Sabrina",
+        "head_last_name": "PRUVOT"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Créteil pour les travailleurs et jeunes, contre la guerre et l'austérité",
+        "list_short_label": "Créteil pour les travailleurs et jeunes, contre la guerre et l'austérité",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Martine",
+        "head_last_name": "DAMIEN"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Pour Créteil, avançons",
+        "list_short_label": "Pour Créteil, avançons",
+        "nuance_code": "LUD",
+        "nuance_label": "Liste d'union à droite",
+        "head_first_name": "Sylvain",
+        "head_last_name": "THEZARD"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Pour un renouveau écologique et citoyen à Créteil",
+        "list_short_label": "Pour un renouveau écologique et citoyen à Créteil",
+        "nuance_code": "LVEC",
+        "nuance_label": "Liste Les Ecologistes",
+        "head_first_name": "Hervé",
+        "head_last_name": "NABARETTE"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Bien Ensemble",
+        "list_short_label": "Bien Ensemble",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Laurent",
+        "head_last_name": "CATHALA"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Créteil pour vous 2026 !",
+        "list_short_label": "Créteil pour vous 2026 !",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Thierry",
+        "head_last_name": "HEBBRECHT"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "Faire mieux pour Créteil",
+        "list_short_label": "Faire mieux pour Créteil",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Abdoulbar",
+        "head_last_name": "DJAFFAR"
+      }
+    ]
+  },
+  "94081": {
+    "commune_code": "94081",
+    "commune_name": "Vitry-sur-Seine",
+    "list_count": 6,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Nouveau Front Populaire Vitry",
+        "list_short_label": "Nouveau Front Populaire Vitry",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Pierre",
+        "head_last_name": "BELL-LLOCH"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "Vitry contre la guerre et les coupes budgétaires !",
+        "list_short_label": "Vitry contre la guerre et les coupes budgétaires",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Véronique",
+        "head_last_name": "DUCANDAS"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - le camps des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Sandrine",
+        "head_last_name": "RUCHOT"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Vitry En Mieux La Liste Ecolo 100% Citoyenne",
+        "list_short_label": "Vitry En Mieux La Liste Ecolo 100% Citoyenne",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Frédéric",
+        "head_last_name": "BOURDON"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "Vitry Autrement",
+        "list_short_label": "Vitry Autrement",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Mathieu",
+        "head_last_name": "SERPETTE"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "Vitry Unie et Populaire",
+        "list_short_label": "Vitry Unie Et Populaire",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Hocine",
+        "head_last_name": "TMIMI"
+      }
+    ]
+  },
+  "95018": {
+    "commune_code": "95018",
+    "commune_name": "Argenteuil",
+    "list_count": 7,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "Lutte ouvrière - Le camp des travailleurs",
+        "list_short_label": "Lutte ouvrière - Le camp des travailleurs",
+        "nuance_code": "LEXG",
+        "nuance_label": "Liste d'extrême-gauche",
+        "head_first_name": "Dominique",
+        "head_last_name": "MARIETTE"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "DONNONS UN AVENIR À ARGENTEUIL",
+        "list_short_label": "DONNONS UN AVENIR À ARGENTEUIL",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Philippe",
+        "head_last_name": "DOUCET"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "Nous, les Argenteuillais.es",
+        "list_short_label": "Nous, les Argenteuillais.es",
+        "nuance_code": "LFI",
+        "nuance_label": "Liste de La France insoumise",
+        "head_first_name": "Yassin",
+        "head_last_name": "ZEGHLI"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "Ensemble, rassemblés pour Argenteuil",
+        "list_short_label": "Ensemble, rassemblés pour Argenteuil",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Franck",
+        "head_last_name": "DEBEAUD"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "ARGENTEUIL TOUJOURS PLUS GRAND",
+        "list_short_label": "ARGENTEUIL TOUJOURS PLUS GRAND",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Georges",
+        "head_last_name": "MOTHRON"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "ARGENTEUIL NOTRE VILLE NOTRE AVENIR",
+        "list_short_label": "ARGENTEUIL NOTRE VILLE NOTRE AVENIR",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Nadir",
+        "head_last_name": "SLIFI"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "Argenteuil La Gauche Rassemblée",
+        "list_short_label": "Argenteuil La Gauche Rassemblée",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Nicolas",
+        "head_last_name": "BOUGEARD"
+      }
+    ]
+  },
+  "97411": {
+    "commune_code": "97411",
+    "commune_name": "Saint-Denis",
+    "list_count": 9,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "NOTRE HEURE C'EST MAINTENANT !",
+        "list_short_label": "NOTRE HEURE C'EST MAINTENANT !",
+        "nuance_code": "LDSV",
+        "nuance_label": "Liste de droite souverainiste",
+        "head_first_name": "Sonny",
+        "head_last_name": "WELMANT"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "RASSEMBLEMENT DIONYSIEN",
+        "list_short_label": "RASSEMBLEMENT  DIONYSIEN",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Jean Max",
+        "head_last_name": "NATIVEL"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "SAINT-DENIS POUR TOUS",
+        "list_short_label": "SAINT-DENIS POUR TOUS",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Ericka",
+        "head_last_name": "BAREIGTS"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "SAINT-DENIS, UNE TERRE UN PEUPLE !",
+        "list_short_label": "SAINT-DENIS, UNE TERRE UN PEUPLE !",
+        "nuance_code": "LECO",
+        "nuance_label": "Liste écologiste",
+        "head_first_name": "Ludovic",
+        "head_last_name": "SAUTRON"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "POUR TOUT SAINT-DENIS",
+        "list_short_label": "POUR TOUT SAINT-DENIS",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Stéphane",
+        "head_last_name": "PERSÉE"
+      },
+      {
+        "panel_number": 6,
+        "list_label": "LA VOIX CITOYENNE A SAINT-DENIS",
+        "list_short_label": "LA VOIX CITOYENNE A SAINT-DENIS",
+        "nuance_code": "LDVG",
+        "nuance_label": "Liste divers gauche",
+        "head_first_name": "Giovanni",
+        "head_last_name": "PAYET"
+      },
+      {
+        "panel_number": 7,
+        "list_label": "LA FORCE D'AGIR POUR SAINT-DENIS !",
+        "list_short_label": "LA FORCE D'AGIR POUR SAINT-DENIS !",
+        "nuance_code": "LEXD",
+        "nuance_label": "Liste d'extrême droite",
+        "head_first_name": "Gaëlle",
+        "head_last_name": "LEBON"
+      },
+      {
+        "panel_number": 8,
+        "list_label": "DIONYSIENS RASSEMBLÉS POUR CHANGER",
+        "list_short_label": "DIONYSIENS RASSEMBLÉS POUR CHANGER",
+        "nuance_code": "LLR",
+        "nuance_label": "Liste des Républicains",
+        "head_first_name": "René-Paul",
+        "head_last_name": "VICTORIA"
+      },
+      {
+        "panel_number": 9,
+        "list_label": "TOUS DIONYSIENS",
+        "list_short_label": "TOUS DIONYSIENS",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Farid",
+        "head_last_name": "MANGROLIA"
+      }
+    ]
+  },
+  "97415": {
+    "commune_code": "97415",
+    "commune_name": "Saint-Paul",
+    "list_count": 5,
+    "lists": [
+      {
+        "panel_number": 1,
+        "list_label": "POUR SAINT-PAUL",
+        "list_short_label": "POUR SAINT-PAUL",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Didier",
+        "head_last_name": "ROBERT"
+      },
+      {
+        "panel_number": 2,
+        "list_label": "LISTE CONDUITE PAR EMMANUEL SÉRAPHIN",
+        "list_short_label": "LISTE CONDUITE PAR EMMANUEL SÉRAPHIN",
+        "nuance_code": "LUG",
+        "nuance_label": "Liste d'union à gauche",
+        "head_first_name": "Emmanuel",
+        "head_last_name": "SÉRAPHIN"
+      },
+      {
+        "panel_number": 3,
+        "list_label": "RASSEMBLEMENT SAINT PAULOIS",
+        "list_short_label": "RASSEMBLEMENT SAINT PAULOIS",
+        "nuance_code": "LRN",
+        "nuance_label": "Liste du Rassemblement National",
+        "head_first_name": "Jean-Yves",
+        "head_last_name": "MOREL"
+      },
+      {
+        "panel_number": 4,
+        "list_label": "NOUS, LES SAINT-PAULOIS",
+        "list_short_label": "NOUS, LES SAINT-PAULOIS",
+        "nuance_code": "LDVD",
+        "nuance_label": "Liste divers droite",
+        "head_first_name": "Cyrille",
+        "head_last_name": "MELCHIOR"
+      },
+      {
+        "panel_number": 5,
+        "list_label": "SAINT-PAUL EN MOUVEMENT",
+        "list_short_label": "SAINT-PAUL EN MOUVEMENT",
+        "nuance_code": "LDVC",
+        "nuance_label": "Liste divers centre",
+        "head_first_name": "Maxime",
+        "head_last_name": "HOARAU"
       }
     ]
   }

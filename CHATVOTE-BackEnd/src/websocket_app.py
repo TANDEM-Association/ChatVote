@@ -93,6 +93,13 @@ MAX_RESPONSE_CHUNK_LENGTH = 10
 CHAT_RESPONSE_TIMEOUT = int(os.getenv("CHAT_RESPONSE_TIMEOUT_SECONDS", "40"))
 MAX_USER_MESSAGE_LENGTH = int(os.getenv("MAX_USER_MESSAGE_LENGTH", "2000"))
 
+
+def _sanitize_source_url(url: str | None) -> str | None:
+    """Return the URL only if it is a real HTTP(S) link, otherwise None."""
+    if url and url.startswith(("http://", "https://")):
+        return url
+    return None
+
 logger = logging.getLogger(__name__)
 
 
@@ -659,7 +666,7 @@ async def fetch_and_emit_response(
                     "document_publish_date": source_doc.metadata.get(
                         "document_publish_date"
                     ),
-                    "url": source_doc.metadata.get("url"),
+                    "url": _sanitize_source_url(source_doc.metadata.get("url")),
                     "source_document": source_doc.metadata.get("source_document"),
                     # Unified metadata
                     "fiabilite": source_doc.metadata.get("fiabilite"),
@@ -710,7 +717,7 @@ async def fetch_and_emit_response(
                             "document_publish_date": source_doc.metadata.get(
                                 "document_publish_date"
                             ),
-                            "url": source_doc.metadata.get("url"),
+                            "url": _sanitize_source_url(source_doc.metadata.get("url")),
                             "source_document": source_doc.metadata.get(
                                 "source_document"
                             ),
@@ -1080,7 +1087,7 @@ async def handle_combined_answer_request(
             "source": source_doc.metadata.get("document_name", "Programme"),
             "page": page_number,
             "content_preview": content_preview,
-            "url": source_doc.metadata.get("url"),
+            "url": _sanitize_source_url(source_doc.metadata.get("url")),
             "source_type": "manifesto",
             "party_id": source_doc.metadata.get("namespace"),
             # Unified metadata
@@ -1112,7 +1119,7 @@ async def handle_combined_answer_request(
             "source": source_doc.metadata.get("document_name", "Site candidat"),
             "page": page_number,
             "content_preview": content_preview,
-            "url": source_doc.metadata.get("url"),
+            "url": _sanitize_source_url(source_doc.metadata.get("url")),
             "source_type": "candidate",
             "candidate_id": candidate_id,
             "candidate_name": source_doc.metadata.get("candidate_name"),

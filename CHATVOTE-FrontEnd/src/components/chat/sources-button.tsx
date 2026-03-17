@@ -136,7 +136,7 @@ const SourceItem = ({ source }: { source: SourceWithIndex }) => {
   const tCommon = useTranslations("common");
 
   const onSourceClick = (source: Source) => {
-    if (!source.url) return;
+    if (!source.url || !source.url.startsWith("http")) return;
     const isPdfLink = source.url.includes(".pdf");
     if (isPdfLink) {
       const url = buildPdfUrl(source);

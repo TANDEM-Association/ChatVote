@@ -5,19 +5,37 @@ import {
   type DragEvent,
   useCallback,
   useEffect,
+  useMemo,
   useRef,
   useState,
 } from "react";
 
 import { useParams } from "next/navigation";
 
+import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@components/ui/card";
+import {
+  Select,
+  SelectContent,
+  SelectGroup,
+  SelectItem,
+  SelectLabel,
+  SelectSeparator,
+  SelectTrigger,
+  SelectValue,
+} from "@components/ui/select";
 import {
   CheckCircle2,
+  ChevronDown,
+  ChevronRight,
+  Eye,
   FileText,
   Loader2,
   RefreshCw,
+  Send,
   UploadCloud,
+  X,
   XCircle,
 } from "lucide-react";
 
@@ -33,23 +51,51 @@ type JobStage =
   | "chunking"
   | "embedding"
   | "indexing"
+  | "preview"
   | "done"
   | "error";
+
+interface AssignmentInfo {
+  target_name: string;
+  target_id: string;
+  target_type: string;
+  confidence: number;
+}
+
+interface ChunkPreview {
+  index: number;
+  content: string;
+  length: number;
+}
+
+interface PreviewData {
+  text_length: number;
+  text_preview: string;
+  chunks_count: number;
+  chunk_previews: ChunkPreview[];
+  auto_assignment: AssignmentInfo | null;
+  error?: string;
+}
 
 interface JobStatus {
   job_id: string;
   filename: string;
   status: JobStage;
   progress: number;
-  assigned_to?: {
-    target_name: string;
-    target_id: string;
-    target_type: string;
-    confidence: number;
-  } | null;
+  assigned_to?: AssignmentInfo | null;
   collection?: string;
   chunks_indexed?: number;
   error?: string;
+  preview?: PreviewData;
+}
+
+interface Target {
+  type: "party" | "candidate";
+  id: string;
+  name: string;
+  abbreviation?: string | null;
+  municipality?: string;
+  party_ids?: string[];
 }
 
 // ---------------------------------------------------------------------------
@@ -61,7 +107,10 @@ const API_URL =
   process.env.NEXT_PUBLIC_SOCKET_URL ||
   "http://localhost:8080";
 
-const ACCEPTED_TYPES = ["application/pdf", "text/plain"];
+const ACCEPTED_TYPES = [
+  "application/pdf",
+  "text/plain",
+];
 const ACCEPTED_EXTENSIONS = [".pdf", ".txt"];
 
 const POLL_INTERVAL_MS = 2000;
@@ -78,6 +127,7 @@ const STAGE_ORDER: JobStage[] = [
 ];
 
 function stageProgress(stage: JobStage): number {
+  if (stage === "preview") return 60;
   const idx = STAGE_ORDER.indexOf(stage);
   if (idx === -1) return 0;
   return Math.round((idx / (STAGE_ORDER.length - 1)) * 100);
@@ -92,6 +142,7 @@ function stageLabel(stage: JobStage): string {
     chunking: "Chunking...",
     embedding: "Embedding...",
     indexing: "Indexing...",
+    preview: "Ready for review",
     done: "Done",
     error: "Error",
   };
@@ -110,10 +161,38 @@ export default function AdminUploadPage() {
   const [isUploading, setIsUploading] = useState(false);
   const [uploadError, setUploadError] = useState<string | null>(null);
   const [notFound, setNotFound] = useState(false);
+  const [targets, setTargets] = useState<Target[]>([]);
+  const [targetsLoading, setTargetsLoading] = useState(true);
+
+  // Per-job manual override selection (job_id -> "type:id")
+  const [manualOverrides, setManualOverrides] = useState<
+    Map<string, string>
+  >(new Map());
 
   const fileInputRef = useRef<HTMLInputElement>(null);
   const pollingRef = useRef<ReturnType<typeof setInterval> | null>(null);
   const dragCounterRef = useRef(0);
+
+  // ---- Load available targets on mount ----
+
+  useEffect(() => {
+    async function loadTargets() {
+      try {
+        const resp = await fetch(`${API_URL}/api/v1/admin/upload-targets`, {
+          headers: { "X-Upload-Secret": secret },
+        });
+        if (resp.ok) {
+          const data = await resp.json();
+          setTargets(data.targets || []);
+        }
+      } catch {
+        // Non-critical — manual selection won't be available
+      } finally {
+        setTargetsLoading(false);
+      }
+    }
+    loadTargets();
+  }, [secret]);
 
   // ---- Polling for job status updates ----
 
@@ -141,9 +220,13 @@ export default function AdminUploadPage() {
         const next = new Map(prev);
         for (const [id, status] of Object.entries(data.jobs)) {
           if (next.has(id)) {
-            next.set(id, { ...status, job_id: id });
+            next.set(id, { ...next.get(id)!, ...status, job_id: id });
           }
-          if (status.status === "done" || status.status === "error") {
+          if (
+            status.status === "done" ||
+            status.status === "error" ||
+            status.status === "preview"
+          ) {
             activeJobIds.current.delete(id);
           }
         }
@@ -169,7 +252,7 @@ export default function AdminUploadPage() {
     return ACCEPTED_EXTENSIONS.includes(ext);
   }, []);
 
-  // ---- Upload handler ----
+  // ---- Upload handler (preview mode) ----
 
   const handleUpload = useCallback(
     async (files: File[]) => {
@@ -187,6 +270,7 @@ export default function AdminUploadPage() {
       try {
         const formData = new FormData();
         valid.forEach((f) => formData.append("files", f));
+        formData.append("mode", "preview");
 
         const resp = await fetch(`${API_URL}/api/v1/admin/upload`, {
           method: "POST",
@@ -206,7 +290,12 @@ export default function AdminUploadPage() {
         }
 
         const data = (await resp.json()) as {
-          jobs: Array<{ job_id: string; filename: string; status: JobStage }>;
+          jobs: Array<{
+            job_id: string;
+            filename: string;
+            status: JobStage;
+            preview?: PreviewData;
+          }>;
         };
 
         setJobs((prev) => {
@@ -217,8 +306,13 @@ export default function AdminUploadPage() {
               filename: job.filename,
               status: job.status,
               progress: stageProgress(job.status),
+              preview: job.preview,
+              assigned_to: job.preview?.auto_assignment || null,
             });
-            activeJobIds.current.add(job.job_id);
+            // Poll if not yet in preview/done/error
+            if (!["preview", "done", "error"].includes(job.status)) {
+              activeJobIds.current.add(job.job_id);
+            }
           }
           return next;
         });
@@ -233,24 +327,100 @@ export default function AdminUploadPage() {
     [secret, isValidFile],
   );
 
-  // ---- Retry handler ----
+  // ---- Confirm handler ----
 
-  const handleRetry = useCallback(
-    (jobId: string) => {
-      const job = jobs.get(jobId);
-      if (!job) return;
+  const handleConfirm = useCallback(
+    async (jobId: string) => {
+      const override = manualOverrides.get(jobId);
+      let body: Record<string, string> = {};
+      if (override && override !== "auto") {
+        const [targetType, targetId] = override.split(":", 2);
+        body = { target_type: targetType, target_id: targetId };
+      }
 
-      // Re-upload requires the original file, which we don't keep.
-      // Instead remove the failed job so the user can re-drop the file.
+      // Optimistically update status
       setJobs((prev) => {
         const next = new Map(prev);
-        next.delete(jobId);
+        const job = next.get(jobId);
+        if (job) {
+          next.set(jobId, { ...job, status: "extracting", progress: 10 });
+        }
         return next;
       });
-      activeJobIds.current.delete(jobId);
+      activeJobIds.current.add(jobId);
+
+      try {
+        const resp = await fetch(
+          `${API_URL}/api/v1/admin/upload-confirm/${jobId}`,
+          {
+            method: "POST",
+            headers: {
+              "X-Upload-Secret": secret,
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify(body),
+          },
+        );
+
+        if (!resp.ok) {
+          const text = await resp.text();
+          setJobs((prev) => {
+            const next = new Map(prev);
+            const job = next.get(jobId);
+            if (job) {
+              next.set(jobId, {
+                ...job,
+                status: "error",
+                error: `Confirm failed: ${text}`,
+              });
+            }
+            return next;
+          });
+          activeJobIds.current.delete(jobId);
+        }
+      } catch (err) {
+        setJobs((prev) => {
+          const next = new Map(prev);
+          const job = next.get(jobId);
+          if (job) {
+            next.set(jobId, {
+              ...job,
+              status: "error",
+              error: `Network error: ${err instanceof Error ? err.message : "Unknown"}`,
+            });
+          }
+          return next;
+        });
+        activeJobIds.current.delete(jobId);
+      }
     },
-    [jobs],
+    [secret, manualOverrides],
   );
+
+  // ---- Confirm all previewed jobs ----
+
+  const handleConfirmAll = useCallback(async () => {
+    const previewJobs = Array.from(jobs.values()).filter(
+      (j) => j.status === "preview",
+    );
+    await Promise.all(previewJobs.map((j) => handleConfirm(j.job_id)));
+  }, [jobs, handleConfirm]);
+
+  // ---- Remove job ----
+
+  const handleRemove = useCallback((jobId: string) => {
+    setJobs((prev) => {
+      const next = new Map(prev);
+      next.delete(jobId);
+      return next;
+    });
+    activeJobIds.current.delete(jobId);
+    setManualOverrides((prev) => {
+      const next = new Map(prev);
+      next.delete(jobId);
+      return next;
+    });
+  }, []);
 
   // ---- Drag & drop handlers ----
 
@@ -290,10 +460,32 @@ export default function AdminUploadPage() {
     (e: ChangeEvent<HTMLInputElement>) => {
       const files = e.target.files ? Array.from(e.target.files) : [];
       if (files.length > 0) handleUpload(files);
-      // Reset input so re-selecting same file triggers change
       if (fileInputRef.current) fileInputRef.current.value = "";
     },
     [handleUpload],
+  );
+
+  // ---- Derived state ----
+
+  const jobList = Array.from(jobs.values());
+  const previewJobs = jobList.filter((j) => j.status === "preview");
+  const processingJobs = jobList.filter(
+    (j) =>
+      !["preview", "done", "error"].includes(j.status),
+  );
+  const completedJobs = jobList.filter(
+    (j) => j.status === "done" || j.status === "error",
+  );
+
+  // ---- Grouped targets ----
+
+  const partyTargets = useMemo(
+    () => targets.filter((t) => t.type === "party"),
+    [targets],
+  );
+  const candidateTargets = useMemo(
+    () => targets.filter((t) => t.type === "candidate"),
+    [targets],
   );
 
   // ---- Not-found gate ----
@@ -308,21 +500,18 @@ export default function AdminUploadPage() {
 
   // ---- Render ----
 
-  const jobList = Array.from(jobs.values());
-
   return (
     <>
-      {/* noindex */}
       <meta name="robots" content="noindex, nofollow" />
 
       <div className="bg-background text-foreground flex min-h-screen flex-col">
-        <div className="mx-auto w-full max-w-3xl space-y-8 px-4 py-10">
+        <div className="mx-auto w-full max-w-4xl space-y-6 px-4 py-10">
           {/* Header */}
           <div>
             <h1 className="text-2xl font-bold">Document Upload</h1>
             <p className="text-muted-foreground mt-1 text-sm">
-              Admin &mdash; drag &amp; drop PDF or TXT files to index into the
-              RAG vector store.
+              Drop PDF or TXT files to preview, configure source assignment,
+              then index into Qdrant.
             </p>
           </div>
 
@@ -333,10 +522,10 @@ export default function AdminUploadPage() {
             onDragOver={onDragOver}
             onDrop={onDrop}
             onClick={() => fileInputRef.current?.click()}
-            className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-12 transition-colors ${
+            className={`flex cursor-pointer flex-col items-center justify-center gap-3 rounded-xl border-2 border-dashed p-10 transition-colors ${
               isDragging
                 ? "border-primary bg-primary/5"
-                : "border-border-subtle hover:border-primary/50 hover:bg-surface/50"
+                : "border-border hover:border-primary/50 hover:bg-muted/30"
             } `}
           >
             <UploadCloud
@@ -356,7 +545,9 @@ export default function AdminUploadPage() {
                 </>
               )}
             </p>
-            <p className="text-muted-foreground/70 text-xs">PDF, TXT</p>
+            <p className="text-muted-foreground/70 text-xs">
+              PDF, TXT — files are previewed before indexing
+            </p>
             <input
               ref={fileInputRef}
               type="file"
@@ -378,19 +569,82 @@ export default function AdminUploadPage() {
           {isUploading && (
             <div className="text-muted-foreground flex items-center gap-2 text-sm">
               <Loader2 className="size-4 animate-spin" />
-              Uploading files...
+              Uploading and analyzing files...
             </div>
           )}
 
-          {/* Upload queue / status table */}
-          {jobList.length > 0 && (
-            <div className="space-y-3">
-              <h2 className="text-lg font-semibold">Upload Queue</h2>
+          {/* Preview section */}
+          {previewJobs.length > 0 && (
+            <div className="space-y-4">
+              <div className="flex items-center justify-between">
+                <h2 className="text-lg font-semibold">
+                  Review &amp; Configure ({previewJobs.length} file
+                  {previewJobs.length > 1 ? "s" : ""})
+                </h2>
+                <Button
+                  onClick={handleConfirmAll}
+                  size="sm"
+                  className="gap-1.5"
+                >
+                  <Send className="size-3.5" />
+                  Index All
+                </Button>
+              </div>
 
-              <div className="border-border-subtle overflow-hidden rounded-xl border">
+              {previewJobs.map((job) => (
+                <PreviewCard
+                  key={job.job_id}
+                  job={job}
+                  partyTargets={partyTargets}
+                  candidateTargets={candidateTargets}
+                  targetsLoading={targetsLoading}
+                  selectedOverride={manualOverrides.get(job.job_id) || "auto"}
+                  onOverrideChange={(value) =>
+                    setManualOverrides((prev) => {
+                      const next = new Map(prev);
+                      next.set(job.job_id, value);
+                      return next;
+                    })
+                  }
+                  onConfirm={() => handleConfirm(job.job_id)}
+                  onRemove={() => handleRemove(job.job_id)}
+                />
+              ))}
+            </div>
+          )}
+
+          {/* Processing jobs */}
+          {processingJobs.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">Processing</h2>
+              <div className="border-border overflow-hidden rounded-xl border">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-border-subtle bg-surface text-muted-foreground border-b text-left text-xs tracking-wider uppercase">
+                    <tr className="border-border bg-muted/50 text-muted-foreground border-b text-left text-xs tracking-wider uppercase">
+                      <th className="px-4 py-2.5">File</th>
+                      <th className="px-4 py-2.5">Assigned To</th>
+                      <th className="px-4 py-2.5">Status</th>
+                      <th className="px-4 py-2.5 text-right">Chunks</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {processingJobs.map((job) => (
+                      <JobRow key={job.job_id} job={job} />
+                    ))}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
+
+          {/* Completed jobs */}
+          {completedJobs.length > 0 && (
+            <div className="space-y-3">
+              <h2 className="text-lg font-semibold">Completed</h2>
+              <div className="border-border overflow-hidden rounded-xl border">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-border bg-muted/50 text-muted-foreground border-b text-left text-xs tracking-wider uppercase">
                       <th className="px-4 py-2.5">File</th>
                       <th className="px-4 py-2.5">Assigned To</th>
                       <th className="px-4 py-2.5">Status</th>
@@ -399,11 +653,11 @@ export default function AdminUploadPage() {
                     </tr>
                   </thead>
                   <tbody>
-                    {jobList.map((job) => (
+                    {completedJobs.map((job) => (
                       <JobRow
                         key={job.job_id}
                         job={job}
-                        onRetry={() => handleRetry(job.job_id)}
+                        onRetry={() => handleRemove(job.job_id)}
                       />
                     ))}
                   </tbody>
@@ -418,17 +672,237 @@ export default function AdminUploadPage() {
 }
 
 // ---------------------------------------------------------------------------
-// Job row sub-component
+// Preview card — shows extraction results + source config before indexing
 // ---------------------------------------------------------------------------
 
-function JobRow({ job, onRetry }: { job: JobStatus; onRetry: () => void }) {
+function PreviewCard({
+  job,
+  partyTargets,
+  candidateTargets,
+  targetsLoading,
+  selectedOverride,
+  onOverrideChange,
+  onConfirm,
+  onRemove,
+}: {
+  job: JobStatus;
+  partyTargets: Target[];
+  candidateTargets: Target[];
+  targetsLoading: boolean;
+  selectedOverride: string;
+  onOverrideChange: (value: string) => void;
+  onConfirm: () => void;
+  onRemove: () => void;
+}) {
+  const [expanded, setExpanded] = useState(false);
+  const preview = job.preview;
+  const autoAssignment = preview?.auto_assignment;
+
+  return (
+    <Card>
+      <CardHeader className="pb-3">
+        <div className="flex items-start justify-between gap-3">
+          <div className="flex items-center gap-2.5 min-w-0">
+            <FileText className="text-muted-foreground size-5 shrink-0" />
+            <div className="min-w-0">
+              <CardTitle className="text-base truncate">
+                {job.filename}
+              </CardTitle>
+              {preview && (
+                <p className="text-muted-foreground mt-0.5 text-xs">
+                  {preview.text_length.toLocaleString()} chars extracted
+                  &middot; {preview.chunks_count} chunks
+                </p>
+              )}
+            </div>
+          </div>
+
+          <div className="flex items-center gap-1.5 shrink-0">
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRemove}
+              className="h-7 px-2 text-muted-foreground hover:text-destructive"
+            >
+              <X className="size-3.5" />
+            </Button>
+          </div>
+        </div>
+      </CardHeader>
+
+      <CardContent className="space-y-4">
+        {/* Auto-detection result */}
+        {autoAssignment && (
+          <div className="flex items-center gap-2 text-sm">
+            <span className="text-muted-foreground">Auto-detected:</span>
+            <Badge variant="secondary">
+              {autoAssignment.target_type === "party" ? "Party" : "Candidate"}
+            </Badge>
+            <span className="font-medium">{autoAssignment.target_name}</span>
+            <span className="text-muted-foreground text-xs">
+              ({Math.round(autoAssignment.confidence * 100)}% confidence)
+            </span>
+          </div>
+        )}
+
+        {!autoAssignment && preview && !preview.error && (
+          <div className="flex items-center gap-2 text-sm text-amber-600">
+            <XCircle className="size-3.5" />
+            Could not auto-detect source — please select manually
+          </div>
+        )}
+
+        {preview?.error && (
+          <div className="text-destructive flex items-center gap-2 text-sm">
+            <XCircle className="size-3.5" />
+            {preview.error}
+          </div>
+        )}
+
+        {/* Source override selector */}
+        <div className="flex items-end gap-3">
+          <div className="flex-1 space-y-1.5">
+            <label className="text-sm font-medium">
+              Assign to
+            </label>
+            <Select value={selectedOverride} onValueChange={onOverrideChange}>
+              <SelectTrigger className="h-9">
+                <SelectValue placeholder="Auto-detect" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="auto">
+                  {autoAssignment
+                    ? `Auto: ${autoAssignment.target_name}`
+                    : "Auto-detect (failed)"}
+                </SelectItem>
+                <SelectSeparator />
+
+                {partyTargets.length > 0 && (
+                  <SelectGroup>
+                    <SelectLabel>Parties</SelectLabel>
+                    {partyTargets.map((t) => (
+                      <SelectItem key={t.id} value={`party:${t.id}`}>
+                        {t.name}
+                        {t.abbreviation ? ` (${t.abbreviation})` : ""}
+                      </SelectItem>
+                    ))}
+                  </SelectGroup>
+                )}
+
+                {candidateTargets.length > 0 && (
+                  <>
+                    <SelectSeparator />
+                    <SelectGroup>
+                      <SelectLabel>Candidates</SelectLabel>
+                      {candidateTargets.map((t) => (
+                        <SelectItem key={t.id} value={`candidate:${t.id}`}>
+                          {t.name}
+                          {t.municipality ? ` — ${t.municipality}` : ""}
+                        </SelectItem>
+                      ))}
+                    </SelectGroup>
+                  </>
+                )}
+
+                {targetsLoading && (
+                  <SelectItem value="_loading" disabled>
+                    Loading targets...
+                  </SelectItem>
+                )}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <Button
+            onClick={onConfirm}
+            size="sm"
+            className="h-9 gap-1.5"
+            disabled={
+              !autoAssignment && selectedOverride === "auto"
+            }
+          >
+            <Send className="size-3.5" />
+            Index
+          </Button>
+        </div>
+
+        {/* Expandable preview */}
+        {preview && preview.chunk_previews && preview.chunk_previews.length > 0 && (
+          <div>
+            <button
+              type="button"
+              onClick={() => setExpanded(!expanded)}
+              className="text-muted-foreground hover:text-foreground flex items-center gap-1 text-xs transition-colors"
+            >
+              {expanded ? (
+                <ChevronDown className="size-3" />
+              ) : (
+                <ChevronRight className="size-3" />
+              )}
+              <Eye className="size-3" />
+              Preview chunks ({preview.chunks_count} total)
+            </button>
+
+            {expanded && (
+              <div className="mt-2 space-y-2">
+                {/* Text preview */}
+                <div className="bg-muted/50 rounded-lg border p-3">
+                  <p className="text-muted-foreground mb-1 text-xs font-medium uppercase">
+                    Extracted text (first 500 chars)
+                  </p>
+                  <p className="text-xs leading-relaxed whitespace-pre-wrap">
+                    {preview.text_preview}
+                  </p>
+                </div>
+
+                {/* Chunk previews */}
+                <div className="space-y-1.5">
+                  <p className="text-muted-foreground text-xs font-medium uppercase">
+                    Sample chunks (first 5 of {preview.chunks_count})
+                  </p>
+                  {preview.chunk_previews.map((chunk) => (
+                    <div
+                      key={chunk.index}
+                      className="bg-muted/30 rounded-lg border px-3 py-2"
+                    >
+                      <div className="text-muted-foreground mb-1 flex items-center justify-between text-[10px]">
+                        <span>Chunk #{chunk.index}</span>
+                        <span>{chunk.length} chars</span>
+                      </div>
+                      <p className="text-xs leading-relaxed">
+                        {chunk.content}
+                        {chunk.content.length < chunk.length ? "..." : ""}
+                      </p>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </CardContent>
+    </Card>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// Job row — for processing and completed tables
+// ---------------------------------------------------------------------------
+
+function JobRow({
+  job,
+  onRetry,
+}: {
+  job: JobStatus;
+  onRetry?: () => void;
+}) {
   const progress =
     job.status === "error" ? 0 : (job.progress ?? stageProgress(job.status));
   const isDone = job.status === "done";
   const isError = job.status === "error";
 
   return (
-    <tr className="border-border-subtle border-b last:border-b-0">
+    <tr className="border-border border-b last:border-b-0">
       {/* Filename */}
       <td className="px-4 py-3 font-medium">
         <div className="flex items-center gap-2">
@@ -448,7 +922,9 @@ function JobRow({ job, onRetry }: { job: JobStatus; onRetry: () => void }) {
             {job.assigned_to.target_name}
           </span>
         ) : (
-          <span className="text-muted-foreground/50 italic">detecting...</span>
+          <span className="text-muted-foreground/50 italic">
+            detecting...
+          </span>
         )}
       </td>
 
@@ -476,7 +952,7 @@ function JobRow({ job, onRetry }: { job: JobStatus; onRetry: () => void }) {
 
           {/* Progress bar */}
           {!isDone && !isError && (
-            <div className="bg-border-subtle h-1.5 w-full overflow-hidden rounded-full">
+            <div className="bg-muted h-1.5 w-full overflow-hidden rounded-full">
               <div
                 className="bg-primary h-full rounded-full transition-all duration-500"
                 style={{ width: `${progress}%` }}
@@ -497,19 +973,20 @@ function JobRow({ job, onRetry }: { job: JobStatus; onRetry: () => void }) {
       </td>
 
       {/* Retry */}
-      <td className="px-4 py-3">
-        {isError && (
-          <Button
-            variant="ghost"
-            size="sm"
-            onClick={onRetry}
-            className="h-7 px-2"
-            tooltip="Remove and re-upload"
-          >
-            <RefreshCw className="size-3.5" />
-          </Button>
-        )}
-      </td>
+      {onRetry && (
+        <td className="px-4 py-3">
+          {isError && (
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={onRetry}
+              className="h-7 px-2"
+            >
+              <RefreshCw className="size-3.5" />
+            </Button>
+          )}
+        </td>
+      )}
     </tr>
   );
 }
