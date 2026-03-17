@@ -1315,6 +1315,7 @@ async def experiment_topic_stats(request):
     # Track per-candidate chunk counts (from candidates collection only)
     candidate_chunks: dict[str, int] = {}
     candidate_manifesto_chunks: dict[str, int] = {}
+    candidate_uploaded_chunks: dict[str, int] = {}
 
     for col_name in [PARTY_INDEX_NAME, CANDIDATES_INDEX_NAME]:
         col_total = 0
@@ -1341,8 +1342,11 @@ async def experiment_topic_stats(request):
                         ns = meta.get("namespace", "")
                         if ns:
                             candidate_chunks[ns] = candidate_chunks.get(ns, 0) + 1
-                            if meta.get("source_document") == "profession_de_foi":
+                            src_doc = meta.get("source_document")
+                            if src_doc == "profession_de_foi":
                                 candidate_manifesto_chunks[ns] = candidate_manifesto_chunks.get(ns, 0) + 1
+                            elif src_doc == "uploaded_document":
+                                candidate_uploaded_chunks[ns] = candidate_uploaded_chunks.get(ns, 0) + 1
                     theme = meta.get("theme")
                     if not theme:
                         continue
@@ -1409,6 +1413,7 @@ async def experiment_topic_stats(request):
         "collections": collection_stats,
         "candidate_chunks": candidate_chunks,
         "candidate_manifesto_chunks": candidate_manifesto_chunks,
+        "candidate_uploaded_chunks": candidate_uploaded_chunks,
     })
 
 

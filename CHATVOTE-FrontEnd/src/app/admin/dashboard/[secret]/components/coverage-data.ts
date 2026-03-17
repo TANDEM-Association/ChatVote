@@ -34,6 +34,7 @@ export type CandidateCoverage = {
   chunk_count: number;
   website_chunks: number;
   manifesto_chunks: number;
+  uploaded_chunks: number;
   scrape_chars: number;
   party_label: string;
   website_url: string;
@@ -96,6 +97,7 @@ type TopicStatsResponse = {
   collections: Record<string, { total: number; classified: number }>;
   candidate_chunks?: Record<string, number>;
   candidate_manifesto_chunks?: Record<string, number>;
+  candidate_uploaded_chunks?: Record<string, number>;
 };
 
 async function fetchTopicStats(): Promise<TopicStatsResponse | null> {
@@ -212,6 +214,8 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
       topicStats?.candidate_chunks ?? {};
     const candidateManifestoChunks: Record<string, number> =
       topicStats?.candidate_manifesto_chunks ?? {};
+    const candidateUploadedChunks: Record<string, number> =
+      topicStats?.candidate_uploaded_chunks ?? {};
 
     const questionsByCommune: Record<string, number> = {};
     for (const doc of sessionsSnap.docs) {
@@ -333,7 +337,8 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
           data.manifesto_pdf_path,
         );
         const manifestoChunkCount = candidateManifestoChunks[doc.id] ?? 0;
-        const websiteChunkCount = chunkCount - manifestoChunkCount;
+        const uploadedChunkCount = candidateUploadedChunks[doc.id] ?? 0;
+        const websiteChunkCount = chunkCount - manifestoChunkCount - uploadedChunkCount;
         // "scraped" means the candidate's *website* was scraped — not just manifesto OCR
         const hasScraped =
           hasWebsite &&
@@ -414,6 +419,7 @@ export async function fetchCoverage(): Promise<CoverageResponse | null> {
           chunk_count: chunkCount,
           website_chunks: websiteChunkCount,
           manifesto_chunks: manifestoChunkCount,
+          uploaded_chunks: uploadedChunkCount,
           scrape_chars: data.scrape_chars ?? 0,
           party_label: partyLabel,
           website_url: websiteUrl,

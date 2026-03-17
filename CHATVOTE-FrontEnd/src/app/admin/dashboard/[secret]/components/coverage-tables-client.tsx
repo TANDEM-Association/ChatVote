@@ -1561,13 +1561,16 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
                 <th className="text-muted-foreground w-36 px-3 py-2.5 text-center text-xs font-semibold tracking-wider uppercase">
                   Chunks
                 </th>
+                <th className="text-muted-foreground w-20 px-3 py-2.5 text-center text-xs font-semibold tracking-wider uppercase">
+                  Uploaded
+                </th>
               </tr>
             </thead>
             <tbody className="divide-border-subtle/50 divide-y">
               {sorted.length === 0 && (
                 <tr>
                   <td
-                    colSpan={7}
+                    colSpan={8}
                     className="text-muted-foreground px-5 py-8 text-center text-sm"
                   >
                     {candidates.length === 0
@@ -1674,6 +1677,17 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
                           {c.has_manifesto || c.manifesto_chunks > 0 ? c.manifesto_chunks : "—"}
                         </span>
                         <span className="text-muted-foreground/50">manifesto</span>
+                      </span>
+                    </td>
+                    <td className="px-3 py-3 text-center">
+                      <span
+                        className={`text-[11px] tabular-nums ${
+                          c.uploaded_chunks > 0
+                            ? "font-medium text-blue-400"
+                            : "text-muted-foreground"
+                        }`}
+                      >
+                        {c.uploaded_chunks > 0 ? c.uploaded_chunks : "—"}
                       </span>
                     </td>
                   </tr>
