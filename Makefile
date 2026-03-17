@@ -79,8 +79,8 @@ dev: dev-infra
 		fi; \
 		sleep 1; \
 	done
-	@for i in 1 2 3 4 5 6 7 8 9 10 11 12 13 14 15; do \
-		if curl -so /dev/null http://localhost:3000/chat 2>/dev/null; then \
+	@for i in $$(seq 1 45); do \
+		if curl -sf -m 2 http://localhost:3000/ > /dev/null 2>&1; then \
 			break; \
 		fi; \
 		sleep 1; \
@@ -262,7 +262,7 @@ check:
 	@printf "  Backend   (:8080)  ... " && \
 		(curl -sf http://localhost:8080/healthz > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 	@printf "  Frontend  (:3000)  ... " && \
-		(curl -so /dev/null -w '' http://localhost:3000/chat 2>/dev/null && echo "OK" || echo "FAIL")
+		(curl -sf -m 5 http://localhost:3000/ > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 
 # ---------------------------------------------------------------------------
 # Logs
@@ -310,6 +310,9 @@ stop:
 			echo "  $$svc stopped."; \
 		fi; \
 	done
+	@lsof -ti :8080 2>/dev/null | xargs kill -9 2>/dev/null && echo "  backend orphans killed." || true
+	@lsof -ti :3000 2>/dev/null | xargs kill -9 2>/dev/null && echo "  frontend orphans killed." || true
+	@rm -f CHATVOTE-FrontEnd/.next/dev/lock
 	@lsof -ti :9099,:8081,:9199 2>/dev/null | sort -u | xargs kill 2>/dev/null && echo "  native firebase emulators stopped." || true
 	@echo "All services stopped."
 
