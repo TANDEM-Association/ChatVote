@@ -131,28 +131,39 @@ async function searchQdrant(
   limit: number,
   precomputedVector?: number[],
 ): Promise<SearchResult[]> {
+  const start = Date.now();
+  console.log(`[ai-chat:qdrant] searching collection=${collection} ${filterKey}=${filterValue} limit=${limit} q="${query.slice(0, 60)}"`);
+
   const embedding = precomputedVector ?? (await embedQuery(query));
 
-  const results = await qdrantClient.search(collection, {
-    vector: { name: 'dense', vector: embedding },
-    filter: {
-      must: [
-        {
-          key: filterKey,
-          match: { value: filterValue },
-        },
-      ],
-      must_not: [
-        {
-          key: 'metadata.fiabilite',
-          range: { gt: 3 },
-        },
-      ],
-    },
-    score_threshold: 0.35,
-    limit,
-    with_payload: true,
-  });
+  let results;
+  try {
+    results = await qdrantClient.search(collection, {
+      vector: { name: 'dense', vector: embedding },
+      filter: {
+        must: [
+          {
+            key: filterKey,
+            match: { value: filterValue },
+          },
+        ],
+        must_not: [
+          {
+            key: 'metadata.fiabilite',
+            range: { gt: 3 },
+          },
+        ],
+      },
+      score_threshold: 0.35,
+      limit,
+      with_payload: true,
+    });
+  } catch (err) {
+    console.error(`[ai-chat:qdrant] FAILED collection=${collection} ${filterKey}=${filterValue} ${Date.now() - start}ms`, err);
+    throw err;
+  }
+
+  console.log(`[ai-chat:qdrant] OK collection=${collection} ${filterKey}=${filterValue} results=${results.length} ${Date.now() - start}ms`);
 
   return results.map((r, idx) => {
     const payload = (r.payload ?? {}) as QdrantPayload;
@@ -700,6 +711,8 @@ export async function POST(req: Request) {
     enabledFeatures?: string[];
   };
 
+  console.log('[ai-chat] POST', { chatId, municipalityCode, partyIds, enabledFeatures, locale, uid, msgCount: uiMessages?.length });
+
   // ── Validate chatId format ──────────────────────────────────────────────
   if (chatId && !CHAT_ID_REGEX.test(chatId)) {
     return new Response(JSON.stringify({ error: 'Invalid chatId format' }), { status: 400 });
@@ -731,9 +744,7 @@ export async function POST(req: Request) {
       }));
       allCandidatesData = candidates;
 
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[ai-chat] municipalityCode:', municipalityCode, 'partyIds:', partyIds, 'candidates found:', candidates.length);
-      }
+      console.log('[ai-chat] municipalityCode:', municipalityCode, 'partyIds:', partyIds, 'candidates found:', candidates.length);
 
       if (candidates.length > 0) {
         // Extract unique party IDs from candidates if none provided
@@ -808,7 +819,12 @@ export async function POST(req: Request) {
 
   const candidateIdsList = searchCandidateIds.map((id) => `  - candidateId: "${id}"`).join('\n');
 
-  const searchInstructions = municipalityCode
+  // When candidateIds is empty (no candidates found for this municipality),
+  // fall back to party manifesto search to avoid referencing unavailable tools
+  const hasCandidates = candidateIds.length > 0;
+  console.log('[ai-chat] routing:', { municipalityCode, hasCandidates, hasSelection, candidateCount: candidateIds.length, searchCandidateCount: searchCandidateIds.length, resolvedPartyIds });
+
+  const searchInstructions = municipalityCode && hasCandidates
     ? hasSelection && searchCandidateIds.length <= 3
       ? `# RÈGLE CRITIQUE — OBLIGATOIRE
 Pour TOUTE question politique, tu DOIS appeler searchCandidateWebsite pour CHAQUE candidat sélectionné ci-dessous AVANT de répondre.
@@ -879,15 +895,13 @@ ${respondInLanguage}${candidateContext}`;
       console.error('[ai-chat] streamText error:', error);
     },
     onStepFinish({ stepNumber, toolCalls, finishReason, usage }) {
-      if (process.env.NODE_ENV === 'development') {
-        console.log('[ai-chat]', {
-          chatId,
-          stepNumber,
-          toolCalls: toolCalls?.map((t) => t?.toolName),
-          finishReason,
-          usage,
-        });
-      }
+      console.log('[ai-chat:step]', {
+        chatId,
+        stepNumber,
+        toolCalls: toolCalls?.map((t) => t?.toolName),
+        finishReason,
+        usage,
+      });
     },
     async onFinish({ text, usage }) {
       // Persist conversation to Firestore (fire-and-forget, never blocks the response)
