@@ -28,12 +28,8 @@ function getProxiedPdfUrl(url: string | null): string | null {
     return null;
   }
 
-  if (
-    url.includes("firebasestorage.app") ||
-    url.includes("storage.googleapis.com") ||
-    url.includes("chatvote-public-assets.s3.fr-par.scw.cloud") ||
-    url.includes("programme-candidats.interieur.gouv.fr")
-  ) {
+  // Proxy all external HTTP(S) URLs to avoid CORS issues
+  if (url.startsWith("http://") || url.startsWith("https://")) {
     return `/api/pdf-proxy?url=${encodeURIComponent(url)}`;
   }
 

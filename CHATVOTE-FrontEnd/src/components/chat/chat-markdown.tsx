@@ -28,9 +28,13 @@ function ChatMarkdown({ message }: Props) {
     // Only open real HTTP URLs — skip .md filenames or empty values
     if (!url || !url.startsWith("http")) return;
 
-    const isPdfLink = url.includes(".pdf");
+    // Detect PDF by URL or source document name
+    const isPdf =
+      url.includes(".pdf") ||
+      source.source?.toLowerCase().endsWith(".pdf") ||
+      source.source_document?.toLowerCase().endsWith(".pdf");
 
-    if (isPdfLink && window) {
+    if (isPdf) {
       const pdfUrl = buildPdfUrl(source);
       if (pdfUrl) return window.open(pdfUrl.toString(), "_blank");
     }

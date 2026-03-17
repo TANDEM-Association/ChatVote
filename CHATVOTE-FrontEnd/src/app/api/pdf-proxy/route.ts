@@ -10,13 +10,31 @@ export async function GET(request: NextRequest) {
     );
   }
 
-  // Only allow known safe domains for security
+  // Only allow HTTP(S) URLs to prevent SSRF against internal services
   if (
-    url.includes("firebasestorage.app") === false &&
-    url.includes("storage.googleapis.com") === false &&
-    url.includes("chatvote-public-assets.s3.fr-par.scw.cloud") === false &&
-    url.includes("programme-candidats.interieur.gouv.fr") === false
+    url.startsWith("https://") === false &&
+    url.startsWith("http://") === false
   ) {
+    return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+  }
+
+  // Block requests to private/internal networks
+  try {
+    const parsed = new URL(url);
+    const hostname = parsed.hostname;
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname.startsWith("10.") ||
+      hostname.startsWith("192.168.") ||
+      hostname.startsWith("172.") ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal")
+    ) {
+      return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
+    }
+  } catch {
     return NextResponse.json({ error: "Invalid URL" }, { status: 400 });
   }
 

@@ -137,8 +137,14 @@ const SourceItem = ({ source }: { source: SourceWithIndex }) => {
 
   const onSourceClick = (source: Source) => {
     if (!source.url || !source.url.startsWith("http")) return;
-    const isPdfLink = source.url.includes(".pdf");
-    if (isPdfLink) {
+
+    // Detect PDF by URL or source document name
+    const isPdf =
+      source.url.includes(".pdf") ||
+      source.source?.toLowerCase().endsWith(".pdf") ||
+      source.source_document?.toLowerCase().endsWith(".pdf");
+
+    if (isPdf) {
       const url = buildPdfUrl(source);
       if (!url) return;
       return window.open(url.toString(), "_blank");
