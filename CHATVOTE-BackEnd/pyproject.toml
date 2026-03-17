@@ -45,6 +45,7 @@ langchain-qdrant = "^0.2.0"
 apscheduler = "^3.10.4"
 boto3 = "^1.42.67"
 apify-client = "^2.5.0"
+pdfplumber = "^0.11.9"
 
 [tool.poetry.group.dev.dependencies]
 mypy = "~1.12.1"

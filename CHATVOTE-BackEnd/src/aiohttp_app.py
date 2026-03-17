@@ -16,7 +16,7 @@ from aiohttp_pydantic.decorator import inject_params
 from src.chatbot_async import (
     get_improved_rag_query_voting_behavior,
 )
-from src.firebase_service import aget_party_by_id, aget_parties, aget_candidates_by_municipality, async_db, db
+from src.firebase_service import aget_party_by_id, aget_parties, aget_candidates, aget_candidates_by_municipality, async_db, db
 from src.llms import reset_all_rate_limits, NON_DETERMINISTIC_LLMS
 from src.models.assistant import CHATVOTE_ASSISTANT
 from src.services.manifesto_indexer import index_all_parties, index_party_by_id
@@ -42,6 +42,8 @@ from src.services.document_upload import (
     get_job,
     get_all_jobs,
     process_upload,
+    preview_upload,
+    confirm_upload,
 )
 from src.services.scheduler import create_scheduler
 from src.models.dtos import (
@@ -463,21 +465,34 @@ async def admin_reset_rate_limit(request):
 # ---------------------------------------------------------------------------
 UPLOAD_SECRET = os.environ.get("ADMIN_UPLOAD_SECRET", "")
 
+# In-memory cache for preview file data (cleared after confirm or timeout)
+_upload_file_cache: dict[str, bytes] = {}
+
 
 def _check_upload_secret(request: web.Request) -> None:
     """Validate upload secret from header or query param.
 
     Raises 404 (not 403) to avoid revealing the endpoint exists.
     """
+    if not UPLOAD_SECRET:
+        return  # no secret configured — allow all (dev mode)
     secret = request.headers.get("X-Upload-Secret") or request.query.get("secret")
-    if not UPLOAD_SECRET or secret != UPLOAD_SECRET:
+    if secret != UPLOAD_SECRET:
         raise web.HTTPNotFound()
 
 
 @routes.post(route_prefix + "/admin/upload")
 async def admin_upload(request: web.Request) -> web.Response:
-    """Upload one or more PDF/TXT files for auto-classification and indexing."""
+    """Upload one or more PDF/TXT files for auto-classification and indexing.
+
+    Supports mode=preview (dry-run) via form field or query param.
+    """
     _check_upload_secret(request)
+
+    # Check mode from query param first; may be overridden by form field
+    mode = request.query.get("mode", "process")  # "preview" or "process"
+    source_url: str | None = request.query.get("source_url")
+    source_type: str | None = request.query.get("source_type")
 
     reader = await request.multipart()
     jobs: list[dict] = []
@@ -486,6 +501,15 @@ async def admin_upload(request: web.Request) -> web.Response:
         part = await reader.next()
         if part is None:
             break
+        if part.name == "mode":
+            mode = (await part.read(decode=True)).decode()
+            continue
+        if part.name == "source_url":
+            source_url = (await part.read(decode=True)).decode()
+            continue
+        if part.name == "source_type":
+            source_type = (await part.read(decode=True)).decode()
+            continue
         if part.filename is None:
             continue  # skip non-file fields
 
@@ -499,17 +523,31 @@ async def admin_upload(request: web.Request) -> web.Response:
         job_id = create_job(filename)
         file_size = len(data)
 
-        # Small files (<5MB): process inline; larger ones: background task
-        if file_size < 5 * 1024 * 1024:
-            try:
-                await process_upload(job_id, filename, data)
-            except Exception as e:
-                logger.error(f"Upload processing error for {filename}: {e}", exc_info=True)
+        if mode == "preview":
+            preview = await preview_upload(job_id, filename, data, source_url=source_url, source_type=source_type)
+            _upload_file_cache[job_id] = data
+            current = get_job(job_id) or {}
+            job_entry: dict = {
+                "job_id": job_id,
+                "filename": filename,
+                "status": current.get("status", "preview"),
+                "preview": preview,
+            }
+            if current.get("error"):
+                job_entry["error"] = current["error"]
+            jobs.append(job_entry)
         else:
-            asyncio.create_task(process_upload(job_id, filename, data))
+            # Small files (<5MB): process inline; larger ones: background task
+            if file_size < 5 * 1024 * 1024:
+                try:
+                    await process_upload(job_id, filename, data)
+                except Exception as e:
+                    logger.error(f"Upload processing error for {filename}: {e}", exc_info=True)
+            else:
+                asyncio.create_task(process_upload(job_id, filename, data))
 
-        current = get_job(job_id) or {}
-        jobs.append({"job_id": job_id, "filename": filename, "status": current.get("status", "pending")})
+            current = get_job(job_id) or {}
+            jobs.append({"job_id": job_id, "filename": filename, "status": current.get("status", "pending")})
 
     if not jobs:
         return web.json_response(
@@ -518,6 +556,132 @@ async def admin_upload(request: web.Request) -> web.Response:
         )
 
     return web.json_response({"status": "accepted", "jobs": jobs})
+
+
+@routes.post(route_prefix + "/admin/upload-text")
+async def admin_upload_text(request: web.Request) -> web.Response:
+    """Upload raw pasted text for preview and indexing.
+
+    Accepts JSON: {"text": "...", "title": "...", "mode": "preview"|"process"}
+    """
+    _check_upload_secret(request)
+
+    body = await request.json()
+    text = body.get("text", "").strip()
+    title = body.get("title", "Pasted text").strip() or "Pasted text"
+    mode = body.get("mode", "preview")
+
+    if not text or len(text) < 50:
+        return web.json_response(
+            {"status": "error", "message": "Text is too short (min 50 chars)"},
+            status=400,
+        )
+
+    # Create a .txt file from the text
+    filename = f"{title}.txt"
+    data = text.encode("utf-8")
+
+    job_id = create_job(filename)
+
+    if mode == "preview":
+        preview = await preview_upload(job_id, filename, data)
+        _upload_file_cache[job_id] = data
+        current = get_job(job_id) or {}
+        return web.json_response({
+            "status": "accepted",
+            "jobs": [{
+                "job_id": job_id,
+                "filename": filename,
+                "status": current.get("status", "preview"),
+                "preview": preview,
+            }],
+        })
+    else:
+        await process_upload(job_id, filename, data)
+        current = get_job(job_id) or {}
+        return web.json_response({
+            "status": "accepted",
+            "jobs": [{"job_id": job_id, "filename": filename, "status": current.get("status", "pending")}],
+        })
+
+
+@routes.get(route_prefix + "/admin/upload-targets")
+async def admin_upload_targets(request: web.Request) -> web.Response:
+    """Return available assignment targets for manual source selection."""
+    _check_upload_secret(request)
+
+    parties = await aget_parties()
+    candidates = await aget_candidates()
+
+    targets = []
+    for p in parties:
+        targets.append({
+            "type": "party",
+            "id": p.party_id,
+            "name": p.name,
+            "abbreviation": getattr(p, "abbreviation", None),
+        })
+    for c in candidates:
+        targets.append({
+            "type": "candidate",
+            "id": c.candidate_id,
+            "name": c.full_name,
+            "municipality": c.municipality_name or c.municipality_code or "",
+            "party_ids": c.party_ids if hasattr(c, "party_ids") else [],
+        })
+
+    return web.json_response({"targets": targets})
+
+
+@routes.post(route_prefix + "/admin/upload-confirm/{job_id}")
+async def admin_upload_confirm(request: web.Request) -> web.Response:
+    """Confirm a previewed upload job and proceed with indexing."""
+    _check_upload_secret(request)
+
+    job_id = request.match_info["job_id"]
+    job = get_job(job_id)
+    if job is None:
+        return web.json_response({"error": "Job not found"}, status=404)
+
+    if job.get("status") != "preview":
+        return web.json_response(
+            {"error": f"Job is not in preview state (current: {job.get('status')})"},
+            status=400,
+        )
+
+    data = _upload_file_cache.pop(job_id, None)
+    if data is None:
+        return web.json_response(
+            {"error": "File data expired. Please re-upload."},
+            status=410,
+        )
+
+    # Parse optional manual override from JSON body
+    body: dict = {}
+    try:
+        body = await request.json()
+    except Exception:
+        pass
+
+    manual_type = body.get("target_type")
+    manual_id = body.get("target_id")
+    source_url = body.get("source_url")
+    source_type = body.get("source_type")
+
+    filename = job["filename"]
+
+    # Run confirmation in background for large files
+    if len(data) < 5 * 1024 * 1024:
+        await confirm_upload(job_id, filename, data, manual_type, manual_id, source_url=source_url, source_type=source_type)
+    else:
+        asyncio.create_task(confirm_upload(job_id, filename, data, manual_type, manual_id, source_url=source_url, source_type=source_type))
+
+    current = get_job(job_id) or {}
+    return web.json_response({
+        "status": "confirmed",
+        "job_id": job_id,
+        "current_status": current.get("status"),
+    })
 
 
 @routes.get(route_prefix + "/admin/upload-status")

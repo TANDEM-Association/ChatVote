@@ -357,12 +357,86 @@ async def _llm_classify(text_excerpt: str, filename: str) -> Optional[Assignment
         return None
 
 
+async def _try_text_search(text: str) -> Optional[AssignmentResult]:
+    """Search document text for candidate names, family names, and city names.
+
+    Scores each candidate by how many identifiers appear in the text:
+    - last_name (weight 2), first_name (weight 1), municipality (weight 2)
+    - full_name exact match (weight 5)
+    Returns the highest-scoring candidate if score >= 3.
+    """
+    import re
+
+    lower_text = text[:5000].lower()  # search first 5000 chars
+    candidates = await aget_candidates()
+
+    best_candidate = None
+    best_score = 0
+
+    for c in candidates:
+        score = 0
+        last = c.last_name.lower()
+        first = c.first_name.lower()
+        full = c.full_name.lower()
+
+        # Full name match is strongest signal
+        if full in lower_text:
+            score += 5
+        else:
+            # Last name (only if >3 chars to avoid false positives like "Le")
+            if len(last) > 3 and re.search(r'\b' + re.escape(last) + r'\b', lower_text):
+                score += 2
+            # First name (only counted alongside last name presence)
+            if score > 0 and re.search(r'\b' + re.escape(first) + r'\b', lower_text):
+                score += 1
+
+        # Municipality match
+        if c.municipality_name and len(c.municipality_name) > 3:
+            muni = c.municipality_name.lower()
+            if re.search(r'\b' + re.escape(muni) + r'\b', lower_text):
+                score += 2
+
+        if score > best_score:
+            best_score = score
+            best_candidate = c
+
+    if best_candidate and best_score >= 3:
+        confidence = min(0.95, 0.5 + best_score * 0.08)
+        logger.info(
+            f"Text search match: {best_candidate.full_name} "
+            f"({best_candidate.municipality_name}) score={best_score}"
+        )
+        return AssignmentResult(
+            target_type="candidate",
+            target_id=best_candidate.candidate_id,
+            target_name=f"{best_candidate.full_name} ({best_candidate.municipality_name or ''})",
+            collection=CANDIDATES_INDEX_NAME,
+            confidence=confidence,
+        )
+
+    # Also check party names in text
+    parties = await aget_parties()
+    for party in parties:
+        name = party.name.lower()
+        if len(name) > 4 and re.search(r'\b' + re.escape(name) + r'\b', lower_text):
+            return AssignmentResult(
+                target_type="party",
+                target_id=party.party_id,
+                target_name=party.name,
+                collection=PARTY_INDEX_NAME,
+                confidence=0.75,
+            )
+
+    return None
+
+
 async def auto_assign(filename: str, text: str) -> Optional[AssignmentResult]:
     """Auto-assign a document to a party, candidate, or local electoral list.
 
     Strategy:
     1. Try filename heuristics (national parties + candidate names)
-    2. Fall back to LLM classification with full context (parties + candidates)
+    2. Search document text for candidate names, family names, city names
+    3. Fall back to LLM classification with full context (parties + candidates)
     """
     # Step 1: filename match
     result = await _try_filename_match(filename)
@@ -373,7 +447,16 @@ async def auto_assign(filename: str, text: str) -> Optional[AssignmentResult]:
         )
         return result
 
-    # Step 2: LLM classification (includes both parties and candidates)
+    # Step 2: text search for candidate/party identifiers
+    result = await _try_text_search(text)
+    if result:
+        logger.info(
+            f"Text search: {filename} -> {result.target_name} "
+            f"(confidence={result.confidence})"
+        )
+        return result
+
+    # Step 3: LLM classification (includes both parties and candidates)
     result = await _llm_classify(text, filename)
     if result:
         logger.info(
@@ -394,6 +477,8 @@ def _create_documents(
     text: str,
     assignment: AssignmentResult,
     filename: str,
+    source_url: Optional[str] = None,
+    source_type: Optional[str] = None,
 ) -> list[Document]:
     """Chunk text and create LangChain Documents with ChunkMetadata."""
     chunks = text_splitter.split_text(text)
@@ -405,12 +490,13 @@ def _create_documents(
 
         cm = ChunkMetadata(
             namespace=assignment.target_id,
-            source_document="uploaded_document",
+            source_document=source_type or "uploaded_document",
             party_ids=[assignment.target_id] if assignment.target_type == "party" else [],
             candidate_ids=[assignment.target_id] if assignment.target_type == "candidate" else [],
             party_name=assignment.target_name if assignment.target_type == "party" else None,
             candidate_name=assignment.target_name if assignment.target_type == "candidate" else None,
             document_name=filename,
+            url=source_url,
             chunk_index=chunk_index,
             total_chunks=0,  # filled below
         )
@@ -508,4 +594,169 @@ async def process_upload(job_id: str, filename: str, data: bytes) -> None:
 
     except Exception as e:
         logger.error(f"[{job_id}] Upload processing failed: {e}", exc_info=True)
+        _update_job(job_id, status="error", error=str(e))
+
+
+# ---------------------------------------------------------------------------
+# Preview / confirm pipeline
+# ---------------------------------------------------------------------------
+
+async def preview_upload(
+    job_id: str,
+    filename: str,
+    data: bytes,
+    source_url: Optional[str] = None,
+    source_type: Optional[str] = None,
+) -> dict[str, Any]:
+    """Preview pipeline: extract -> classify -> chunk (no indexing).
+
+    Returns preview data for admin review before confirmation.
+    """
+    try:
+        _update_job(job_id, status="extracting", progress=10)
+        text = await extract_text(filename, data)
+        if not text or len(text.strip()) < 50:
+            _update_job(job_id, status="error", error="Extracted text is too short or empty")
+            return {"error": "Extracted text is too short or empty"}
+
+        logger.info(f"[{job_id}] Preview: extracted {len(text)} chars from {filename}")
+
+        _update_job(job_id, status="classifying", progress=25)
+        assignment = await auto_assign(filename, text)
+
+        _update_job(job_id, status="chunking", progress=50)
+        # Use a placeholder for preview purposes if auto-assign failed
+        preview_assignment = assignment
+        if not preview_assignment:
+            preview_assignment = AssignmentResult(
+                target_type="unknown",
+                target_id="unassigned",
+                target_name="Unassigned",
+                collection="",
+                confidence=0.0,
+            )
+
+        documents = _create_documents(text, preview_assignment, filename, source_url=source_url, source_type=source_type)
+
+        preview = {
+            "text_length": len(text),
+            "text_preview": text[:500],
+            "chunks_count": len(documents),
+            "chunk_previews": [
+                {
+                    "index": i,
+                    "content": doc.page_content,
+                    "length": len(doc.page_content),
+                    "metadata": doc.metadata,
+                }
+                for i, doc in enumerate(documents[:5])
+            ],
+            "auto_assignment": assignment.to_dict() if assignment else None,
+        }
+
+        _update_job(
+            job_id,
+            status="preview",
+            progress=60,
+            assigned_to=assignment.to_dict() if assignment else None,
+            preview=preview,
+        )
+
+        return preview
+
+    except Exception as e:
+        logger.error(f"[{job_id}] Preview failed: {e}", exc_info=True)
+        _update_job(job_id, status="error", error=str(e))
+        return {"error": str(e)}
+
+
+async def _resolve_manual_target(target_type: str, target_id: str) -> Optional[AssignmentResult]:
+    """Resolve a manually selected target to an AssignmentResult."""
+    if target_type == "party":
+        parties = await aget_parties()
+        party = next((p for p in parties if p.party_id == target_id), None)
+        if party:
+            return AssignmentResult(
+                target_type="party",
+                target_id=party.party_id,
+                target_name=party.name,
+                collection=PARTY_INDEX_NAME,
+                confidence=1.0,
+            )
+    elif target_type == "candidate":
+        candidates = await aget_candidates()
+        candidate = next((c for c in candidates if c.candidate_id == target_id), None)
+        if candidate:
+            return AssignmentResult(
+                target_type="candidate",
+                target_id=candidate.candidate_id,
+                target_name=f"{candidate.full_name} ({candidate.municipality_name or ''})",
+                collection=CANDIDATES_INDEX_NAME,
+                confidence=1.0,
+            )
+    return None
+
+
+async def confirm_upload(
+    job_id: str,
+    filename: str,
+    data: bytes,
+    manual_target_type: Optional[str] = None,
+    manual_target_id: Optional[str] = None,
+    source_url: Optional[str] = None,
+    source_type: Optional[str] = None,
+) -> None:
+    """Confirm and index a previewed upload, optionally with manual assignment override."""
+    try:
+        _update_job(job_id, status="extracting", progress=10)
+        text = await extract_text(filename, data)
+        if not text or len(text.strip()) < 50:
+            _update_job(job_id, status="error", error="Extracted text is too short or empty")
+            return
+
+        # Use manual override or auto-assign
+        assignment: Optional[AssignmentResult] = None
+        if manual_target_type and manual_target_id:
+            _update_job(job_id, status="classifying", progress=25)
+            assignment = await _resolve_manual_target(manual_target_type, manual_target_id)
+
+        if not assignment:
+            _update_job(job_id, status="classifying", progress=25)
+            assignment = await auto_assign(filename, text)
+
+        if not assignment:
+            _update_job(
+                job_id,
+                status="error",
+                error="Could not determine which party/candidate this document belongs to",
+            )
+            return
+
+        _update_job(
+            job_id,
+            assigned_to=assignment.to_dict(),
+            collection=assignment.collection,
+            progress=40,
+        )
+
+        _update_job(job_id, status="chunking", progress=50)
+        documents = _create_documents(text, assignment, filename, source_url=source_url, source_type=source_type)
+        if not documents:
+            _update_job(job_id, status="error", error="No chunks created from document")
+            return
+
+        _update_job(job_id, status="embedding", progress=60)
+        _update_job(job_id, status="indexing", progress=75)
+        count = await _index_documents(documents, assignment)
+
+        _update_job(
+            job_id,
+            status="done",
+            progress=100,
+            chunks_indexed=count,
+        )
+        logger.info(f"[{job_id}] Indexed {count} chunks for {filename}")
+
+    except Exception as e:
+        logger.error(f"[{job_id}] Confirm upload failed: {e}", exc_info=True)
         _update_job(job_id, status="error", error=str(e))

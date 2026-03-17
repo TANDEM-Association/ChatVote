@@ -19,6 +19,7 @@ const TABS = [
   "multi-query",
   "consistency",
   "crawler",
+  "upload",
 ] as const;
 type TabId = (typeof TABS)[number];
 
@@ -31,6 +32,7 @@ const TAB_LABELS: Record<TabId, string> = {
   "multi-query": "Multi Query",
   consistency: "Data Consistency",
   crawler: "Crawler",
+  upload: "Upload",
 };
 
 // Lazy load tab components
@@ -58,6 +60,9 @@ const DataConsistencyTab = dynamic(
   { ssr: false },
 );
 const CrawlerTab = dynamic(() => import("./components/crawler-tab"), {
+  ssr: false,
+});
+const UploadTab = dynamic(() => import("./components/upload-tab"), {
   ssr: false,
 });
 
@@ -350,6 +355,15 @@ export default function AdminDashboard() {
                 secret={secret}
                 apiUrl={API_URL}
                 active={activeTab === "crawler"}
+              />
+            </div>
+          )}
+          {activatedTabs.has("upload") && (
+            <div className={activeTab !== "upload" ? "hidden" : undefined}>
+              <UploadTab
+                secret={secret}
+                apiUrl={API_URL}
+                active={activeTab === "upload"}
               />
             </div>
           )}
