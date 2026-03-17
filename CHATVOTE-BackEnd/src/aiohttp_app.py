@@ -463,22 +463,8 @@ async def admin_reset_rate_limit(request):
 # ---------------------------------------------------------------------------
 # Document upload endpoints (secret-protected)
 # ---------------------------------------------------------------------------
-UPLOAD_SECRET = os.environ.get("ADMIN_UPLOAD_SECRET", "")
-
 # In-memory cache for preview file data (cleared after confirm or timeout)
 _upload_file_cache: dict[str, bytes] = {}
-
-
-def _check_upload_secret(request: web.Request) -> None:
-    """Validate upload secret from header or query param.
-
-    Raises 404 (not 403) to avoid revealing the endpoint exists.
-    """
-    if not UPLOAD_SECRET:
-        return  # no secret configured — allow all (dev mode)
-    secret = request.headers.get("X-Upload-Secret") or request.query.get("secret")
-    if secret != UPLOAD_SECRET:
-        raise web.HTTPNotFound()
 
 
 @routes.post(route_prefix + "/admin/upload")
@@ -487,7 +473,8 @@ async def admin_upload(request: web.Request) -> web.Response:
 
     Supports mode=preview (dry-run) via form field or query param.
     """
-    _check_upload_secret(request)
+    if not _check_admin_secret(request):
+        raise web.HTTPNotFound()
 
     # Check mode from query param first; may be overridden by form field
     mode = request.query.get("mode", "process")  # "preview" or "process"
@@ -564,7 +551,8 @@ async def admin_upload_text(request: web.Request) -> web.Response:
 
     Accepts JSON: {"text": "...", "title": "...", "mode": "preview"|"process"}
     """
-    _check_upload_secret(request)
+    if not _check_admin_secret(request):
+        raise web.HTTPNotFound()
 
     body = await request.json()
     text = body.get("text", "").strip()
@@ -608,7 +596,8 @@ async def admin_upload_text(request: web.Request) -> web.Response:
 @routes.get(route_prefix + "/admin/upload-targets")
 async def admin_upload_targets(request: web.Request) -> web.Response:
     """Return available assignment targets for manual source selection."""
-    _check_upload_secret(request)
+    if not _check_admin_secret(request):
+        raise web.HTTPNotFound()
 
     parties = await aget_parties()
     candidates = await aget_candidates()
@@ -636,7 +625,8 @@ async def admin_upload_targets(request: web.Request) -> web.Response:
 @routes.post(route_prefix + "/admin/upload-confirm/{job_id}")
 async def admin_upload_confirm(request: web.Request) -> web.Response:
     """Confirm a previewed upload job and proceed with indexing."""
-    _check_upload_secret(request)
+    if not _check_admin_secret(request):
+        raise web.HTTPNotFound()
 
     job_id = request.match_info["job_id"]
     job = get_job(job_id)
@@ -687,14 +677,16 @@ async def admin_upload_confirm(request: web.Request) -> web.Response:
 @routes.get(route_prefix + "/admin/upload-status")
 async def admin_upload_status(request: web.Request) -> web.Response:
     """Return status of all upload jobs."""
-    _check_upload_secret(request)
+    if not _check_admin_secret(request):
+        raise web.HTTPNotFound()
     return web.json_response({"jobs": get_all_jobs()})
 
 
 @routes.get(route_prefix + "/admin/upload-status/{job_id}")
 async def admin_upload_job_status(request: web.Request) -> web.Response:
     """Return status of a single upload job. Supports SSE via Accept header."""
-    _check_upload_secret(request)
+    if not _check_admin_secret(request):
+        raise web.HTTPNotFound()
 
     job_id = request.match_info["job_id"]
     job = get_job(job_id)

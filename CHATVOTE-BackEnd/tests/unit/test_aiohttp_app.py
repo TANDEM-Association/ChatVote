@@ -209,7 +209,6 @@ aiohttp_app.is_candidates_listener_running = (
 )
 aiohttp_app.index_party_by_id = _mock_manifesto_indexer.index_party_by_id
 aiohttp_app.index_candidate_by_id = _mock_candidate_indexer.index_candidate_by_id
-aiohttp_app.UPLOAD_SECRET = ""
 
 
 # ---------------------------------------------------------------------------
@@ -258,10 +257,8 @@ async def client():
 
 @pytest.fixture(autouse=True)
 def reset_secrets(monkeypatch):
-    """Ensure ADMIN_SECRET and UPLOAD_SECRET are unset for each test."""
+    """Ensure ADMIN_SECRET is unset for each test."""
     monkeypatch.delenv("ADMIN_SECRET", raising=False)
-    monkeypatch.delenv("ADMIN_UPLOAD_SECRET", raising=False)
-    aiohttp_app.UPLOAD_SECRET = ""
 
 
 # ---------------------------------------------------------------------------
@@ -397,49 +394,34 @@ class TestAssistantEndpoint:
 
 
 # ---------------------------------------------------------------------------
-# _check_upload_secret — tested via /api/v1/admin/upload-status  (GET)
+# Upload endpoints now use _check_admin_secret (X-Admin-Secret / ADMIN_SECRET)
 # ---------------------------------------------------------------------------
 
 
-class TestCheckUploadSecret:
+class TestUploadAdminSecret:
     async def test_200_when_no_secret_configured(self, client):
-        # UPLOAD_SECRET="" → dev mode, allows all requests
+        # No ADMIN_SECRET → _check_admin_secret returns True → allows all
         resp = await client.get("/api/v1/admin/upload-status")
         assert resp.status == 200
 
-    async def test_404_when_wrong_secret_in_header(self, client, monkeypatch):
-        monkeypatch.setenv("ADMIN_UPLOAD_SECRET", "correct")
-        aiohttp_app.UPLOAD_SECRET = "correct"
+    async def test_404_when_wrong_secret(self, client, monkeypatch):
+        monkeypatch.setenv("ADMIN_SECRET", "correct")
         resp = await client.get(
             "/api/v1/admin/upload-status",
-            headers={"X-Upload-Secret": "wrong"},
+            headers={"X-Admin-Secret": "wrong"},
         )
         assert resp.status == 404
 
-    async def test_404_when_wrong_secret_in_query(self, client, monkeypatch):
-        monkeypatch.setenv("ADMIN_UPLOAD_SECRET", "correct")
-        aiohttp_app.UPLOAD_SECRET = "correct"
-        resp = await client.get("/api/v1/admin/upload-status?secret=wrong")
-        assert resp.status == 404
-
-    async def test_200_when_correct_secret_in_header(self, client, monkeypatch):
-        monkeypatch.setenv("ADMIN_UPLOAD_SECRET", "s3cret")
-        aiohttp_app.UPLOAD_SECRET = "s3cret"
+    async def test_200_when_correct_secret(self, client, monkeypatch):
+        monkeypatch.setenv("ADMIN_SECRET", "s3cret")
         _mock_document_upload.get_all_jobs.return_value = []
         resp = await client.get(
             "/api/v1/admin/upload-status",
-            headers={"X-Upload-Secret": "s3cret"},
+            headers={"X-Admin-Secret": "s3cret"},
         )
         assert resp.status == 200
         data = await resp.json()
         assert "jobs" in data
-
-    async def test_200_when_correct_secret_in_query(self, client, monkeypatch):
-        monkeypatch.setenv("ADMIN_UPLOAD_SECRET", "s3cret")
-        aiohttp_app.UPLOAD_SECRET = "s3cret"
-        _mock_document_upload.get_all_jobs.return_value = []
-        resp = await client.get("/api/v1/admin/upload-status?secret=s3cret")
-        assert resp.status == 200
 
 
 # ---------------------------------------------------------------------------
@@ -825,13 +807,12 @@ class TestApiKeyMiddleware:
 
 class TestUploadJobStatus:
     async def test_200_without_secret_in_dev_mode(self, client):
-        """When UPLOAD_SECRET is empty (dev mode), endpoint is accessible."""
+        """When ADMIN_SECRET is unset, endpoint is accessible."""
         resp = await client.get("/api/v1/admin/upload-status/job-123")
         assert resp.status == 200
 
     async def test_returns_job_data_when_found(self, client, monkeypatch):
-        monkeypatch.setenv("ADMIN_UPLOAD_SECRET", "s3cret")
-        aiohttp_app.UPLOAD_SECRET = "s3cret"
+        monkeypatch.setenv("ADMIN_SECRET", "s3cret")
         _mock_document_upload.get_job.return_value = {
             "job_id": "job-123",
             "status": "done",
@@ -839,19 +820,18 @@ class TestUploadJobStatus:
         }
         resp = await client.get(
             "/api/v1/admin/upload-status/job-123",
-            headers={"X-Upload-Secret": "s3cret"},
+            headers={"X-Admin-Secret": "s3cret"},
         )
         assert resp.status == 200
         data = await resp.json()
         assert data["status"] == "done"
 
     async def test_404_when_job_not_found(self, client, monkeypatch):
-        monkeypatch.setenv("ADMIN_UPLOAD_SECRET", "s3cret")
-        aiohttp_app.UPLOAD_SECRET = "s3cret"
+        monkeypatch.setenv("ADMIN_SECRET", "s3cret")
         _mock_document_upload.get_job.return_value = None
         resp = await client.get(
             "/api/v1/admin/upload-status/nonexistent",
-            headers={"X-Upload-Secret": "s3cret"},
+            headers={"X-Admin-Secret": "s3cret"},
         )
         assert resp.status == 404
 

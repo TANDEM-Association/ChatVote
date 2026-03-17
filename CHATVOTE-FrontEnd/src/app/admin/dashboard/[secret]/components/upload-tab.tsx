@@ -427,7 +427,7 @@ export default function UploadTab({
     async function loadTargets() {
       try {
         const resp = await fetch(`${apiUrl}/api/v1/admin/upload-targets`, {
-          headers: { "X-Upload-Secret": secret },
+          headers: { "X-Admin-Secret": secret },
         });
         if (resp.ok) {
           const data = await resp.json();
@@ -451,7 +451,7 @@ export default function UploadTab({
 
     try {
       const resp = await fetch(`${apiUrl}/api/v1/admin/upload-status`, {
-        headers: { "X-Upload-Secret": secret },
+        headers: { "X-Admin-Secret": secret },
       });
 
       if (!resp.ok) return;
@@ -558,7 +558,7 @@ export default function UploadTab({
 
         const resp = await fetch(`${apiUrl}/api/v1/admin/upload`, {
           method: "POST",
-          headers: { "X-Upload-Secret": secret },
+          headers: { "X-Admin-Secret": secret },
           body: formData,
         });
 
@@ -596,7 +596,7 @@ export default function UploadTab({
       const resp = await fetch(`${apiUrl}/api/v1/admin/upload-text`, {
         method: "POST",
         headers: {
-          "X-Upload-Secret": secret,
+          "X-Admin-Secret": secret,
           "Content-Type": "application/json",
         },
         body: JSON.stringify({
@@ -655,7 +655,7 @@ export default function UploadTab({
           {
             method: "POST",
             headers: {
-              "X-Upload-Secret": secret,
+              "X-Admin-Secret": secret,
               "Content-Type": "application/json",
             },
             body: JSON.stringify(body),
