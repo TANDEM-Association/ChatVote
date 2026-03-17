@@ -466,6 +466,25 @@ async def admin_reset_rate_limit(request):
 # In-memory cache for preview file data (cleared after confirm or timeout)
 _upload_file_cache: dict[str, bytes] = {}
 
+# Cached set of target commune codes (from municipalities collection)
+_target_commune_codes: set[str] | None = None
+
+
+async def _get_target_commune_codes() -> set[str]:
+    """Return the set of municipality codes from the municipalities collection (cached)."""
+    global _target_commune_codes
+    if _target_commune_codes is not None:
+        return _target_commune_codes
+    codes: set[str] = set()
+    async for doc in async_db.collection("municipalities").select(["code"]).stream():
+        d = doc.to_dict() or {}
+        code = d.get("code")
+        if code:
+            codes.add(code)
+    _target_commune_codes = codes
+    logger.info("[upload-targets] cached %d target commune codes", len(codes))
+    return codes
+
 
 @routes.post(route_prefix + "/admin/upload")
 async def admin_upload(request: web.Request) -> web.Response:
@@ -600,7 +619,6 @@ async def admin_upload_targets(request: web.Request) -> web.Response:
         raise web.HTTPNotFound()
 
     parties = await aget_parties()
-    candidates = await aget_candidates()
 
     targets = []
     for p in parties:
@@ -610,14 +628,19 @@ async def admin_upload_targets(request: web.Request) -> web.Response:
             "name": p.name,
             "abbreviation": getattr(p, "abbreviation", None),
         })
+
+    # Only return candidates from target communes (municipalities collection)
+    target_codes = await _get_target_commune_codes()
+    candidates = await aget_candidates()
     for c in candidates:
-        targets.append({
-            "type": "candidate",
-            "id": c.candidate_id,
-            "name": c.full_name,
-            "municipality": c.municipality_name or c.municipality_code or "",
-            "party_ids": c.party_ids if hasattr(c, "party_ids") else [],
-        })
+        if c.municipality_code and c.municipality_code in target_codes:
+            targets.append({
+                "type": "candidate",
+                "id": c.candidate_id,
+                "name": c.full_name,
+                "municipality": c.municipality_name or c.municipality_code or "",
+                "party_ids": c.party_ids if hasattr(c, "party_ids") else [],
+            })
 
     return web.json_response({"targets": targets})
 
