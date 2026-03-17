@@ -982,6 +982,102 @@ async def admin_list_municipalities(request):
     return web.json_response({"municipalities": results})
 
 
+@routes.get(f"{route_prefix}/admin/candidate-sources/{{candidate_id}}")
+async def admin_candidate_sources(request):
+    """Return grouped source documents for a single candidate from Qdrant."""
+    if not _check_admin_secret(request):
+        return web.json_response({"error": "Unauthorized"}, status=401)
+
+    candidate_id = request.match_info["candidate_id"]
+    from collections import Counter, defaultdict
+
+    sources: dict[str, dict] = {}  # key = (source_type, url, document_name)
+    total_chunks = 0
+
+    try:
+        offset = None
+        while True:
+            points, next_offset = qdrant_client.scroll(
+                collection_name=CANDIDATES_INDEX_NAME,
+                limit=256,
+                offset=offset,
+                scroll_filter={
+                    "must": [
+                        {"key": "metadata.namespace", "match": {"value": candidate_id}}
+                    ]
+                },
+                with_payload=[
+                    "metadata.source_document",
+                    "metadata.url",
+                    "metadata.document_name",
+                    "metadata.page_title",
+                    "metadata.fiabilite",
+                    "metadata.theme",
+                ],
+                with_vectors=False,
+            )
+            for p in points:
+                total_chunks += 1
+                meta = (p.payload or {}).get("metadata", {})
+                source_type = meta.get("source_document") or "unknown"
+                url = meta.get("url")
+                document_name = meta.get("document_name")
+                page_title = meta.get("page_title")
+                fiabilite = meta.get("fiabilite")
+                theme = meta.get("theme")
+
+                # Group key: (source_type, url, document_name)
+                key = f"{source_type}||{url or ''}||{document_name or ''}"
+                if key not in sources:
+                    sources[key] = {
+                        "source_type": source_type,
+                        "url": url,
+                        "document_name": document_name,
+                        "page_title": page_title,
+                        "chunk_count": 0,
+                        "_fiabilite_counts": Counter(),
+                        "themes": defaultdict(int),
+                    }
+                entry = sources[key]
+                entry["chunk_count"] += 1
+                if fiabilite is not None:
+                    entry["_fiabilite_counts"][fiabilite] += 1
+                if theme:
+                    entry["themes"][theme] += 1
+
+            if next_offset is None:
+                break
+            offset = next_offset
+
+    except Exception as exc:
+        logger.error(f"Error scrolling candidate sources for {candidate_id}: {exc!r}", exc_info=True)
+        return web.json_response({"error": str(exc)}, status=500)
+
+    # Finalise: pick most-common fiabilite, convert themes to plain dict
+    result_sources = []
+    for entry in sources.values():
+        fc = entry.pop("_fiabilite_counts")
+        most_common_fiabilite = fc.most_common(1)[0][0] if fc else None
+        result_sources.append({
+            "source_type": entry["source_type"],
+            "url": entry["url"],
+            "document_name": entry["document_name"],
+            "page_title": entry["page_title"],
+            "chunk_count": entry["chunk_count"],
+            "fiabilite": most_common_fiabilite,
+            "themes": dict(entry["themes"]),
+        })
+
+    # Sort: profession_de_foi first, then by chunk_count desc
+    result_sources.sort(key=lambda s: (0 if s["source_type"] == "profession_de_foi" else 1, -s["chunk_count"]))
+
+    return web.json_response({
+        "candidate_id": candidate_id,
+        "total_chunks": total_chunks,
+        "sources": result_sources,
+    })
+
+
 @routes.post(f"{route_prefix}/admin/multi-query")
 async def admin_multi_query(request):
     """Run the same RAG search as the chat across multiple municipalities and report coverage."""

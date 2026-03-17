@@ -1411,14 +1411,208 @@ function PartiesTable({ parties }: { parties: PartyCoverage[] }) {
 }
 
 // ---------------------------------------------------------------------------
+// CandidateSourcesPanel — fetches & renders per-candidate Qdrant sources
+// ---------------------------------------------------------------------------
+
+interface CandidateSource {
+  source_type: string;
+  url: string | null;
+  document_name: string | null;
+  page_title: string | null;
+  chunk_count: number;
+  fiabilite: number | null;
+  themes: Record<string, number>;
+}
+
+interface CandidateSourcesData {
+  candidate_id: string;
+  total_chunks: number;
+  sources: CandidateSource[];
+}
+
+function sourceTypeBadge(sourceType: string) {
+  if (sourceType === "profession_de_foi")
+    return (
+      <span className="rounded bg-green-500/15 px-1.5 py-0.5 text-[10px] font-medium text-green-400">
+        profession de foi
+      </span>
+    );
+  if (sourceType === "uploaded_document")
+    return (
+      <span className="rounded bg-purple-500/15 px-1.5 py-0.5 text-[10px] font-medium text-purple-400">
+        uploaded
+      </span>
+    );
+  if (sourceType === "programme")
+    return (
+      <span className="rounded bg-amber-500/15 px-1.5 py-0.5 text-[10px] font-medium text-amber-400">
+        programme
+      </span>
+    );
+  // website / html / candidate_website_*
+  return (
+    <span className="rounded bg-blue-500/15 px-1.5 py-0.5 text-[10px] font-medium text-blue-400">
+      {sourceType.replace(/_/g, " ")}
+    </span>
+  );
+}
+
+const CandidateSourcesPanel = memo(function CandidateSourcesPanel({
+  candidateId,
+  secret,
+  apiUrl,
+}: {
+  candidateId: string;
+  secret: string | undefined;
+  apiUrl: string | undefined;
+}) {
+  const [data, setData] = useState<CandidateSourcesData | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
+    setError(null);
+    setData(null);
+    const base = apiUrl || BACKEND_URL;
+    fetch(`${base}/api/v1/admin/candidate-sources/${candidateId}`, {
+      headers: secret ? { "X-Admin-Secret": secret } : {},
+    })
+      .then((r) => {
+        if (!r.ok) throw new Error(`Status ${r.status}`);
+        return r.json() as Promise<CandidateSourcesData>;
+      })
+      .then((json) => {
+        if (!cancelled) {
+          setData(json);
+          setLoading(false);
+        }
+      })
+      .catch((err: unknown) => {
+        if (!cancelled) {
+          setError(err instanceof Error ? err.message : "Failed to load");
+          setLoading(false);
+        }
+      });
+    return () => {
+      cancelled = true;
+    };
+  }, [candidateId, secret, apiUrl]);
+
+  if (loading)
+    return (
+      <div className="flex items-center gap-2 px-6 py-4">
+        <Loader2Icon className="text-muted-foreground size-3.5 animate-spin" />
+        <span className="text-muted-foreground text-xs">Loading sources…</span>
+      </div>
+    );
+
+  if (error)
+    return (
+      <div className="px-6 py-3 text-xs text-red-400">
+        Error: {error}
+      </div>
+    );
+
+  if (!data || data.sources.length === 0)
+    return (
+      <div className="text-muted-foreground px-6 py-3 text-xs">
+        No indexed sources found for this candidate.
+      </div>
+    );
+
+  return (
+    <div className="border-violet-500/20 bg-violet-500/[0.03] border-l-2 px-6 py-3">
+      <p className="text-muted-foreground mb-2 text-[11px] font-semibold tracking-wider uppercase">
+        {data.total_chunks} indexed chunks — {data.sources.length} source
+        {data.sources.length !== 1 ? "s" : ""}
+      </p>
+      <table className="w-full text-xs">
+        <thead>
+          <tr className="text-muted-foreground border-border-subtle border-b text-left">
+            <th className="pb-1.5 pr-3 font-medium">Type</th>
+            <th className="pb-1.5 pr-3 font-medium">Document</th>
+            <th className="pb-1.5 pr-3 text-right font-medium">Chunks</th>
+            <th className="pb-1.5 pr-3 text-right font-medium">Fiabilité</th>
+            <th className="pb-1.5 font-medium">Themes</th>
+          </tr>
+        </thead>
+        <tbody className="divide-border-subtle/40 divide-y">
+          {data.sources.map((src, i) => (
+            <tr key={i} className="align-top">
+              <td className="py-1.5 pr-3">{sourceTypeBadge(src.source_type)}</td>
+              <td className="py-1.5 pr-3">
+                {src.url ? (
+                  <a
+                    href={src.url}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-foreground hover:text-primary inline-flex items-center gap-1 font-medium"
+                  >
+                    {src.document_name || src.page_title || src.url}
+                    <ExternalLinkIcon className="size-3 shrink-0" />
+                  </a>
+                ) : (
+                  <span className="text-foreground font-medium">
+                    {src.document_name || src.page_title || "—"}
+                  </span>
+                )}
+                {src.page_title && src.document_name && src.page_title !== src.document_name && (
+                  <span className="text-muted-foreground ml-1.5 text-[10px]">
+                    {src.page_title}
+                  </span>
+                )}
+              </td>
+              <td className="text-foreground py-1.5 pr-3 text-right tabular-nums">
+                {src.chunk_count}
+              </td>
+              <td className="text-muted-foreground py-1.5 pr-3 text-right tabular-nums">
+                {src.fiabilite ?? "—"}
+              </td>
+              <td className="py-1.5">
+                <div className="flex flex-wrap gap-1">
+                  {Object.entries(src.themes)
+                    .sort((a, b) => b[1] - a[1])
+                    .slice(0, 6)
+                    .map(([theme, count]) => (
+                      <span
+                        key={theme}
+                        className="bg-border-subtle rounded px-1.5 py-0.5 text-[10px] tabular-nums"
+                        title={`${count} chunks`}
+                      >
+                        {theme}
+                        <span className="text-muted-foreground ml-0.5">{count}</span>
+                      </span>
+                    ))}
+                </div>
+              </td>
+            </tr>
+          ))}
+        </tbody>
+      </table>
+    </div>
+  );
+});
+
+// ---------------------------------------------------------------------------
 // Candidates table
 // ---------------------------------------------------------------------------
 
-function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
+function CandidatesTable({
+  candidates,
+  secret,
+  apiUrl,
+}: {
+  candidates: CandidateCoverage[];
+  secret?: string;
+  apiUrl?: string;
+}) {
   const [sortKey, setSortKey] = useState<CandidateSortKey>("name");
   const [sortDir, setSortDir] = useState<SortDir>("asc");
   const [search, setSearch] = useState("");
   const [onlyMissing, setOnlyMissing] = useState(false);
+  const [expandedId, setExpandedId] = useState<string | null>(null);
 
   const scrollContainerRef = useRef<HTMLDivElement>(null);
 
@@ -1473,7 +1667,14 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
   const rowVirtualizer = useVirtualizer({
     count: sorted.length,
     getScrollElement: () => scrollContainerRef.current,
-    estimateSize: () => 48,
+    estimateSize: useCallback(
+      (index: number) => {
+        const candidate = sorted[index];
+        if (!candidate) return 48;
+        return expandedId === candidate.candidate_id ? 400 : 48;
+      },
+      [sorted, expandedId],
+    ),
     overscan: 10,
   });
 
@@ -1588,17 +1789,23 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
               {virtualItems.map((virtualRow) => {
                 const c = sorted[virtualRow.index];
                 if (!c) return null;
+                const isExpanded = expandedId === c.candidate_id;
                 return (
+                  <Fragment key={c.candidate_id}>
                   <tr
-                    key={c.candidate_id}
-                    className={`hover:bg-border-subtle/10 transition-colors ${
+                    className={`hover:bg-border-subtle/10 cursor-pointer select-none transition-colors ${
                       !c.has_website || !c.has_manifesto
                         ? "bg-red-500/[0.03]"
                         : ""
                     }`}
+                    onClick={() =>
+                      setExpandedId(isExpanded ? null : c.candidate_id)
+                    }
                   >
                     <td className="text-muted-foreground px-5 py-3 text-xs tabular-nums">
-                      {virtualRow.index + 1}.
+                      <ChevronRightIcon
+                        className={`inline-block size-3.5 transition-transform duration-150 ${isExpanded ? "rotate-90" : ""}`}
+                      />
                     </td>
                     <td className="px-3 py-3">
                       <span className="text-foreground font-medium">
@@ -1691,6 +1898,19 @@ function CandidatesTable({ candidates }: { candidates: CandidateCoverage[] }) {
                       </span>
                     </td>
                   </tr>
+                  {isExpanded && (
+                    <tr className="bg-border-subtle/5">
+                      <td colSpan={8} className="p-0">
+                        <CandidateSourcesPanel
+                          candidateId={c.candidate_id}
+                          secret={secret}
+                          apiUrl={apiUrl}
+                          key={c.candidate_id}
+                        />
+                      </td>
+                    </tr>
+                  )}
+                  </Fragment>
                 );
               })}
 
@@ -1718,11 +1938,15 @@ export default function CoverageTablesClient({
   parties,
   candidates,
   coverageByCommune,
+  secret,
+  apiUrl,
 }: {
   communes: CommuneCoverage[];
   parties: PartyCoverage[];
   candidates: CandidateCoverage[];
   coverageByCommune: ChartAggregations["coverageByCommune"];
+  secret?: string;
+  apiUrl?: string;
 }) {
   return (
     <div className="space-y-8">
@@ -1748,7 +1972,7 @@ export default function CoverageTablesClient({
           </span>
           <div className="border-border-subtle flex-1 border-t" />
         </div>
-        <CandidatesTable candidates={candidates} />
+        <CandidatesTable candidates={candidates} secret={secret} apiUrl={apiUrl} />
       </div>
     </div>
   );

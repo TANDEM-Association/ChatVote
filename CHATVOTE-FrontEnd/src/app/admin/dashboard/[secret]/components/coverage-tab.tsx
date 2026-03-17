@@ -175,6 +175,8 @@ export default function CoverageTab({
         parties={parties}
         candidates={candidates}
         coverageByCommune={charts?.coverageByCommune ?? {}}
+        secret={_secret}
+        apiUrl={_apiUrl}
       />
     </div>
   );
