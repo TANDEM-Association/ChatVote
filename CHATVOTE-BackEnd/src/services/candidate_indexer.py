@@ -205,24 +205,44 @@ def create_documents_from_scraped_website(
     return documents
 
 
-async def delete_candidate_documents(candidate_id: str) -> None:
-    """Delete all existing documents for a candidate from Qdrant."""
+async def delete_candidate_documents(
+    candidate_id: str,
+    *,
+    preserve_manifestos: bool = False,
+) -> None:
+    """Delete existing documents for a candidate from Qdrant.
+
+    Args:
+        candidate_id: The candidate whose documents to delete.
+        preserve_manifestos: If True, keep profession_de_foi chunks and only
+            delete website chunks.
+    """
     try:
         _ensure_candidates_collection_exists()
+        conditions = [
+            FieldCondition(
+                key="metadata.namespace",
+                match=MatchValue(value=candidate_id),
+            )
+        ]
+        if preserve_manifestos:
+            conditions.append(
+                FieldCondition(
+                    key="metadata.source_document",
+                    match=MatchValue(value="profession_de_foi"),
+                )
+            )
         qdrant_client.delete(
             collection_name=CANDIDATES_INDEX_NAME,
             points_selector=FilterSelector(
                 filter=Filter(
-                    must=[
-                        FieldCondition(
-                            key="metadata.namespace",
-                            match=MatchValue(value=candidate_id),
-                        )
-                    ]
+                    must=[conditions[0]],
+                    must_not=[conditions[1]] if preserve_manifestos else None,
                 )
             ),
         )
-        logger.info(f"Deleted existing documents for candidate {candidate_id}")
+        label = " (preserved manifestos)" if preserve_manifestos else ""
+        logger.info(f"Deleted existing documents for candidate {candidate_id}{label}")
     except Exception as e:
         logger.error(f"Error deleting documents for candidate {candidate_id}: {e}")
 
@@ -427,9 +447,9 @@ async def index_candidate_website(
     else:
         logger.info(f"[indexer] theme classification skipped for {candidate.full_name}")
 
-    # Delete existing documents for this candidate
+    # Delete existing *website* documents for this candidate (preserve profession_de_foi)
     _ts = _t.monotonic()
-    await delete_candidate_documents(candidate.candidate_id)
+    await delete_candidate_documents(candidate.candidate_id, preserve_manifestos=True)
     logger.info(f"[TIMING] delete old docs {candidate.full_name}: {_t.monotonic()-_ts:.1f}s")
 
     # Index into Qdrant

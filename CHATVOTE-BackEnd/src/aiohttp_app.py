@@ -429,6 +429,62 @@ async def admin_index_candidate_website(request):
         )
 
 
+@routes.post(route_prefix + "/admin/index-candidate-profession/{candidate_id}")
+async def admin_index_candidate_profession(request):
+    """Admin endpoint to re-index a candidate's profession de foi from its PDF URL."""
+    candidate_id = request.match_info["candidate_id"]
+    logger.info(f"Admin triggered: indexing profession de foi for candidate {candidate_id}")
+
+    try:
+        from src.firebase_service import aget_candidate_by_id
+        candidate = await aget_candidate_by_id(candidate_id)
+        if candidate is None:
+            return web.json_response(
+                {"status": "error", "message": f"Candidate {candidate_id} not found"},
+                status=404,
+            )
+
+        pdf_url = getattr(candidate, "manifesto_pdf_url", "") or ""
+        if not pdf_url:
+            return web.json_response(
+                {"status": "warning", "message": f"No manifesto_pdf_url for {candidate_id}"},
+            )
+
+        # Download PDF to temp file
+        import tempfile
+        import aiohttp as _aiohttp
+        async with _aiohttp.ClientSession() as session:
+            async with session.get(pdf_url) as resp:
+                if resp.status != 200:
+                    return web.json_response(
+                        {"status": "error", "message": f"Failed to download PDF: HTTP {resp.status}"},
+                        status=502,
+                    )
+                pdf_bytes = await resp.read()
+
+        with tempfile.NamedTemporaryFile(suffix=".pdf", delete=False) as tmp:
+            tmp.write(pdf_bytes)
+            tmp_path = tmp.name
+
+        from src.services.profession_indexer import index_candidate_profession
+        count = await index_candidate_profession(candidate_id, tmp_path)
+
+        import os
+        os.unlink(tmp_path)
+
+        if count > 0:
+            return web.json_response(
+                {"status": "success", "message": f"Indexed {count} profession de foi chunks for {candidate_id}"}
+            )
+        else:
+            return web.json_response(
+                {"status": "warning", "message": f"No chunks indexed for {candidate_id} profession de foi"}
+            )
+    except Exception as e:
+        logger.error(f"Error indexing profession for {candidate_id}: {e}", exc_info=True)
+        return web.json_response({"status": "error", "message": str(e)}, status=500)
+
+
 @routes.get(f"{route_prefix}/admin/listener-status")
 async def admin_listener_status(request):
     """Check if the Firestore listeners are running."""
