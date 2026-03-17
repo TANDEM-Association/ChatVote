@@ -107,45 +107,98 @@ def extract_text_from_pdf_bytes(data: bytes) -> str:
         raise
 
 
-async def ocr_pdf_with_gemini(data: bytes, filename: str) -> str:
-    """OCR a PDF using Gemini vision (for image-based / scanned PDFs).
+async def ocr_pdf_with_scaleway(data: bytes, filename: str) -> str:
+    """OCR a PDF using Scaleway Generative API (Mistral Small 3.2 vision).
 
-    Sends the raw PDF to Gemini 2.0 Flash which can read images and
-    extract text from scanned documents.
+    Renders each page at 300 DPI, sends to Mistral vision model in parallel,
+    and returns concatenated text. Same approach as profession_indexer.
     """
     import base64
-    from google import genai
+    import io
 
-    api_key = os.environ.get("GOOGLE_API_KEY", "")
+    import aiohttp
+
+    api_key = os.environ.get("SCALEWAY_EMBED_API_KEY", "")
     if not api_key:
-        raise ValueError("GOOGLE_API_KEY required for OCR")
+        raise ValueError("SCALEWAY_EMBED_API_KEY required for OCR")
 
-    client = genai.Client(api_key=api_key)
+    try:
+        import fitz  # pymupdf
+        from PIL import Image
+    except ImportError:
+        raise ValueError("pymupdf and Pillow required for OCR (pip install pymupdf Pillow)")
 
-    pdf_b64 = base64.standard_b64encode(data).decode("utf-8")
+    doc = fitz.open(stream=data, filetype="pdf")
 
-    logger.info(f"[OCR] Sending {filename} ({len(data):,} bytes) to Gemini for OCR")
+    # Render all pages to base64 PNGs
+    page_images: list[tuple[int, str]] = []
+    for page_num in range(len(doc)):
+        page = doc[page_num]
+        mat = fitz.Matrix(300 / 72, 300 / 72)  # 300 DPI
+        pix = page.get_pixmap(matrix=mat)
+        img = Image.open(io.BytesIO(pix.tobytes("png")))
+        buf = io.BytesIO()
+        img.save(buf, format="PNG")
+        img_b64 = base64.standard_b64encode(buf.getvalue()).decode("utf-8")
+        page_images.append((page_num + 1, img_b64))
+    doc.close()
 
-    response = await asyncio.to_thread(
-        client.models.generate_content,
-        model="gemini-2.5-flash",
-        contents=[
-            {
-                "parts": [
-                    {"inline_data": {"mime_type": "application/pdf", "data": pdf_b64}},
-                    {"text": (
-                        "Extract ALL text from this scanned PDF document. "
-                        "Return ONLY the extracted text, preserving paragraph structure. "
-                        "If there are multiple pages, separate them with blank lines. "
-                        "Do not add any commentary or formatting — just the raw text content."
-                    )},
-                ]
-            }
-        ],
-    )
+    logger.info(f"[OCR] Sending {filename} ({len(data):,} bytes, {len(page_images)} pages) to Scaleway Mistral")
 
-    text = response.text.strip() if response.text else ""
-    logger.info(f"[OCR] Gemini extracted {len(text)} chars from {filename}")
+    async def _ocr_page(
+        session: aiohttp.ClientSession, page_num: int, img_b64: str
+    ) -> tuple[int, str] | None:
+        async with session.post(
+            "https://api.scaleway.ai/v1/chat/completions",
+            headers={
+                "Authorization": f"Bearer {api_key}",
+                "Content-Type": "application/json",
+            },
+            json={
+                "model": "mistral-small-3.2-24b-instruct-2506",
+                "messages": [
+                    {
+                        "role": "user",
+                        "content": [
+                            {
+                                "type": "image_url",
+                                "image_url": {
+                                    "url": f"data:image/png;base64,{img_b64}",
+                                },
+                            },
+                            {
+                                "type": "text",
+                                "text": (
+                                    "Extrais le texte complet de cette image de document. "
+                                    "Retourne UNIQUEMENT le texte brut, sans commentaire, "
+                                    "sans formatage markdown. Préserve la structure des paragraphes."
+                                ),
+                            },
+                        ],
+                    }
+                ],
+                "max_tokens": 8192,
+                "temperature": 0.0,
+            },
+        ) as resp:
+            if resp.status != 200:
+                body = await resp.text()
+                logger.warning(f"[OCR] Scaleway page {page_num}: HTTP {resp.status} — {body[:200]}")
+                return None
+            resp_data = await resp.json()
+            text = resp_data["choices"][0]["message"]["content"]
+            if text and text.strip():
+                return (page_num, text.strip())
+            return None
+
+    async with aiohttp.ClientSession() as session:
+        results = await asyncio.gather(
+            *[_ocr_page(session, pn, b64) for pn, b64 in page_images]
+        )
+
+    pages = sorted([r for r in results if r is not None], key=lambda x: x[0])
+    text = "\n\n".join(t for _, t in pages)
+    logger.info(f"[OCR] Scaleway extracted {len(text)} chars from {filename} ({len(pages)} pages)")
     return text
 
 
@@ -169,12 +222,12 @@ async def extract_text(filename: str, data: bytes) -> str:
         text = extract_text_from_pdf_bytes(data)
         if len(text.strip()) >= _MIN_TEXT_LENGTH:
             return text
-        # Image-based PDF — fall back to Gemini OCR
+        # Image-based PDF — fall back to Scaleway vision OCR
         logger.info(
             f"pypdf extracted only {len(text.strip())} chars from {filename}, "
-            f"falling back to Gemini OCR"
+            f"falling back to Scaleway OCR"
         )
-        return await ocr_pdf_with_gemini(data, filename)
+        return await ocr_pdf_with_scaleway(data, filename)
     elif lower.endswith(".txt"):
         return extract_text_from_txt_bytes(data)
     else:
