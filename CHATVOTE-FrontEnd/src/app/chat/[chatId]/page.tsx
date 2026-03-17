@@ -10,6 +10,7 @@ type ChatPageProps = {
     ref_snapshot_id: string;
     q: string;
     municipality_code?: string;
+    mode?: string;
   }>;
 };
 

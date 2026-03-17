@@ -37,14 +37,20 @@ type ChatPageProps = {
     party_id: string[] | string | undefined;
     q?: string;
     municipality_code?: string;
+    mode?: string;
   }>;
 };
 const ChatPage: NextPage<ChatPageProps> = async ({ searchParams }) => {
-  const { party_id, q, chat_id, municipality_code } = await searchParams;
+  const { party_id, q, chat_id, municipality_code, mode } = await searchParams;
   const parties = await getParties();
 
   if (chat_id) {
-    redirect(`/chat/${chat_id}`);
+    // Preserve query params (mode=ai, municipality_code) through the redirect
+    const params = new URLSearchParams();
+    if (mode) params.set('mode', mode);
+    if (municipality_code) params.set('municipality_code', municipality_code);
+    const qs = params.toString();
+    redirect(`/chat/${chat_id}${qs ? `?${qs}` : ''}`);
   }
 
   let normalizedPartyIds = Array.isArray(party_id)

@@ -664,22 +664,23 @@ function checkRateLimit(uid: string): boolean {
 const CHAT_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
 
 export async function POST(req: Request) {
-  // ── Auth: verify Firebase ID token ──────────────────────────────────────
+  // ── Auth: verify Firebase ID token (optional — anonymous users allowed) ──
   const authHeader = req.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
-  if (!token) {
-    return new Response(JSON.stringify({ error: 'Missing authorization token' }), { status: 401 });
-  }
-  let uid: string;
-  try {
-    const decoded = await auth.verifyIdToken(token);
-    uid = decoded.uid;
-  } catch {
-    return new Response(JSON.stringify({ error: 'Invalid authorization token' }), { status: 401 });
+  let uid: string = 'anonymous';
+  if (token) {
+    try {
+      const decoded = await auth.verifyIdToken(token);
+      uid = decoded.uid;
+    } catch {
+      // Invalid token — fall through as anonymous rather than blocking
+      console.warn('[ai-chat] Invalid auth token, proceeding as anonymous');
+    }
   }
 
-  // ── Rate limit ──────────────────────────────────────────────────────────
-  if (!checkRateLimit(uid)) {
+  // ── Rate limit (by uid or IP for anonymous) ─────────────────────────────
+  const rateLimitKey = uid !== 'anonymous' ? uid : (req.headers.get('x-forwarded-for') ?? 'unknown');
+  if (!checkRateLimit(rateLimitKey)) {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429 });
   }
 
