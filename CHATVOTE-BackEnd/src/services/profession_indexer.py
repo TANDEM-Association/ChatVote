@@ -3,18 +3,18 @@
 # SPDX-License-Identifier: PolyForm-Noncommercial-1.0.0
 
 """
-Service to index profession de foi PDFs into Qdrant and upload to Firebase Storage.
+Service to index profession de foi PDFs into Qdrant and upload to S3.
 
 Profession de foi = official candidate manifestos from the French interior ministry.
 Source: https://programme-candidats.interieur.gouv.fr/elections-municipales-2026/
 
 Pipeline:
 1. Read locally cached PDFs (downloaded by professions pipeline node)
-2. Upload to Firebase Storage for user-accessible viewing
+2. Upload to S3 public-assets bucket for user-accessible viewing
 3. Extract text with pypdf (page-aware)
 4. Chunk with RecursiveCharacterTextSplitter
 5. Embed and index into candidates_websites Qdrant collection
-6. Update Firestore candidate doc with Firebase Storage URL
+6. Update Firestore candidate doc with S3 public URL
 """
 
 import asyncio
@@ -292,9 +292,15 @@ async def _extract_pages_with_gemini(pdf_content: bytes) -> list[tuple[int, str]
 # macOS /tmp cleanup between pipeline runs.
 _PDF_CACHE_DIR = Path(__file__).resolve().parents[2] / ".cache" / "professions_pdfs"
 
-# Firebase Storage config
+# S3 Storage config (Scaleway Object Storage — public-read bucket)
 env = os.getenv("ENV", "dev")
-BUCKET_NAME = os.environ.get("FIREBASE_STORAGE_BUCKET", "")
+S3_PUBLIC_BUCKET = os.environ.get(
+    "S3_PUBLIC_BUCKET", "chatvote-public-assets"
+)
+S3_PUBLIC_BASE_URL = os.environ.get(
+    "S3_PUBLIC_BASE_URL",
+    f"https://{S3_PUBLIC_BUCKET}.s3.fr-par.scw.cloud",
+)
 STORAGE_PREFIX = "public/professions_de_foi"
 
 # Text splitter — same config as candidate_indexer and manifesto_indexer
@@ -310,22 +316,27 @@ text_splitter = RecursiveCharacterTextSplitter(
 
 
 # ---------------------------------------------------------------------------
-# Firebase Storage upload
+# S3 upload (Scaleway Object Storage — public-read bucket)
 # ---------------------------------------------------------------------------
 
-def _upload_to_storage(data: bytes, blob_path: str) -> str:
-    """Upload PDF bytes to Firebase Storage and return a download URL."""
-    from firebase_admin import storage
+def _upload_to_s3(data: bytes, blob_path: str) -> str:
+    """Upload PDF bytes to S3 public-assets bucket and return the public URL."""
+    import boto3
 
-    bucket = storage.bucket(BUCKET_NAME)
-    blob = bucket.blob(blob_path)
-    blob.metadata = {"firebaseStorageDownloadTokens": blob_path.replace("/", "_")}
-    blob.upload_from_string(data, content_type="application/pdf")
-    token = blob.metadata["firebaseStorageDownloadTokens"]
-    return (
-        f"https://firebasestorage.googleapis.com/v0/b/{bucket.name}"
-        f"/o/{blob_path.replace('/', '%2F')}?alt=media&token={token}"
+    s3 = boto3.client(
+        "s3",
+        endpoint_url=os.environ.get("S3_ENDPOINT_URL", "https://s3.fr-par.scw.cloud"),
+        aws_access_key_id=os.environ.get("S3_ACCESS_KEY", ""),
+        aws_secret_access_key=os.environ.get("S3_SECRET_KEY", ""),
+        region_name=os.environ.get("S3_REGION", "fr-par"),
     )
+    s3.put_object(
+        Bucket=S3_PUBLIC_BUCKET,
+        Key=blob_path,
+        Body=data,
+        ContentType="application/pdf",
+    )
+    return f"{S3_PUBLIC_BASE_URL}/{blob_path}"
 
 
 # ---------------------------------------------------------------------------
@@ -420,9 +431,9 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
 
     Steps:
     1. Read PDF from local path (already downloaded by professions pipeline node)
-    2. Upload to Firebase Storage
+    2. Upload to S3 public-assets bucket
     3. Extract text, chunk, embed, store in Qdrant
-    4. Update Firestore candidate doc with Firebase Storage URL
+    4. Update Firestore candidate doc with S3 public URL
 
     Args:
         candidate_id: e.g. "cand-75056-1"
@@ -455,7 +466,7 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
         )
         return 0
 
-    # Step 3: Upload to Firebase Storage
+    # Step 3: Upload to S3 (public-assets bucket)
     # Extract commune_code from candidate or candidate_id
     commune_code = candidate.municipality_code or (
         candidate_id.split("-")[1] if len(candidate_id.split("-")) >= 3 else "unknown"
@@ -464,13 +475,13 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
 
     try:
         storage_url = await asyncio.to_thread(
-            _upload_to_storage, pdf_content, blob_path
+            _upload_to_s3, pdf_content, blob_path
         )
         logger.info(
-            f"[profession_indexer] uploaded {candidate_id} to Firebase Storage: {storage_url}"
+            f"[profession_indexer] uploaded {candidate_id} to S3: {storage_url}"
         )
     except Exception as e:
-        logger.warning(f"Failed to upload PDF to Firebase Storage for {candidate_id}: {e}")
+        logger.warning(f"Failed to upload PDF to S3 for {candidate_id}: {e}")
         storage_url = None  # non-fatal — continue with OCR + indexing
 
     # Step 4: Extract PDF text — 4-tier OCR cascade with content quality checks
@@ -554,7 +565,7 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
             f"({len(batch)} docs) for {candidate_id}"
         )
 
-    # Step 8: Update Firestore candidate doc with Firebase Storage URL
+    # Step 8: Update Firestore candidate doc with S3 URL
     await _update_firestore_url(candidate_id, storage_url)
 
     elapsed = _t.monotonic() - _t0
@@ -566,7 +577,7 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
 
 
 async def _update_firestore_url(candidate_id: str, storage_url: str | None) -> None:
-    """Update Firestore candidate doc with the Firebase Storage URL.
+    """Update Firestore candidate doc with the S3 public URL.
 
     Skips the write when ``storage_url`` is None (upload failed) so we don't
     overwrite the original PDF URL that the populate node already stored.
@@ -808,7 +819,7 @@ def main() -> None:
     )
 
     parser = argparse.ArgumentParser(
-        description="Index profession de foi PDFs into Qdrant and Firebase Storage"
+        description="Index profession de foi PDFs into Qdrant and S3"
     )
     group = parser.add_mutually_exclusive_group()
     group.add_argument(

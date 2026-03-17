@@ -148,7 +148,7 @@ async def _enqueue_from_firestore(
         commune_code = parts[1]
         panneau = parts[2]
         # The manifesto_pdf_url at this stage may be either the ministry URL
-        # or the Firebase Storage URL. Workers will re-download from ministry anyway.
+        # or the S3 URL. Workers will re-download from ministry anyway.
         pdf_url = _PDF_URL_TPL.format(
             tour="1",
             commune_code=commune_code,
@@ -310,9 +310,9 @@ async def _process_item(payload: dict[str, Any]) -> dict[str, Any] | None:
         )
         return {"skipped": True, "reason": "not_in_firestore"}
 
-    # Step 3: Upload to Firebase Storage
+    # Step 3: Upload to S3 (public-assets bucket)
     from src.services.profession_indexer import (
-        _upload_to_storage,
+        _upload_to_s3,
         STORAGE_PREFIX,
         _create_documents_from_profession,
         _delete_profession_chunks,
@@ -327,9 +327,9 @@ async def _process_item(payload: dict[str, Any]) -> dict[str, Any] | None:
     blob_path = f"{STORAGE_PREFIX}/{commune_code}/{candidate_id}.pdf"
 
     _t_upload = _time.monotonic()
-    storage_url = await asyncio.to_thread(_upload_to_storage, pdf_content, blob_path)
+    storage_url = await asyncio.to_thread(_upload_to_s3, pdf_content, blob_path)
     logger.info("[profession_worker:timing] storage_upload(%s) took %.2fs", candidate_id, _time.monotonic() - _t_upload)
-    logger.info("[worker] uploaded %s to Firebase Storage", candidate_id)
+    logger.info("[worker] uploaded %s to S3", candidate_id)
 
     # Step 4: Extract text (page-aware), with Gemini OCR fallback
     _t_extract = _time.monotonic()
