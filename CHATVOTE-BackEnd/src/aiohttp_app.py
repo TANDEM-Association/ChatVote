@@ -586,18 +586,36 @@ async def admin_upload(request: web.Request) -> web.Response:
         file_size = len(data)
 
         if mode == "preview":
-            preview = await preview_upload(job_id, filename, data, source_url=source_url, source_type=source_type)
-            _upload_file_cache[job_id] = data
-            current = get_job(job_id) or {}
-            job_entry: dict = {
-                "job_id": job_id,
-                "filename": filename,
-                "status": current.get("status", "preview"),
-                "preview": preview,
-            }
-            if current.get("error"):
-                job_entry["error"] = current["error"]
-            jobs.append(job_entry)
+            if file_size < 2 * 1024 * 1024:  # <2MB: inline preview (fast text PDFs)
+                preview = await preview_upload(job_id, filename, data, source_url=source_url, source_type=source_type)
+                _upload_file_cache[job_id] = data
+                current = get_job(job_id) or {}
+                job_entry: dict = {
+                    "job_id": job_id,
+                    "filename": filename,
+                    "status": current.get("status", "preview"),
+                    "preview": preview,
+                }
+                if current.get("error"):
+                    job_entry["error"] = current["error"]
+                jobs.append(job_entry)
+            else:
+                # Large file: run preview in background, client polls for status
+                _upload_file_cache[job_id] = data
+
+                async def _bg_preview(jid: str, fn: str, d: bytes, su: str | None, st: str | None) -> None:
+                    try:
+                        await preview_upload(jid, fn, d, source_url=su, source_type=st)
+                    except Exception as e:
+                        from src.services.document_upload import _update_job
+                        _update_job(jid, status="error", error=str(e))
+
+                asyncio.create_task(_bg_preview(job_id, filename, data, source_url, source_type))
+                jobs.append({
+                    "job_id": job_id,
+                    "filename": filename,
+                    "status": "extracting",
+                })
         else:
             # Small files (<5MB): process inline; larger ones: background task
             if file_size < 5 * 1024 * 1024:
