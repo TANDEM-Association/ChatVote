@@ -525,6 +525,30 @@ async def load_scraped_from_drive(
                     candidate_id, slug, candidates_folders[0]["name"],
                 )
 
+        # Domain-only fallback: when the URL has a path (e.g. /mon-projet/),
+        # the slug includes the path which may not match the Drive folder
+        # (crawl service typically stores under domain-only slug).
+        if not candidates_folders:
+            parsed = urlparse(website_url)
+            domain_slug = re.sub(r"[^a-z0-9]+", "-", parsed.netloc.lower()).strip("-")
+            if domain_slug and domain_slug != slug:
+                domain_norm = domain_slug.replace("-", "")
+                candidates_folders = sorted(
+                    [
+                        f for f in subfolders
+                        if f["name"] == domain_slug
+                        or domain_slug in f["name"]
+                        or domain_norm in f["name"].replace("-", "")
+                    ],
+                    key=lambda f: f.get("createdTime", ""),
+                    reverse=True,
+                )
+                if candidates_folders:
+                    logger.info(
+                        "[load_scraped_from_drive] domain-only slug match for %s: %s -> %s",
+                        candidate_id, domain_slug, candidates_folders[0]["name"],
+                    )
+
         if not candidates_folders:
             logger.warning(
                 "[load_scraped_from_drive] no slug match for %s (slug=%s, %d folders in Drive, sample=%s)",
