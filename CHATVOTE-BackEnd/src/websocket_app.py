@@ -100,6 +100,24 @@ def _sanitize_source_url(url: str | None) -> str | None:
         return url
     return None
 
+
+_S3_PUBLIC_BASE = "https://chatvote-public-assets.s3.fr-par.scw.cloud"
+
+
+def _profession_de_foi_fallback_url(metadata: dict) -> str | None:
+    """Build S3 URL for profession_de_foi sources missing a URL.
+
+    The profession indexer uploads PDFs to a predictable S3 path:
+    public/professions_de_foi/{municipality_code}/{candidate_id}.pdf
+    """
+    if metadata.get("source_document") != "profession_de_foi":
+        return None
+    candidate_id = metadata.get("namespace")
+    municipality_code = metadata.get("municipality_code")
+    if not candidate_id or not municipality_code:
+        return None
+    return f"{_S3_PUBLIC_BASE}/public/professions_de_foi/{municipality_code}/{candidate_id}.pdf"
+
 logger = logging.getLogger(__name__)
 
 
@@ -659,6 +677,10 @@ async def fetch_and_emit_response(
                 if len(source_doc.page_content) > 80:
                     content_preview += "..."
 
+                source_url = _sanitize_source_url(source_doc.metadata.get("url"))
+                if source_url is None:
+                    source_url = _profession_de_foi_fallback_url(source_doc.metadata)
+
                 source = {
                     "source": source_doc.metadata.get("document_name"),
                     "page": page_number,
@@ -666,7 +688,7 @@ async def fetch_and_emit_response(
                     "document_publish_date": source_doc.metadata.get(
                         "document_publish_date"
                     ),
-                    "url": _sanitize_source_url(source_doc.metadata.get("url")),
+                    "url": source_url,
                     "source_document": source_doc.metadata.get("source_document"),
                     # Unified metadata
                     "fiabilite": source_doc.metadata.get("fiabilite"),
@@ -710,6 +732,10 @@ async def fetch_and_emit_response(
                         if len(source_doc.page_content) > 80:
                             content_preview += "..."
 
+                        source_url = _sanitize_source_url(source_doc.metadata.get("url"))
+                        if source_url is None:
+                            source_url = _profession_de_foi_fallback_url(source_doc.metadata)
+
                         source = {
                             "source": source_doc.metadata.get("document_name"),
                             "page": page_number,
@@ -717,7 +743,7 @@ async def fetch_and_emit_response(
                             "document_publish_date": source_doc.metadata.get(
                                 "document_publish_date"
                             ),
-                            "url": _sanitize_source_url(source_doc.metadata.get("url")),
+                            "url": source_url,
                             "source_document": source_doc.metadata.get(
                                 "source_document"
                             ),
@@ -1115,11 +1141,15 @@ async def handle_combined_answer_request(
                 f"doc={source_doc.metadata.get('document_name', 'unknown')}"
             )
 
+        source_url = _sanitize_source_url(source_doc.metadata.get("url"))
+        if source_url is None:
+            source_url = _profession_de_foi_fallback_url(source_doc.metadata)
+
         source = {
             "source": source_doc.metadata.get("document_name", "Site candidat"),
             "page": page_number,
             "content_preview": content_preview,
-            "url": _sanitize_source_url(source_doc.metadata.get("url")),
+            "url": source_url,
             "source_type": "candidate",
             "candidate_id": candidate_id,
             "candidate_name": source_doc.metadata.get("candidate_name"),

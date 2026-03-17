@@ -473,6 +473,10 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
     )
     blob_path = f"{STORAGE_PREFIX}/{commune_code}/{candidate_id}.pdf"
 
+    # Always compute the expected S3 URL so Qdrant metadata has a URL
+    # even when the upload fails (the PDF will be uploaded on retry).
+    expected_url = f"{S3_PUBLIC_BASE_URL}/{blob_path}"
+
     try:
         storage_url = await asyncio.to_thread(
             _upload_to_s3, pdf_content, blob_path
@@ -482,7 +486,7 @@ async def index_candidate_profession(candidate_id: str, pdf_path: str) -> int:
         )
     except Exception as e:
         logger.warning(f"Failed to upload PDF to S3 for {candidate_id}: {e}")
-        storage_url = None  # non-fatal — continue with OCR + indexing
+        storage_url = expected_url  # use expected URL so metadata is never null
 
     # Step 4: Extract PDF text — 4-tier OCR cascade with content quality checks
     # Order: pypdf (free/fast) → Scaleway (cleanest OCR) → tesseract (free/local) → Gemini (last resort)
