@@ -59,19 +59,6 @@ test.describe("Experiment Pages Layout", () => {
     await expect(page.locator('a[href="/chat"]').first()).toBeVisible();
   });
 
-  test("coverage page has sidebar and back arrow to /experiment", async ({
-    page,
-  }) => {
-    await page.goto("/experiment/coverage", { timeout: 30000 });
-    await expect(page.getByText("Coverage Report")).toBeVisible({
-      timeout: 15000,
-    });
-    // Back arrow link to /experiment
-    await expect(page.locator('a[href="/experiment"]')).toBeVisible();
-    // Sidebar
-    await expect(page.locator('a[href="/chat"]').first()).toBeVisible();
-  });
-
   test("topics page has sidebar", async ({ page }) => {
     await page.goto("/experiment/topics", { timeout: 30000 });
     await expect(

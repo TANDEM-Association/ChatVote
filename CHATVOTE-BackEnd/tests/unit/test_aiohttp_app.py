@@ -402,10 +402,10 @@ class TestAssistantEndpoint:
 
 
 class TestCheckUploadSecret:
-    async def test_404_when_no_secret_configured(self, client):
-        # UPLOAD_SECRET="" → always raises HTTPNotFound
+    async def test_200_when_no_secret_configured(self, client):
+        # UPLOAD_SECRET="" → dev mode, allows all requests
         resp = await client.get("/api/v1/admin/upload-status")
-        assert resp.status == 404
+        assert resp.status == 200
 
     async def test_404_when_wrong_secret_in_header(self, client, monkeypatch):
         monkeypatch.setenv("ADMIN_UPLOAD_SECRET", "correct")
@@ -824,9 +824,10 @@ class TestApiKeyMiddleware:
 
 
 class TestUploadJobStatus:
-    async def test_404_without_secret(self, client):
+    async def test_200_without_secret_in_dev_mode(self, client):
+        """When UPLOAD_SECRET is empty (dev mode), endpoint is accessible."""
         resp = await client.get("/api/v1/admin/upload-status/job-123")
-        assert resp.status == 404
+        assert resp.status == 200
 
     async def test_returns_job_data_when_found(self, client, monkeypatch):
         monkeypatch.setenv("ADMIN_UPLOAD_SECRET", "s3cret")

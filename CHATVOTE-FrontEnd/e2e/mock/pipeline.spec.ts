@@ -37,9 +37,9 @@ const STATUS_MOCK = {
     settings: {},
     checkpoints: {},
   },
-  seed: {
-    node_id: "seed",
-    label: "seed",
+  populate: {
+    node_id: "populate",
+    label: "populate",
     enabled: true,
     status: "error",
     last_run_at: "2026-03-13T23:00:00Z",
@@ -65,6 +65,54 @@ const STATUS_MOCK = {
     node_id: "indexer",
     label: "indexer",
     enabled: false,
+    status: "idle",
+    last_run_at: null,
+    last_duration_s: null,
+    last_error: null,
+    counts: {},
+    settings: {},
+    checkpoints: {},
+  },
+  websites: {
+    node_id: "websites",
+    label: "websites",
+    enabled: true,
+    status: "idle",
+    last_run_at: null,
+    last_duration_s: null,
+    last_error: null,
+    counts: {},
+    settings: {},
+    checkpoints: {},
+  },
+  professions: {
+    node_id: "professions",
+    label: "professions",
+    enabled: true,
+    status: "idle",
+    last_run_at: null,
+    last_duration_s: null,
+    last_error: null,
+    counts: {},
+    settings: {},
+    checkpoints: {},
+  },
+  crawl_scraper: {
+    node_id: "crawl_scraper",
+    label: "crawl_scraper",
+    enabled: true,
+    status: "idle",
+    last_run_at: null,
+    last_duration_s: null,
+    last_error: null,
+    counts: {},
+    settings: {},
+    checkpoints: {},
+  },
+  pourquituvotes: {
+    node_id: "pourquituvotes",
+    label: "pourquituvotes",
+    enabled: true,
     status: "idle",
     last_run_at: null,
     last_duration_s: null,
@@ -261,7 +309,7 @@ test.describe("Admin Dashboard Pipeline Tab (mocked)", () => {
     ).toBeVisible({ timeout: 15000 });
   });
 
-  test("error node (seed) shows red status dot", async ({ page }) => {
+  test("error node (populate) shows red status dot", async ({ page }) => {
     await mockAdminApis(page);
     await page.goto(`${ADMIN_URL}?tab=pipeline`, { timeout: 30000 });
     await expect(
@@ -269,7 +317,7 @@ test.describe("Admin Dashboard Pipeline Tab (mocked)", () => {
     ).toBeVisible({ timeout: 15000 });
 
     // statusDot uses bg-red-500/100 for error
-    const seedCard = page.locator('[data-node-id="seed"]');
+    const seedCard = page.locator('[data-node-id="populate"]');
     await expect(seedCard.locator('[class*="bg-red-500"]').first()).toBeVisible(
       { timeout: 15000 },
     );
@@ -308,7 +356,7 @@ test.describe("Admin Dashboard Pipeline Tab (mocked)", () => {
     ).not.toBeVisible();
   });
 
-  test("error node (seed) shows error message text", async ({ page }) => {
+  test("error node (populate) shows error message text", async ({ page }) => {
     await mockAdminApis(page);
     await page.goto(`${ADMIN_URL}?tab=pipeline`, { timeout: 30000 });
     await expect(

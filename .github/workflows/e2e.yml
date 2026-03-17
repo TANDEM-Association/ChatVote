@@ -13,7 +13,11 @@ concurrency:
 jobs:
   e2e:
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
+    strategy:
+      fail-fast: false
+      matrix:
+        shard: [1, 2]
 
     steps:
       - name: Checkout
@@ -41,6 +45,13 @@ jobs:
       - name: Install frontend dependencies
         working-directory: CHATVOTE-FrontEnd
         run: pnpm install --frozen-lockfile
+
+      - name: Cache firebase-tools
+        uses: actions/cache@v4
+        id: firebase-cache
+        with:
+          path: ~/.npm/_npx
+          key: firebase-tools-${{ runner.os }}-${{ hashFiles('CHATVOTE-BackEnd/firebase/firebase-test.json') }}
 
       - name: Install firebase-tools
         run: npm i -g firebase-tools
@@ -93,10 +104,10 @@ jobs:
         working-directory: CHATVOTE-BackEnd/firebase
 
       # global-setup.ts handles: Firestore seeding, mock Socket.IO server, and
-      # Next.js warmup. playwright.config.ts webServer builds + starts Next.js on :3001.
-      - name: Run Playwright E2E tests
+      # Next.js warmup. playwright.config.ts webServer builds + starts Next.js.
+      - name: Run Playwright E2E tests (shard ${{ matrix.shard }}/2)
         working-directory: CHATVOTE-FrontEnd
-        run: npx playwright test --reporter=list
+        run: npx playwright test --reporter=list --shard=${{ matrix.shard }}/2
         env:
           CI: 'true'
           FIRESTORE_EMULATOR_HOST: localhost:8081
@@ -106,7 +117,7 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: playwright-report
+          name: playwright-report-shard-${{ matrix.shard }}
           path: CHATVOTE-FrontEnd/playwright-report/
           retention-days: 7
 
@@ -114,6 +125,6 @@ jobs:
         if: failure()
         uses: actions/upload-artifact@v4
         with:
-          name: test-traces
+          name: test-traces-shard-${{ matrix.shard }}
           path: CHATVOTE-FrontEnd/test-results/
           retention-days: 7

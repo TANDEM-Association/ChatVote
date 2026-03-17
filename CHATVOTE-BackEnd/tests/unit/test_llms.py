@@ -480,10 +480,14 @@ class TestGetAnswerFromLlms:
         await get_answer_from_llms([llm_fail, llm_ok], MESSAGES)
         assert llm_fail.is_at_rate_limit is True
 
-    async def test_clears_is_at_rate_limit_on_successful_llm(self):
-        llm_ok = make_llm("llm-ok", priority=100, responses=["ok"])
-        llm_ok.is_at_rate_limit = True  # Simulate previously rate-limited
-        await get_answer_from_llms([llm_ok], MESSAGES)
+    async def test_skips_rate_limited_llm(self):
+        """Rate-limited LLMs are skipped; a non-rate-limited fallback succeeds."""
+        llm_limited = make_llm("llm-limited", priority=100, responses=["ok"])
+        llm_limited.is_at_rate_limit = True
+        llm_ok = make_llm("llm-ok", priority=50, responses=["fallback"])
+        result = await get_answer_from_llms([llm_limited, llm_ok], MESSAGES)
+        assert result.content == "fallback"
+        assert llm_limited.is_at_rate_limit is True  # Still marked
         assert llm_ok.is_at_rate_limit is False
 
     async def test_tries_backup_llms_after_all_primary_fail(self):

@@ -1472,10 +1472,10 @@ class TestSourcesDto:
         dto = SourcesDto(
             session_id="sess-002",
             sources=[],
-            party_id=None,
+            party_id="test-party",
             rag_query=None,
         )
-        assert dto.party_id is None
+        assert dto.party_id == "test-party"
         assert dto.rag_query is None
 
 

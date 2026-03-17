@@ -417,10 +417,12 @@ class TestClassifyChunksWithLLM:
     @pytest.mark.asyncio
     async def test_ambiguous_chunk_goes_to_llm(self):
         """AMBIGUOUS_TEXT has no clear keyword signal → must go to LLM."""
-        from src.models.structured_outputs import ChunkThemeClassification
+        from src.models.structured_outputs import BatchChunkThemeClassification, ChunkThemeClassification
 
-        llm_result = ChunkThemeClassification(
-            theme="institutions", sub_theme="budget participatif"
+        llm_result = BatchChunkThemeClassification(
+            classifications=[
+                ChunkThemeClassification(theme="institutions", sub_theme="budget participatif")
+            ]
         )
 
         with patch(
@@ -436,9 +438,15 @@ class TestClassifyChunksWithLLM:
     @pytest.mark.asyncio
     async def test_keyword_fast_path_false_sends_all_chunks_to_llm(self):
         """keyword_fast_path=False → every chunk goes to LLM regardless of keyword signal."""
-        from src.models.structured_outputs import ChunkThemeClassification
+        from src.models.structured_outputs import BatchChunkThemeClassification, ChunkThemeClassification
 
-        llm_result = ChunkThemeClassification(theme="environnement", sub_theme=None)
+        # Both chunks go in a single batch (batch_size=20 > 2)
+        llm_result = BatchChunkThemeClassification(
+            classifications=[
+                ChunkThemeClassification(theme="environnement", sub_theme=None),
+                ChunkThemeClassification(theme="environnement", sub_theme=None),
+            ]
+        )
 
         with patch(
             "src.llms.get_structured_output_from_llms",
@@ -449,16 +457,19 @@ class TestClassifyChunksWithLLM:
             results = await classify_chunks(
                 chunks, keyword_fast_path=False, use_llm=True
             )
-            # Both chunks should have been sent to LLM
-            assert mock_llm.call_count == 2
+            # Both chunks sent in one batch call
+            assert mock_llm.call_count == 1
             assert all(r.method == "llm" for r in results)
 
     @pytest.mark.asyncio
     async def test_returns_one_result_per_chunk_with_llm(self):
-        from src.models.structured_outputs import ChunkThemeClassification
+        from src.models.structured_outputs import BatchChunkThemeClassification, ChunkThemeClassification
 
-        llm_result = ChunkThemeClassification(
-            theme="sante", sub_theme="accès aux soins"
+        llm_result = BatchChunkThemeClassification(
+            classifications=[
+                ChunkThemeClassification(theme="sante", sub_theme="accès aux soins"),
+                ChunkThemeClassification(theme="sante", sub_theme="accès aux soins"),
+            ]
         )
 
         with patch(
