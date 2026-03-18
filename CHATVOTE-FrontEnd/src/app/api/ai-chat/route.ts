@@ -1,6 +1,5 @@
-import type { GatewayLanguageModelOptions } from '@ai-sdk/gateway';
 import { google } from '@ai-sdk/google';
-import { type UIMessage, convertToModelMessages, stepCountIs, streamText, tool } from 'ai';
+import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, streamText, tool } from 'ai';
 import { z } from 'zod/v4';
 
 import { deepResearch } from '@lib/ai/deep-research';
@@ -13,6 +12,7 @@ import {
   searchQdrantRaw,
   deduplicateResults,
 } from '@lib/ai/qdrant-search';
+import { scalewayChat } from '@lib/ai/providers';
 import { db, auth } from '@lib/firebase/firebase-admin';
 
 export const maxDuration = 120;
@@ -860,20 +860,25 @@ Tu disposes d'une recherche approfondie automatique : si tes premières recherch
 
 ${respondInLanguage}${candidateContext}`;
 
+  // Model fallback: Gemini 2.5 Flash (primary) → Scaleway Qwen3 235B (fallback)
+  let model: LanguageModel = google('gemini-2.5-flash');
+  try {
+    // Test that the Google provider is configured (key present)
+    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
+      console.warn('[ai-chat] GOOGLE_GENERATIVE_AI_API_KEY missing, falling back to Scaleway');
+      model = scalewayChat;
+    }
+  } catch {
+    console.warn('[ai-chat] Google provider init failed, falling back to Scaleway');
+    model = scalewayChat;
+  }
+
   const result = streamText({
-    model: google('gemini-2.5-flash'),
+    model,
     system: systemPrompt,
     messages,
     stopWhen: stepCountIs(6),
     toolChoice: 'auto',
-    providerOptions: {
-      gateway: {
-        models: [
-          'google/gemini-2.5-flash-lite',   // Fallback 1: cheaper Google model
-          'scaleway/qwen3-235b-a22b-instruct-2507', // Fallback 2: Scaleway sovereign
-        ],
-      } satisfies GatewayLanguageModelOptions,
-    },
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);
     },
