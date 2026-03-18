@@ -209,6 +209,12 @@ jobs:
           SYNC_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID }}
           SYNC_NEXT_PUBLIC_FIREBASE_APP_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_APP_ID }}
           SYNC_NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID: ${{ secrets.NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID }}
+          SYNC_GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          SYNC_SCALEWAY_EMBED_API_KEY: ${{ secrets.SCALEWAY_EMBED_API_KEY }}
+          SYNC_QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          SYNC_QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          SYNC_LANGCHAIN_TRACING: ${{ secrets.LANGCHAIN_TRACING }}
+          SYNC_LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
         run: |
           # Sync env vars BEFORE vercel pull so pulled .env has correct values
           sync_var() {
@@ -229,6 +235,13 @@ jobs:
           sync_var NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID "$SYNC_NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID"
           sync_var NEXT_PUBLIC_FIREBASE_APP_ID "$SYNC_NEXT_PUBLIC_FIREBASE_APP_ID"
           sync_var NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID "$SYNC_NEXT_PUBLIC_FIREBASE_MEASUREMENT_ID"
+          sync_var GOOGLE_GENERATIVE_AI_API_KEY "$SYNC_GOOGLE_GENERATIVE_AI_API_KEY"
+          sync_var SCALEWAY_EMBED_API_KEY "$SYNC_SCALEWAY_EMBED_API_KEY"
+          sync_var QDRANT_URL "$SYNC_QDRANT_URL"
+          sync_var QDRANT_API_KEY "$SYNC_QDRANT_API_KEY"
+          sync_var ENV "prod"
+          sync_var LANGCHAIN_TRACING "$SYNC_LANGCHAIN_TRACING"
+          sync_var LANGCHAIN_API_KEY "$SYNC_LANGCHAIN_API_KEY"
 
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
@@ -258,6 +271,13 @@ jobs:
           FIREBASE_PRIVATE_KEY: ${{ secrets.FIREBASE_PRIVATE_KEY }}
           STRIPE_SECRET_KEY: ${{ secrets.STRIPE_SECRET_KEY }}
           NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY: ${{ secrets.NEXT_PUBLIC_STRIPE_PUBLISHABLE_KEY }}
+          GOOGLE_GENERATIVE_AI_API_KEY: ${{ secrets.GOOGLE_API_KEY }}
+          SCALEWAY_EMBED_API_KEY: ${{ secrets.SCALEWAY_EMBED_API_KEY }}
+          QDRANT_URL: ${{ secrets.QDRANT_URL }}
+          QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
+          ENV: prod
+          LANGCHAIN_TRACING: ${{ secrets.LANGCHAIN_TRACING }}
+          LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
