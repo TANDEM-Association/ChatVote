@@ -70,7 +70,7 @@ function ChatHeader() {
         )}
         <div className="border-border flex h-10 w-full flex-none items-center justify-center border-b px-4">
           <a
-            href="https://zap.ai"
+            href="https://zaq.ai"
             target="_blank"
             rel="noopener noreferrer"
             className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs transition-colors"
