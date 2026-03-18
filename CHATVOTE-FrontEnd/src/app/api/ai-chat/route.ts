@@ -1,6 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, tool } from 'ai';
-import { streamText } from '@lib/ai/langsmith';
+import { streamText } from '@lib/ai/tracing';
 import { z } from 'zod/v4';
 
 import { deepResearch } from '@lib/ai/deep-research';
@@ -108,7 +108,7 @@ async function searchDataGouvMcp(query: string, limit = 5): Promise<DataGouvData
 }
 
 
-function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[] = []) {
+function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[] = [], candidateNames: Map<string, string> = new Map()) {
   const features = enabledFeatures ?? ['rag'];
   const ragEnabled = features.includes('rag');
 
@@ -118,10 +118,10 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
       ? {
           searchPartyManifesto: tool({
             description:
-              "Search a political party's manifesto/programme for relevant content. Call this for EACH relevant party. You can search multiple parties simultaneously.",
+              "Recherche dans le programme/manifeste PDF d'un parti politique. Contient les engagements officiels, propositions thématiques et priorités du parti. Appelle cet outil pour CHAQUE parti pertinent — les appels simultanés sont possibles et recommandés.",
             inputSchema: z.object({
-              partyId: z.string().describe('The party identifier to search within'),
-              query: z.string().describe('The search query to find relevant content'),
+              partyId: z.string().describe('Identifiant du parti (ex: "ps", "lr") — utilise les IDs fournis dans le contexte'),
+              query: z.string().describe('Requête de recherche autonome et complète — pas de pronoms ni références implicites'),
             }),
             execute: async (input) => {
               const { partyId, query } = input;
@@ -155,10 +155,10 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
             },
           }),
           searchCandidateWebsite: tool({
-            description: "Search a single candidate's website content. Prefer searchAllCandidates when searching the whole commune.",
+            description: "Recherche dans le contenu web d'un candidat spécifique (site officiel, profession de foi PDF, pages de campagne). Utilise cet outil quand l'utilisateur pose une question sur un candidat précis. Pour une recherche globale sur toute la commune, préfère searchAllCandidates.",
             inputSchema: z.object({
-              candidateId: z.string().describe('The candidate identifier to search within'),
-              query: z.string().describe('The search query to find relevant content'),
+              candidateId: z.string().describe('Identifiant du candidat — utilise les IDs fournis dans le contexte'),
+              query: z.string().describe('Requête de recherche autonome et spécifique au candidat'),
             }),
             execute: async (input) => {
               const { candidateId, query } = input;
@@ -184,10 +184,10 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                return { candidateId, results, count: results.length };
+                return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results, count: results.length };
               } catch (err) {
                 console.error('[ai-chat] searchCandidateWebsite error:', err);
-                return { candidateId, results: [] as SearchResult[], count: 0, error: String(err) };
+                return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results: [] as SearchResult[], count: 0, error: String(err) };
               }
             },
           }),
@@ -196,14 +196,14 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
             ? {
                 searchAllCandidates: tool({
                   description:
-                    'Search ALL candidates in the current commune. Accepts multiple queries for broader coverage — each query is re-ranked independently then merged. Use this for any general question about the commune.',
+                    'Recherche simultanée dans TOUS les candidats de la commune. Accepte plusieurs requêtes pour une couverture maximale — chaque requête est classée indépendamment puis fusionnée. Utilise cet outil pour toute question comparative ou générale sur la commune. Stratégie optimale : 2-3 formulations variées couvrant synonymes et angles différents.',
                   inputSchema: z.object({
                     queries: z
                       .array(z.string())
                       .min(1)
                       .max(5)
                       .describe(
-                        'Search queries — use 2-3 varied phrasings for better recall (e.g. ["transports en commun", "mobilité urbaine", "vélo piste cyclable"])',
+                        'Requêtes de recherche variées pour maximiser le rappel. Utilise 2-3 formulations différentes couvrant le même sujet (ex: ["transports en commun plan vélo", "mobilité urbaine piste cyclable", "stationnement voiture circulation"])',
                       ),
                   }),
                   execute: async (input) => {
@@ -294,9 +294,9 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
       ? {
           searchVotingRecords: tool({
             description:
-              'Search parliamentary voting records to find how parties voted on specific topics, bills, or laws.',
+              "Recherche dans les votes de l'Assemblée nationale. Contient les scrutins publics avec le détail par groupe parlementaire (pour, contre, abstention). Utilise pour vérifier la cohérence entre les promesses d'un parti et ses votes passés, ou pour illustrer une position avec des faits concrets.",
             inputSchema: z.object({
-              query: z.string().describe('The topic or bill to search voting records for'),
+              query: z.string().describe('Sujet, loi ou projet de loi à rechercher (ex: "loi climat résilience", "réforme retraites 2023")'),
             }),
             execute: async (input) => {
               try {
@@ -335,13 +335,13 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
       ? {
           searchParliamentaryQuestions: tool({
             description:
-              'Search parliamentary questions asked by members of parliament on specific topics.',
+              "Recherche dans les questions parlementaires posées par les députés au gouvernement. Révèle les préoccupations concrètes des élus sur le terrain (santé, éducation, agriculture, emploi...). Utile pour montrer l'engagement réel d'un parti sur un sujet au-delà de son programme.",
             inputSchema: z.object({
-              query: z.string().describe('The topic to search parliamentary questions for'),
+              query: z.string().describe('Sujet à rechercher dans les questions parlementaires (ex: "déserts médicaux", "fermeture école rurale")'),
               partyId: z
                 .string()
                 .optional()
-                .describe('Optional party ID to filter questions by party'),
+                .describe('Optionnel : filtrer par parti pour voir ses questions spécifiques'),
             }),
             execute: async (input) => {
               const namespace = input.partyId
@@ -405,9 +405,9 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
       ? {
           searchDataGouv: tool({
             description:
-              'Search open government data on data.gouv.fr. Returns datasets with descriptions and download links. Use for statistics, public data, budgets, demographics, etc.',
+              "Recherche dans les données ouvertes de l'État français (data.gouv.fr). Contient des jeux de données officiels : budgets municipaux, démographie INSEE, résultats électoraux, équipements publics, qualité de l'air, etc. Utilise pour appuyer une réponse avec des chiffres vérifiables ou quand l'utilisateur demande des statistiques.",
             inputSchema: z.object({
-              query: z.string().describe('The search query in French'),
+              query: z.string().describe('Recherche en français (ex: "budget commune Marseille", "résultats élections municipales 2020")'),
             }),
             execute: async (input) => {
               try {
@@ -427,9 +427,9 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
       ? {
           webSearch: tool({
             description:
-              'Search the web for recent news and current information. Use for recent events, news articles, or facts not in the RAG database.',
+              "Recherche web pour l'actualité récente et les informations non présentes dans la base documentaire. Utilise pour : actualités de campagne, déclarations récentes, sondages, événements locaux, faits divers liés à la commune. Complément aux outils RAG, pas un substitut.",
             inputSchema: z.object({
-              query: z.string().describe('The search query'),
+              query: z.string().describe('Recherche web en français — privilégie des termes précis et datés si possible'),
             }),
             execute: async (input) => {
               try {
@@ -499,7 +499,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
       ? {
           renderWidget: tool({
             description:
-              'Render an interactive chart or visualization. Use to compare party positions, show voting statistics, display poll data, or visualize any structured data. Returns chart configuration that the frontend renders.',
+              "Affiche un graphique interactif. Utilise pour comparer visuellement les positions des candidats, montrer des statistiques de vote, ou visualiser des données structurées. Particulièrement utile quand tu as des données chiffrées à comparer (budgets, pourcentages, scores). Le frontend gère le rendu — tu fournis les données.",
             inputSchema: z.object({
               title: z.string().describe('Chart title'),
               chartType: z
@@ -536,12 +536,12 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
 
     // ── Always-on tools ──────────────────────────────────────────────────────
     suggestFollowUps: tool({
-      description: 'Generate 3 follow-up question suggestions for the user.',
+      description: "Génère 3 suggestions de questions de suivi pertinentes et concrètes. Les suggestions doivent approfondir le sujet discuté, explorer un angle connexe, ou comparer avec d'autres candidats/thèmes. Appelle cet outil à la FIN de chaque réponse.",
       inputSchema: z.object({
         suggestions: z
           .array(z.string())
           .length(3)
-          .describe('Exactly 3 follow-up question suggestions'),
+          .describe('3 questions de suivi : une qui approfondit, une qui compare, une qui explore un thème connexe'),
       }),
       execute: async (input) => {
         return { suggestions: input.suggestions };
@@ -550,13 +550,13 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
 
     changeCity: tool({
       description:
-        "Change the user's municipality/city context. Use when user asks to switch city or change location.",
+        "Change la commune de l'utilisateur. Utilise quand l'utilisateur mentionne une autre ville ou demande à changer de commune. Déclenche le rechargement des candidats disponibles dans la nouvelle commune.",
       inputSchema: z.object({
-        cityName: z.string().describe('The name of the city to switch to'),
+        cityName: z.string().describe('Nom de la commune (ex: "Marseille", "Lyon 3e")'),
         municipalityCode: z
           .string()
           .optional()
-          .describe('The INSEE municipality code if known'),
+          .describe('Code INSEE si connu (ex: "13055" pour Marseille) — sinon le système le résout automatiquement'),
       }),
       execute: async (input) => {
         let code = input.municipalityCode;
@@ -600,12 +600,12 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
 
     changeCandidates: tool({
       description:
-        'Update selected candidates/parties. Use when user asks to focus on specific parties or remove parties.',
+        "Modifie la sélection de candidats/partis de l'utilisateur. Utilise quand l'utilisateur veut se concentrer sur certains partis, en ajouter ou en retirer de la comparaison.",
       inputSchema: z.object({
-        partyIds: z.array(z.string()).describe('The party IDs to set, add, or remove'),
+        partyIds: z.array(z.string()).describe('IDs des partis à ajouter, définir ou retirer'),
         operation: z
           .enum(['set', 'add', 'remove'])
-          .describe('Whether to set, add to, or remove from current selection'),
+          .describe('"set" remplace la sélection, "add" ajoute, "remove" retire'),
       }),
       execute: async (input) => {
         return {
@@ -618,9 +618,9 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
 
     removeRestrictions: tool({
       description:
-        'Remove municipality/party restrictions for a broader national search. Use when user wants to search across all parties or remove city filter.',
+        "Supprime les filtres de commune ou de parti pour élargir la recherche au niveau national. Utilise quand l'utilisateur veut comparer au-delà de sa commune ou chercher des informations sur des partis non présents localement.",
       inputSchema: z.object({
-        reason: z.string().describe('Brief reason why the user wants to broaden scope'),
+        reason: z.string().describe("Raison de l'élargissement (ex: \"l'utilisateur veut comparer avec d'autres villes\")"),
       }),
       execute: async (input) => {
         return { action: 'removeRestrictions', reason: input.reason };
@@ -703,6 +703,7 @@ export async function POST(req: Request) {
   let resolvedPartyIds = partyIds ?? [];
   let candidateContext = '';
   let candidateIds: string[] = [];
+  const candidateNamesMap = new Map<string, string>();
   let allCandidatesData: Array<{ id: string; [key: string]: any }> = [];
 
   if (municipalityCode) {
@@ -728,8 +729,12 @@ export async function POST(req: Request) {
           ];
         }
 
-        // Collect candidate IDs for search instructions
+        // Collect candidate IDs and build name lookup for search instructions
         candidateIds = candidates.map((c: any) => c.id);
+        for (const c of candidates as any[]) {
+          const name = [c.first_name, c.last_name].filter(Boolean).join(' ');
+          if (name) candidateNamesMap.set(String(c.id).toLowerCase(), name);
+        }
 
         // Fetch party details for richer context
         const partiesSnap = await db.collection('parties').get();
@@ -800,31 +805,29 @@ export async function POST(req: Request) {
 
   const searchInstructions = municipalityCode && hasCandidates
     ? hasSelection && searchCandidateIds.length <= 3
-      ? `# RÈGLE CRITIQUE — OBLIGATOIRE
-Pour TOUTE question politique, tu DOIS appeler searchCandidateWebsite pour CHAQUE candidat sélectionné ci-dessous AVANT de répondre.
-N'utilise PAS searchPartyManifesto en mode commune.
-Ne réponds JAMAIS sans avoir d'abord appelé les outils de recherche.
-L'utilisateur a sélectionné ces candidats via l'interface — concentre-toi sur eux.
+      ? `# Protocole de recherche
+**Obligation** : Pour toute question sur les positions politiques, appelle searchCandidateWebsite pour CHAQUE candidat ci-dessous AVANT de rédiger ta réponse.
+- En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
+- L'utilisateur a sélectionné ces candidats via l'interface — concentre-toi sur eux.
+- Si un candidat n'a pas de résultats sur le sujet, dis-le explicitement plutôt que de l'ignorer.
 
-Appelle searchCandidateWebsite avec ces candidateId (un appel par candidat) :
+Candidats sélectionnés (un appel searchCandidateWebsite par candidat) :
 ${candidateIdsList}`
-      : `# RÈGLE CRITIQUE — OBLIGATOIRE
-Pour TOUTE question politique, tu DOIS appeler searchAllCandidates avec ta requête AVANT de répondre.
-Cet outil recherche automatiquement dans TOUS les candidats de la commune et re-classe les résultats par pertinence.
-N'utilise PAS searchPartyManifesto en mode commune.
-Ne réponds JAMAIS sans avoir d'abord appelé searchAllCandidates.
-Ne demande JAMAIS à l'utilisateur de préciser quel candidat ou quel parti.
+      : `# Protocole de recherche
+**Obligation** : Pour toute question sur les positions politiques, appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
+- searchAllCandidates recherche automatiquement dans TOUS les candidats et re-classe par pertinence.
+- En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
+- Ne demande JAMAIS à l'utilisateur de préciser quel candidat — recherche dans tous et présente les résultats.
+- ${hasSelection ? "L'utilisateur a sélectionné des candidats — mets en avant leurs positions en priorité, mais inclus les autres pour permettre la comparaison." : 'Aucun candidat sélectionné — présente les positions de TOUS les candidats de la commune de manière équitable.'}
 
-${hasSelection ? `L'utilisateur a sélectionné des candidats — mets en avant leurs positions, mais inclus aussi les autres pour comparaison.` : `Aucun candidat sélectionné — présente les positions de TOUS les candidats de la commune.`}
-
-Candidats disponibles :
+Candidats disponibles (${candidateIds.length}) :
 ${candidateIds.map((id) => `  - ${id}`).join('\n')}`
-    : `# RÈGLE CRITIQUE — OBLIGATOIRE
-Pour TOUTE question politique, tu DOIS appeler searchPartyManifesto pour CHAQUE parti ci-dessous AVANT de répondre.
-Ne réponds JAMAIS sans avoir d'abord appelé les outils de recherche.
-Ne demande JAMAIS à l'utilisateur de préciser quel parti — cherche dans TOUS.
+    : `# Protocole de recherche
+**Obligation** : Pour toute question sur les positions politiques, appelle searchPartyManifesto pour CHAQUE parti ci-dessous AVANT de rédiger ta réponse.
+- Ne demande JAMAIS à l'utilisateur de préciser quel parti — recherche dans TOUS systématiquement.
+- Si un parti n'a pas de résultats sur le sujet, dis-le explicitement.
 
-Appelle searchPartyManifesto avec ces partyId (un appel par parti) :
+Partis à rechercher (un appel searchPartyManifesto par parti) :
 ${resolvedPartyIds.map((id) => `  - partyId: "${id}"`).join('\n') || '  (aucun parti trouvé)'}`;
 
   const contextLine = municipalityCode
@@ -834,30 +837,37 @@ ${resolvedPartyIds.map((id) => `  - partyId: "${id}"`).join('\n') || '  (aucun p
   const systemPrompt = `${searchInstructions}
 
 # Rôle
-Tu es un assistant IA politiquement neutre spécialisé dans les élections municipales françaises.
-Tu aides les citoyens à comparer les positions des candidats de leur commune en te basant sur leurs programmes, sites web et professions de foi.
+Tu es l'assistant ChatVote — un outil d'information civique neutre pour les élections municipales françaises de 2026.
+Ta mission : aider chaque citoyen à comprendre et comparer les propositions des candidats de sa commune, en se basant exclusivement sur leurs documents officiels (programmes, professions de foi, sites web de campagne, votes parlementaires).
 
 # Contexte
 Date : ${currentDate}
 ${contextLine}
 
-# Instructions pour ta réponse
-1. **Basé sur les sources** : Réfère-toi exclusivement aux documents récupérés via les outils. Si les documents ne contiennent pas d'information sur le sujet, dis-le honnêtement. N'invente jamais de faits.
-2. **Neutralité stricte** : N'évalue pas les positions. Évite les adjectifs subjectifs. Ne donne AUCUNE recommandation de vote.
-3. **Comparatif par défaut** : Quand plusieurs candidats ont des positions sur un sujet, présente-les côte à côte pour faciliter la comparaison. Utilise des tableaux ou puces par candidat.
-4. **Style de réponse** :
-   - Concret et facile à comprendre, avec des chiffres précis quand disponibles
-   - Cite les sources : [1], [2] après chaque affirmation factuelle
-   - Si aucune source n'a été utilisée, écris l'affirmation en italique
-   - Formate en Markdown avec des puces et des mots-clés en gras
-   - Réponses concises : 1-3 puces par candidat, sauf demande de détails
-   - **Sois proactif** : ne pose pas plus d'une question de clarification. Si la demande est vague, fais des choix raisonnables et agis. Montre ce que tu sais faire.
-5. **Limites** : Signale quand l'information peut être obsolète ou incomplète
-6. **Protection des données** : Ne demande pas d'intentions de vote ni de données personnelles
-7. **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle TOUJOURS l'outil suggestFollowUps avec 3 questions pertinentes
-8. **Reformulation des requêtes** : Quand tu appelles un outil de recherche, ton paramètre "query" doit être AUTONOME et COMPLET. N'utilise JAMAIS de pronoms ("ça", "ce sujet", "celui-là") ni de références à des messages précédents. Inclus tout le contexte nécessaire directement dans la requête. Exemple : au lieu de "et sur ce sujet ?", écris "positions des candidats sur les transports en commun à Marseille". Garde les requêtes concises mais auto-suffisantes.
+# Principes fondamentaux
+1. **Rigueur factuelle** : Chaque affirmation doit être traçable à une source documentaire. Cite systématiquement [1], [2], etc. après chaque fait. Si aucune source ne couvre un sujet, dis-le clairement : "Aucun des candidats ne mentionne ce sujet dans les documents disponibles." N'invente jamais, ne déduis jamais au-delà de ce que les sources disent explicitement.
+2. **Neutralité absolue** : Tu ne juges pas, tu ne recommandes pas, tu ne classes pas les candidats. Pas d'adjectifs valorisants ("ambitieux", "courageux") ni dépréciatifs. Présente les faits et laisse le citoyen se forger son opinion.
+3. **Transparence sur les limites** : Si l'information est partielle, dis-le. Si un candidat n'a pas de position documentée sur un sujet, mentionne-le explicitement plutôt que de l'omettre silencieusement. Distingue "pas trouvé dans nos documents" de "le candidat n'en parle pas".
 
-Tu disposes d'une recherche approfondie automatique : si tes premières recherches ne trouvent pas assez de résultats, le système relance automatiquement des recherches plus larges. Fais confiance aux résultats retournés par tes outils.
+# Format de réponse
+- **Comparatif par défaut** : Quand plusieurs candidats sont concernés, structure ta réponse candidat par candidat avec des puces ou un tableau comparatif.
+- **Concis et concret** : 1-3 puces par candidat avec les propositions clés et les chiffres quand disponibles. Développe uniquement si l'utilisateur le demande.
+- **Markdown** : Utilise les titres, puces, **gras** pour les mots-clés, et *italique* pour les informations non sourcées.
+- **Proactivité** : Si la question est vague, fais un choix raisonnable et agis plutôt que de poser des questions. Maximum 1 question de clarification.
+
+# Règles techniques
+- **Requêtes de recherche** : Tes paramètres "query" doivent être AUTONOMES et COMPLETS. Jamais de pronoms ("ça", "ce sujet"), jamais de références implicites au contexte. Exemple : au lieu de "et sur ça ?", écris "propositions transports en commun et mobilité douce [nom commune]".
+- **Recherche approfondie automatique** : Si tes premières recherches retournent peu de résultats, le système relance automatiquement des recherches plus larges. Fais confiance aux résultats.
+- **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle suggestFollowUps avec 3 questions pertinentes (une qui approfondit, une qui compare, une sur un thème connexe).
+- **Protection des données** : Ne demande jamais d'intentions de vote, d'opinions personnelles, ni de données personnelles.
+${(enabledFeatures ?? []).includes('widgets') ? `
+# Visualisation (renderWidget)
+Quand tu disposes de données chiffrées comparables (scores, pourcentages, budgets, résultats électoraux, statistiques démographiques…), appelle **renderWidget** pour les afficher sous forme de graphique interactif.
+- **bar** : comparaison entre candidats/partis/communes (le plus fréquent)
+- **pie** : répartition/distribution (ex : répartition des voix)
+- **line** : tendance temporelle (ex : évolution du budget)
+- **radar** : comparaison multi-critères
+Appelle renderWidget APRÈS avoir obtenu les données (via searchDataGouv, RAG, etc.), pas avant. Fournis des données réelles issues de tes recherches, jamais de données fictives ou simulées.` : ''}
 
 ${respondInLanguage}${candidateContext}`;
 
@@ -935,7 +945,7 @@ ${respondInLanguage}${candidateContext}`;
         console.error('[ai-chat] Failed to persist conversation:', err);
       }
     },
-    tools: buildTools(enabledFeatures, candidateIds),
+    tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap),
   });
 
   return result.toUIMessageStreamResponse();
