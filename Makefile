@@ -312,6 +312,7 @@ stop:
 	done
 	@lsof -ti :8080 2>/dev/null | xargs kill -9 2>/dev/null && echo "  backend orphans killed." || true
 	@lsof -ti :3000 2>/dev/null | xargs kill -9 2>/dev/null && echo "  frontend orphans killed." || true
+	@pkill -9 -f "detached-flush.js.*CHATVOTE-FrontEnd" 2>/dev/null && echo "  next.js telemetry zombies killed." || true
 	@rm -f CHATVOTE-FrontEnd/.next/dev/lock
 	@lsof -ti :9099,:8081,:9199 2>/dev/null | sort -u | xargs kill 2>/dev/null && echo "  native firebase emulators stopped." || true
 	@echo "All services stopped."
