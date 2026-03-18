@@ -120,11 +120,16 @@ const ChatContextSidebar = () => {
     [toggleElectoralList],
   );
 
-  if (!municipalityCode) return null;
+  const isOpen = !!municipalityCode;
 
   return (
-    <div className="border-border-subtle bg-surface hidden w-72 flex-none flex-col border-r md:flex">
-      <div className="flex h-full flex-col gap-3 overflow-y-auto p-3">
+    <div
+      className={cn(
+        "border-border-subtle bg-surface hidden flex-none flex-col overflow-hidden border-r transition-[width] duration-300 ease-in-out md:flex",
+        isOpen ? "w-72" : "w-0 border-r-0",
+      )}
+    >
+      <div className="flex h-full w-72 flex-col gap-3 overflow-y-auto p-3">
         <div className="flex flex-col gap-1">
           <span className="text-muted-foreground text-xs font-medium uppercase">
             {t("lists")}
