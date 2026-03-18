@@ -113,6 +113,8 @@ export default function AiSdkChatView({
         storeApi.setState({
           municipalityCode: municipality.code,
           scope: "local",
+          selectedElectoralLists: [],
+          partyIds: new Set<string>(),
         });
       }
       const next = new URLSearchParams(searchParams.toString());
@@ -189,6 +191,8 @@ export default function AiSdkChatView({
             storeApi.setState({
               municipalityCode: result.municipalityCode,
               scope: "local",
+              selectedElectoralLists: [],
+              partyIds: new Set<string>(),
             });
             // Update URL so the prop also changes (no reload)
             const next = new URLSearchParams(searchParams.toString());
