@@ -744,8 +744,10 @@ export async function POST(req: Request) {
         }
 
         // Build rich candidate context for system prompt
+        // Note: candidate IDs are internal identifiers for tool calls only — never show them to the user
         candidateContext =
           `\n\n# Candidats disponibles dans cette commune (${municipalityCode})\n` +
+          `**IMPORTANT** : Les identifiants candidats (candidateId) sont des identifiants techniques internes. Ne les mentionne JAMAIS dans tes réponses à l'utilisateur. Utilise uniquement le nom complet du candidat.\n\n` +
           candidates
             .map((c: any) => {
               const name = [c.first_name, c.last_name].filter(Boolean).join(' ') || c.id;
@@ -753,14 +755,14 @@ export async function POST(req: Request) {
                 .map((pid: string) => partiesMap.get(pid)?.name ?? pid)
                 .join(', ');
               const lines = [`## ${name}`];
-              lines.push(`- **ID candidat (pour searchCandidateWebsite)**: \`${c.id}\``);
-              lines.push(`- **Parti(s)**: ${partyNames || 'Indépendant'}`);
-              if (c.position) lines.push(`- **Position**: ${c.position}`);
-              if (c.bio) lines.push(`- **Bio**: ${c.bio}`);
-              if (c.website_url) lines.push(`- **Site web**: ${c.website_url}`);
-              if (c.manifesto_pdf_url) lines.push(`- **Profession de foi / PDF programme**: ${c.manifesto_pdf_url}`);
-              if (c.is_incumbent) lines.push(`- **Sortant**: oui`);
-              if (c.birth_year) lines.push(`- **Année de naissance**: ${c.birth_year}`);
+              lines.push(`- candidateId (interne, ne pas afficher) : \`${c.id}\``);
+              lines.push(`- **Parti(s)** : ${partyNames || 'Indépendant'}`);
+              if (c.position) lines.push(`- **Position** : ${c.position}`);
+              if (c.bio) lines.push(`- **Bio** : ${c.bio}`);
+              if (c.website_url) lines.push(`- **Site web** : ${c.website_url}`);
+              if (c.manifesto_pdf_url) lines.push(`- **Profession de foi / PDF programme** : ${c.manifesto_pdf_url}`);
+              if (c.is_incumbent) lines.push(`- **Sortant** : oui`);
+              if (c.birth_year) lines.push(`- **Année de naissance** : ${c.birth_year}`);
               return lines.join('\n');
             })
             .join('\n\n');
@@ -796,32 +798,45 @@ export async function POST(req: Request) {
     }
   }
 
-  const candidateIdsList = searchCandidateIds.map((id) => `  - candidateId: "${id}"`).join('\n');
-
   // When candidateIds is empty (no candidates found for this municipality),
   // fall back to party manifesto search to avoid referencing unavailable tools
   const hasCandidates = candidateIds.length > 0;
   console.log('[ai-chat] routing:', { municipalityCode, hasCandidates, hasSelection, candidateCount: candidateIds.length, searchCandidateCount: searchCandidateIds.length, resolvedPartyIds });
+
+  // Build human-readable candidate list for search instructions (name + internal ID for tool use)
+  const searchCandidateLabels = searchCandidateIds.map((id) => {
+    const name = candidateNamesMap.get(id.toLowerCase());
+    return name ? `  - ${name} (candidateId: "${id}")` : `  - candidateId: "${id}"`;
+  }).join('\n');
 
   const searchInstructions = municipalityCode && hasCandidates
     ? hasSelection && searchCandidateIds.length <= 3
       ? `# Protocole de recherche
 **Obligation** : Pour toute question sur les positions politiques, appelle searchCandidateWebsite pour CHAQUE candidat ci-dessous AVANT de rédiger ta réponse.
 - En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
-- L'utilisateur a sélectionné ces candidats via l'interface — concentre-toi sur eux.
+- L'utilisateur a sélectionné ces candidats via le panneau latéral — recherche UNIQUEMENT ces candidats. Ne recherche PAS les candidats non sélectionnés.
 - Si un candidat n'a pas de résultats sur le sujet, dis-le explicitement plutôt que de l'ignorer.
+- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.
 
-Candidats sélectionnés (un appel searchCandidateWebsite par candidat) :
-${candidateIdsList}`
-      : `# Protocole de recherche
+Candidats sélectionnés :
+${searchCandidateLabels}`
+      : hasSelection
+        ? `# Protocole de recherche
+**Obligation** : Pour toute question sur les positions politiques, appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
+- searchAllCandidates recherche automatiquement dans les candidats sélectionnés et re-classe par pertinence.
+- En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
+- L'utilisateur a sélectionné des candidats via le panneau latéral — concentre-toi EXCLUSIVEMENT sur eux. Ne mentionne pas et ne recherche pas les candidats non sélectionnés.
+- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.
+
+Candidats sélectionnés (${searchCandidateIds.length}) :
+${searchCandidateLabels}`
+        : `# Protocole de recherche
 **Obligation** : Pour toute question sur les positions politiques, appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
 - searchAllCandidates recherche automatiquement dans TOUS les candidats et re-classe par pertinence.
 - En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
+- Aucun candidat sélectionné — présente les positions de TOUS les candidats de la commune de manière équitable.
 - Ne demande JAMAIS à l'utilisateur de préciser quel candidat — recherche dans tous et présente les résultats.
-- ${hasSelection ? "L'utilisateur a sélectionné des candidats — mets en avant leurs positions en priorité, mais inclus les autres pour permettre la comparaison." : 'Aucun candidat sélectionné — présente les positions de TOUS les candidats de la commune de manière équitable.'}
-
-Candidats disponibles (${candidateIds.length}) :
-${candidateIds.map((id) => `  - ${id}`).join('\n')}`
+- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.`
     : `# Protocole de recherche
 **Obligation** : Pour toute question sur les positions politiques, appelle searchPartyManifesto pour CHAQUE parti ci-dessous AVANT de rédiger ta réponse.
 - Ne demande JAMAIS à l'utilisateur de préciser quel parti — recherche dans TOUS systématiquement.
@@ -830,8 +845,11 @@ ${candidateIds.map((id) => `  - ${id}`).join('\n')}`
 Partis à rechercher (un appel searchPartyManifesto par parti) :
 ${resolvedPartyIds.map((id) => `  - partyId: "${id}"`).join('\n') || '  (aucun parti trouvé)'}`;
 
+  const selectedCandidateNames = searchCandidateIds
+    .map((id) => candidateNamesMap.get(id.toLowerCase()) ?? id)
+    .join(', ');
   const contextLine = municipalityCode
-    ? `L'utilisateur consulte les candidats de la commune ${municipalityCode}. ${hasSelection ? `Candidats sélectionnés : ${searchCandidateIds.join(', ')}` : 'Aucun candidat sélectionné — montre TOUS les candidats.'}`
+    ? `L'utilisateur consulte les candidats de la commune ${municipalityCode}. ${hasSelection ? `Candidats sélectionnés : ${selectedCandidateNames}` : 'Aucun candidat sélectionné — montre TOUS les candidats.'}`
     : `L'utilisateur a sélectionné ces partis : ${partiesList}`;
 
   const systemPrompt = `${searchInstructions}
