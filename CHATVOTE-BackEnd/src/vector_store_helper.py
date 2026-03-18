@@ -843,7 +843,7 @@ async def identify_relevant_docs_combined(
                     rag_query=rag_query,
                     party_ids=party_ids,
                     municipality_code=municipality_code,
-                    n_docs_per_candidate=5,
+                    n_docs_per_candidate=15,
                     score_threshold=score_threshold,
                 )
             )

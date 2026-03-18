@@ -1072,13 +1072,17 @@ async def handle_combined_answer_request(
     # Build candidate IDs for unaffiliated candidates that the party-based
     # search would miss (their content is indexed under candidate_id namespace,
     # not a party namespace). Affiliated candidates are found via party search.
-    candidate_ids_to_search = []
+    # Unaffiliated candidates found via municipality lookup
+    unaffiliated_ids = []
     if is_local_scope and local_candidates:
-        candidate_ids_to_search = [
+        unaffiliated_ids = [
             c.candidate_id
             for c in local_candidates
             if not c.party_ids
         ]
+    # Merge with any explicitly requested candidate IDs from the client
+    explicitly_requested = getattr(chat_message_data, "candidate_ids", []) or []
+    candidate_ids_to_search = list(set(unaffiliated_ids + explicitly_requested))
 
     # Perform combined search
     logger.info(f"TIMING handle_combined step=pre_rag elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
@@ -1090,6 +1094,8 @@ async def handle_combined_answer_request(
         candidate_ids=candidate_ids_to_search,
         scope=chat_session.scope,
         municipality_code=municipality_code,
+        n_docs_manifesto=20,
+        n_docs_candidates=20,
     )
 
     logger.debug(
@@ -1097,33 +1103,9 @@ async def handle_combined_answer_request(
     )
     _log_timing("rag_search_combined", t0, sid, {"n_manifesto": len(manifesto_docs), "n_candidate": len(candidate_docs)})
 
-    # Build sources from both doc types
+    # Build sources — only candidate sources are shown to the user.
+    # Manifesto docs are used for LLM context but not surfaced as clickable sources.
     sources = []
-
-    # Add manifesto sources
-    for source_doc in manifesto_docs:
-        page_raw = source_doc.metadata.get("page", 0)
-        page_number = int(page_raw if page_raw is not None else 0) + 1
-
-        content_preview = source_doc.page_content[:80].replace("\n", " ").strip()
-        if len(source_doc.page_content) > 80:
-            content_preview += "..."
-
-        source = {
-            "source": source_doc.metadata.get("document_name", "Programme"),
-            "page": page_number,
-            "content_preview": content_preview,
-            "url": _sanitize_source_url(source_doc.metadata.get("url")),
-            "source_type": "manifesto",
-            "party_id": source_doc.metadata.get("namespace"),
-            # Unified metadata
-            "fiabilite": source_doc.metadata.get("fiabilite"),
-            "theme": source_doc.metadata.get("theme"),
-            "sub_theme": source_doc.metadata.get("sub_theme"),
-            "document_publish_date": source_doc.metadata.get("document_publish_date"),
-            "source_document": source_doc.metadata.get("source_document"),
-        }
-        sources.append(source)
 
     # Add candidate sources
     for source_doc in candidate_docs:

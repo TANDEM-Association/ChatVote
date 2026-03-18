@@ -236,6 +236,10 @@ class ChatUserMessageDto(BaseModel):
         description="The locale for responses (fr or en). Defaults to French.",
         default="fr",
     )
+    candidate_ids: List[str] = Field(
+        description="Optional list of specific candidate IDs to target in retrieval.",
+        default_factory=list,
+    )
 
     @field_validator("session_id")
     def session_id_must_not_be_empty(cls, value):
