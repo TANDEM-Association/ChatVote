@@ -549,7 +549,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
     }),
 
     presentOptions: tool({
-      description: "Affiche des options cliquables pour l'utilisateur. Utilise quand tu veux proposer des choix (ex : thèmes, catégories, sujets) au lieu d'écrire une liste numérotée dans le texte. L'utilisateur peut cliquer sur une option pour l'envoyer comme message.",
+      description: "Affiche des options cliquables pour l'utilisateur. Utilise au lieu d'écrire une liste numérotée ou des questions dans le texte. Mets la question dans le champ 'label' et les choix dans 'options'. N'écris PAS ces éléments dans ton texte — l'outil les affiche automatiquement comme des boutons.",
       inputSchema: z.object({
         label: z.string().optional().describe('Titre optionnel au-dessus des options (ex : "Quel sujet t\'intéresse ?")'),
         options: z
@@ -927,7 +927,7 @@ ${contextLine}
 - **Requêtes de recherche** : Tes paramètres "query" doivent être AUTONOMES et COMPLETS. Jamais de pronoms ("ça", "ce sujet"), jamais de références implicites au contexte. Exemple : au lieu de "et sur ça ?", écris "propositions transports en commun et mobilité douce [nom commune]".
 - **Recherche approfondie** : Si tes premières recherches retournent peu de résultats (< 3), appelle runDeepResearch pour lancer une exploration multi-requêtes avec reformulations automatiques. Utilise aussi cet outil quand l'utilisateur demande explicitement une analyse approfondie ou complète.
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
-- **Choix interactifs** : Quand tu veux proposer des options à l'utilisateur (ex : "Quel sujet t'intéresse ?"), appelle l'outil presentOptions au lieu d'écrire une liste numérotée. Les options s'affichent comme des boutons cliquables.
+- **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.
 - **Protection des données** : Ne demande jamais d'intentions de vote, d'opinions personnelles, ni de données personnelles.
 ${(enabledFeatures ?? []).includes('widgets') ? `
 # Visualisation (renderWidget)
