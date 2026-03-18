@@ -309,9 +309,6 @@ export default function AiSdkChatView({
 
   return (
     <div className="flex h-full flex-col">
-      {/* Feature toggle ribbon */}
-      <AiSdkFeatureRibbon />
-
       {/* Candidate selection is handled by ChatContextSidebar */}
 
       {messages.length > 0 && (
@@ -457,6 +454,7 @@ export default function AiSdkChatView({
             </button>
           )}
         </form>
+        <AiSdkFeatureRibbon />
       </div>
     </div>
   );
