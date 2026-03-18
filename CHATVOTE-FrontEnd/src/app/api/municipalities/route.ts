@@ -87,19 +87,57 @@ async function loadMunicipalities(): Promise<Municipality[]> {
   return municipalities;
 }
 
-export async function GET() {
+const MAX_RESULTS = 20;
+
+function searchMunicipalities(
+  municipalities: Municipality[],
+  q: string,
+): Municipality[] {
+  const term = q.trim().toLowerCase();
+  if (term.length < 2) return [];
+
+  const isNumeric = /^\d+$/.test(term);
+
+  const results = municipalities.filter((m) => {
+    if (isNumeric) {
+      return (
+        m.code.includes(term) ||
+        (m.codesPostaux ?? []).some((cp) => cp.includes(term))
+      );
+    }
+    return m.nom.toLowerCase().includes(term);
+  });
+
+  return results.slice(0, MAX_RESULTS);
+}
+
+export async function GET(request: Request) {
   try {
+    const { searchParams } = new URL(request.url);
+    const q = searchParams.get("q") ?? "";
+    const code = searchParams.get("code") ?? "";
+
     const municipalities = await loadMunicipalities();
 
     const isDev = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
+    const cacheHeader = isDev
+      ? "no-store"
+      : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800";
 
-    return NextResponse.json(municipalities, {
-      headers: {
-        "Cache-Control": isDev
-          ? "no-store"
-          : "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
-      },
-    });
+    // Single lookup by INSEE code
+    if (code) {
+      const match = municipalities.find((m) => m.code === code) ?? null;
+      return NextResponse.json(match, { headers: { "Cache-Control": cacheHeader } });
+    }
+
+    // Search query — filter server-side
+    if (q) {
+      const results = searchMunicipalities(municipalities, q);
+      return NextResponse.json(results, { headers: { "Cache-Control": cacheHeader } });
+    }
+
+    // No params — return empty (avoid dumping all data to client)
+    return NextResponse.json([], { headers: { "Cache-Control": "no-store" } });
   } catch (error) {
     console.error("Error fetching municipalities:", error);
     return NextResponse.json(

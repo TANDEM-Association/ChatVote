@@ -68,6 +68,18 @@ function ChatHeader() {
             </div>
           </div>
         )}
+        <div className="border-border flex h-10 w-full flex-none items-center justify-center border-b px-4">
+          <a
+            href="https://zap.ai"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="text-muted-foreground hover:text-foreground flex items-center gap-1.5 text-xs transition-colors"
+          >
+            <span>Sponsorisé par</span>
+            <span className="font-semibold">Zaq.ai</span>
+            <span className="bg-primary/10 text-primary rounded px-1.5 py-0.5 text-[10px] font-medium">Sponsor</span>
+          </a>
+        </div>
         <div className="flex h-16 w-full flex-none items-center justify-between gap-1 px-4">
           {/* Left side - Logo, Home, Theme, Language, Sidebar Toggle */}
           <div className="flex items-center gap-1">

@@ -1,16 +1,15 @@
-import React, { Suspense } from "react";
+import { Suspense } from "react";
 
 import AiDisclaimer from "@components/legal/ai-disclaimer";
 import LoadingSpinner from "@components/loading-spinner";
 import { getAuth, getSystemStatus } from "@lib/firebase/firebase-server";
-import { cn } from "@lib/utils";
-
 import ChatSidebar from "./sidebar/chat-sidebar";
 import ChatSidebarDesktop from "./sidebar/chat-sidebar-desktop";
 import ChatContextSidebar from "./chat-context-sidebar";
 import ChatDynamicChatInput from "./chat-dynamic-chat-input";
 import ChatHeader from "./chat-header";
 import ChatMainContent from "./chat-main-content";
+import ChatInputGate from "./chat-input-gate";
 import ChatScrollDownIndicator from "./chat-scroll-down-indicator";
 import ChatViewSsr from "./chat-view-ssr";
 import ChatViewSwitcher from "./chat-view-switcher";
@@ -41,7 +40,7 @@ async function ChatView({
       <ChatSidebarDesktop auth={auth} />
       <ChatContextSidebar />
       <DevMetadataSidebarWrapper />
-      <div className="relative flex w-full flex-col overflow-hidden">
+      <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <ChatHeader />
         {/* Main content - adds padding when sidebar is expanded */}
         <ChatMainContent>
@@ -63,26 +62,20 @@ async function ChatView({
                 municipalityCode={municipalityCode}
               />
             </Suspense>
-            <div
-              className={cn(
-                "from-background/50 absolute right-0 bottom-0 left-0 z-20 w-full bg-linear-to-t to-transparent transition-all",
-                !sessionId && !municipalityCode && !partyIds?.length
-                  ? "h-1/3 backdrop-blur-xs dark:h-1/2"
-                  : "pointer-events-none h-0",
-              )}
-            />
-            <div className="bg-background relative mx-auto w-full max-w-192 shrink-0 p-3 md:p-4">
-              <ChatScrollDownIndicator />
-              <ChatDynamicChatInput
-                initialSystemStatus={systemStatus}
-                hasValidServerUser={
-                  auth.session !== null && !auth.session.isAnonymous
-                }
-                municipalityCode={municipalityCode}
-                sessionId={sessionId}
-              />
-              <AiDisclaimer />
-            </div>
+            <ChatInputGate municipalityCode={municipalityCode}>
+              <div className="bg-background relative mx-auto w-full max-w-192 shrink-0 p-3 md:p-4">
+                <ChatScrollDownIndicator />
+                <ChatDynamicChatInput
+                  initialSystemStatus={systemStatus}
+                  hasValidServerUser={
+                    auth.session !== null && !auth.session.isAnonymous
+                  }
+                  municipalityCode={municipalityCode}
+                  sessionId={sessionId}
+                />
+                <AiDisclaimer />
+              </div>
+            </ChatInputGate>
           </ChatViewSwitcher>
         </ChatMainContent>
       </div>

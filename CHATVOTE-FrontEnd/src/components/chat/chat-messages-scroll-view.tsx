@@ -5,12 +5,15 @@ import { chatViewScrollToBottom } from "@lib/scroll-utils";
 
 type Props = {
   children: React.ReactNode;
+  hasMessages?: boolean;
 };
 
-function ChatMessagesScrollView({ children }: Props) {
+function ChatMessagesScrollView({ children, hasMessages }: Props) {
   useEffect(() => {
-    chatViewScrollToBottom({ behavior: "instant" });
-  }, []);
+    if (hasMessages) {
+      chatViewScrollToBottom({ behavior: "instant" });
+    }
+  }, [hasMessages]);
 
   return (
     <div

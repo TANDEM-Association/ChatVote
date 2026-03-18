@@ -2,6 +2,8 @@
 
 import { useEffect, useMemo, useRef } from "react";
 
+import Image from "next/image";
+
 import { useAnonymousAuth } from "@components/anonymous-auth";
 import { useAppContext } from "@components/providers/app-provider";
 import { useChatStore } from "@components/providers/chat-store-provider";
@@ -15,6 +17,7 @@ import { type GroupedMessage } from "@lib/stores/chat-store.types";
 
 import ChatEmptyView from "./chat-empty-view";
 import ChatGroupedMessages from "./chat-grouped-messages";
+import SponsorPartners from "./sponsor-partners";
 import ChatMessagesScrollView from "./chat-messages-scroll-view";
 import ChatPartyHeader from "./chat-party-header";
 import ChatPostcodePrompt from "./chat-postcode-prompt";
@@ -121,59 +124,67 @@ function ChatMessagesView({
   }, [messages, storeMessages, initialQuestion]);
 
   return (
-    <ChatMessagesScrollView>
+    <ChatMessagesScrollView hasMessages={normalizedMessages.length > 0}>
       {/* Sticky party header when there are messages */}
       {normalizedMessages.length > 0 && <ChatPartyHeader parties={parties} />}
 
-      {/* Always show commune selector + mini dashboard at the top */}
-      <div className="flex flex-col items-center gap-6 px-3 pt-4 md:px-9">
-        <ChatPostcodePrompt />
-      </div>
-
-      <div className="flex flex-col gap-6 px-3 py-4 md:px-9">
-        {normalizedMessages.length === 0 && (
-          <div className="mt-12 flex h-full grow justify-center">
-            <ChatEmptyView
-              parties={parties}
-              proposedQuestions={proposedQuestions}
-              municipalityCode={municipalityCode}
-            />
-          </div>
-        )}
-
-        {normalizedMessages.map((m, index) => {
-          // Count user messages up to this point (inclusive)
-          const userMessageCount = normalizedMessages
-            .slice(0, index + 1)
-            .filter((msg) => msg.role === "user").length;
-
-          // Show demographic question after assistant response to specific user message counts
-          const demographicQuestion =
-            demographicsLoaded && m.role !== "user"
-              ? getNextDemographicQuestion(userMessageCount, userDemographics)
-              : null;
-
-          return (
-            <div key={m.id}>
-              <ChatGroupedMessages
-                message={m}
-                isLastMessage={index === normalizedMessages.length - 1}
-                parties={allParties?.filter((p) =>
-                  m.messages.some((msg) => msg.party_id === p.party_id),
-                )}
-              />
-              {demographicQuestion && (
-                <DemographicBubble
-                  question={demographicQuestion}
-                  messageNumber={userMessageCount}
-                />
-              )}
+      {normalizedMessages.length === 0 ? (
+        /* Empty state: logo → city input → sponsors → suggestions, all in one container */
+        <div className="flex flex-col items-center gap-5 px-3 py-8 md:px-9">
+          <Image src="/images/logos/chatvote.svg" alt="ChatVote" width={260} height={87} priority />
+          <ChatPostcodePrompt />
+          <SponsorPartners />
+          <ChatEmptyView
+            parties={parties}
+            proposedQuestions={proposedQuestions}
+            municipalityCode={municipalityCode}
+          />
+        </div>
+      ) : (
+        <>
+          {/* City input above messages */}
+          <div className="flex justify-center px-3 pt-4 md:px-9">
+            <div className="w-full max-w-2xl">
+              <ChatPostcodePrompt />
             </div>
-          );
-        })}
+          </div>
 
-        {hasCurrentStreamingMessages && <CurrentStreamingMessages />}
-      </div>
+          <div className="flex flex-col gap-6 px-3 py-4 md:px-9">
+            {normalizedMessages.map((m, index) => {
+              // Count user messages up to this point (inclusive)
+              const userMessageCount = normalizedMessages
+                .slice(0, index + 1)
+                .filter((msg) => msg.role === "user").length;
+
+              // Show demographic question after assistant response to specific user message counts
+              const demographicQuestion =
+                demographicsLoaded && m.role !== "user"
+                  ? getNextDemographicQuestion(userMessageCount, userDemographics)
+                  : null;
+
+              return (
+                <div key={m.id}>
+                  <ChatGroupedMessages
+                    message={m}
+                    isLastMessage={index === normalizedMessages.length - 1}
+                    parties={allParties?.filter((p) =>
+                      m.messages.some((msg) => msg.party_id === p.party_id),
+                    )}
+                  />
+                  {demographicQuestion && (
+                    <DemographicBubble
+                      question={demographicQuestion}
+                      messageNumber={userMessageCount}
+                    />
+                  )}
+                </div>
+              );
+            })}
+
+            {hasCurrentStreamingMessages && <CurrentStreamingMessages />}
+          </div>
+        </>
+      )}
     </ChatMessagesScrollView>
   );
 }

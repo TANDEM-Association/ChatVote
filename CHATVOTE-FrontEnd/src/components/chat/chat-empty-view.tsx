@@ -75,6 +75,7 @@ const ChatEmptyView = ({
           ))}
         </div>
       )}
+
     </div>
   );
 };
