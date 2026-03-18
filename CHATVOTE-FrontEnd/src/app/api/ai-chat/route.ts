@@ -536,7 +536,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
 
     // ── Always-on tools ──────────────────────────────────────────────────────
     suggestFollowUps: tool({
-      description: "Génère 3 suggestions de questions de suivi pertinentes et concrètes. Les suggestions doivent approfondir le sujet discuté, explorer un angle connexe, ou comparer avec d'autres candidats/thèmes. Appelle cet outil à la FIN de chaque réponse.",
+      description: "Génère 3 suggestions de questions de suivi pertinentes et concrètes. Les suggestions doivent approfondir le sujet discuté, explorer un angle connexe, ou comparer avec d'autres candidats/thèmes. Appelle cet outil à la FIN de chaque réponse. N'écris JAMAIS les suggestions en texte — utilise TOUJOURS cet outil.",
       inputSchema: z.object({
         suggestions: z
           .array(z.string())
@@ -545,6 +545,56 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
       }),
       execute: async (input) => {
         return { suggestions: input.suggestions };
+      },
+    }),
+
+    presentOptions: tool({
+      description: "Affiche des options cliquables pour l'utilisateur. Utilise quand tu veux proposer des choix (ex : thèmes, catégories, sujets) au lieu d'écrire une liste numérotée dans le texte. L'utilisateur peut cliquer sur une option pour l'envoyer comme message.",
+      inputSchema: z.object({
+        label: z.string().optional().describe('Titre optionnel au-dessus des options (ex : "Quel sujet t\'intéresse ?")'),
+        options: z
+          .array(z.string())
+          .min(2)
+          .max(8)
+          .describe('Les options à présenter comme boutons cliquables'),
+      }),
+      execute: async (input) => {
+        return { label: input.label, options: input.options };
+      },
+    }),
+
+    runDeepResearch: tool({
+      description: "Lance une recherche approfondie multi-requêtes sur un sujet. Utilise quand les premières recherches ne donnent pas assez de résultats, ou quand l'utilisateur demande explicitement une analyse approfondie. Le sous-agent reformule automatiquement la requête avec synonymes et termes officiels pour maximiser le rappel.",
+      inputSchema: z.object({
+        query: z.string().describe('Le sujet à approfondir — la requête originale de l\'utilisateur'),
+        collections: z.array(z.string()).optional().describe('Collections cibles (optionnel — par défaut toutes)'),
+      }),
+      execute: async (input) => {
+        const start = Date.now();
+        const collections = input.collections?.length
+          ? input.collections
+          : [COLLECTIONS.candidatesWebsites, COLLECTIONS.allParties];
+        const result = await deepResearch({
+          originalQuery: input.query,
+          collections,
+          candidateIds: candidateIds.length > 0 ? candidateIds : undefined,
+        });
+        const elapsed = Date.now() - start;
+        return {
+          findings: result.findings.slice(0, 12).map((r) => ({
+            content: r.content.slice(0, 300),
+            source: r.source,
+            url: r.url,
+            score: r.score,
+            party_id: r.party_id,
+            candidate_name: r.candidate_name,
+          })),
+          totalFindings: result.findings.length,
+          queriesTried: result.queriesTried,
+          collectionsSearched: result.collectionsSearched,
+          summary: result.summary,
+          elapsedMs: elapsed,
+        };
       },
     }),
 
@@ -875,8 +925,9 @@ ${contextLine}
 
 # Règles techniques
 - **Requêtes de recherche** : Tes paramètres "query" doivent être AUTONOMES et COMPLETS. Jamais de pronoms ("ça", "ce sujet"), jamais de références implicites au contexte. Exemple : au lieu de "et sur ça ?", écris "propositions transports en commun et mobilité douce [nom commune]".
-- **Recherche approfondie automatique** : Si tes premières recherches retournent peu de résultats, le système relance automatiquement des recherches plus larges. Fais confiance aux résultats.
-- **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle suggestFollowUps avec 3 questions pertinentes (une qui approfondit, une qui compare, une sur un thème connexe).
+- **Recherche approfondie** : Si tes premières recherches retournent peu de résultats (< 3), appelle runDeepResearch pour lancer une exploration multi-requêtes avec reformulations automatiques. Utilise aussi cet outil quand l'utilisateur demande explicitement une analyse approfondie ou complète.
+- **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
+- **Choix interactifs** : Quand tu veux proposer des options à l'utilisateur (ex : "Quel sujet t'intéresse ?"), appelle l'outil presentOptions au lieu d'écrire une liste numérotée. Les options s'affichent comme des boutons cliquables.
 - **Protection des données** : Ne demande jamais d'intentions de vote, d'opinions personnelles, ni de données personnelles.
 ${(enabledFeatures ?? []).includes('widgets') ? `
 # Visualisation (renderWidget)

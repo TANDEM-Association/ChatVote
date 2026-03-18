@@ -1,4 +1,8 @@
-'use client';
+"use client";
+
+import { useState } from "react";
+
+import dynamic from "next/dynamic";
 
 import {
   ChevronDown,
@@ -6,7 +10,6 @@ import {
   Database,
   ExternalLink,
   Globe,
-  Loader2,
   MapPin,
   MessageSquare,
   Search,
@@ -14,15 +17,17 @@ import {
   Unlock,
   Users,
   Vote,
-} from 'lucide-react';
-import { useState } from 'react';
-import dynamic from 'next/dynamic';
+} from "lucide-react";
 
-const AiSdkChartWidget = dynamic(() => import('./ai-sdk-chart-widget'), {
+const AiSdkChartWidget = dynamic(() => import("./ai-sdk-chart-widget"), {
   ssr: false,
   loading: () => (
-    <div className="bg-muted/50 my-2 flex items-center gap-2 rounded-lg border p-3 text-sm">
-      <Loader2 className="text-primary size-4 animate-spin" />
+    <div className="my-2 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 p-3 text-sm">
+      <span className="flex gap-1">
+        <span className="bg-primary/60 size-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+        <span className="bg-primary/60 size-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+        <span className="bg-primary/60 size-1.5 animate-bounce rounded-full" />
+      </span>
       <span className="text-muted-foreground">Chargement du graphique...</span>
     </div>
   ),
@@ -53,50 +58,61 @@ type Props = {
 };
 
 const TOOL_LOADING_LABELS: Record<string, string> = {
-  searchPartyManifesto: 'Recherche dans le programme',
-  searchCandidateWebsite: 'Recherche sur le site du candidat',
-  searchAllCandidates: 'Recherche dans tous les candidats',
-  suggestFollowUps: 'Génération de suggestions',
-  changeCity: 'Changement de ville',
-  changeCandidates: 'Mise à jour des partis',
-  removeRestrictions: 'Suppression des restrictions',
-  searchDataGouv: 'Recherche sur data.gouv.fr',
-  webSearch: 'Recherche sur le web',
-  renderWidget: 'Génération du graphique',
-  searchVotingRecords: 'Recherche des votes parlementaires',
-  searchParliamentaryQuestions: 'Recherche des questions parlementaires',
+  searchPartyManifesto: "Programme de",
+  searchCandidateWebsite: "Recherche candidat",
+  searchAllCandidates: "Recherche tous candidats",
+  suggestFollowUps: "Génération de suggestions",
+  presentOptions: "Préparation des options",
+  runDeepResearch: "Recherche approfondie en cours",
+  changeCity: "Changement de ville",
+  changeCandidates: "Mise à jour des partis",
+  removeRestrictions: "Suppression des restrictions",
+  searchDataGouv: "Recherche sur data.gouv.fr",
+  webSearch: "Recherche sur le web",
+  renderWidget: "Génération du graphique",
+  searchVotingRecords: "Votes parlementaires",
+  searchParliamentaryQuestions: "Questions parlementaires",
 };
 
 export default function AiSdkToolResult({ part, onSendMessage }: Props) {
-  const toolName = part.toolName ?? part.type.replace('tool-', '');
+  const toolName = part.toolName ?? part.type.replace("tool-", "");
   const [expanded, setExpanded] = useState(false);
 
   // ── Searching / loading state ──────────────────────────────────────────────
   if (
-    part.state === 'partial-call' ||
-    part.state === 'call' ||
-    part.state === 'input-available' ||
-    part.state === 'input-streaming'
+    part.state === "partial-call" ||
+    part.state === "call" ||
+    part.state === "input-available" ||
+    part.state === "input-streaming"
   ) {
     const input = (part.input ?? part.args ?? {}) as Record<string, string>;
     const partyId = input.partyId;
+    const candidateId = input.candidateId;
     const query = input.query;
 
-    const label = TOOL_LOADING_LABELS[toolName] ?? 'Traitement en cours';
-    const suffix =
-      toolName === 'searchPartyManifesto' && partyId
-        ? ` de ${partyId.toUpperCase()}`
-        : '';
+    const baseLabel = TOOL_LOADING_LABELS[toolName] ?? "Traitement en cours";
+
+    // Show partyId (readable) or candidateId for now (name will appear in result)
+    let displayLabel = baseLabel;
+    if (toolName === "searchPartyManifesto" && partyId) {
+      displayLabel = `${baseLabel} ${partyId.toUpperCase()}`;
+    } else if (toolName === "searchCandidateWebsite" && candidateId) {
+      // candidateId is ugly — just show generic label, the result card will show the name
+      displayLabel = baseLabel;
+    }
 
     return (
-      <div className="bg-muted/50 my-2 flex items-center gap-2 rounded-lg border p-3 text-sm">
-        <Loader2 className="text-primary size-4 animate-spin" />
+      <div className="my-2 flex items-center gap-2.5 rounded-xl border border-white/10 bg-white/5 p-3 text-xs">
+        <span className="flex gap-1">
+          <span className="bg-primary/70 size-1.5 animate-bounce rounded-full [animation-delay:-0.3s]" />
+          <span className="bg-primary/70 size-1.5 animate-bounce rounded-full [animation-delay:-0.15s]" />
+          <span className="bg-primary/70 size-1.5 animate-bounce rounded-full" />
+        </span>
         <span className="text-muted-foreground">
-          {label}
-          {suffix}...
+          {displayLabel}...
         </span>
         {query && (
-          <span className="text-muted-foreground/60 truncate text-xs italic">
+          <span className="text-muted-foreground/50 truncate italic">
             &quot;{query}&quot;
           </span>
         )}
@@ -105,7 +121,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   }
 
   // ── suggestFollowUps ───────────────────────────────────────────────────────
-  if (toolName === 'suggestFollowUps' && part.state === 'output-available') {
+  if (toolName === "suggestFollowUps" && part.state === "output-available") {
     const result = part.output as { suggestions?: string[] };
     if (!result?.suggestions?.length) return null;
 
@@ -115,9 +131,9 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
           <button
             key={i}
             onClick={() => onSendMessage?.(suggestion)}
-            className="bg-background hover:bg-accent rounded-full border px-3 py-1.5 text-xs transition-colors"
+            className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs text-purple-200 transition-colors hover:border-white/20 hover:bg-white/10"
           >
-            <Sparkles className="mr-1 inline size-3" />
+            <Sparkles className="text-primary/80 size-3 shrink-0" />
             {suggestion}
           </button>
         ))}
@@ -125,31 +141,151 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
     );
   }
 
+  // ── runDeepResearch ────────────────────────────────────────────────────────
+  if (toolName === "runDeepResearch") {
+    if (part.state !== "output-available") {
+      return (
+        <div className="my-2 flex items-center gap-3 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3">
+          <div className="relative flex size-8 items-center justify-center">
+            <div className="absolute inset-0 animate-ping rounded-full bg-purple-500/20" />
+            <Search className="relative size-4 text-purple-300" />
+          </div>
+          <div className="flex flex-col gap-0.5">
+            <span className="text-sm font-medium text-purple-200">
+              Recherche approfondie en cours
+            </span>
+            <span className="text-muted-foreground text-xs">
+              Reformulation et exploration multi-requêtes...
+            </span>
+          </div>
+        </div>
+      );
+    }
+
+    const result = part.output as {
+      findings?: Array<{ content: string; source?: string; url?: string; score?: number; candidate_name?: string }>;
+      totalFindings?: number;
+      queriesTried?: string[];
+      collectionsSearched?: string[];
+      summary?: string;
+      elapsedMs?: number;
+    };
+
+    return (
+      <div className="my-2 rounded-xl border border-purple-500/20 bg-purple-500/5 p-3">
+        <button
+          onClick={() => setExpanded(!expanded)}
+          className="flex w-full items-center gap-2 text-left"
+        >
+          <Search className="size-4 shrink-0 text-purple-300" />
+          <span className="text-sm font-medium text-purple-200">
+            Recherche approfondie
+          </span>
+          <span className="text-muted-foreground ml-1 text-xs">
+            {result.totalFindings ?? 0} résultats · {result.queriesTried?.length ?? 0} requêtes · {result.elapsedMs ? `${(result.elapsedMs / 1000).toFixed(1)}s` : ''}
+          </span>
+          <span className="ml-auto">
+            {expanded ? (
+              <ChevronUp className="text-muted-foreground size-3.5" />
+            ) : (
+              <ChevronDown className="text-muted-foreground size-3.5" />
+            )}
+          </span>
+        </button>
+        {expanded && (
+          <div className="mt-2 space-y-2 border-t border-purple-500/10 pt-2">
+            {result.queriesTried && result.queriesTried.length > 0 && (
+              <div className="flex flex-wrap gap-1">
+                {result.queriesTried.map((q, i) => (
+                  <span
+                    key={i}
+                    className="rounded-full bg-purple-500/10 px-2 py-0.5 text-[10px] text-purple-300"
+                  >
+                    {q}
+                  </span>
+                ))}
+              </div>
+            )}
+            {result.findings?.slice(0, 6).map((f, i) => (
+              <div
+                key={i}
+                className="rounded-lg border border-white/5 bg-white/5 p-2 text-xs"
+              >
+                {f.candidate_name && (
+                  <span className="mb-1 inline-block rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-medium text-purple-200">
+                    {f.candidate_name}
+                  </span>
+                )}
+                <p className="text-muted-foreground line-clamp-3 leading-relaxed">
+                  {f.content}
+                </p>
+                {f.source && (
+                  <span className="text-muted-foreground mt-1 block text-[10px]">
+                    {f.source}
+                  </span>
+                )}
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+    );
+  }
+
+  // ── presentOptions ─────────────────────────────────────────────────────────
+  if (toolName === "presentOptions" && part.state === "output-available") {
+    const result = part.output as { label?: string; options?: string[] };
+    if (!result?.options?.length) return null;
+
+    return (
+      <div className="mt-3 flex flex-col gap-2">
+        {result.label && (
+          <span className="text-muted-foreground text-xs font-medium">
+            {result.label}
+          </span>
+        )}
+        <div className="flex flex-wrap gap-2">
+          {result.options.map((option, i) => (
+            <button
+              key={i}
+              onClick={() => onSendMessage?.(option)}
+              className="inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 text-xs transition-colors hover:border-white/20 hover:bg-white/10"
+            >
+              {option}
+            </button>
+          ))}
+        </div>
+      </div>
+    );
+  }
+
   // ── RAG search results (manifestos + candidate websites) ───────────────────
   if (
-    part.state === 'output-available' &&
-    (toolName === 'searchPartyManifesto' || toolName === 'searchCandidateWebsite' || toolName === 'searchAllCandidates')
+    part.state === "output-available" &&
+    (toolName === "searchPartyManifesto" ||
+      toolName === "searchCandidateWebsite" ||
+      toolName === "searchAllCandidates")
   ) {
     return (
       <SourceResultCard
         output={part.output}
         expanded={expanded}
         setExpanded={setExpanded}
-        icon={<Search className="size-3.5 shrink-0 text-green-600 dark:text-green-400" />}
-        colorScheme="green"
+        icon={<Search className="size-3.5 shrink-0 text-purple-300" />}
+        accentColor="border-l-purple-400/60"
       />
     );
   }
 
   // ── Voting records results ─────────────────────────────────────────────────
-  if (toolName === 'searchVotingRecords' && part.state === 'output-available') {
+  if (toolName === "searchVotingRecords" && part.state === "output-available") {
     return (
       <SourceResultCard
         output={part.output}
         expanded={expanded}
         setExpanded={setExpanded}
-        icon={<Vote className="size-3.5 shrink-0 text-purple-600 dark:text-purple-400" />}
-        colorScheme="purple"
+        icon={<Vote className="size-3.5 shrink-0 text-violet-300" />}
+        accentColor="border-l-violet-400/60"
         label="vote parlementaire"
         labelPlural="votes parlementaires"
       />
@@ -157,16 +293,17 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   }
 
   // ── Parliamentary questions results ────────────────────────────────────────
-  if (toolName === 'searchParliamentaryQuestions' && part.state === 'output-available') {
+  if (
+    toolName === "searchParliamentaryQuestions" &&
+    part.state === "output-available"
+  ) {
     return (
       <SourceResultCard
         output={part.output}
         expanded={expanded}
         setExpanded={setExpanded}
-        icon={
-          <MessageSquare className="size-3.5 shrink-0 text-indigo-600 dark:text-indigo-400" />
-        }
-        colorScheme="indigo"
+        icon={<MessageSquare className="size-3.5 shrink-0 text-indigo-300" />}
+        accentColor="border-l-indigo-400/60"
         label="question parlementaire"
         labelPlural="questions parlementaires"
       />
@@ -174,7 +311,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   }
 
   // ── data.gouv.fr results ───────────────────────────────────────────────────
-  if (toolName === 'searchDataGouv' && part.state === 'output-available') {
+  if (toolName === "searchDataGouv" && part.state === "output-available") {
     const result = part.output as {
       datasets?: Array<{
         id: string;
@@ -190,34 +327,35 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
     const count = result?.count ?? datasets.length;
 
     return (
-      <div className="my-2 overflow-hidden rounded-lg border border-sky-200 bg-sky-50 text-xs dark:border-sky-900 dark:bg-sky-950">
+      <div className="my-2 overflow-hidden rounded-xl border border-l-2 border-white/10 border-l-blue-400/60 bg-white/5 text-xs backdrop-blur-sm">
         <button
           onClick={() => setExpanded((prev) => !prev)}
-          className="flex w-full items-center gap-2 p-2 text-left transition-colors hover:bg-sky-100 dark:hover:bg-sky-900/50"
+          className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-white/5"
         >
-          <Database className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
-          <span className="flex-1 text-sky-800 dark:text-sky-200">
-            {count} jeu{count !== 1 ? 'x' : ''} de données trouvé{count !== 1 ? 's' : ''} sur
-            data.gouv.fr
+          <Database className="size-3.5 shrink-0 text-blue-300" />
+          <span className="text-foreground/80 flex-1">
+            {count} jeu{count !== 1 ? "x" : ""} de données trouvé
+            {count !== 1 ? "s" : ""} sur{" "}
+            <span className="text-foreground font-medium">data.gouv.fr</span>
           </span>
           {datasets.length > 0 &&
             (expanded ? (
-              <ChevronUp className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
+              <ChevronUp className="text-muted-foreground size-3.5 shrink-0" />
             ) : (
-              <ChevronDown className="size-3.5 shrink-0 text-sky-600 dark:text-sky-400" />
+              <ChevronDown className="text-muted-foreground size-3.5 shrink-0" />
             ))}
         </button>
 
         {expanded && datasets.length > 0 && (
-          <ul className="divide-y divide-sky-200 border-t border-sky-200 dark:divide-sky-900 dark:border-sky-900">
+          <ul className="divide-y divide-white/5 border-t border-white/10">
             {datasets.map((ds, i) => (
-              <li key={ds.id ?? i} className="p-2">
+              <li key={ds.id ?? i} className="p-3">
                 <div className="flex items-start gap-2">
-                  <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-sky-200 text-[10px] font-semibold text-sky-800 dark:bg-sky-800 dark:text-sky-200">
+                  <span className="bg-primary/15 text-primary flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold">
                     {i + 1}
                   </span>
                   <div className="min-w-0 flex-1">
-                    <p className="font-medium text-sky-900 dark:text-sky-100">
+                    <p className="text-foreground font-medium">
                       {ds.title}
                       {ds.url && (
                         <a
@@ -225,22 +363,24 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
                           target="_blank"
                           rel="noopener noreferrer"
                           onClick={(e) => e.stopPropagation()}
-                          className="ml-1 inline-block hover:text-sky-600 dark:hover:text-sky-300"
+                          className="text-muted-foreground hover:text-foreground ml-1 inline-block transition-colors"
                         >
                           <ExternalLink className="inline size-3" />
                         </a>
                       )}
                     </p>
                     {ds.organization?.name && (
-                      <p className="text-sky-700 dark:text-sky-400">{ds.organization.name}</p>
+                      <p className="text-muted-foreground mt-0.5">
+                        {ds.organization.name}
+                      </p>
                     )}
                     {ds.description && (
-                      <p className="mt-0.5 line-clamp-2 leading-snug text-sky-900/70 dark:text-sky-100/70">
+                      <p className="text-foreground/60 mt-0.5 line-clamp-2 leading-snug">
                         {ds.description}
                       </p>
                     )}
                     {ds.resources && ds.resources.length > 0 && (
-                      <div className="mt-1 flex flex-wrap gap-1">
+                      <div className="mt-1.5 flex flex-wrap gap-1">
                         {ds.resources.map((r, ri) => (
                           <a
                             key={ri}
@@ -248,9 +388,9 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
                             target="_blank"
                             rel="noopener noreferrer"
                             onClick={(e) => e.stopPropagation()}
-                            className="inline-flex items-center gap-0.5 rounded bg-sky-200/60 px-1.5 py-0.5 text-[10px] font-medium text-sky-800 hover:bg-sky-300/60 dark:bg-sky-800/60 dark:text-sky-200 dark:hover:bg-sky-700/60"
+                            className="bg-primary/10 text-primary hover:bg-primary/20 inline-flex items-center rounded px-1.5 py-0.5 text-[10px] font-medium transition-colors"
                           >
-                            {r.format?.toUpperCase() || 'FILE'}
+                            {r.format?.toUpperCase() || "FILE"}
                           </a>
                         ))}
                       </div>
@@ -266,41 +406,46 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   }
 
   // ── Web search results ─────────────────────────────────────────────────────
-  if (toolName === 'webSearch' && part.state === 'output-available') {
+  if (toolName === "webSearch" && part.state === "output-available") {
     const result = part.output as {
-      results?: Array<{ id: number; title: string; snippet: string; url: string }>;
+      results?: Array<{
+        id: number;
+        title: string;
+        snippet: string;
+        url: string;
+      }>;
       count?: number;
     };
     const webResults = result?.results ?? [];
     const count = result?.count ?? webResults.length;
 
     return (
-      <div className="my-2 overflow-hidden rounded-lg border border-teal-200 bg-teal-50 text-xs dark:border-teal-900 dark:bg-teal-950">
+      <div className="my-2 overflow-hidden rounded-xl border border-l-2 border-white/10 border-l-sky-400/60 bg-white/5 text-xs backdrop-blur-sm">
         <button
           onClick={() => setExpanded((prev) => !prev)}
-          className="flex w-full items-center gap-2 p-2 text-left transition-colors hover:bg-teal-100 dark:hover:bg-teal-900/50"
+          className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-white/5"
         >
-          <Globe className="size-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
-          <span className="flex-1 text-teal-800 dark:text-teal-200">
-            {count} résultat{count !== 1 ? 's' : ''} web
+          <Globe className="size-3.5 shrink-0 text-sky-300" />
+          <span className="text-foreground/80 flex-1">
+            {count} résultat{count !== 1 ? "s" : ""} web
           </span>
           {webResults.length > 0 &&
             (expanded ? (
-              <ChevronUp className="size-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+              <ChevronUp className="text-muted-foreground size-3.5 shrink-0" />
             ) : (
-              <ChevronDown className="size-3.5 shrink-0 text-teal-600 dark:text-teal-400" />
+              <ChevronDown className="text-muted-foreground size-3.5 shrink-0" />
             ))}
         </button>
 
         {expanded && webResults.length > 0 && (
-          <ul className="divide-y divide-teal-200 border-t border-teal-200 dark:divide-teal-900 dark:border-teal-900">
+          <ul className="divide-y divide-white/5 border-t border-white/10">
             {webResults.map((wr, i) => (
-              <li key={wr.id ?? i} className="flex gap-2 p-2">
-                <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-teal-200 text-[10px] font-semibold text-teal-800 dark:bg-teal-800 dark:text-teal-200">
+              <li key={wr.id ?? i} className="flex gap-2 p-3">
+                <span className="bg-primary/15 text-primary flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold">
                   {i + 1}
                 </span>
                 <div className="min-w-0 flex-1">
-                  <p className="font-medium text-teal-900 dark:text-teal-100">
+                  <p className="text-foreground font-medium">
                     {wr.title}
                     {wr.url && (
                       <a
@@ -308,13 +453,13 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
                         target="_blank"
                         rel="noopener noreferrer"
                         onClick={(e) => e.stopPropagation()}
-                        className="ml-1 inline-block hover:text-teal-600 dark:hover:text-teal-300"
+                        className="text-muted-foreground hover:text-foreground ml-1 inline-block transition-colors"
                       >
                         <ExternalLink className="inline size-3" />
                       </a>
                     )}
                   </p>
-                  <p className="mt-0.5 line-clamp-2 leading-snug text-teal-900/70 dark:text-teal-100/70">
+                  <p className="text-foreground/60 mt-0.5 line-clamp-2 leading-snug">
                     {wr.snippet}
                   </p>
                 </div>
@@ -327,11 +472,11 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   }
 
   // ── Chart widget ───────────────────────────────────────────────────────────
-  if (toolName === 'renderWidget' && part.state === 'output-available') {
+  if (toolName === "renderWidget" && part.state === "output-available") {
     const result = part.output as {
       widget?: {
-        type: 'chart';
-        chartType: 'bar' | 'pie' | 'radar' | 'line';
+        type: "chart";
+        chartType: "bar" | "pie" | "radar" | "line";
         title: string;
         data: Array<{ label: string; value: number; color?: string }>;
         xAxisLabel?: string;
@@ -353,37 +498,49 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   }
 
   // ── changeCity ─────────────────────────────────────────────────────────────
-  if (toolName === 'changeCity' && part.state === 'output-available') {
-    const result = part.output as { action: string; cityName: string; municipalityCode?: string };
+  if (toolName === "changeCity" && part.state === "output-available") {
+    const result = part.output as {
+      action: string;
+      cityName: string;
+      municipalityCode?: string;
+    };
     return (
-      <div className="my-2 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs dark:border-blue-900 dark:bg-blue-950">
-        <MapPin className="size-3.5 text-blue-600 dark:text-blue-400" />
-        <span className="text-blue-800 dark:text-blue-200">
-          Contexte changé : <strong>{result.cityName}</strong>
+      <div className="my-2 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">
+        <MapPin className="size-3.5 shrink-0 text-purple-300" />
+        <span className="text-foreground/70">
+          Contexte changé :{" "}
+          <span className="text-foreground font-medium">{result.cityName}</span>
         </span>
       </div>
     );
   }
 
   // ── changeCandidates ───────────────────────────────────────────────────────
-  if (toolName === 'changeCandidates' && part.state === 'output-available') {
-    const result = part.output as { action: string; partyIds: string[]; operation: string };
+  if (toolName === "changeCandidates" && part.state === "output-available") {
+    const result = part.output as {
+      action: string;
+      partyIds: string[];
+      operation: string;
+    };
     return (
-      <div className="my-2 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs dark:border-blue-900 dark:bg-blue-950">
-        <Users className="size-3.5 text-blue-600 dark:text-blue-400" />
-        <span className="text-blue-800 dark:text-blue-200">
-          Partis mis à jour : <strong>{result.partyIds.join(', ')}</strong>
+      <div className="my-2 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">
+        <Users className="size-3.5 shrink-0 text-purple-300" />
+        <span className="text-foreground/70">
+          Partis mis à jour :{" "}
+          <span className="text-foreground font-medium">
+            {result.partyIds.join(", ")}
+          </span>
         </span>
       </div>
     );
   }
 
   // ── removeRestrictions ─────────────────────────────────────────────────────
-  if (toolName === 'removeRestrictions' && part.state === 'output-available') {
+  if (toolName === "removeRestrictions" && part.state === "output-available") {
     return (
-      <div className="my-2 flex items-center gap-2 rounded-lg border border-blue-200 bg-blue-50 p-2 text-xs dark:border-blue-900 dark:bg-blue-950">
-        <Unlock className="size-3.5 text-blue-600 dark:text-blue-400" />
-        <span className="text-blue-800 dark:text-blue-200">
+      <div className="my-2 flex items-center gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-xs">
+        <Unlock className="size-3.5 shrink-0 text-purple-300" />
+        <span className="text-foreground/70">
           Restrictions supprimées — recherche nationale activée
         </span>
       </div>
@@ -394,79 +551,28 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
 }
 
 // ── Reusable source result card ──────────────────────────────────────────────
-type ColorScheme = 'green' | 'purple' | 'indigo';
-
-const COLOR_CLASSES: Record<
-  ColorScheme,
-  {
-    border: string;
-    bg: string;
-    hoverBg: string;
-    text: string;
-    textStrong: string;
-    badge: string;
-    badgeText: string;
-    divider: string;
-    icon: string;
-  }
-> = {
-  green: {
-    border: 'border-green-200 dark:border-green-900',
-    bg: 'bg-green-50 dark:bg-green-950',
-    hoverBg: 'hover:bg-green-100 dark:hover:bg-green-900/50',
-    text: 'text-green-800 dark:text-green-200',
-    textStrong: 'text-green-900 dark:text-green-100',
-    badge: 'bg-green-200 dark:bg-green-800',
-    badgeText: 'text-green-800 dark:text-green-200',
-    divider: 'divide-green-200 dark:divide-green-900 border-green-200 dark:border-green-900',
-    icon: 'text-green-600 dark:text-green-400',
-  },
-  purple: {
-    border: 'border-purple-200 dark:border-purple-900',
-    bg: 'bg-purple-50 dark:bg-purple-950',
-    hoverBg: 'hover:bg-purple-100 dark:hover:bg-purple-900/50',
-    text: 'text-purple-800 dark:text-purple-200',
-    textStrong: 'text-purple-900 dark:text-purple-100',
-    badge: 'bg-purple-200 dark:bg-purple-800',
-    badgeText: 'text-purple-800 dark:text-purple-200',
-    divider:
-      'divide-purple-200 dark:divide-purple-900 border-purple-200 dark:border-purple-900',
-    icon: 'text-purple-600 dark:text-purple-400',
-  },
-  indigo: {
-    border: 'border-indigo-200 dark:border-indigo-900',
-    bg: 'bg-indigo-50 dark:bg-indigo-950',
-    hoverBg: 'hover:bg-indigo-100 dark:hover:bg-indigo-900/50',
-    text: 'text-indigo-800 dark:text-indigo-200',
-    textStrong: 'text-indigo-900 dark:text-indigo-100',
-    badge: 'bg-indigo-200 dark:bg-indigo-800',
-    badgeText: 'text-indigo-800 dark:text-indigo-200',
-    divider:
-      'divide-indigo-200 dark:divide-indigo-900 border-indigo-200 dark:border-indigo-900',
-    icon: 'text-indigo-600 dark:text-indigo-400',
-  },
-};
 
 function SourceResultCard({
   output,
   expanded,
   setExpanded,
   icon,
-  colorScheme,
-  label = 'source',
-  labelPlural = 'sources',
+  accentColor,
+  label = "source",
+  labelPlural = "sources",
 }: {
   output: unknown;
   expanded: boolean;
   setExpanded: (fn: (prev: boolean) => boolean) => void;
   icon: React.ReactNode;
-  colorScheme: ColorScheme;
+  accentColor: string;
   label?: string;
   labelPlural?: string;
 }) {
   const result = output as {
     partyId?: string;
     candidateId?: string;
+    candidateName?: string;
     results?: SearchResult[];
     documents?: Array<{ content: string }>;
     count?: number;
@@ -474,49 +580,60 @@ function SourceResultCard({
 
   const sources = result?.results ?? [];
   const count = result?.count ?? result?.documents?.length ?? sources.length;
-  const entityLabel = result?.partyId ?? result?.candidateId;
-  const c = COLOR_CLASSES[colorScheme];
+  // Show candidateName (human-readable) or partyId — never raw candidateId
+  const entityLabel = result?.candidateName ?? result?.partyId;
 
   return (
-    <div className={`my-2 overflow-hidden rounded-lg border ${c.border} ${c.bg} text-xs`}>
+    <div
+      className={`my-2 overflow-hidden rounded-xl border border-l-2 border-white/10 ${accentColor} bg-white/5 text-xs backdrop-blur-sm`}
+    >
       <button
         onClick={() => setExpanded((prev) => !prev)}
-        className={`flex w-full items-center gap-2 p-2 text-left transition-colors ${c.hoverBg}`}
+        className="flex w-full items-center gap-2 px-3 py-2 text-left transition-colors hover:bg-white/5"
       >
         {icon}
-        <span className={`flex-1 ${c.text}`}>
-          {count} {count !== 1 ? labelPlural : label} trouvée{count !== 1 ? 's' : ''}
-          {entityLabel && (
+        <span className="text-foreground/80 flex-1">
+          {entityLabel ? (
             <>
-              {' '}
-              pour <strong>{entityLabel.toUpperCase()}</strong>
+              <span className="text-foreground font-medium">
+                {result?.candidateName ? entityLabel : entityLabel.toUpperCase()}
+              </span>
+              {" — "}
+              {count} {count !== 1 ? labelPlural : label}
+            </>
+          ) : (
+            <>
+              {count} {count !== 1 ? labelPlural : label} trouvée
+              {count !== 1 ? "s" : ""}
             </>
           )}
         </span>
         {sources.length > 0 &&
           (expanded ? (
-            <ChevronUp className={`size-3.5 shrink-0 ${c.icon}`} />
+            <ChevronUp className="text-muted-foreground size-3.5 shrink-0" />
           ) : (
-            <ChevronDown className={`size-3.5 shrink-0 ${c.icon}`} />
+            <ChevronDown className="text-muted-foreground size-3.5 shrink-0" />
           ))}
       </button>
 
       {expanded && sources.length > 0 && (
-        <ul className={`divide-y border-t ${c.divider}`}>
+        <ul className="divide-y divide-white/5 border-t border-white/10">
           {sources.map((src, i) => (
-            <li key={src.id ?? i} className="flex gap-2 p-2">
-              <span
-                className={`flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold ${c.badge} ${c.badgeText}`}
-              >
+            <li key={src.id ?? i} className="flex gap-2 p-3">
+              <span className="bg-primary/15 text-primary flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold">
                 {i + 1}
               </span>
               <div className="min-w-0 flex-1">
-                <p className={`line-clamp-3 leading-snug ${c.textStrong}`}>
-                  {src.content.length > 150 ? src.content.slice(0, 150) + '…' : src.content}
+                <p className="text-foreground/80 line-clamp-3 leading-snug">
+                  {src.content.length > 150
+                    ? src.content.slice(0, 150) + "…"
+                    : src.content}
                 </p>
-                <div className={`mt-1 flex items-center gap-1 ${c.icon}`}>
-                  {src.source && <span className="truncate font-medium">{src.source}</span>}
-                  {src.page != null && src.page !== '' && (
+                <div className="text-muted-foreground mt-1 flex items-center gap-1">
+                  {src.source && (
+                    <span className="truncate font-medium">{src.source}</span>
+                  )}
+                  {src.page != null && src.page !== "" && (
                     <span className="shrink-0">· p.{src.page}</span>
                   )}
                   {src.url && (
@@ -525,7 +642,7 @@ function SourceResultCard({
                       target="_blank"
                       rel="noopener noreferrer"
                       onClick={(e) => e.stopPropagation()}
-                      className={`ml-auto shrink-0 hover:${c.textStrong}`}
+                      className="hover:text-foreground ml-auto shrink-0 transition-colors"
                     >
                       <ExternalLink className="size-3" />
                     </a>
