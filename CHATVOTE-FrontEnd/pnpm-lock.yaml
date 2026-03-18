@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@ai-sdk/gateway':
+        specifier: ^3.0.66
+        version: 3.0.66(zod@4.3.6)
       '@ai-sdk/google':
         specifier: ^3.0.43
         version: 3.0.43(zod@4.3.6)

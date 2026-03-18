@@ -1,9 +1,18 @@
+import type { GatewayLanguageModelOptions } from '@ai-sdk/gateway';
 import { google } from '@ai-sdk/google';
 import { type UIMessage, convertToModelMessages, stepCountIs, streamText, tool } from 'ai';
 import { z } from 'zod/v4';
 
+import { deepResearch } from '@lib/ai/deep-research';
 import { embedQuery } from '@lib/ai/embedding';
-import { COLLECTIONS, qdrantClient } from '@lib/ai/qdrant-client';
+import { COLLECTIONS } from '@lib/ai/qdrant-client';
+import {
+  type SearchResult,
+  searchQdrant,
+  searchQdrantBroad,
+  searchQdrantRaw,
+  deduplicateResults,
+} from '@lib/ai/qdrant-search';
 import { db, auth } from '@lib/firebase/firebase-admin';
 
 export const maxDuration = 120;
@@ -97,98 +106,6 @@ async function searchDataGouvMcp(query: string, limit = 5): Promise<DataGouvData
   }));
 }
 
-interface QdrantPayload {
-  page_content?: string;
-  metadata?: {
-    source?: string;
-    url?: string;
-    page?: number | string;
-    party_id?: string;
-    namespace?: string;
-    [key: string]: unknown;
-  };
-  [key: string]: unknown;
-}
-
-interface SearchResult {
-  id: number;
-  score?: number;
-  content: string;
-  source: string;
-  url: string;
-  page: number | string;
-  party_id: string;
-  candidate_name: string;
-  document_name: string;
-  source_document: string;
-}
-
-async function searchQdrant(
-  collection: string,
-  query: string,
-  filterKey: string,
-  filterValue: string,
-  limit: number,
-  precomputedVector?: number[],
-): Promise<SearchResult[]> {
-  const start = Date.now();
-  console.log(`[ai-chat:qdrant] searching collection=${collection} ${filterKey}=${filterValue} limit=${limit} q="${query.slice(0, 60)}"`);
-
-  const embedding = precomputedVector ?? (await embedQuery(query));
-
-  let results;
-  try {
-    results = await qdrantClient.search(collection, {
-      vector: { name: 'dense', vector: embedding },
-      filter: {
-        must: [
-          {
-            key: filterKey,
-            match: { value: filterValue },
-          },
-        ],
-        must_not: [
-          {
-            key: 'metadata.fiabilite',
-            range: { gt: 3 },
-          },
-        ],
-      },
-      score_threshold: 0.35,
-      limit,
-      with_payload: true,
-    });
-  } catch (err) {
-    console.error(`[ai-chat:qdrant] FAILED collection=${collection} ${filterKey}=${filterValue} ${Date.now() - start}ms`, err);
-    throw err;
-  }
-
-  console.log(`[ai-chat:qdrant] OK collection=${collection} ${filterKey}=${filterValue} results=${results.length} ${Date.now() - start}ms`);
-
-  return results.map((r, idx) => {
-    const payload = (r.payload ?? {}) as QdrantPayload;
-    const meta = payload.metadata ?? {};
-
-    // Resolve URL: use real URL if available, skip .md filenames
-    let url = String(meta.url ?? '');
-    if (url && !url.startsWith('http')) {
-      url = '';
-    }
-
-    return {
-      id: idx + 1,
-      score: r.score ?? 0,
-      content: String(payload.page_content ?? ''),
-      source: String(meta.source ?? ''),
-      url,
-      page: (meta.page as number | string) ?? '',
-      party_id: String(meta.party_id ?? meta.namespace ?? ''),
-      candidate_name: String(meta.candidate_name ?? ''),
-      document_name: String(meta.document_name ?? ''),
-      source_document: String(meta.source_document ?? ''),
-    };
-  });
-}
 
 function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[] = []) {
   const features = enabledFeatures ?? ['rag'];
@@ -209,13 +126,26 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
               const { partyId, query } = input;
               const normalizedPartyId = partyId.toLowerCase();
               try {
-                const results = await searchQdrant(
+                let results = await searchQdrant(
                   COLLECTIONS.allParties,
                   query,
                   'metadata.namespace',
                   normalizedPartyId,
                   8,
                 );
+                // Tier 1: retry with lower threshold + broad scope
+                if (results.length < 3) {
+                  console.log(`[qdrant:fallback] searchPartyManifesto: ${results.length} results at 0.35, retrying at 0.25 broad`);
+                  const broadResults = await searchQdrantBroad(COLLECTIONS.allParties, query, 8);
+                  results = deduplicateResults([...results, ...broadResults]);
+                }
+                // Tier 2: deep research sub-agent
+                if (results.length < 3) {
+                  console.log(`[deep-research] searchPartyManifesto: ${results.length} results after Tier 1, launching deep research`);
+                  const research = await deepResearch({ originalQuery: query, collections: [COLLECTIONS.allParties] });
+                  results = deduplicateResults([...results, ...research.findings]);
+                  console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
+                }
                 return { partyId, results, count: results.length };
               } catch (err) {
                 console.error('[ai-chat] searchPartyManifesto error:', err);
@@ -233,13 +163,26 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
               const { candidateId, query } = input;
               const normalizedCandidateId = candidateId.toLowerCase();
               try {
-                const results = await searchQdrant(
+                let results = await searchQdrant(
                   COLLECTIONS.candidatesWebsites,
                   query,
                   'metadata.namespace',
                   normalizedCandidateId,
                   5,
                 );
+                // Tier 1: retry with lower threshold + broad scope
+                if (results.length < 3) {
+                  console.log(`[qdrant:fallback] searchCandidateWebsite: ${results.length} results at 0.35, retrying at 0.25 broad`);
+                  const broadResults = await searchQdrantBroad(COLLECTIONS.candidatesWebsites, query, 8);
+                  results = deduplicateResults([...results, ...broadResults]);
+                }
+                // Tier 2: deep research sub-agent
+                if (results.length < 3) {
+                  console.log(`[deep-research] searchCandidateWebsite: ${results.length} results after Tier 1, launching deep research`);
+                  const research = await deepResearch({ originalQuery: query, collections: [COLLECTIONS.candidatesWebsites], candidateIds: [candidateId] });
+                  results = deduplicateResults([...results, ...research.findings]);
+                  console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
+                }
                 return { candidateId, results, count: results.length };
               } catch (err) {
                 console.error('[ai-chat] searchCandidateWebsite error:', err);
@@ -275,7 +218,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                           const vec = queryVectors.get(query)!;
                           const allResults = await Promise.all(
                             candidateIds.map(async (cid) => {
-                              const results = await searchQdrant(
+                              let results = await searchQdrant(
                                 COLLECTIONS.candidatesWebsites,
                                 query,
                                 'metadata.namespace',
@@ -283,6 +226,20 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                                 5,
                                 vec,
                               );
+                              // Tier 1: retry at lower threshold (keep namespace scoping)
+                              if (results.length < 3) {
+                                console.log(`[qdrant:fallback] searchAllCandidates/${cid}: ${results.length} results at 0.35, retrying at 0.25`);
+                                const retryResults = await searchQdrant(
+                                  COLLECTIONS.candidatesWebsites,
+                                  query,
+                                  'metadata.namespace',
+                                  cid.toLowerCase(),
+                                  5,
+                                  vec,
+                                  { scoreThreshold: 0.25 },
+                                );
+                                results = deduplicateResults([...results, ...retryResults]);
+                              }
                               return results.map((r) => ({ ...r, candidateId: cid }));
                             }),
                           );
@@ -342,13 +299,26 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
             }),
             execute: async (input) => {
               try {
-                const results = await searchQdrant(
+                let results = await searchQdrant(
                   COLLECTIONS.votingBehavior,
                   input.query,
                   'metadata.namespace',
                   'vote_summary',
                   8,
                 );
+                // Tier 1: retry with lower threshold + broad scope
+                if (results.length < 3) {
+                  console.log(`[qdrant:fallback] searchVotingRecords: ${results.length} results at 0.35, retrying at 0.25 broad`);
+                  const broadResults = await searchQdrantBroad(COLLECTIONS.votingBehavior, input.query, 8);
+                  results = deduplicateResults([...results, ...broadResults]);
+                }
+                // Tier 2: deep research sub-agent
+                if (results.length < 3) {
+                  console.log(`[deep-research] searchVotingRecords: ${results.length} results after Tier 1, launching deep research`);
+                  const research = await deepResearch({ originalQuery: input.query, collections: [COLLECTIONS.votingBehavior] });
+                  results = deduplicateResults([...results, ...research.findings]);
+                  console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
+                }
                 return { results, count: results.length };
               } catch (err) {
                 console.error('[ai-chat] searchVotingRecords error:', err);
@@ -377,40 +347,43 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                 ? `${input.partyId}-parliamentary-questions`
                 : undefined;
               try {
-                // If no partyId, search without namespace filter
-                const embedding = await embedQuery(input.query);
-                const filter = namespace
-                  ? {
-                      must: [{ key: 'metadata.namespace', match: { value: namespace } }],
-                    }
-                  : undefined;
-                const rawResults = await qdrantClient.search(
-                  COLLECTIONS.parliamentaryQuestions,
-                  {
-                    vector: { name: 'dense', vector: embedding },
-                    ...(filter ? { filter } : {}),
-                    score_threshold: 0.35,
-                    limit: 8,
-                    with_payload: true,
-                  },
-                );
-                const results = rawResults.map((r, idx) => {
-                  const payload = (r.payload ?? {}) as QdrantPayload;
-                  const meta = payload.metadata ?? {};
-                  let url = String(meta.url ?? '');
-                  if (url && !url.startsWith('http')) url = '';
-                  return {
-                    id: idx + 1,
-                    content: String(payload.page_content ?? ''),
-                    source: String(meta.source ?? ''),
-                    url,
-                    page: (meta.page as number | string) ?? '',
-                    party_id: String(meta.party_id ?? meta.namespace ?? ''),
-                    candidate_name: String(meta.candidate_name ?? ''),
-                    document_name: String(meta.document_name ?? ''),
-                    source_document: String(meta.source_document ?? ''),
-                  };
-                });
+                let results: SearchResult[];
+                if (namespace) {
+                  results = await searchQdrant(
+                    COLLECTIONS.parliamentaryQuestions,
+                    input.query,
+                    'metadata.namespace',
+                    namespace,
+                    8,
+                    undefined,
+                    { mustNot: null },
+                  );
+                } else {
+                  results = await searchQdrantRaw(
+                    COLLECTIONS.parliamentaryQuestions,
+                    input.query,
+                    8,
+                  );
+                }
+                // Tier 1: retry with lower threshold + broad scope
+                if (results.length < 3) {
+                  console.log(`[qdrant:fallback] searchParliamentaryQuestions: ${results.length} results at 0.35, retrying at 0.25 broad`);
+                  const broadResults = await searchQdrantBroad(
+                    COLLECTIONS.parliamentaryQuestions,
+                    input.query,
+                    8,
+                    undefined,
+                    { mustNot: null },
+                  );
+                  results = deduplicateResults([...results, ...broadResults]);
+                }
+                // Tier 2: deep research sub-agent
+                if (results.length < 3) {
+                  console.log(`[deep-research] searchParliamentaryQuestions: ${results.length} results after Tier 1, launching deep research`);
+                  const research = await deepResearch({ originalQuery: input.query, collections: [COLLECTIONS.parliamentaryQuestions] });
+                  results = deduplicateResults([...results, ...research.findings]);
+                  console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
+                }
                 return { partyId: input.partyId, results, count: results.length };
               } catch (err) {
                 console.error('[ai-chat] searchParliamentaryQuestions error:', err);
@@ -883,14 +856,24 @@ ${contextLine}
 7. **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle TOUJOURS l'outil suggestFollowUps avec 3 questions pertinentes
 8. **Reformulation des requêtes** : Quand tu appelles un outil de recherche, ton paramètre "query" doit être AUTONOME et COMPLET. N'utilise JAMAIS de pronoms ("ça", "ce sujet", "celui-là") ni de références à des messages précédents. Inclus tout le contexte nécessaire directement dans la requête. Exemple : au lieu de "et sur ce sujet ?", écris "positions des candidats sur les transports en commun à Marseille". Garde les requêtes concises mais auto-suffisantes.
 
+Tu disposes d'une recherche approfondie automatique : si tes premières recherches ne trouvent pas assez de résultats, le système relance automatiquement des recherches plus larges. Fais confiance aux résultats retournés par tes outils.
+
 ${respondInLanguage}${candidateContext}`;
 
   const result = streamText({
-    model: google('gemini-2.0-flash'),
+    model: google('gemini-2.5-flash'),
     system: systemPrompt,
     messages,
-    stopWhen: stepCountIs(5),
+    stopWhen: stepCountIs(6),
     toolChoice: 'auto',
+    providerOptions: {
+      gateway: {
+        models: [
+          'google/gemini-2.5-flash-lite',   // Fallback 1: cheaper Google model
+          'scaleway/qwen3-235b-a22b-instruct-2507', // Fallback 2: Scaleway sovereign
+        ],
+      } satisfies GatewayLanguageModelOptions,
+    },
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);
     },

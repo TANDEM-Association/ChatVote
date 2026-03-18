@@ -19,6 +19,7 @@
     "test:e2e:ui": "playwright test --ui"
   },
   "dependencies": {
+    "@ai-sdk/gateway": "^3.0.66",
     "@ai-sdk/google": "^3.0.43",
     "@ai-sdk/openai-compatible": "^2.0.35",
     "@ai-sdk/react": "^3.0.118",

@@ -169,7 +169,7 @@ anthropic_claude_haiku = (
 
 # Scaleway Generative API (OpenAI-compatible)
 _scaleway_api_key = safe_load_api_key("SCALEWAY_EMBED_API_KEY")
-_scaleway_llm_model = os.getenv("SCALEWAY_LLM_MODEL", "llama-3.3-70b-instruct")
+_scaleway_llm_model = os.getenv("SCALEWAY_LLM_MODEL", "qwen3-235b-a22b-instruct-2507")
 scaleway_chat = (
     ChatOpenAI(
         model=_scaleway_llm_model,
