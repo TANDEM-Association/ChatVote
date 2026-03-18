@@ -1017,5 +1017,7 @@ ${respondInLanguage}${candidateContext}`;
     tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap),
   });
 
-  return result.toUIMessageStreamResponse();
+  return result.toUIMessageStreamResponse({
+    originalMessages: uiMessages ?? [],
+  });
 }
