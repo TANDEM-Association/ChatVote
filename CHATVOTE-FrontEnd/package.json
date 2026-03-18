@@ -45,6 +45,7 @@
     "firebase": "^11.0.2",
     "firebase-admin": "^13.0.2",
     "immer": "^10.1.1",
+    "langsmith": "^0.5.10",
     "lucide-react": "^0.460.0",
     "motion": "^12.4.1",
     "next": "16.1.4",

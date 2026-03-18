@@ -1,5 +1,6 @@
 import { google } from '@ai-sdk/google';
-import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, streamText, tool } from 'ai';
+import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, tool } from 'ai';
+import { streamText } from '@lib/ai/langsmith';
 import { z } from 'zod/v4';
 
 import { deepResearch } from '@lib/ai/deep-research';

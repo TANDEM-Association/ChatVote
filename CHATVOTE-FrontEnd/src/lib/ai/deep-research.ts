@@ -1,5 +1,6 @@
 import { google } from '@ai-sdk/google';
-import { generateText, stepCountIs, tool } from 'ai';
+import { stepCountIs, tool } from 'ai';
+import { generateText } from './langsmith';
 import { z } from 'zod/v4';
 
 import { COLLECTIONS } from './qdrant-client';
