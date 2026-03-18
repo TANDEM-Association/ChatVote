@@ -146,6 +146,7 @@ export interface ChatUserMessageDto {
   scope: ChatScope;
   municipality_code: string | null;
   locale: "fr" | "en";
+  candidate_ids: string[];
 }
 
 // --- SourcesDto ---

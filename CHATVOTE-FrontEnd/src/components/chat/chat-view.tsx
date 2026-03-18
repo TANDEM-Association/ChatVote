@@ -39,7 +39,9 @@ async function ChatView({
       <ChatSidebar />
       <ChatSidebarDesktop auth={auth} />
       <ChatContextSidebar />
-      <DevMetadataSidebarWrapper />
+      <Suspense fallback={null}>
+        <DevMetadataSidebarWrapper />
+      </Suspense>
       <div className="relative flex min-w-0 flex-1 flex-col overflow-hidden">
         <ChatHeader />
         {/* Main content - adds padding when sidebar is expanded */}
