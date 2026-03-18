@@ -5,8 +5,8 @@ type Props = {
 };
 
 const partners = [
+  { name: "Co-CTO", logo: "/images/logos/sponsors/co-cto.svg", href: "https://www.co-cto.fr/" },
   { name: "Zaq.ai", logo: "/images/logos/sponsors/zaq-ai.png", href: "https://zaq.ai" },
-  { name: "Chatvote", logo: "/images/logos/chatvote.svg", href: "https://app.chatvote.org" },
   { name: "Tandem", logo: "/images/logos/sponsors/tandem.svg", href: "https://tndm.fr" },
 ];
 
