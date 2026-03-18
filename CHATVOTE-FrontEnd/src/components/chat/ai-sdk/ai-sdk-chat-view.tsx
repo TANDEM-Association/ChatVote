@@ -28,7 +28,6 @@ import { Plus } from "lucide-react";
 
 import SponsorPartners from "../sponsor-partners";
 
-import AiSdkCandidateBar from "./ai-sdk-candidate-bar";
 import AiSdkFeatureRibbon from "./ai-sdk-feature-ribbon";
 import AiSdkMessage from "./ai-sdk-message";
 import AiSdkStreamingIndicator from "./ai-sdk-streaming-indicator";
@@ -48,6 +47,7 @@ export default function AiSdkChatView({
   const scope = useChatStore((s) => s.scope);
   const storeMunicipalityCode = useChatStore((s) => s.municipalityCode);
   const municipalityCode = municipalityCodeProp ?? storeMunicipalityCode;
+  const selectedElectoralLists = useChatStore((s) => s.selectedElectoralLists);
   const getEnabledFeatureIds = useAiSdkFeaturesStore(
     (s) => s.getEnabledFeatureIds,
   );
@@ -67,6 +67,36 @@ export default function AiSdkChatView({
       }
     }
   }, [municipalityCodeProp, storeApi]);
+
+  // Sync sidebar electoral list selection → AI SDK partyIds
+  // Fetch panel_number → party_ids mapping, then derive partyIds from sidebar selection
+  type CandidateListItem = { panel_number: number; party_ids: string[]; candidate_id: string | null };
+  const [candidateListMap, setCandidateListMap] = useState<CandidateListItem[]>([]);
+
+  useEffect(() => {
+    if (!municipalityCode) { setCandidateListMap([]); return; }
+    let cancelled = false;
+    fetch(`/api/candidate-lists?municipalityCode=${encodeURIComponent(municipalityCode)}`)
+      .then((r) => r.ok ? r.json() : null)
+      .then((data) => { if (!cancelled && data?.lists) setCandidateListMap(data.lists); })
+      .catch(() => {});
+    return () => { cancelled = true; };
+  }, [municipalityCode]);
+
+  // When sidebar selection changes, derive partyIds
+  useEffect(() => {
+    if (candidateListMap.length === 0) return;
+    const selectedPartyIds = [
+      ...new Set(
+        candidateListMap
+          .filter((c) => selectedElectoralLists.includes(c.panel_number))
+          .flatMap((c) => c.party_ids),
+      ),
+    ];
+    if (storeApi) {
+      storeApi.setState({ partyIds: new Set(selectedPartyIds) });
+    }
+  }, [selectedElectoralLists, candidateListMap, storeApi]);
 
   // Municipality search
   const router = useRouter();
@@ -225,13 +255,10 @@ export default function AiSdkChatView({
     setInput("");
   };
 
-  // Dev-only UI invariant guards
+  // Dev-only UI invariant guards (candidate selection is now in the sidebar)
   useEffect(() => {
     if (process.env.NODE_ENV !== "development") return;
     const timer = setTimeout(() => {
-      const hasCandidateSelector = !!document.querySelector(
-        '[data-testid="candidate-selector"]',
-      );
       const hasMunicipalitySearch = !!document.querySelector(
         '[data-testid="municipality-search"]',
       );
@@ -239,33 +266,13 @@ export default function AiSdkChatView({
         '[data-testid="quick-suggestions"]',
       );
 
-      // Rule 1: If municipality is set, candidate selector MUST be visible
-      if (municipalityCode && !hasCandidateSelector) {
-        console.error(
-          "[UI Guard] Municipality is set but candidate-selector is NOT visible",
-        );
+      // Rule: If no municipality, municipality search MUST be visible (when no messages)
+      if (!municipalityCode && messages.length === 0 && !hasMunicipalitySearch) {
+        console.error("[UI Guard] No municipality set but municipality-search is NOT visible");
       }
-      // Rule 2: If no municipality, municipality search MUST be visible (when no messages)
-      if (
-        !municipalityCode &&
-        messages.length === 0 &&
-        !hasMunicipalitySearch
-      ) {
-        console.error(
-          "[UI Guard] No municipality set but municipality-search is NOT visible",
-        );
-      }
-      // Rule 3: municipality-search and candidate-selector are mutually exclusive
-      if (hasCandidateSelector && hasMunicipalitySearch) {
-        console.error(
-          "[UI Guard] Both candidate-selector AND municipality-search are visible",
-        );
-      }
-      // Rule 4: Quick suggestions only visible when municipality is set and no messages
+      // Rule: Quick suggestions only visible when municipality is set and no messages
       if (municipalityCode && messages.length === 0 && !hasSuggestions) {
-        console.warn(
-          "[UI Guard] Municipality set with no messages but quick-suggestions not visible",
-        );
+        console.warn("[UI Guard] Municipality set with no messages but quick-suggestions not visible");
       }
     }, 500);
     return () => clearTimeout(timer);
@@ -301,16 +308,7 @@ export default function AiSdkChatView({
       {/* Feature toggle ribbon */}
       <AiSdkFeatureRibbon />
 
-      {/* Candidate/party pills — always selectable */}
-      {municipalityCode && (
-        <div data-testid="candidate-selector">
-          <AiSdkCandidateBar
-            municipalityCode={municipalityCode}
-            selectable
-            onSelectionChange={(ids) => setPartyIds(ids)}
-          />
-        </div>
-      )}
+      {/* Candidate selection is handled by ChatContextSidebar */}
 
       {messages.length > 0 && (
         <div className="flex justify-end px-3 py-1.5 md:px-9">
@@ -339,7 +337,7 @@ export default function AiSdkChatView({
 
               <p className="text-muted-foreground text-center text-sm">
                 {municipalityCode
-                  ? "Sélectionnez les candidats ci-dessus puis posez une question"
+                  ? "Sélectionnez les candidats dans le panneau latéral puis posez une question"
                   : "Avant de poser votre question, renseignez votre commune ou code postal"}
               </p>
 
