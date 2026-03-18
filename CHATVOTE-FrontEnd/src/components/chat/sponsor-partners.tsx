@@ -64,10 +64,10 @@ export default function SponsorPartners({ compact = false }: Props) {
               href={partner.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-3 rounded-full border border-white/10 bg-white/5 px-5 py-3 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
+              className="group flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
             >
-              <div className="flex size-14 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10">
-                <Image src={partner.logo} alt={partner.name} width={44} height={44} className="object-contain" />
+              <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-full bg-white/10">
+                <Image src={partner.logo} alt={partner.name} width={24} height={24} className="object-contain" />
               </div>
               <span className="whitespace-nowrap text-sm font-medium text-white/70 group-hover:text-white/90 transition-colors">
                 {partner.name}
