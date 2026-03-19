@@ -40,6 +40,7 @@ export const expandSearchQueries = observe(
       const result = await generateObject({
         model: google('gemini-2.0-flash'),
         schema: expansionSchema,
+        experimental_telemetry: { isEnabled: true },
         system: `Tu es un expert en recherche documentaire pour les élections françaises.
 On te donne une question d'un citoyen. Génère 2-3 requêtes de recherche vectorielle OPTIMISÉES pour retrouver les passages pertinents dans des documents politiques (programmes, professions de foi, sites web de campagne, votes parlementaires).
 ${entityContext}

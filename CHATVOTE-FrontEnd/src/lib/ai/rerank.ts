@@ -52,6 +52,7 @@ export const rerankResults = observe(
       const result = await generateObject({
         model: google('gemini-2.0-flash'),
         schema: rerankSchema,
+        experimental_telemetry: { isEnabled: true },
         system: `Tu es un expert en pertinence documentaire pour les élections françaises.
 
 On te donne ${results.length} extraits de documents (programmes, professions de foi, sites de campagne, votes parlementaires).

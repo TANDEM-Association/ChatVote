@@ -1,8 +1,9 @@
 import { google } from '@ai-sdk/google';
 import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, tool } from 'ai';
 import { after } from 'next/server';
-import { observe, propagateAttributes, setActiveTraceIO } from '@langfuse/tracing';
+import { observe, propagateAttributes, getActiveTraceId } from '@langfuse/tracing';
 import { langfuseSpanProcessor } from '@lib/ai/langfuse-processor';
+import { Langfuse } from 'langfuse';
 import { streamText } from '@lib/ai/tracing';
 import { z } from 'zod/v4';
 
@@ -23,6 +24,10 @@ import { db, auth } from '@lib/firebase/firebase-admin';
 
 export const maxDuration = 120;
 export const preferredRegion = 'cdg1';
+
+// Module-level Langfuse SDK client for trace-level I/O updates
+// (OTEL setActiveTraceIO doesn't populate trace I/O with LangfuseSpanProcessor)
+const langfuse = process.env.LANGFUSE_SECRET_KEY ? new Langfuse() : null;
 
 // ── data.gouv.fr REST API client ─────────────────────────────────────────────
 // Uses the official data.gouv.fr REST API (https://www.data.gouv.fr/api/1/)
@@ -732,13 +737,16 @@ const handleChat = observe(async function handleChat(req: Request) {
 
   console.log('[ai-chat] POST', { chatId, municipalityCode, partyIds, enabledFeatures, locale, uid, msgCount: uiMessages?.length });
 
-  // ── Langfuse: set trace-level input ───────────────────────────────────────
+  // ── Langfuse: set trace-level input via SDK (OTEL setActiveTraceIO doesn't populate trace I/O) ──
   const lastUserMessage = uiMessages?.[uiMessages.length - 1];
   const inputText = lastUserMessage?.parts
     ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
     .map((p) => p.text)
     .join('') ?? '';
-  setActiveTraceIO({ input: inputText });
+  const langfuseTraceId = getActiveTraceId();
+  if (langfuse && langfuseTraceId) {
+    langfuse.trace({ id: langfuseTraceId, input: inputText });
+  }
 
   // ── Validate chatId format ──────────────────────────────────────────────
   if (chatId && !CHAT_ID_REGEX.test(chatId)) {
@@ -1010,8 +1018,14 @@ ${respondInLanguage}${candidateContext}`;
         usage,
       });
     },
-    async onFinish({ text, usage }) {
-      setActiveTraceIO({ output: text });
+    async onFinish({ text, steps, usage }) {
+      // In multi-step tool-calling flows, `text` may be empty.
+      // Collect text from all steps as the final output.
+      const outputText = text || steps?.map((s) => s.text).filter(Boolean).join('\n') || '';
+      if (langfuse && langfuseTraceId && outputText) {
+        langfuse.trace({ id: langfuseTraceId, output: outputText });
+        await langfuse.flushAsync();
+      }
       // Persist conversation to Firestore (fire-and-forget, never blocks the response)
       if (!chatId) return;
       try {
@@ -1067,7 +1081,10 @@ ${respondInLanguage}${candidateContext}`;
 export async function POST(req: Request) {
   const response = await handleChat(req);
   after(async () => {
-    await langfuseSpanProcessor.forceFlush();
+    await Promise.all([
+      langfuseSpanProcessor.forceFlush(),
+      langfuse?.flushAsync(),
+    ]);
   });
   return response;
 }
