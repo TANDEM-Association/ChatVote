@@ -1,6 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, tool } from 'ai';
-import { streamText } from '@lib/ai/tracing';
+import { streamText, flushLangfuse } from '@lib/ai/tracing';
 import { z } from 'zod/v4';
 
 import { deepResearch } from '@lib/ai/deep-research';
@@ -990,6 +990,8 @@ ${respondInLanguage}${candidateContext}`;
       } catch (err) {
         console.error('[ai-chat] Failed to persist conversation:', err);
       }
+      // Flush Langfuse spans before serverless function exits
+      await flushLangfuse();
     },
     tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap, searchCandidateIds),
   });

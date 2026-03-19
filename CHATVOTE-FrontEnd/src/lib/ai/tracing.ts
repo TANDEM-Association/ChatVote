@@ -96,3 +96,11 @@ function makeGenerateText(): (params: GenerateTextParams) => GenerateTextReturn 
 
 export const streamText = makeStreamText();
 export const generateText = makeGenerateText();
+
+// ── Flush (call at end of serverless request) ────────────────────────────────
+
+export async function flushLangfuse(): Promise<void> {
+  if (_langfuseInstance) {
+    await _langfuseInstance.flushAsync();
+  }
+}
