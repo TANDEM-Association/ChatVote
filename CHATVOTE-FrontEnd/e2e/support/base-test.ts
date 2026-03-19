@@ -63,6 +63,8 @@ const TEST_ENV_ERROR_PATTERNS = [
   /API key not valid/,
   /config-fetch-failed/,
   /installations\/request-failed/,
+  /fetchDynamicConfig/,
+  /@firebase\/analytics.*Failed to fetch/,
   // Firebase Auth network errors (transient in test env, e.g. emulator restart timing)
   /auth\/network-request-failed/,
   // Note: FirebaseError auth errors and "Chat session not found" are NOT

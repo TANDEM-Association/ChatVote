@@ -16,8 +16,9 @@ test.describe("Landing Page and Navigation", () => {
     await expect(
       page.getByPlaceholder(/commune|municipality/i).first(),
     ).toBeVisible();
-    // Chat input should be disabled before municipality selection
-    await expect(getChatInput(page)).toBeDisabled();
+    // The chat input is not rendered at all until a municipality is selected
+    // (ChatInputGate returns null when no municipality_code is present).
+    await expect(getChatInput(page)).not.toBeVisible();
   });
 
   test("Header elements are present", async ({ page }) => {

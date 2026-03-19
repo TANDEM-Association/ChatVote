@@ -6,7 +6,9 @@ test.describe("Chat Input and Message Submission", () => {
     page,
   }) => {
     await goToChat(page);
-    await expect(getChatInput(page)).toBeDisabled();
+    // The chat input is not rendered at all until a municipality is selected
+    // (ChatInputGate returns null when no municipality_code is present).
+    await expect(getChatInput(page)).not.toBeVisible();
   });
 
   test("Chat input becomes enabled after municipality selection", async ({

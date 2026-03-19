@@ -13,7 +13,9 @@ test.describe("Municipality Details", () => {
     await expect(
       page.getByPlaceholder(/commune|municipality/i).first(),
     ).toBeVisible({ timeout: 10000 });
-    await expect(getChatInput(page)).toBeDisabled({ timeout: 5000 });
+    // The chat input is not rendered at all until a municipality is selected
+    // (ChatInputGate returns null when no municipality_code is present).
+    await expect(getChatInput(page)).not.toBeVisible({ timeout: 5000 });
   });
 
   test("3.2 Typing in municipality input shows autocomplete suggestions", async ({
@@ -63,7 +65,8 @@ test.describe("Municipality Details", () => {
     await expect(
       page.locator("li").filter({ hasText: "xyznonexistent999" }).first(),
     ).not.toBeVisible({ timeout: 5000 });
-    // Chat input should remain disabled
-    await expect(getChatInput(page)).toBeDisabled({ timeout: 5000 });
+    // The chat input is not rendered at all until a municipality is selected
+    // (ChatInputGate returns null when no municipality_code is present).
+    await expect(getChatInput(page)).not.toBeVisible({ timeout: 5000 });
   });
 });
