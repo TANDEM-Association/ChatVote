@@ -132,6 +132,13 @@ export default function AiSdkChatView({
     partyIdsRef.current = Array.from(partyIds);
   }
 
+  // Show tool toggles in dev always, in prod only with ?tools=1 (persists across navigation)
+  const showToolsRef = useRef(
+    process.env.NODE_ENV === "development" ||
+      (typeof window !== "undefined" &&
+        new URLSearchParams(window.location.search).get("tools") === "1"),
+  );
+
   const [input, setInput] = useState("");
 
   // Generate a stable chat ID for this session
@@ -456,7 +463,7 @@ export default function AiSdkChatView({
             </button>
           )}
         </form>
-        <AiSdkFeatureRibbon />
+        {showToolsRef.current && <AiSdkFeatureRibbon />}
       </div>
     </div>
   );
