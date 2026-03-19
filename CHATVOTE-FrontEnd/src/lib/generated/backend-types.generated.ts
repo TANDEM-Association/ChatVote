@@ -39,6 +39,10 @@ export interface Candidate {
   manifesto_pdf_url: string | null;
   created_at: string | null;
   updated_at: string | null;
+  is_second_round: boolean;
+  second_round_nuance_code: string | null;
+  second_round_list_label: string | null;
+  second_round_panel_number: number | null;
 }
 
 // --- Vote ---

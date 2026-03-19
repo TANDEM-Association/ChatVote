@@ -130,8 +130,8 @@ function ChatMessagesView({
 
       {normalizedMessages.length === 0 ? (
         /* Empty state: logo → city input → sponsors → suggestions, all in one container */
-        <div className="flex flex-col items-center gap-5 px-3 py-8 md:px-9">
-          <Image src="/images/logos/chatvote.svg" alt="ChatVote" width={260} height={87} priority />
+        <div className="flex flex-col items-center gap-4 px-3 py-4 md:gap-5 md:py-8 md:px-9">
+          <Image src="/images/logos/chatvote.svg" alt="ChatVote" width={260} height={87} priority className="w-40 md:w-52 lg:w-[260px] h-auto" />
           <ChatPostcodePrompt />
           <SponsorPartners />
           <ChatEmptyView

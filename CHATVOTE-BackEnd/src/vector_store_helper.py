@@ -764,6 +764,7 @@ async def identify_relevant_docs_combined(
     n_docs_candidates: int = 10,
     score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     debug_callback: Optional[Callable] = None,
+    is_second_round_active: bool = False,
 ) -> tuple[list[Document], list[Document]]:
     """
     Combined search across party manifestos and candidate websites.
@@ -848,6 +849,7 @@ async def identify_relevant_docs_combined(
                     municipality_code=municipality_code,
                     n_docs_per_candidate=15,
                     score_threshold=score_threshold,
+                    is_second_round_active=is_second_round_active,
                 )
             )
         else:
@@ -1092,6 +1094,7 @@ async def _search_candidate_docs_by_party_and_municipality(
     n_docs_per_candidate: int = 5,
     score_threshold: float = DEFAULT_SCORE_THRESHOLD,
     max_fiabilite: int = 3,
+    is_second_round_active: bool = False,
 ) -> list[Document]:
     """Search candidate docs per-candidate to ensure fair coverage.
 
@@ -1113,6 +1116,8 @@ async def _search_candidate_docs_by_party_and_municipality(
     if not candidate_ids:
         from src.firebase_service import aget_candidates_by_municipality
         local_candidates = await aget_candidates_by_municipality(municipality_code)
+        if is_second_round_active:
+            local_candidates = [c for c in local_candidates if c.is_second_round]
         candidate_ids = [c.candidate_id for c in local_candidates]
 
     logger.info(

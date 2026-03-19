@@ -215,6 +215,8 @@
       "loadingHistory": "Chargement de l'historique...",
       "compareParties": "Comparer les partis",
       "lists": "Listes",
+      "round1": "1er tour",
+      "round2": "2nd tour",
       "noElectoralData": "Pas de données électorales pour cette commune",
       "noElectoralDataHint": "Vous pouvez toujours poser des questions sur les partis nationaux"
     },

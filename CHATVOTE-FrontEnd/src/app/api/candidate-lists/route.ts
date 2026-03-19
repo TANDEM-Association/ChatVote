@@ -36,11 +36,18 @@ export async function GET(request: NextRequest) {
   };
 
   try {
-    // Fetch candidates from Firestore
-    const candidatesSnap = await db
-      .collection("candidates")
-      .where("municipality_code", "==", municipalityCode)
-      .get();
+    // Fetch candidates and election config in parallel
+    const [candidatesSnap, configDoc] = await Promise.all([
+      db
+        .collection("candidates")
+        .where("municipality_code", "==", municipalityCode)
+        .get(),
+      db.collection("system_status").doc("election_config").get(),
+    ]);
+
+    const isSecondRoundActive =
+      configDoc.exists &&
+      configDoc.data()?.is_second_round_active === true;
 
     if (candidatesSnap.empty) {
       return NextResponse.json(
@@ -50,6 +57,7 @@ export async function GET(request: NextRequest) {
     }
 
     // Build candidate map by last_name for enrichment
+    // When second round is active, only include second-round candidates
     const candidatesByName = new Map<
       string,
       {
@@ -61,6 +69,7 @@ export async function GET(request: NextRequest) {
     >();
     for (const doc of candidatesSnap.docs) {
       const d = doc.data();
+      if (isSecondRoundActive && d.is_second_round !== true) continue;
       const key = (d.last_name as string)?.toUpperCase();
       if (key) {
         candidatesByName.set(key, {
@@ -80,7 +89,13 @@ export async function GET(request: NextRequest) {
 
     if (electoralDoc.exists) {
       const data = electoralDoc.data() as ElectoralListsByCommune;
-      const enrichedLists: CandidateListItem[] = data.lists.map((list) => {
+      // Use lists_round_2 when second round is active
+      const listsToEnrich =
+        isSecondRoundActive && data.lists_round_2?.length
+          ? data.lists_round_2
+          : data.lists;
+
+      const enrichedLists: CandidateListItem[] = listsToEnrich.map((list) => {
         const match = candidatesByName.get(list.head_last_name?.toUpperCase());
         return {
           ...list,
@@ -100,8 +115,12 @@ export async function GET(request: NextRequest) {
       );
     }
 
-    // Fallback: build list items directly from candidates
-    const lists: CandidateListItem[] = candidatesSnap.docs.map((doc) => {
+    // Fallback: build list items directly from candidates (already filtered above)
+    const candidateDocs = isSecondRoundActive
+      ? candidatesSnap.docs.filter((doc) => doc.data().is_second_round === true)
+      : candidatesSnap.docs;
+
+    const lists: CandidateListItem[] = candidateDocs.map((doc) => {
       const d = doc.data();
       return {
         panel_number: 0,

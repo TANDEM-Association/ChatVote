@@ -20,6 +20,7 @@ type Props = {
   selectable?: boolean;
   gridColumns?: number;
   showChatvoteButton?: boolean;
+  partyIds?: string[];
 };
 
 function PartyCards({
@@ -29,9 +30,10 @@ function PartyCards({
   selectable = true,
   gridColumns = 4,
   showChatvoteButton = false,
+  partyIds,
 }: Props) {
   const t = useTranslations("common");
-  const parties = useParties();
+  const parties = useParties(partyIds);
 
   const smallParties = parties.filter((party) => {
     return party.is_small_party === true;

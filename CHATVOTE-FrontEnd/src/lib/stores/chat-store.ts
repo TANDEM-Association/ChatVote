@@ -77,6 +77,7 @@ const defaultState: ChatStoreState = {
   userDemographics: null,
   demographicsLoaded: false,
   debugLlmCalls: [],
+  secondRoundPartyIds: null,
 };
 
 export function createChatStore(initialState?: Partial<ChatStore>) {
@@ -150,6 +151,7 @@ export function createChatStore(initialState?: Partial<ChatStore>) {
             state.debugLlmCalls.push(payload);
           }),
         clearDebugLlmCalls: () => set({ debugLlmCalls: [] }),
+        setSecondRoundPartyIds: (ids) => set({ secondRoundPartyIds: ids }),
       })),
     ),
   );

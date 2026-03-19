@@ -7,6 +7,7 @@ import ChatSidebar from "./sidebar/chat-sidebar";
 import ChatSidebarDesktop from "./sidebar/chat-sidebar-desktop";
 import ChatContextSidebar from "./chat-context-sidebar";
 import ChatDynamicChatInput from "./chat-dynamic-chat-input";
+import MobileElectoralListsBar from "./mobile-electoral-lists-bar";
 import ChatHeader from "./chat-header";
 import ChatMainContent from "./chat-main-content";
 import ChatInputGate from "./chat-input-gate";
@@ -67,6 +68,7 @@ async function ChatView({
             <ChatInputGate municipalityCode={municipalityCode}>
               <div className="bg-background relative mx-auto w-full max-w-192 shrink-0 p-3 md:p-4">
                 <ChatScrollDownIndicator />
+                <MobileElectoralListsBar />
                 <ChatDynamicChatInput
                   initialSystemStatus={systemStatus}
                   hasValidServerUser={

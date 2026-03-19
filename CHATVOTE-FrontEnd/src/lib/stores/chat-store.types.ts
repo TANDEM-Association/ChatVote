@@ -126,6 +126,7 @@ export type ChatStoreState = {
   userDemographics: UserDemographics | null;
   demographicsLoaded: boolean;
   debugLlmCalls: DebugLlmCallPayload[];
+  secondRoundPartyIds: string[] | null;
 };
 
 export type ChatStoreActions = {
@@ -240,6 +241,7 @@ export type ChatStoreActions = {
   loadUserDemographics: (userId: string) => Promise<void>;
   addDebugLlmCall: (payload: DebugLlmCallPayload) => void;
   clearDebugLlmCalls: () => void;
+  setSecondRoundPartyIds: (ids: string[] | null) => void;
 };
 
 export type ChatStore = ChatStoreState & ChatStoreActions;

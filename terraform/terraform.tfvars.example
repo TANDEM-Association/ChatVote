@@ -38,3 +38,13 @@ admin_upload_secret = ""
 
 # Backend image (updated by CI/CD, or set manually)
 # backend_image = "rg.fr-par.scw.cloud/chatvote/backend:latest"
+
+# RAGFlow
+ragflow_enabled        = true
+ragflow_mysql_password = ""
+ragflow_redis_password = ""
+ragflow_minio_password = ""
+ragflow_es_password    = ""
+scaleway_llm_api_key   = ""
+# scaleway_llm_model       = "llama-3.3-70b-instruct"
+# scaleway_embedding_model = "qwen3-embedding-8b"

@@ -215,6 +215,8 @@
       "loadingHistory": "Loading history...",
       "compareParties": "Compare parties",
       "lists": "Lists",
+      "round1": "1st round",
+      "round2": "2nd round",
       "noElectoralData": "No electoral data for this municipality",
       "noElectoralDataHint": "You can still ask questions about national parties"
     },

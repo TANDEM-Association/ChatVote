@@ -62,6 +62,18 @@ class Candidate(BaseModel):
     updated_at: Optional[datetime] = Field(
         default=None, description="When the candidate record was last updated"
     )
+    is_second_round: bool = Field(
+        default=False, description="True if the candidate is running in the second round"
+    )
+    second_round_nuance_code: Optional[str] = Field(
+        default=None, description="Nuance code for the second round list"
+    )
+    second_round_list_label: Optional[str] = Field(
+        default=None, description="Label of the second round list"
+    )
+    second_round_panel_number: Optional[int] = Field(
+        default=None, description="Panel number for the second round"
+    )
 
     @property
     def full_name(self) -> str:

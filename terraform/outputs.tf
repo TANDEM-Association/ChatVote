@@ -40,3 +40,13 @@ output "langfuse_db_connection_string" {
   sensitive   = true
   description = "Full DATABASE_URL for Langfuse deployment"
 }
+
+output "ragflow_public_ip" {
+  value       = var.ragflow_enabled ? scaleway_instance_ip.ragflow[0].address : null
+  description = "RAGFlow instance public IP"
+}
+
+output "ragflow_url" {
+  value       = var.ragflow_enabled ? "http://${scaleway_instance_ip.ragflow[0].address}" : null
+  description = "RAGFlow web UI URL"
+}

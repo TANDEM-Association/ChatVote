@@ -7,6 +7,7 @@ import HowToDialog from "@components/guide-dialog";
 import { LanguageSwitcher } from "@components/i18n/LanguageSwitcher";
 import { Button } from "@components/ui/button";
 import { SidebarTrigger } from "@components/ui/sidebar";
+
 import { IS_EMBEDDED } from "@lib/utils";
 import { Heart, HelpCircleIcon, XIcon } from "lucide-react";
 
@@ -37,34 +38,35 @@ function ChatHeader() {
         {displayBanner === true && (
           <div
             className={
-              "bg-primary text-primary-foreground flex w-full flex-col items-center justify-between gap-4 px-4 py-3 md:flex-row"
+              "bg-primary text-primary-foreground flex w-full items-center justify-between gap-2 px-3 py-2 md:gap-4 md:px-4 md:py-3"
             }
           >
-            <div className={"flex justify-between gap-3 md:gap-0"}>
-              <div className={"text-sm"}>
-                ChatVote est une initiative associative open source et
-                souveraine - la fiabilité de l&apos;information fournie est
-                notre priorité. Version 1.0
-              </div>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="size-8 flex-none md:hidden"
-                onClick={() => setDisplayBanner(false)}
-              >
-                <XIcon />
-              </Button>
+            <div className="min-w-0 flex-1 text-xs leading-tight lg:text-sm">
+              <span className="hidden xl:inline">ChatVote est une initiative associative open source et
+              souveraine - la fiabilité de l&apos;information fournie est
+              notre priorité. Version 1.0</span>
+              <span className="hidden md:inline xl:hidden">ChatVote - open source et souveraine</span>
+              <span className="md:hidden">ChatVote - open source et souveraine. V1.0</span>
             </div>
-            <div className={"flex flex-wrap items-center gap-3 md:flex-nowrap"}>
-              <Button data-sidebar="more" size="sm">
+            <div className="flex flex-none items-center gap-2">
+              <Button data-sidebar="more" size="sm" className="hidden lg:inline-flex">
                 <div>En savoir plus</div>
               </Button>
               <DonationDialog>
-                <Button size="sm" data-sidebar="donation" variant="donation">
-                  <Heart />
-                  <div>Aidez-nous à aider la démocratie !</div>
+                <Button size="sm" data-sidebar="donation" variant="donation" className="whitespace-nowrap text-xs md:text-sm">
+                  <Heart className="size-3.5 md:size-4" />
+                  <span className="hidden sm:inline">Aidez-nous à aider la démocratie !</span>
+                  <span className="sm:hidden">Soutenir</span>
                 </Button>
               </DonationDialog>
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-7 flex-none md:hidden"
+                onClick={() => setDisplayBanner(false)}
+              >
+                <XIcon className="size-3.5" />
+              </Button>
             </div>
           </div>
         )}
@@ -104,6 +106,7 @@ function ChatHeader() {
 
         <SocketDisconnectedBanner />
       </header>
+
     </React.Fragment>
   );
 }

@@ -49,27 +49,27 @@ export default function SponsorPartners({ compact = false }: Props) {
   }
 
   return (
-    <div className="flex w-full flex-col items-center gap-5 py-2">
+    <div className="flex w-full flex-col items-center gap-3 py-2 md:gap-5">
       {/* Label */}
       <p className="text-[10px] font-medium tracking-[0.2em] uppercase text-white/25">
         Partenaires &amp; souveraineté numérique
       </p>
 
       {/* Partner pills */}
-      <div className="flex items-center justify-center gap-2">
+      <div className="flex flex-wrap items-center justify-center gap-2">
         {partners.map((partner, i) => (
           <div key={partner.name} className="flex items-center gap-2">
-            {i > 0 && <div className="h-px w-6 bg-white/10" />}
+            {i > 0 && <div className="hidden h-px w-6 bg-white/10 md:block" />}
             <a
               href={partner.href}
               target="_blank"
               rel="noopener noreferrer"
-              className="group flex items-center gap-2 rounded-full border border-white/10 bg-white/5 px-3 py-1.5 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10"
+              className="group flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-2.5 py-1 backdrop-blur-sm transition-all hover:border-white/20 hover:bg-white/10 md:gap-2 md:px-3 md:py-1.5"
             >
-              <div className="flex size-8 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10">
+              <div className="flex size-6 shrink-0 items-center justify-center overflow-hidden rounded-lg bg-white/10 md:size-8">
                 <Image src={partner.logo} alt={partner.name} width={28} height={28} className="object-contain" />
               </div>
-              <span className="whitespace-nowrap text-sm font-medium text-white/70 group-hover:text-white/90 transition-colors">
+              <span className="whitespace-nowrap text-xs font-medium text-white/70 group-hover:text-white/90 transition-colors md:text-sm">
                 {partner.name}
               </span>
             </a>
@@ -78,7 +78,7 @@ export default function SponsorPartners({ compact = false }: Props) {
       </div>
 
       {/* Scaleway */}
-      <div className="flex items-center gap-2 text-xs text-white/30">
+      <div className="flex flex-col items-center gap-1 text-[10px] text-white/30 md:flex-row md:gap-2 md:text-xs">
         <span>Souveraineté numérique soutenue par</span>
         <a
           href="https://www.scaleway.com"
@@ -86,7 +86,7 @@ export default function SponsorPartners({ compact = false }: Props) {
           rel="noopener noreferrer"
           className="opacity-40 hover:opacity-70 transition-opacity"
         >
-          <Image src="/images/logos/sponsors/scaleway.svg" alt="Scaleway" width={160} height={32} className="inline-block" />
+          <Image src="/images/logos/sponsors/scaleway.svg" alt="Scaleway" width={160} height={32} className="inline-block w-24 h-auto md:w-40" />
         </a>
       </div>
     </div>

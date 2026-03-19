@@ -14,6 +14,7 @@ export type Candidate = Omit<
   bio: string;
   created_at: string;
   updated_at: string;
+  is_second_round?: boolean;
 };
 
 export type CandidatesMetadata = {
@@ -87,6 +88,8 @@ export type ElectoralListsByCommune = {
   commune_name: string;
   list_count: number;
   lists: ElectoralList[];
+  lists_round_2?: ElectoralList[];
+  list_count_round_2?: number;
 };
 
 // Helper to check if a candidate is in a coalition

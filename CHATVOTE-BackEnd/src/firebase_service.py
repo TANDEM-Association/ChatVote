@@ -67,8 +67,9 @@ _cache: dict[str, Any] = {}
 _cache_expiry: dict[str, float] = {}
 
 
-async def _cached_get(key: str, fetch_fn: Any) -> Any:
+async def _cached_get(key: str, fetch_fn: Any, ttl: int | None = None) -> Any:
     """Return cached value if fresh, else call fetch_fn() and cache the result."""
+    effective_ttl = ttl or CACHE_TTL_SECONDS
     now = time.time()
     if key in _cache and _cache_expiry.get(key, 0.0) > now:
         ttl_remaining = _cache_expiry[key] - now
@@ -79,7 +80,7 @@ async def _cached_get(key: str, fetch_fn: Any) -> Any:
     elapsed = time.perf_counter() - t0
     _fb_logger.info(f"CACHE MISS key={key} fetch_time={elapsed:.3f}s")
     _cache[key] = result
-    _cache_expiry[key] = now + CACHE_TTL_SECONDS
+    _cache_expiry[key] = now + effective_ttl
     return result
 
 
@@ -205,3 +206,16 @@ async def aget_candidates_by_election_type(election_type_id: str) -> List[Candid
         .stream()
     )
     return [Candidate(**candidate.to_dict()) async for candidate in candidates]
+
+
+async def aget_election_config() -> dict:
+    """Get election config from Firestore (cached, 60s TTL)."""
+    import asyncio
+
+    async def _fetch() -> dict:
+        def _sync():
+            doc = db.collection("system_status").document("election_config").get()
+            return doc.to_dict() if doc.exists else {"is_second_round_active": False}
+        return await asyncio.get_event_loop().run_in_executor(None, _sync)
+
+    return await _cached_get("election_config", _fetch, ttl=60)

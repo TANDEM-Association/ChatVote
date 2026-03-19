@@ -7,6 +7,7 @@ import { track } from "@vercel/analytics/react";
 import { useTranslations } from "next-intl";
 import { toast } from "sonner";
 
+import { useChatStore } from "../providers/chat-store-provider";
 import ChatGroupPartySelectSubmitButton from "./chat-group-party-select-submit-button";
 
 type Props = {
@@ -23,6 +24,7 @@ const ChatGroupPartySelectContent = ({
   addPartiesToChat,
 }: Props) => {
   const t = useTranslations("chat.groupSelect");
+  const secondRoundPartyIds = useChatStore((s) => s.secondRoundPartyIds);
   const [selectedPartyIds, setSelectedPartyIds] = useState<string[]>(
     selectedPartyIdsInStore ?? [],
   );
@@ -58,6 +60,7 @@ const ChatGroupPartySelectContent = ({
         className="pb-2"
         onSelectParty={handlePartyClicked}
         selectedPartyIds={selectedPartyIds}
+        partyIds={secondRoundPartyIds ?? undefined}
       />
       <div className="flex justify-end pt-2">
         <ChatGroupPartySelectSubmitButton

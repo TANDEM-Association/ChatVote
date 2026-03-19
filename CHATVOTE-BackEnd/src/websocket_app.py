@@ -43,6 +43,7 @@ from src.firebase_service import (
     # Candidate functions
     aget_candidates_by_municipality,
     aget_candidate_by_id,
+    aget_election_config,
 )
 from src.models.chat import CachedResponse, GroupChatSession, Message, Role
 from src.models.dtos import (
@@ -1057,6 +1058,13 @@ async def handle_combined_answer_request(
         if local_candidates:
             municipality_name = local_candidates[0].municipality_name or ""
 
+    # Filter candidates to second-round qualifiers when second round is active
+    election_config = await aget_election_config()
+    is_second_round_active = election_config.get("is_second_round_active", False)
+    if is_second_round_active and local_candidates:
+        local_candidates = [c for c in local_candidates if c.is_second_round]
+        logger.info(f"Second round active: filtered to {len(local_candidates)} second-round candidates sid={sid}")
+
     # Determine which parties to search
     if has_specific_parties:
         # User selected specific parties - focus on those only
@@ -1106,6 +1114,7 @@ async def handle_combined_answer_request(
         n_docs_manifesto=20,
         n_docs_candidates=20,
         debug_callback=_debug_cb,
+        is_second_round_active=is_second_round_active,
     )
 
     logger.debug(
