@@ -381,13 +381,15 @@ export default function AiSdkChatView({
             </div>
           )}
 
-          {messages.map((message) => (
-            <AiSdkMessage
-              key={message.id}
-              message={message}
-              onSendMessage={handleSendMessage}
-            />
-          ))}
+          {messages
+            .filter((msg, idx, arr) => arr.findIndex((m) => m.id === msg.id) === idx)
+            .map((message) => (
+              <AiSdkMessage
+                key={message.id}
+                message={message}
+                onSendMessage={handleSendMessage}
+              />
+            ))}
 
           {status === "streaming" && <AiSdkStreamingIndicator onStop={stop} />}
 
