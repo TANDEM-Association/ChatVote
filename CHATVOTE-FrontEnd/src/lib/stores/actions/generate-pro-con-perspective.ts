@@ -1,3 +1,4 @@
+import { trackProConRequested } from "@lib/firebase/analytics";
 import { scrollMessageBottomInView } from "@lib/scroll-utils";
 import { type StreamingMessage } from "@lib/socket.types";
 import {
@@ -44,6 +45,11 @@ export const generateProConPerspective: ChatStoreActionHandlerFor<
       last_assistant_message: message.content,
       last_user_message:
         lastUserMessageBeforeProConPerspective.messages[0].content,
+    });
+
+    trackProConRequested({
+      session_id: chatId,
+      topic: lastUserMessageBeforeProConPerspective.messages[0].content,
     });
 
     await new Promise((resolve) => setTimeout(resolve, 10));

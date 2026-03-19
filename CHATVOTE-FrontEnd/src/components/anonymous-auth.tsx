@@ -9,6 +9,11 @@ import {
 } from "react";
 
 import {
+  setAnalyticsUserId,
+  trackLogin,
+  trackSignUp,
+} from "@lib/firebase/analytics";
+import {
   auth,
   getUser,
   updateUserData as updateUserDataFirebase,
@@ -78,6 +83,20 @@ export const AuthProvider = ({ children, initialAuth }: AuthProviderProps) => {
   useEffect(() => {
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser !== null) {
+        setAnalyticsUserId(firebaseUser.uid);
+
+        const method = firebaseUser.isAnonymous
+          ? "anonymous"
+          : (firebaseUser.providerData[0]?.providerId ?? "unknown");
+        const isNewUser =
+          firebaseUser.metadata.creationTime ===
+          firebaseUser.metadata.lastSignInTime;
+        if (isNewUser) {
+          trackSignUp({ method });
+        } else {
+          trackLogin({ method });
+        }
+
         setSession({
           uid: firebaseUser.uid,
           isAnonymous: firebaseUser.isAnonymous,

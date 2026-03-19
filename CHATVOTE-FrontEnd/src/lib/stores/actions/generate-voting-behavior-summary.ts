@@ -1,3 +1,4 @@
+import { trackVotingBehaviorRequested } from "@lib/firebase/analytics";
 import { scrollMessageBottomInView } from "@lib/scroll-utils";
 import { type ChatStoreActionHandlerFor } from "@lib/stores/chat-store.types";
 
@@ -31,6 +32,11 @@ export const generateVotingBehaviorSummary: ChatStoreActionHandlerFor<
     user_is_logged_in: !isAnonymous,
     locale,
   });
+
+  const { chatId } = get();
+  if (chatId) {
+    trackVotingBehaviorRequested({ session_id: chatId, party_id: partyId });
+  }
 
   set((state) => {
     state.loading.votingBehaviorSummary = message.id;

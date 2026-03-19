@@ -9,6 +9,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@components/ui/tooltip";
+import { trackSourceClicked } from "@lib/firebase/analytics";
 import { type Source } from "@lib/stores/chat-store.types";
 import { buildPdfUrl, cn, prettyDate } from "@lib/utils";
 import { BookMarkedIcon } from "lucide-react";
@@ -137,6 +138,11 @@ const SourceItem = ({ source }: { source: SourceWithIndex }) => {
 
   const onSourceClick = (source: Source) => {
     if (!source.url || !source.url.startsWith("http")) return;
+
+    trackSourceClicked({
+      source_url: source.url,
+      party_id: source.party_id ?? "",
+    });
 
     // Detect PDF by URL or source document name
     const isPdf =

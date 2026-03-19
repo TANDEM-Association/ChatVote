@@ -7,6 +7,10 @@ import {
   useState,
 } from "react";
 
+import {
+  trackCommunePageView,
+  trackMunicipalitySearched,
+} from "@lib/firebase/analytics";
 import { type Municipality } from "@lib/election/election.types";
 import { Loader2Icon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -80,6 +84,10 @@ const MunicipalitySearch = ({
         const data = (await res.json()) as Municipality[];
         setSuggestions(data);
         setShowSuggestions(data.length > 0);
+        trackMunicipalitySearched({
+          search_term: value,
+          result_count: data.length,
+        });
       } catch (err) {
         if (err instanceof Error && err.name === "AbortError") return;
         console.error("Municipality search failed:", err);
@@ -94,6 +102,10 @@ const MunicipalitySearch = ({
       setSearchTerm(municipality.nom);
       setShowSuggestions(false);
       setSuggestions([]);
+      trackCommunePageView({
+        commune_code: municipality.code,
+        commune_name: municipality.nom,
+      });
       onSelectMunicipality(municipality);
     },
     [onSelectMunicipality],
