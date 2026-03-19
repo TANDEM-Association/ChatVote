@@ -132,11 +132,14 @@ export default function AiSdkChatView({
     partyIdsRef.current = Array.from(partyIds);
   }
 
-  // Show tool toggles in dev always, in prod only with ?tools=1 (persists across navigation)
+  // Show tool toggles in dev always, in prod only with ?mode=ai&tools=1 (persists across navigation)
   const showToolsRef = useRef(
     process.env.NODE_ENV === "development" ||
       (typeof window !== "undefined" &&
-        new URLSearchParams(window.location.search).get("tools") === "1"),
+        (() => {
+          const params = new URLSearchParams(window.location.search);
+          return params.get("mode") === "ai" && params.get("tools") === "1";
+        })()),
   );
 
   const [input, setInput] = useState("");
