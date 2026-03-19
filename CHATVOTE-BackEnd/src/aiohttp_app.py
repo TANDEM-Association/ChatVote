@@ -181,6 +181,7 @@ async def get_assistant_info(request):
 
 
 _indexing_status: dict = {"manifestos": None, "candidates": None}
+_indexing_tasks: dict[str, asyncio.Task] = {}
 
 
 @routes.post(f"{route_prefix}/admin/index-all-manifestos")
@@ -248,6 +249,9 @@ async def admin_index_all_candidates(request):
     force = request.query.get("force", "").lower() == "true"
     logger.info(f"Admin triggered: indexing all candidate websites (scraper={scraper_backend}, force={force})")
 
+    if "all_candidates" in _indexing_tasks and not _indexing_tasks["all_candidates"].done():
+        return web.json_response({"status": "already_running", "message": "Candidate indexing is already in progress."})
+
     async def _run():
         try:
             _indexing_status["candidates"] = {"status": "running", "started": True}
@@ -261,8 +265,10 @@ async def admin_index_all_candidates(request):
         except Exception as e:
             _indexing_status["candidates"] = {"status": "error", "message": str(e)}
             logger.error(f"Error indexing candidates: {e}", exc_info=True)
+        finally:
+            _indexing_tasks.pop("all_candidates", None)
 
-    asyncio.create_task(_run())
+    _indexing_tasks["all_candidates"] = asyncio.create_task(_run())
     return web.json_response({"status": "started", "message": "Candidate indexing started in background. Check /admin/index-status for progress."})
 
 
@@ -404,8 +410,15 @@ async def admin_index_candidate_website(request):
     candidate_id = request.match_info["candidate_id"]
     logger.info(f"Admin triggered: indexing website for candidate {candidate_id}")
 
+    task_key = f"candidate_{candidate_id}"
+    if task_key in _indexing_tasks and not _indexing_tasks[task_key].done():
+        return web.json_response({"status": "already_running", "message": f"Indexing for candidate {candidate_id} is already in progress."})
+
+    coro = index_candidate_by_id(candidate_id)
+    task = asyncio.ensure_future(coro)
+    _indexing_tasks[task_key] = task
     try:
-        count = await index_candidate_by_id(candidate_id)
+        count = await task
 
         if count > 0:
             return web.json_response(
@@ -427,6 +440,8 @@ async def admin_index_candidate_website(request):
             {"status": "error", "message": str(e)},
             status=500,
         )
+    finally:
+        _indexing_tasks.pop(task_key, None)
 
 
 @routes.post(route_prefix + "/admin/index-candidate-profession/{candidate_id}")
@@ -815,6 +830,103 @@ async def admin_upload_job_status(request: web.Request) -> web.Response:
         return resp
 
     return web.json_response(job)
+
+
+@routes.get(route_prefix + "/admin/uploaded-documents")
+async def admin_uploaded_documents(request: web.Request) -> web.Response:
+    """List all manually uploaded documents from Qdrant (uploaded_document + profession_de_foi).
+
+    Groups chunks by (candidate, document_name, source_document) and returns
+    per-document stats: chunk count, candidate info, URLs, etc.
+
+    Query params:
+        ?candidate_id=cand-75056-7  — filter to one candidate
+        ?source_type=uploaded_document — filter by source_document type
+    """
+    if not _check_admin_secret(request):
+        raise web.HTTPNotFound()
+
+    candidate_id = request.query.get("candidate_id")
+    source_type = request.query.get("source_type")
+
+    # Source types to scan (non-scraped = manually uploaded or official docs)
+    target_types = ["uploaded_document", "profession_de_foi", "election_manifesto"]
+    if source_type:
+        target_types = [source_type]
+
+    from qdrant_client.models import Filter, FieldCondition, MatchValue, MatchAny
+
+    must_conditions = [
+        FieldCondition(
+            key="metadata.source_document",
+            match=MatchAny(any=target_types),
+        )
+    ]
+    if candidate_id:
+        must_conditions.append(
+            FieldCondition(key="metadata.namespace", match=MatchValue(value=candidate_id))
+        )
+
+    # Scroll all matching points
+    documents: dict[tuple, dict] = {}  # (namespace, doc_name, source_doc) -> info
+    offset = None
+    total_points = 0
+    while True:
+        results, next_offset = qdrant_client.scroll(
+            collection_name=CANDIDATES_INDEX_NAME,
+            limit=256,
+            offset=offset,
+            scroll_filter=Filter(must=must_conditions),
+            with_payload=[
+                "metadata.namespace", "metadata.candidate_name",
+                "metadata.municipality_code", "metadata.municipality_name",
+                "metadata.source_document", "metadata.document_name",
+                "metadata.url", "metadata.total_chunks", "metadata.chunk_index",
+                "metadata.theme", "metadata.party_ids",
+            ],
+            with_vectors=False,
+        )
+        if not results:
+            break
+        for pt in results:
+            total_points += 1
+            meta = (pt.payload or {}).get("metadata", {})
+            key = (
+                meta.get("namespace", "?"),
+                meta.get("document_name", "?"),
+                meta.get("source_document", "?"),
+            )
+            if key not in documents:
+                documents[key] = {
+                    "candidate_id": meta.get("namespace"),
+                    "candidate_name": meta.get("candidate_name"),
+                    "municipality_code": meta.get("municipality_code"),
+                    "municipality_name": meta.get("municipality_name"),
+                    "document_name": meta.get("document_name"),
+                    "source_document": meta.get("source_document"),
+                    "url": meta.get("url"),
+                    "party_ids": meta.get("party_ids", []),
+                    "total_chunks_expected": meta.get("total_chunks", 0),
+                    "chunks_found": 0,
+                    "themes": {},
+                }
+            documents[key]["chunks_found"] += 1
+            theme = meta.get("theme")
+            if theme:
+                themes = documents[key]["themes"]
+                themes[theme] = themes.get(theme, 0) + 1
+        if next_offset is None:
+            break
+        offset = next_offset
+
+    # Convert to list sorted by candidate
+    doc_list = sorted(documents.values(), key=lambda d: (d["candidate_name"] or "", d["document_name"] or ""))
+
+    return web.json_response({
+        "total_points": total_points,
+        "total_documents": len(doc_list),
+        "documents": doc_list,
+    })
 
 
 @routes.get(f"{route_prefix}/admin/debug-qdrant")

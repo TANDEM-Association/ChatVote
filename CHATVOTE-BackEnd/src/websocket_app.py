@@ -1040,6 +1040,11 @@ async def handle_combined_answer_request(
     )
     logger.info(f"TIMING handle_combined step=rag_query_improvement elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
     logger.debug(f"Improved RAG query: {improved_rag_query}")
+    await _emit_debug_llm_call(sid, chat_session.session_id, "rag_query_improvement", {
+        "party_id": "combined",
+        "original_query": user_message.content,
+        "improved_query": improved_rag_query,
+    })
 
     # For LOCAL scope, get the list of candidates in the municipality
     # This is important to KNOW which candidates exist, even if their websites aren't indexed
@@ -1086,6 +1091,10 @@ async def handle_combined_answer_request(
 
     # Perform combined search
     logger.info(f"TIMING handle_combined step=pre_rag elapsed={time.perf_counter() - t0:.3f}s sid={sid}")
+
+    async def _debug_cb(stage: str, detail: dict):
+        await _emit_debug_llm_call(sid, chat_session.session_id, stage, detail)
+
     manifesto_docs, candidate_docs = await identify_relevant_docs_combined(
         rag_query=improved_rag_query,
         chat_history=chat_history_str,
@@ -1096,12 +1105,19 @@ async def handle_combined_answer_request(
         municipality_code=municipality_code,
         n_docs_manifesto=20,
         n_docs_candidates=20,
+        debug_callback=_debug_cb,
     )
 
     logger.debug(
         f"RAG: {len(manifesto_docs)} manifesto + {len(candidate_docs)} candidate docs"
     )
     _log_timing("rag_search_combined", t0, sid, {"n_manifesto": len(manifesto_docs), "n_candidate": len(candidate_docs)})
+    await _emit_debug_llm_call(sid, chat_session.session_id, "rag_search_rerank", {
+        "party_id": "combined",
+        "query": improved_rag_query,
+        "num_manifesto_docs": len(manifesto_docs),
+        "num_candidate_docs": len(candidate_docs),
+    })
 
     # Build sources — only candidate sources are shown to the user.
     # Manifesto docs are used for LLM context but not surfaced as clickable sources.
@@ -1167,6 +1183,15 @@ async def handle_combined_answer_request(
             logger.info(
                 f"Generating response focused on parties: {[p.name for p in parties_for_response]}"
             )
+
+        await _emit_debug_llm_call(sid, chat_session.session_id, "response_generation_start", {
+            "party_id": responder_id,
+            "scope": chat_session.scope,
+            "num_manifesto_docs": len(manifesto_docs),
+            "num_candidate_docs": len(candidate_docs),
+            "llm_size": chat_session.chat_response_llm_size,
+            "is_single_party_focus": has_specific_parties,
+        })
 
         # Generate a comprehensive response using all manifesto and candidate data
         chunk_stream = await generate_streaming_global_combined_response(

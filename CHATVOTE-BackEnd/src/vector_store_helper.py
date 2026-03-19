@@ -2,7 +2,7 @@
 
 import os
 from pathlib import Path
-from typing import Union, Optional, Any
+from typing import Union, Optional, Any, Callable
 import logging
 
 from langchain_qdrant import QdrantVectorStore
@@ -198,6 +198,8 @@ def _scaleway_embeddings(api_key: str) -> tuple[Embeddings, int]:
             openai_api_key=api_key,
             openai_api_base=base_url,
             dimensions=dim,
+            timeout=60,
+            max_retries=3,
         ),
         dim,
     )
@@ -761,6 +763,7 @@ async def identify_relevant_docs_combined(
     n_docs_manifesto: int = 10,
     n_docs_candidates: int = 10,
     score_threshold: float = DEFAULT_SCORE_THRESHOLD,
+    debug_callback: Optional[Callable] = None,
 ) -> tuple[list[Document], list[Document]]:
     """
     Combined search across party manifestos and candidate websites.
@@ -857,6 +860,17 @@ async def identify_relevant_docs_combined(
                 )
             )
 
+    # Emit debug: vector search starting
+    if debug_callback:
+        await debug_callback("rag_vector_search", {
+            "query": rag_query,
+            "manifesto_namespaces": len(tasks),
+            "candidate_ids": candidate_ids,
+            "party_ids": party_ids,
+            "scope": scope,
+            "municipality_code": municipality_code,
+        })
+
     # Execute all tasks in parallel
     results = await asyncio.gather(*tasks, return_exceptions=True)
 
@@ -893,6 +907,15 @@ async def identify_relevant_docs_combined(
             seen_candidate_contents.add(content_key)
             unique_candidate_docs.append(doc)
 
+    # Emit debug: vector search results (before reranking)
+    if debug_callback:
+        await debug_callback("rag_vector_results", {
+            "raw_manifesto_docs": len(manifesto_docs),
+            "raw_candidate_docs": len(candidate_docs),
+            "unique_manifesto_docs": len(unique_manifesto_docs),
+            "unique_candidate_docs": len(unique_candidate_docs),
+        })
+
     # Rerank each set if we have enough docs.
     # Keep more manifesto docs (up to 10) since they span multiple parties
     # and truncating to 5 can drop entire parties from the context.
@@ -907,9 +930,10 @@ async def identify_relevant_docs_combined(
     # Rerank candidate docs PER CANDIDATE to preserve fair representation.
     # Global reranking would let dominant candidates (many chunks) crowd out
     # smaller ones. Instead, rerank within each candidate's docs and keep top 3.
+    per_cand: dict[str, list[Document]] = {}
     if unique_candidate_docs:
         from collections import defaultdict
-        per_cand: dict[str, list[Document]] = defaultdict(list)
+        per_cand = defaultdict(list)
         for doc in unique_candidate_docs:
             cid = (doc.metadata.get("candidate_ids") or ["unknown"])[0]
             per_cand[cid].append(doc)
@@ -945,6 +969,14 @@ async def identify_relevant_docs_combined(
             f"Per-candidate reranking: {len(per_cand)} candidates, "
             f"{len(unique_candidate_docs)} docs total"
         )
+
+    # Emit debug: reranking results
+    if debug_callback:
+        await debug_callback("rag_rerank_results", {
+            "manifesto_docs_after_rerank": len(unique_manifesto_docs),
+            "candidate_docs_after_rerank": len(unique_candidate_docs),
+            "candidate_groups": len(per_cand),
+        })
 
     return (unique_manifesto_docs, unique_candidate_docs)
 
