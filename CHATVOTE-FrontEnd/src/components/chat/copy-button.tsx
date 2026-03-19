@@ -4,6 +4,7 @@ import { useState } from "react";
 
 import { Button } from "@components/ui/button";
 import { cn } from "@lib/utils";
+import { trackMessageCopied } from "@lib/firebase/analytics";
 import { track } from "@vercel/analytics/react";
 import { type VariantProps } from "class-variance-authority";
 import { Check, Copy } from "lucide-react";
@@ -39,6 +40,7 @@ function CopyButton({
     track("message_copied", {
       message: text,
     });
+    trackMessageCopied();
 
     setTimeout(() => {
       setIsCopied(false);

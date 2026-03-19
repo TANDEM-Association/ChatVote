@@ -4,6 +4,7 @@ import React, { useState } from "react";
 
 import Link from "next/link";
 
+import { trackFeedbackDialogOpened } from "@lib/firebase/analytics";
 import { config } from "@config";
 import { MailIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -21,7 +22,7 @@ const FeedbackDialog = ({ children }: Props) => {
 
   return (
     <React.Fragment>
-      <div onClick={() => setIsOpen(true)}>{children}</div>
+      <div onClick={() => { setIsOpen(true); trackFeedbackDialogOpened(); }}>{children}</div>
 
       <Modal
         isOpen={isOpen}

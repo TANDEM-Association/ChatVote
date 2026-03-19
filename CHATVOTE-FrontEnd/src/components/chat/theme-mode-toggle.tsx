@@ -8,6 +8,7 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@components/ui/dropdown-menu";
+import { trackThemeChanged } from "@lib/firebase/analytics";
 import { useTheme } from "@lib/hooks/useTheme";
 import { Moon, Sun } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -35,13 +36,13 @@ export function ThemeModeToggle({ align }: Props) {
         </Button>
       </DropdownMenuTrigger>
       <DropdownMenuContent align={normalizedAlign}>
-        <DropdownMenuItem onClick={() => setTheme("light")}>
+        <DropdownMenuItem onClick={() => { setTheme("light"); trackThemeChanged({ theme: "light" }); }}>
           {t("light")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("dark")}>
+        <DropdownMenuItem onClick={() => { setTheme("dark"); trackThemeChanged({ theme: "dark" }); }}>
           {t("dark")}
         </DropdownMenuItem>
-        <DropdownMenuItem onClick={() => setTheme("system")}>
+        <DropdownMenuItem onClick={() => { setTheme("system"); trackThemeChanged({ theme: "system" }); }}>
           {t("system")}
         </DropdownMenuItem>
       </DropdownMenuContent>

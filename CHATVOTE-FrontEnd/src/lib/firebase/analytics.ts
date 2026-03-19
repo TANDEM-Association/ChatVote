@@ -250,3 +250,95 @@ export function trackNewChatStarted(params: {
     party_count: params.party_count,
   });
 }
+
+// Donation funnel
+export function trackDonationDialogOpened(): void {
+  trackEvent("donation_dialog_opened");
+}
+
+export function trackDonationAmountSelected(params: {
+  amount: number;
+  is_custom: boolean;
+}): void {
+  trackEvent("donation_amount_selected", {
+    amount: params.amount,
+    is_custom: params.is_custom ? 1 : 0,
+  });
+}
+
+export function trackDonationSubmitted(params: { amount: number }): void {
+  trackEvent("donation_submitted", { amount: params.amount });
+}
+
+export function trackDonationCompleted(): void {
+  trackEvent("donation_completed");
+}
+
+export function trackDonationFailed(): void {
+  trackEvent("donation_failed");
+}
+
+// Feedback
+export function trackFeedbackDialogOpened(): void {
+  trackEvent("feedback_dialog_opened");
+}
+
+export function trackFeedbackEmailClicked(): void {
+  trackEvent("feedback_email_clicked");
+}
+
+// Message interactions
+export function trackMessageLiked(params: { session_id: string }): void {
+  trackEvent("message_liked", { session_id: params.session_id });
+}
+
+export function trackMessageDisliked(params: {
+  session_id: string;
+  has_detail: boolean;
+}): void {
+  trackEvent("message_disliked", {
+    session_id: params.session_id,
+    has_detail: params.has_detail ? 1 : 0,
+  });
+}
+
+export function trackMessageCopied(): void {
+  trackEvent("message_copied");
+}
+
+// UI interactions
+export function trackThemeChanged(params: { theme: string }): void {
+  trackEvent("theme_changed", { theme: params.theme });
+}
+
+export function trackGuideOpened(): void {
+  trackEvent("guide_opened");
+}
+
+export function trackSurveyOpened(params: { session_id: string }): void {
+  trackEvent("survey_opened", { session_id: params.session_id });
+}
+
+export function trackSurveyDismissed(): void {
+  trackEvent("survey_dismissed");
+}
+
+export function trackPartySelectOpened(): void {
+  trackEvent("party_select_opened");
+}
+
+export function trackPartySelectConfirmed(params: {
+  party_count: number;
+}): void {
+  trackEvent("party_select_confirmed", { party_count: params.party_count });
+}
+
+export function trackHistoryItemClicked(params: {
+  session_id: string;
+}): void {
+  trackEvent("history_item_clicked", { session_id: params.session_id });
+}
+
+export function trackChatModeToggled(params: { mode: string }): void {
+  trackEvent("chat_mode_toggled", { mode: params.mode });
+}

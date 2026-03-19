@@ -15,6 +15,7 @@ import {
   SidebarMenuItem,
   useSidebar,
 } from "@components/ui/sidebar";
+import { trackHistoryItemClicked } from "@lib/firebase/analytics";
 import { listenToHistory } from "@lib/firebase/firebase";
 import { type ChatSession } from "@lib/firebase/firebase.types";
 import { cn } from "@lib/utils";
@@ -41,10 +42,6 @@ function SidebarHistory({ history: initialHistory }: Props) {
     return () => unsubscribe();
   }, [user?.uid]);
 
-  function handleClick() {
-    setOpen(false);
-  }
-
   if (history.length === 0) return null;
 
   return (
@@ -66,7 +63,7 @@ function SidebarHistory({ history: initialHistory }: Props) {
                         ? `/chat/${item.id}?municipality_code=${item.municipality_code}`
                         : `/chat/${item.id}`
                     }
-                    onClick={handleClick}
+                    onClick={() => { setOpen(false); trackHistoryItemClicked({ session_id: item.id }); }}
                   >
                     <span className="w-full truncate">
                       {item.title ||

@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { trackDonationAmountSelected, trackDonationSubmitted } from "@lib/firebase/analytics";
 import { createCheckoutSession } from "@lib/server-actions/stripe-create-session";
 import { formatAmountForDisplay } from "@lib/stripe/stripe-helpers";
 import { cn } from "@lib/utils";
@@ -34,6 +35,7 @@ const DonationForm = () => {
     track("donation_started", {
       amount: amount,
     });
+    trackDonationSubmitted({ amount });
 
     const result = await createCheckoutSession(data);
 
@@ -45,6 +47,7 @@ const DonationForm = () => {
   const handleSetAmount = (amount: number) => {
     setAmount(amount);
     setCustomAmount(false);
+    trackDonationAmountSelected({ amount, is_custom: false });
   };
 
   const handleSliderChange = (value: number[]) => {
@@ -124,7 +127,7 @@ const DonationForm = () => {
               customAmount &&
                 "bg-primary text-primary-foreground hover:bg-primary/90 hover:text-primary-foreground/90",
             )}
-            onClick={() => setCustomAmount(true)}
+            onClick={() => { setCustomAmount(true); trackDonationAmountSelected({ amount, is_custom: true }); }}
           >
             {tCommon("other")}
           </Button>

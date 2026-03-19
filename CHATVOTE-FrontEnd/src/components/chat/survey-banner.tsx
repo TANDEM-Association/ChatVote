@@ -7,6 +7,7 @@ import { useChatStore } from "@components/providers/chat-store-provider";
 import { Button } from "@components/ui/button";
 import { FilloutPopupEmbed } from "@fillout/react";
 import { SURVEY_BANNER_MIN_MESSAGE_COUNT } from "@lib/stores/chat-store";
+import { trackSurveyDismissed, trackSurveyOpened } from "@lib/firebase/analytics";
 import { track } from "@vercel/analytics/react";
 import { MessageCircleHeartIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -54,6 +55,7 @@ const SurveyBanner = () => {
     setOptimisticShowSurveyBanner(false);
 
     track("survey_banner_force_closed");
+    trackSurveyDismissed();
 
     if (!user?.uid) return;
     updateUser({
@@ -107,7 +109,7 @@ const SurveyBanner = () => {
         </Button>
       </div>
       <p className="text-muted-foreground text-sm">{t("description")}</p>
-      <Button size="sm" variant="default" onClick={() => setOpen(true)}>
+      <Button size="sm" variant="default" onClick={() => { setOpen(true); trackSurveyOpened({ session_id: sessionId ?? "" }); }}>
         <MessageCircleHeartIcon />
         {t("startSurvey")}
       </Button>

@@ -2,6 +2,7 @@
 
 import { Sparkles, Users } from "lucide-react";
 
+import { trackChatModeToggled } from "@lib/firebase/analytics";
 import { cn } from "@lib/utils";
 import { useChatModeStore } from "@lib/stores/chat-mode-store";
 
@@ -18,7 +19,7 @@ export function ChatModeToggle() {
             : "text-muted-foreground hover:text-foreground",
         )}
         title="Mode multi-parti — interrogez plusieurs partis simultanément"
-        onClick={() => setChatMode("classic")}
+        onClick={() => { setChatMode("classic"); trackChatModeToggled({ mode: "classic" }); }}
       >
         <Users className="mr-1 inline size-3.5" />
         Multi-parti
@@ -31,7 +32,7 @@ export function ChatModeToggle() {
             : "text-muted-foreground hover:text-foreground",
         )}
         title="Assistant IA — conversation guidée avec un assistant intelligent"
-        onClick={() => setChatMode("ai-sdk")}
+        onClick={() => { setChatMode("ai-sdk"); trackChatModeToggled({ mode: "ai-sdk" }); }}
       >
         <Sparkles className="mr-1 inline size-3.5" />
         Assistant IA

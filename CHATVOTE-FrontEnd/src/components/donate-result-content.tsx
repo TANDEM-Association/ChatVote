@@ -1,8 +1,10 @@
 "use client";
 
-import React from "react";
+import React, { useEffect } from "react";
 
 import Link from "next/link";
+
+import { trackDonationCompleted, trackDonationFailed } from "@lib/firebase/analytics";
 
 import { Button } from "@components/ui/button";
 import {
@@ -20,6 +22,14 @@ type Props = {
 
 const DonateResultContent = ({ isSuccess }: Props) => {
   const t = useTranslations("donateResult");
+
+  useEffect(() => {
+    if (isSuccess) {
+      trackDonationCompleted();
+    } else {
+      trackDonationFailed();
+    }
+  }, [isSuccess]);
 
   if (isSuccess === false) {
     return (

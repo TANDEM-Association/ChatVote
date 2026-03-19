@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 
+import { trackGuideOpened } from "@lib/firebase/analytics";
+
 import { Modal } from "./ui/modal";
 import Guide from "./guide";
 
@@ -14,7 +16,7 @@ const GuideDialog = ({ children }: Props) => {
 
   return (
     <React.Fragment>
-      <div onClick={() => setIsOpen(true)}>{children}</div>
+      <div onClick={() => { setIsOpen(true); trackGuideOpened(); }}>{children}</div>
 
       <Modal
         isOpen={isOpen}

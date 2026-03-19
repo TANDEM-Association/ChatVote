@@ -2,6 +2,8 @@
 
 import React, { useState } from "react";
 
+import { trackDonationDialogOpened } from "@lib/firebase/analytics";
+
 import { Modal } from "./ui/modal";
 import DonationForm from "./donation-form";
 
@@ -14,7 +16,7 @@ const DonationDialog = ({ children }: Props) => {
 
   return (
     <React.Fragment>
-      <div onClick={() => setIsOpen(true)}>{children}</div>
+      <div onClick={() => { setIsOpen(true); trackDonationDialogOpened(); }}>{children}</div>
 
       <Modal
         isOpen={isOpen}

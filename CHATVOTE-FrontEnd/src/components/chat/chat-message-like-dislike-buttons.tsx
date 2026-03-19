@@ -4,6 +4,7 @@ import { Button } from "@components/ui/button";
 import { type StreamingMessage } from "@lib/socket.types";
 import { type MessageItem } from "@lib/stores/chat-store.types";
 import { cn } from "@lib/utils";
+import { trackMessageDisliked, trackMessageLiked } from "@lib/firebase/analytics";
 import { track } from "@vercel/analytics/react";
 import { ThumbsUp } from "lucide-react";
 
@@ -15,11 +16,13 @@ type Props = {
 
 function ChatMessageLikeDislikeButtons({ message }: Props) {
   const setMessageFeedback = useChatStore((state) => state.setMessageFeedback);
+  const chatId = useChatStore((state) => state.chatId);
 
   const handleLike = () => {
     track("message_liked", {
       message: message.content ?? "empty-message",
     });
+    if (chatId) trackMessageLiked({ session_id: chatId });
     setMessageFeedback(message.id, { feedback: "like" });
   };
 
@@ -29,6 +32,7 @@ function ChatMessageLikeDislikeButtons({ message }: Props) {
       message: message.content ?? "empty-message",
       details,
     });
+    if (chatId) trackMessageDisliked({ session_id: chatId, has_detail: details.length > 0 });
   };
 
   const isLiked = message.feedback?.feedback === "like";

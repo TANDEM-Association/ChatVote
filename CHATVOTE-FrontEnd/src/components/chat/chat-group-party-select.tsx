@@ -2,6 +2,7 @@
 
 import React, { useState } from "react";
 
+import { trackPartySelectConfirmed, trackPartySelectOpened } from "@lib/firebase/analytics";
 import { Modal } from "@components/ui/modal";
 import { useTranslations } from "next-intl";
 
@@ -25,12 +26,13 @@ const ChatGroupPartySelect = ({
 
   const handleNewChat = (partyIds: string[]) => {
     setIsOpen(false);
+    trackPartySelectConfirmed({ party_count: partyIds.length });
     onNewChat?.(partyIds);
   };
 
   return (
     <React.Fragment>
-      <div onClick={() => setIsOpen(true)}>{children}</div>
+      <div onClick={() => { setIsOpen(true); trackPartySelectOpened(); }}>{children}</div>
 
       <Modal
         isOpen={isOpen}
