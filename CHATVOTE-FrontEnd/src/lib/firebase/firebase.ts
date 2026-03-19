@@ -51,13 +51,17 @@ export async function createChatSession(
   partyIds: string[],
   sessionId: string,
   tenantId?: string,
+  municipalityCode?: string,
 ): Promise<void> {
+  const scope = municipalityCode ? "local" : "national";
   return await setDoc(doc(db, "chat_sessions", sessionId), {
     user_id: userId,
     party_ids: partyIds,
+    scope,
     created_at: Timestamp.now(),
     updated_at: Timestamp.now(),
     ...(tenantId ? { tenant_id: tenantId } : {}),
+    ...(municipalityCode ? { municipality_code: municipalityCode } : {}),
   });
 }
 

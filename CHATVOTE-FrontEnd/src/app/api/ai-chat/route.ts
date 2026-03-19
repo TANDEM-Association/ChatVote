@@ -202,11 +202,12 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                         }),
                       );
 
-                      // Merge all queries, deduplicate by content hash, keep highest score
+                      // Merge all queries, deduplicate by candidate + content fingerprint, keep highest score
                       const seen = new Map<string, (typeof perQueryResults)[0][0]>();
                       for (const results of perQueryResults) {
                         for (const r of results) {
-                          const key = `${r.party_id}:${r.content.slice(0, 100)}`;
+                          // Use candidateId (namespace) + first 200 chars of content for robust dedup
+                          const key = `${(r as any).candidateId ?? r.party_id}:${r.content.slice(0, 200).replace(/\s+/g, ' ').trim()}`;
                           const existing = seen.get(key);
                           if (!existing || (r.score ?? 0) > (existing.score ?? 0)) {
                             seen.set(key, r);
@@ -821,10 +822,15 @@ Tu disposes de **12 tours d'outils maximum**. Utilise-les intelligemment :
 **Tour 3+ — Compléments ciblés** : Recherches additionnelles pour combler les trous identifiés.
 **Dernier tour — Réponse** : Rédige ta réponse + appelle suggestFollowUps.
 
-**Règles clés** :
+**Règles anti-doublons (CRITIQUE)** :
+- **N'appelle JAMAIS searchAllCandidates plus d'une fois.** Cet outil accepte plusieurs requêtes en une seule invocation — passe toutes tes formulations d'un coup dans le champ \`queries\`.
+- **N'appelle JAMAIS searchCandidateWebsite deux fois pour le même candidat** sauf si tu reformules avec un angle RADICALEMENT différent (ex : Tour 1 = "budget municipal" → Tour 2 = "plan d'investissement infrastructures").
+- Les requêtes du champ \`queries\` doivent couvrir des **angles distincts**, pas des synonymes proches. Mauvais : ["transport urbain", "transports en commun", "mobilité urbaine"]. Bon : ["plan vélo pistes cyclables", "stationnement voiture parking", "transports en commun bus tramway"].
+- Si tu relances une recherche au tour 2+, c'est UNIQUEMENT pour un sujet non couvert au tour 1 (ex : un candidat manquant, un thème connexe).
+
+**Autres règles** :
 - Lance TOUJOURS plusieurs recherches en parallèle au premier tour (pas une seule requête).
-- Varie les formulations : synonymes, termes courants vs administratifs, angles différents.
-- Après chaque tour, évalue : "Ai-je assez de matière pour chaque candidat concerné ?" Si non, relance.
+- Après chaque tour, évalue : "Ai-je assez de matière pour chaque candidat concerné ?" Si non, relance avec un angle DIFFÉRENT.
 - Ne rédige ta réponse que quand tu as suffisamment de données OU que tu as épuisé tes reformulations.
 - **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.`;
 

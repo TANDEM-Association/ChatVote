@@ -10,6 +10,8 @@ export type ChatSession = {
   updated_at?: Date;
   party_ids?: string[];
   tenant_id?: string;
+  municipality_code?: string;
+  scope?: "national" | "local";
 };
 
 export type ProposedQuestion = {

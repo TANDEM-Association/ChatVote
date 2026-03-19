@@ -183,6 +183,8 @@ export async function getChatSession(sessionId: string) {
     title: data.title,
     party_ids: data.party_ids,
     tenant_id: data.tenant_id,
+    municipality_code: data.municipality_code,
+    scope: data.scope,
     updated_at: firestoreTimestampToDate(data.updated_at),
     created_at: firestoreTimestampToDate(data.created_at),
   } as ChatSession;

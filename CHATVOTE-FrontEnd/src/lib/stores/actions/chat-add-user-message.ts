@@ -77,7 +77,7 @@ export const chatAddUserMessage: ChatStoreActionHandlerFor<"addUserMessage"> =
     });
 
     messages = get().messages;
-    const { tenant } = get();
+    const { tenant, municipalityCode } = get();
 
     try {
       if (messages.length < 2 && !isMessageResend) {
@@ -108,6 +108,7 @@ export const chatAddUserMessage: ChatStoreActionHandlerFor<"addUserMessage"> =
           [...partyIds],
           safeSessionId,
           tenant?.id,
+          municipalityCode,
         ).catch(console.error);
       }
 

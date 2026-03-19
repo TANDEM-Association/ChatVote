@@ -70,6 +70,9 @@ async function ChatViewSsr({
     : [undefined, undefined];
 
   const normalizedPartyIds = chatSession?.party_ids ?? partyIds;
+  // Prefer municipality_code from stored session, fallback to URL param
+  const resolvedMunicipalityCode =
+    chatSession?.municipality_code ?? municipalityCode;
 
   // Fetch parties and proposed questions in parallel (all independent)
   const [parties, allParties, proposedQuestions] = await Promise.all([
@@ -89,7 +92,7 @@ async function ChatViewSsr({
       messages={messages}
       proposedQuestions={proposedQuestions}
       initialQuestion={initialQuestion}
-      municipalityCode={municipalityCode}
+      municipalityCode={resolvedMunicipalityCode}
     />
   );
 }

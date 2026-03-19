@@ -209,7 +209,8 @@ export async function searchQdrantRaw(
 export function deduplicateResults(results: SearchResult[]): SearchResult[] {
   const seen = new Set<string>();
   return results.filter((r) => {
-    const key = r.content.slice(0, 200);
+    // Normalize whitespace for robust matching across different query results
+    const key = r.content.slice(0, 200).replace(/\s+/g, ' ').trim();
     if (seen.has(key)) return false;
     seen.add(key);
     return true;

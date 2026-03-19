@@ -60,7 +60,14 @@ function SidebarHistory({ history: initialHistory }: Props) {
                   asChild
                   className={cn(chatId === item.id && "bg-muted")}
                 >
-                  <Link href={`/chat/${item.id}`} onClick={handleClick}>
+                  <Link
+                    href={
+                      item.municipality_code
+                        ? `/chat/${item.id}?municipality_code=${item.municipality_code}`
+                        : `/chat/${item.id}`
+                    }
+                    onClick={handleClick}
+                  >
                     <span className="w-full truncate">
                       {item.title ||
                         item.party_ids?.join(",") ||
