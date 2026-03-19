@@ -1,0 +1,85 @@
+apiVersion: apps/v1
+kind: StatefulSet
+metadata:
+  name: langfuse-clickhouse
+  namespace: chatvote-prod
+  labels:
+    app: langfuse-clickhouse
+spec:
+  serviceName: langfuse-clickhouse
+  replicas: 1
+  selector:
+    matchLabels:
+      app: langfuse-clickhouse
+  template:
+    metadata:
+      labels:
+        app: langfuse-clickhouse
+    spec:
+      nodeSelector:
+        k8s.scaleway.com/pool-name: pool-par-2-8gb
+      containers:
+        - name: clickhouse
+          image: clickhouse/clickhouse-server:24-alpine
+          ports:
+            - containerPort: 8123
+              name: http
+            - containerPort: 9000
+              name: native
+          env:
+            - name: CLICKHOUSE_USER
+              value: clickhouse
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: clickhouse-password
+          volumeMounts:
+            - name: clickhouse-storage
+              mountPath: /var/lib/clickhouse
+          livenessProbe:
+            exec:
+              command:
+                - wget
+                - --spider
+                - -q
+                - http://localhost:8123/ping
+            periodSeconds: 15
+            failureThreshold: 3
+            timeoutSeconds: 5
+          readinessProbe:
+            exec:
+              command:
+                - wget
+                - --spider
+                - -q
+                - http://localhost:8123/ping
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          startupProbe:
+            exec:
+              command:
+                - wget
+                - --spider
+                - -q
+                - http://localhost:8123/ping
+            periodSeconds: 5
+            failureThreshold: 30
+            timeoutSeconds: 3
+          resources:
+            requests:
+              memory: "128Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+  volumeClaimTemplates:
+    - metadata:
+        name: clickhouse-storage
+      spec:
+        accessModes: ["ReadWriteOnce"]
+        storageClassName: scw-bssd
+        resources:
+          requests:
+            storage: 10Gi

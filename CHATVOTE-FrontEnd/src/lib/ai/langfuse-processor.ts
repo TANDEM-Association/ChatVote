@@ -1,6 +1,11 @@
 import { LangfuseSpanProcessor } from '@langfuse/otel';
+import { NodeTracerProvider } from '@opentelemetry/sdk-trace-node';
 
-// Singleton span processor — shared between instrumentation.ts and route handlers.
-// instrumentation.ts registers this with the NodeTracerProvider.
-// Route handlers call forceFlush() via after() to ensure spans are sent.
+// Singleton span processor
 export const langfuseSpanProcessor = new LangfuseSpanProcessor();
+
+// Register the OTEL tracer provider at module level
+const tracerProvider = new NodeTracerProvider({
+  spanProcessors: [langfuseSpanProcessor],
+});
+tracerProvider.register();

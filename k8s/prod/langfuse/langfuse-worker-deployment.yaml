@@ -1,10 +1,10 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: langfuse
+  name: langfuse-worker
   namespace: chatvote-prod
   labels:
-    app: langfuse
+    app: langfuse-worker
 spec:
   replicas: 1
   strategy:
@@ -14,20 +14,20 @@ spec:
       maxUnavailable: 0
   selector:
     matchLabels:
-      app: langfuse
+      app: langfuse-worker
   template:
     metadata:
       labels:
-        app: langfuse
+        app: langfuse-worker
     spec:
       nodeSelector:
         k8s.scaleway.com/pool-name: pool-par-2-8gb
       containers:
-        - name: langfuse
-          image: ghcr.io/langfuse/langfuse:3
+        - name: langfuse-worker
+          image: langfuse/langfuse-worker:3
           ports:
-            - containerPort: 3000
-              name: http
+            - containerPort: 3030
+              name: worker
           env:
             - name: DATABASE_URL
               valueFrom:
@@ -49,10 +49,23 @@ spec:
                 secretKeyRef:
                   name: langfuse-secrets
                   key: encryption-key
-            - name: NEXTAUTH_URL
-              value: "https://langfuse.chatvote.fr"
-            - name: AUTH_DISABLE_SIGNUP
-              value: "true"
+            - name: CLICKHOUSE_URL
+              value: "http://langfuse-clickhouse:8123"
+            - name: CLICKHOUSE_MIGRATION_URL
+              value: "clickhouse://langfuse-clickhouse:9000"
+            - name: CLICKHOUSE_USER
+              value: clickhouse
+            - name: CLICKHOUSE_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: clickhouse-password
+            - name: CLICKHOUSE_CLUSTER_ENABLED
+              value: "false"
+            - name: REDIS_HOST
+              value: langfuse-redis
+            - name: REDIS_PORT
+              value: "6379"
             - name: LANGFUSE_S3_EVENT_UPLOAD_BUCKET
               valueFrom:
                 secretKeyRef:
@@ -76,23 +89,6 @@ spec:
               value: "true"
             - name: LANGFUSE_S3_EVENT_UPLOAD_PREFIX
               value: "events/"
-            - name: CLICKHOUSE_URL
-              value: "http://langfuse-clickhouse:8123"
-            - name: CLICKHOUSE_MIGRATION_URL
-              value: "clickhouse://langfuse-clickhouse:9000"
-            - name: CLICKHOUSE_USER
-              value: clickhouse
-            - name: CLICKHOUSE_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: langfuse-secrets
-                  key: clickhouse-password
-            - name: CLICKHOUSE_CLUSTER_ENABLED
-              value: "false"
-            - name: REDIS_HOST
-              value: langfuse-redis
-            - name: REDIS_PORT
-              value: "6379"
             - name: LANGFUSE_S3_MEDIA_UPLOAD_BUCKET
               valueFrom:
                 secretKeyRef:
@@ -118,29 +114,29 @@ spec:
               value: "media/"
           startupProbe:
             httpGet:
-              path: /api/public/health
-              port: 3000
+              path: /api/health
+              port: 3030
             periodSeconds: 5
             failureThreshold: 30
             timeoutSeconds: 3
           livenessProbe:
             httpGet:
-              path: /api/public/health
-              port: 3000
+              path: /api/health
+              port: 3030
             periodSeconds: 15
             failureThreshold: 3
             timeoutSeconds: 5
           readinessProbe:
             httpGet:
-              path: /api/public/health
-              port: 3000
+              path: /api/health
+              port: 3030
             periodSeconds: 10
             failureThreshold: 3
             timeoutSeconds: 5
           resources:
             requests:
-              memory: "256Mi"
+              memory: "128Mi"
               cpu: "100m"
             limits:
-              memory: "768Mi"
+              memory: "512Mi"
               cpu: "500m"

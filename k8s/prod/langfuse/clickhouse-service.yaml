@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: langfuse-clickhouse
+  namespace: chatvote-prod
+  labels:
+    app: langfuse-clickhouse
+spec:
+  type: ClusterIP
+  selector:
+    app: langfuse-clickhouse
+  ports:
+    - name: http
+      port: 8123
+      targetPort: 8123
+      protocol: TCP
+    - name: native
+      port: 9000
+      targetPort: 9000
+      protocol: TCP
