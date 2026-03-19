@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # src/lib/firebase
 
@@ -16,6 +16,8 @@ Firebase integration layer split into client-side, server-side, and admin-side m
 | `firebase-server.ts` | Server-side helpers using the client SDK from a server context: `getParties()`, `getAuth()`, `getSystemStatus()`. Imports `server-only`                                                |
 | `firebase-admin.ts`  | Firebase Admin SDK: `getTenant()`, privileged server operations. Imports `server-only`                                                                                                 |
 | `firebase.types.ts`  | Domain types: `ChatSession`, `Tenant`, `ProposedQuestion`, `SourceDocument`, `LlmSystemStatus`, `DEFAULT_LLM_SIZE`                                                                     |
+| `analytics.ts`       | Firebase Analytics: event tracking for chat interactions, errors, newsletter signups, response timing                                                                                    |
+| `user-profile.ts`    | User profile helpers for Firebase Auth user data                                                                                                                                         |
 
 ## For AI Agents
 

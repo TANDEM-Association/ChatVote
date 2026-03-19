@@ -1,18 +1,52 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # scripts
 
 ## Purpose
-Developer utility scripts for local development setup, Firestore data import, and frontend type synchronisation. Not part of the production application; these are run manually or via `make` targets to set up a local development environment or perform one-off data operations.
+Developer utility scripts for local development, data auditing, Firestore operations, Qdrant management, candidate pipeline operations, and frontend type synchronisation. Not part of the production application; run manually or via `make` targets.
 
 ## Key Files
 | File | Description |
 |------|-------------|
-| `seed_local.py` | Seeds the Firestore emulator with dev data from `firebase/firestore_data/dev/` and creates required Qdrant collections; `--with-vectors` flag also generates sample embeddings via Ollama for basic RAG testing |
-| `import-firestore.js` | Node.js script that imports a JSON seed file into Firestore emulator; accepts collection name, file path, and `--clean` flag to delete existing documents first |
-| `generate_ts_types.py` | Exports Pydantic model JSON Schemas and Socket.IO event maps as JSON to stdout; consumed by the frontend's TypeScript type generation toolchain |
-| `package.json` / `package-lock.json` | Node.js dependencies for `import-firestore.js` (Firebase Admin SDK for Node) |
+| `seed_local.py` | Seeds Firestore emulator + Qdrant collections from `firebase/firestore_data/dev/`; `--with-vectors` generates sample embeddings via Ollama |
+| `import-firestore.js` | Node.js: imports JSON seed file into Firestore emulator; `--clean` flag resets collection |
+| `export-firestore.js` | Node.js: exports Firestore emulator data to JSON files |
+| `generate_ts_types.py` | Exports Pydantic JSON Schemas + Socket.IO event maps for frontend TS type generation |
+| `candidate_id_audit.py` | Audits candidate ID consistency across Firestore and Qdrant |
+| `candidate_id_audit_figures.py` | Generates visual charts from candidate ID audit results |
+| `municipality_audit.py` | Audits municipality data integrity in Firestore |
+| `qdrant_snapshot.py` | Creates and manages Qdrant collection snapshots for backup |
+| `chunk_health_audit.py` | Audits Qdrant chunk metadata completeness and quality |
+| `pipeline_audit.py` | End-to-end data pipeline health audit |
+| `pipeline_audit_figures.py` | Generates visual reports from pipeline audit results |
+| `crawl_all_candidates.py` | Batch-crawls all candidate websites |
+| `reindex_all_damaged_prod.py` | Re-indexes damaged/incomplete Qdrant points in production |
+| `reindex_candidate_prod.py` | Re-indexes a single candidate in production |
+| `reindex_paris_prod.py` | Re-indexes Paris-specific candidates in production |
+| `migrate_dev_to_prod_qdrant.py` | Migrates Qdrant data from dev to prod collections |
+| `fetch_second_turn_candidates.py` | Fetches second-round election candidate data |
+| `ingest_second_tour_candidatures.py` | Ingests second-round candidature data into Firestore |
+| `seed_all_profession_communes.py` | Seeds profession de foi PDFs for all communes |
+| `seed_commune_vectors.py` | Seeds Qdrant vectors for commune-level data |
+| `upload_all_professions_to_storage.py` | Uploads all profession de foi PDFs to Firebase Storage |
+| `upload_poster_pdfs_to_storage.py` | Uploads election poster PDFs to Firebase Storage |
+| `index_election_posters.py` | Indexes election poster content into Qdrant |
+| `index_posters_prod.py` | Production variant of poster indexing |
+| `backfill_md_urls.py` | Backfills markdown URLs in Qdrant metadata |
+| `backfill_profession_urls.py` | Backfills profession de foi URLs in metadata |
+| `backfill_urls.py` | General URL backfill utility |
+| `validate_qdrant_metadata.py` | Validates Qdrant point metadata against expected schema |
+| `validate_chat_e2e.py` | End-to-end chat validation script |
+| `check_prod_status.py` | Health check for production services |
+| `diagnose_coverage.py` | Diagnoses RAG coverage gaps by theme/party |
+| `sync_crawl_status.py` | Syncs crawl status from scraper to Firestore |
+| `optimize_prompts.py` | Prompt optimization utilities |
+| `eval_report.py` | Generates evaluation reports from test results |
+| `generate_goldens.py` | Generates golden test datasets for evaluation |
+| `migrate_municipalities_to_prod.js` | Migrates municipality data to production Firestore |
+| `migrate_firebase_urls_to_s3.py` | Migrates Firebase Storage URLs to S3 |
+| `snapshot.Dockerfile` | Dockerfile for Qdrant snapshot operations |
 
 ## For AI Agents
 

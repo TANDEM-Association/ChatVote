@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # src/services
 
@@ -15,6 +15,24 @@ Background services that run alongside the HTTP/Socket.IO server. Handles automa
 | `firestore_listener.py` | Firestore real-time listeners on `parties` and `candidates` collections; triggers manifesto or website indexing when documents are added or modified; runs in a separate thread and dispatches to the main asyncio event loop |
 | `scheduler.py` | APScheduler `AsyncIOScheduler` with two cron jobs: municipalities sync every Sunday at midnight, candidate website re-indexing daily at 3 AM |
 | `municipalities_sync.py` | Fetches all French communes from `geo.api.gouv.fr` with full metadata (code, name, region, department, EPCI, population, etc.) and writes to `firebase/firestore_data/dev/municipalities.json` |
+| `profession_indexer.py` | Indexes profession de foi PDFs from Firebase Storage into `candidates_websites_` Qdrant collection with namespace per candidate |
+| `theme_classifier.py` | LLM-based theme classification for Qdrant chunks using 14-theme taxonomy; classifies chunks into theme + sub-theme |
+| `chunk_classifier.py` | Classifies chunk source types (manifesto, website, profession de foi) and enriches metadata |
+| `backfill_themes.py` | CLI tool to backfill theme/sub-theme on existing Qdrant chunks via `theme_classifier`; supports batch + concurrent LLM calls |
+| `backfill_metadata.py` | Backfills missing metadata fields (URLs, titles, source types) on existing Qdrant points |
+| `chunking.py` | Shared text chunking utilities using `RecursiveCharacterTextSplitter` with configurable size/overlap |
+| `content_processing.py` | Content extraction and cleaning from HTML/PDF sources; normalises text for embedding |
+| `pdf_extract.py` | PDF text extraction with `pypdf`; handles corrupted/encrypted PDFs gracefully |
+| `qdrant_ops.py` | Low-level Qdrant operations: batch upsert, scroll, delete by filter, collection management |
+| `document_upload.py` | Uploads documents (PDFs, scraped content) to Firebase Storage |
+| `firecrawl_scraper.py` | Alternative scraper using Firecrawl API for JavaScript-heavy sites |
+| `playwright_fast_scraper.py` | Optimised Playwright scraper with connection pooling and parallel page processing |
+| `k8s_job_launcher.py` | Launches Kubernetes Jobs for batch indexing/scraping operations on the cluster |
+
+## Subdirectories
+| Directory | Purpose |
+|-----------|---------|
+| `data_pipeline/` | Orchestration layer for the full scrape → chunk → embed → index pipeline |
 
 ## For AI Agents
 

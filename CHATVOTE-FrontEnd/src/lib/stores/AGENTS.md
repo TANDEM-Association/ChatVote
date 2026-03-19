@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # src/lib/stores
 
@@ -13,6 +13,8 @@ The Zustand chat store — the central state container for the entire chat featu
 | --------------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
 | `chat-store.ts`       | Store factory: `createChatStore()` assembles all 32+ action handlers using Zustand + Immer + devtools middleware. Defines `defaultState`                                                                                          |
 | `chat-store.types.ts` | All TypeScript types for the store: `ChatStoreState`, `ChatStoreActions`, `ChatStore`, `GroupedMessage`, `MessageItem`, `Source`, `VotingBehavior`, `MessageFeedback`, `CurrentStreamingMessages`, `ChatStoreActionHandlerFor<T>` |
+| `ai-sdk-features-store.ts` | Zustand store for AI SDK experimental features (feature flags and state) |
+| `chat-mode-store.ts` | Store for chat mode state (national vs local scope toggle) |
 
 ## Subdirectories
 

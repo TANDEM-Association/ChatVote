@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # src/app/api
 
@@ -12,7 +12,14 @@ Next.js API Route Handlers for server-side data fetching, OG image generation, P
 | File               | Description                                                      |
 | ------------------ | ---------------------------------------------------------------- |
 | `parties/route.ts` | `GET /api/parties` — returns list of party details from Firebase |
+| `ai-chat/`         | AI chat completion and streaming routes                          |
+| `candidate-lists/` | Candidate list generation and search routes                      |
+| `candidates/`      | Candidate data and profile routes                                |
+| `commune/`         | Commune (municipality) lookup and search routes                  |
+| `coverage/`        | Coverage analysis and reporting routes                           |
+| `electoral-lists/` | Electoral list data routes                                       |
 | `embed/`           | Embed widget API routes                                          |
+| `experiment/`      | A/B testing and experimental feature routes                      |
 | `municipalities/`  | Municipality search/lookup routes                                |
 | `og/`              | Open Graph image generation routes                               |
 | `parties/`         | Party data routes                                                |

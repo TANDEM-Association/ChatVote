@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # src/lib/stores/actions
 
@@ -43,6 +43,7 @@
 | `set-socket-error.ts`                                             | Stores socket error message                                                      |
 | `set-chat-session-is-public.ts`                                   | Toggles session public/private visibility in Firestore                           |
 | `set-message-feedback.ts`                                         | Persists like/dislike feedback to Firestore and updates local state              |
+| `user-demographics.ts`                                            | Manages user demographic data in store state                                    |
 
 ## For AI Agents
 

@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # src/models
 
@@ -16,6 +16,8 @@ Pydantic v2 data models shared across the entire backend. Defines domain entitie
 | `dtos.py` | All Socket.IO event payloads (init, chunks, complete, pro/con, voting behaviour, parliamentary questions, stream reset, quick replies) and REST request/response DTOs |
 | `general.py` | `LLMSize` enum (`small` | `large`); `LLM` model — provider instance, priority, capacity, rate-limit flag, premium/backup flags |
 | `assistant.py` | `Assistant` model; `CHATVOTE_ASSISTANT` singleton; `ASSISTANT_ID = "chat-vote"` constant |
+| `chunk_metadata.py` | `ChunkMetadata` — metadata attached to each Qdrant vector point (source type, party/candidate ID, theme, sub-theme, URL, title) |
+| `scraper.py` | `ScrapedPage`, `ScrapedWebsite`, `CrawlResult` — data models for the web scraping pipeline output |
 | `structured_outputs.py` | Pydantic schemas for structured LLM outputs: `RAG`, `QuickReplyGenerator`, `PartyListGenerator`, `QuestionTypeClassifier`, `RerankingOutput`, `EntityDetector`, `GroupChatTitleQuickReplyGenerator` |
 
 ## For AI Agents

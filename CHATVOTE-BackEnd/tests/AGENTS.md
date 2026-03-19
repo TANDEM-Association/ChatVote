@@ -1,16 +1,43 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # tests
 
 ## Purpose
-End-to-end integration test suite for the Socket.IO WebSocket API. Tests connect to a running local server via the python-socketio client, emit events, and assert on received event payloads. Covers chat session lifecycle, streaming response handling, pro/con perspective generation, candidate pro/con, voting behaviour, and chat summary flows.
+Comprehensive test suite covering Socket.IO integration tests, unit tests for individual services, and evaluation/red-team harnesses. Tests range from full end-to-end WebSocket flows to isolated unit tests for indexing, chunking, classification, and vector search.
 
 ## Key Files
 | File | Description |
 |------|-------------|
-| `test_websocket_app.py` | All Socket.IO integration tests; uses `pytest-asyncio` for async test functions; `TestHelpers` class provides reusable event send-and-wait utilities |
-| `__init__.py` | Package marker |
+| `test_websocket_app.py` | Socket.IO integration tests; uses `pytest-asyncio`; `TestHelpers` class provides reusable event send-and-wait utilities |
+| `conftest.py` | Shared pytest fixtures (Qdrant client, Firestore emulator, test data) |
+| `test_chunk_classifier.py` | Tests for chunk source-type classification logic |
+| `test_chunk_metadata.py` | Tests for `ChunkMetadata` model validation and serialisation |
+| `test_chunking.py` | Tests for text splitting/chunking utilities |
+| `test_content_processing.py` | Tests for HTML/PDF content extraction and cleaning |
+| `test_candidate_indexer.py` | Tests for candidate website indexing pipeline |
+| `test_manifesto_indexer.py` | Tests for manifesto PDF indexing pipeline |
+| `test_pdf_extract.py` | Tests for PDF text extraction edge cases |
+| `test_qdrant_ops.py` | Tests for low-level Qdrant operations |
+| `test_vector_store_helper.py` | Tests for collection management, alias resolution |
+| `test_vector_search.py` | Tests for RAG vector similarity search |
+| `test_theme_classifier.py` | Tests for LLM-based theme classification |
+| `test_source_builder.py` | Tests for source attribution formatting |
+| `test_topic_stats.py` | Tests for topic/theme statistics aggregation |
+| `test_seed_functions.py` | Tests for Firestore seeding utilities |
+| `test_crawl_scraper_cleanup.py` | Tests for scraper output cleanup |
+| `test_crawl_scraper_flow.py` | Tests for end-to-end crawl flow |
+| `test_indexer_node.py` | Tests for indexer pipeline nodes |
+| `test_pipeline_base.py` | Tests for data pipeline base classes |
+| `test_pipeline_context.py` | Tests for pipeline execution context |
+
+## Subdirectories
+| Directory | Purpose |
+|-----------|---------|
+| `unit/` | Isolated unit tests (no external services required) |
+| `eval/` | LLM evaluation harnesses (response quality, retrieval accuracy) |
+| `red_team/` | Adversarial/red-team test scenarios for prompt injection, jailbreak |
+| `fixtures/` | Shared test data (sample PDFs, HTML, JSON) |
 
 ## For AI Agents
 

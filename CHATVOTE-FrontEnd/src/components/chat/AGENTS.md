@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # src/components/chat
 
@@ -39,8 +39,42 @@ The core UI layer for the chat feature — 63 components covering everything fro
 | `chat-message-like-dislike-buttons.tsx`     | Feedback buttons (like/dislike) on assistant messages                                             |
 | `chat-scroll-down-indicator.tsx`            | Floating button to scroll to latest message                                                       |
 | `socket-disconnected-banner.tsx`            | Banner shown when Socket.IO connection is lost                                                    |
+| `ai-sdk/`                                   | AI SDK integration components (experimental)                                                      |
 | `sidebar/`                                  | Chat sidebar: history, settings, party selector                                                   |
-| `survey-banner.tsx`                         | Survey prompt shown after 8+ messages                                                             |
+| `survey-banner.tsx`                         | Survey prompt banner shown after 8+ messages; tracks analytics events                             |
+| `chat-group-party-select-content.tsx`       | Party selection content panel within group chat                                                   |
+| `chat-group-party-select-submit-button.tsx` | Submit button for party selection in group chat                                                   |
+| `chat-input-add-parties-button.tsx`         | Button to add more parties to the active session                                                  |
+| `chat-input-rate-limit.tsx`                 | Rate limit warning display in the input area                                                      |
+| `chat-input-gate.tsx`                       | Guards chat input based on municipality selection requirement                                     |
+| `chat-postcode-prompt.tsx`                  | Prompts user to enter postcode for local scope                                                    |
+| `chat-mode-toggle.tsx`                      | Toggle between national and local chat scope                                                      |
+| `chat-view-switcher.tsx`                    | Switches between different chat view modes                                                        |
+| `chat-action-button-highlight.tsx`          | Highlighted action button with animation                                                          |
+| `chat-dislike-feedback-button.tsx`          | Dislike feedback button with reason collection                                                    |
+| `chat-single-message-actions.tsx`           | Action bar (copy, like, dislike) on individual messages                                           |
+| `chat-context-sidebar.tsx`                  | Contextual sidebar with session metadata                                                          |
+| `chat-embed-header.tsx`                     | Header for embed/widget mode                                                                      |
+| `chat-vote-charts-header.tsx`               | Header for voting behavior chart views                                                            |
+| `chat-vote-details-header.tsx`              | Header for voting detail views                                                                    |
+| `chat-vote-details-slide-counter.tsx`       | Slide counter for voting details carousel                                                         |
+| `chat-voting-behavior-detail-button.tsx`    | Button to view detailed voting behavior                                                           |
+| `chat-voting-behavior-detail-justification.tsx` | Justification text in voting detail view                                                      |
+| `chat-voting-behavior-submitting-parties.tsx`   | Shows which parties are providing voting data                                                 |
+| `chat-voting-behavior-summary-button.tsx`   | Button to generate voting behavior summary                                                        |
+| `copy-button.tsx`                           | Copy-to-clipboard button for message content                                                      |
+| `create-new-chat-dropdown-button.tsx`       | Dropdown button to create a new chat session                                                      |
+| `create-new-chat-dropdown-button-trigger.tsx` | Trigger component for new chat dropdown                                                         |
+| `demographic-bubble.tsx`                    | User demographics display bubble                                                                  |
+| `dev-metadata-sidebar.tsx`                  | Developer metadata sidebar (debug info)                                                           |
+| `dev-metadata-sidebar-wrapper.tsx`          | Wrapper for dev metadata sidebar                                                                  |
+| `electoral-list-shared.tsx`                 | Shared electoral list display component                                                           |
+| `group-chat-empty-view.tsx`                 | Empty state for group chat mode                                                                   |
+| `initial-suggestion-bubble.tsx`             | Initial suggested question bubbles                                                                |
+| `mini-dashboard-card.tsx`                   | Compact dashboard card for chat stats                                                             |
+| `mobile-electoral-lists-bar.tsx`            | Mobile-optimized electoral lists bar                                                              |
+| `pro-con-icon.tsx`                          | Icon component for pro/con indicators                                                             |
+| `sponsor-partners.tsx`                      | Sponsor and partner logos display                                                                 |
 | `thinking-message.tsx`                      | Animated placeholder during LLM response generation                                               |
 | `animate-text-overflow.tsx`                 | Animated text truncation for long party names                                                     |
 | `theme-mode-toggle.tsx`                     | Dark/light theme toggle button                                                                    |

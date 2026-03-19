@@ -1,5 +1,5 @@
 <!-- Parent: ../AGENTS.md -->
-<!-- Generated: 2026-03-04 | Updated: 2026-03-04 -->
+<!-- Generated: 2026-03-04 | Updated: 2026-03-19 -->
 
 # src/app
 
@@ -18,17 +18,23 @@ Next.js App Router root. Contains the global layout (fonts, metadata, providers)
 
 ## Subdirectories
 
-| Directory         | Purpose                                                      |
-| ----------------- | ------------------------------------------------------------ |
-| `_actions/`       | Next.js Server Actions (e.g., `i18n/getLocale.ts`)           |
-| `api/`            | Next.js API route handlers (see `api/AGENTS.md`)             |
-| `chat/`           | Chat session pages — the main feature (see `chat/AGENTS.md`) |
-| `(home)/`         | Landing page                                                 |
-| `donate/`         | Stripe donation flow                                         |
-| `guide/`          | User guide page                                              |
-| `legal-notice/`   | Legal notice page                                            |
-| `privacy-policy/` | Privacy policy page                                          |
-| `pdf/`            | PDF viewer page (uses pdfjs-dist)                            |
+| Directory           | Purpose                                                                       |
+| ------------------- | ----------------------------------------------------------------------------- |
+| `_actions/`         | Next.js Server Actions (e.g., `i18n/getLocale.ts`)                           |
+| `admin/`            | Admin dashboard for data sources and election management                     |
+| `api/`              | Next.js API route handlers (see `api/AGENTS.md`)                             |
+| `chat/`             | Chat session pages — the main feature (see `chat/AGENTS.md`)                 |
+| `commune/`          | Commune (municipality) information and search pages                          |
+| `(home)/`           | Landing page                                                                 |
+| `dev/`              | Development-only pages (debug, health checks, internal tools)                |
+| `donate/`           | Stripe donation flow                                                         |
+| `experiment/`       | Experimental features and A/B test pages                                    |
+| `guide/`            | User guide page                                                              |
+| `legal-notice/`     | Legal notice page                                                            |
+| `maintenance/`      | Maintenance mode and status pages                                           |
+| `pdf/`              | PDF viewer page (uses pdfjs-dist)                                            |
+| `privacy-policy/`   | Privacy policy page                                                          |
+| `topics/`           | Topic-based filtering and election topic pages                              |
 
 ## For AI Agents
 
