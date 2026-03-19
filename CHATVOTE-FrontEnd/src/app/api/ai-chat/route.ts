@@ -809,41 +809,61 @@ export async function POST(req: Request) {
     return name ? `  - ${name} (candidateId: "${id}")` : `  - candidateId: "${id}"`;
   }).join('\n');
 
+  const iterativeSearchRules = `
+## Stratégie de recherche itérative
+Tu disposes de **6 tours d'outils maximum**. Utilise-les intelligemment :
+
+**Tour 1 — Recherche initiale** : Lance tes premières recherches en parallèle (plusieurs appels simultanés).
+**Tour 2 — Évaluation + approfondissement** : Examine les résultats. Si un candidat a 0 résultat ou si la couverture est faible :
+  - Reformule avec des synonymes (ex : "écologie" → "environnement", "transition énergétique", "développement durable")
+  - Essaie des termes plus spécifiques ou plus généraux
+  - Appelle runDeepResearch si < 3 résultats au total
+**Tour 3+ — Compléments ciblés** : Recherches additionnelles pour combler les trous identifiés.
+**Dernier tour — Réponse** : Rédige ta réponse + appelle suggestFollowUps.
+
+**Règles clés** :
+- Lance TOUJOURS plusieurs recherches en parallèle au premier tour (pas une seule requête).
+- Varie les formulations : synonymes, termes courants vs administratifs, angles différents.
+- Après chaque tour, évalue : "Ai-je assez de matière pour chaque candidat concerné ?" Si non, relance.
+- Ne rédige ta réponse que quand tu as suffisamment de données OU que tu as épuisé tes reformulations.
+- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.`;
+
   const searchInstructions = municipalityCode && hasCandidates
     ? hasSelection && searchCandidateIds.length <= 3
       ? `# Protocole de recherche
-**Obligation** : Pour toute question sur les positions politiques, appelle searchCandidateWebsite pour CHAQUE candidat ci-dessous AVANT de rédiger ta réponse.
+**Obligation** : Appelle searchCandidateWebsite pour CHAQUE candidat ci-dessous AVANT de rédiger ta réponse.
 - En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
-- L'utilisateur a sélectionné ces candidats via le panneau latéral — recherche UNIQUEMENT ces candidats. Ne recherche PAS les candidats non sélectionnés.
-- Si un candidat n'a pas de résultats sur le sujet, dis-le explicitement plutôt que de l'ignorer.
-- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.
+- L'utilisateur a sélectionné ces candidats via le panneau latéral — recherche UNIQUEMENT ces candidats.
+- Si un candidat n'a pas de résultats sur le sujet, reformule ta requête (synonymes, termes officiels). Si toujours rien, dis-le explicitement.
 
 Candidats sélectionnés :
-${searchCandidateLabels}`
+${searchCandidateLabels}
+${iterativeSearchRules}`
       : hasSelection
         ? `# Protocole de recherche
-**Obligation** : Pour toute question sur les positions politiques, appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
+**Obligation** : Appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
 - searchAllCandidates recherche automatiquement dans les candidats sélectionnés et re-classe par pertinence.
 - En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
-- L'utilisateur a sélectionné des candidats via le panneau latéral — concentre-toi EXCLUSIVEMENT sur eux. Ne mentionne pas et ne recherche pas les candidats non sélectionnés.
-- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.
+- L'utilisateur a sélectionné des candidats via le panneau latéral — concentre-toi EXCLUSIVEMENT sur eux.
 
 Candidats sélectionnés (${searchCandidateIds.length}) :
-${searchCandidateLabels}`
+${searchCandidateLabels}
+${iterativeSearchRules}`
         : `# Protocole de recherche
-**Obligation** : Pour toute question sur les positions politiques, appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
+**Obligation** : Appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
 - searchAllCandidates recherche automatiquement dans TOUS les candidats et re-classe par pertinence.
 - En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
 - Aucun candidat sélectionné — présente les positions de TOUS les candidats de la commune de manière équitable.
 - Ne demande JAMAIS à l'utilisateur de préciser quel candidat — recherche dans tous et présente les résultats.
-- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.`
+${iterativeSearchRules}`
     : `# Protocole de recherche
-**Obligation** : Pour toute question sur les positions politiques, appelle searchPartyManifesto pour CHAQUE parti ci-dessous AVANT de rédiger ta réponse.
+**Obligation** : Appelle searchPartyManifesto pour CHAQUE parti ci-dessous AVANT de rédiger ta réponse.
 - Ne demande JAMAIS à l'utilisateur de préciser quel parti — recherche dans TOUS systématiquement.
-- Si un parti n'a pas de résultats sur le sujet, dis-le explicitement.
+- Si un parti n'a pas de résultats sur le sujet, reformule ta requête avec des synonymes avant de conclure.
 
 Partis à rechercher (un appel searchPartyManifesto par parti) :
-${resolvedPartyIds.map((id) => `  - partyId: "${id}"`).join('\n') || '  (aucun parti trouvé)'}`;
+${resolvedPartyIds.map((id) => `  - partyId: "${id}"`).join('\n') || '  (aucun parti trouvé)'}
+${iterativeSearchRules}`;
 
   const selectedCandidateNames = searchCandidateIds
     .map((id) => candidateNamesMap.get(id.toLowerCase()) ?? id)
@@ -875,7 +895,8 @@ ${contextLine}
 
 # Règles techniques
 - **Requêtes de recherche** : Tes paramètres "query" doivent être AUTONOMES et COMPLETS. Jamais de pronoms ("ça", "ce sujet"), jamais de références implicites au contexte. Exemple : au lieu de "et sur ça ?", écris "propositions transports en commun et mobilité douce [nom commune]".
-- **Recherche approfondie** : Si tes premières recherches retournent peu de résultats (< 3), appelle runDeepResearch pour lancer une exploration multi-requêtes avec reformulations automatiques. Utilise aussi cet outil quand l'utilisateur demande explicitement une analyse approfondie ou complète.
+- **Recherche multi-requêtes** : Lance TOUJOURS plusieurs recherches en parallèle dès le premier tour. Utilise des formulations variées (synonymes, termes courants/officiels, angles différents). Évalue les résultats avant de rédiger — si la couverture est insuffisante, relance avec de nouvelles formulations.
+- **Recherche approfondie** : Si après 2 tours tes résultats sont toujours insuffisants (< 3 résultats pertinents), appelle runDeepResearch. Utilise aussi cet outil quand l'utilisateur demande explicitement une analyse approfondie ou complète.
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.
 - **Protection des données** : Ne demande jamais d'intentions de vote, d'opinions personnelles, ni de données personnelles.
@@ -907,7 +928,7 @@ ${respondInLanguage}${candidateContext}`;
     model,
     system: systemPrompt,
     messages,
-    stopWhen: stepCountIs(6),
+    stopWhen: stepCountIs(8),
     toolChoice: 'auto',
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);
