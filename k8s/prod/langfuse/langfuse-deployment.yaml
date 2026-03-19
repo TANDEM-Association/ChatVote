@@ -50,9 +50,33 @@ spec:
                   name: langfuse-secrets
                   key: encryption-key
             - name: NEXTAUTH_URL
-              value: "https://langfuse.chatvote.fr"
+              value: "http://51.159.207.188:3000"
             - name: AUTH_DISABLE_SIGNUP
               value: "true"
+            - name: LANGFUSE_INIT_ORG_ID
+              value: chatvote-prod
+            - name: LANGFUSE_INIT_ORG_NAME
+              value: ChatVote
+            - name: LANGFUSE_INIT_PROJECT_ID
+              value: chatvote
+            - name: LANGFUSE_INIT_PROJECT_NAME
+              value: ChatVote
+            - name: LANGFUSE_INIT_PROJECT_PUBLIC_KEY
+              value: pk-lf-prod-515918b36f3ced9bdc8cf5bd5a69e14d
+            - name: LANGFUSE_INIT_PROJECT_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: langfuse-init-secret-key
+            - name: LANGFUSE_INIT_USER_EMAIL
+              value: admin@chatvote.org
+            - name: LANGFUSE_INIT_USER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: langfuse-init-user-password
+            - name: LANGFUSE_INIT_USER_NAME
+              value: Admin
             - name: LANGFUSE_S3_EVENT_UPLOAD_BUCKET
               valueFrom:
                 secretKeyRef:
@@ -120,9 +144,9 @@ spec:
             httpGet:
               path: /api/public/health
               port: 3000
-            periodSeconds: 5
+            periodSeconds: 10
             failureThreshold: 30
-            timeoutSeconds: 3
+            timeoutSeconds: 10
           livenessProbe:
             httpGet:
               path: /api/public/health
@@ -139,8 +163,8 @@ spec:
             timeoutSeconds: 5
           resources:
             requests:
-              memory: "256Mi"
-              cpu: "100m"
+              memory: "512Mi"
+              cpu: "200m"
             limits:
-              memory: "768Mi"
-              cpu: "500m"
+              memory: "1Gi"
+              cpu: "1000m"
