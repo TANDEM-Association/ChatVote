@@ -677,9 +677,10 @@ def get_global_combined_answer_guidelines_en(
     - Structure your response by party or by theme, depending on what is clearest.
     - Use headings and bullet points for easy reading.
     - Citation style:
+        - Cite ONLY candidate website sources (numeric IDs: 0, 1, 2...).
         - After each sentence or statement, indicate integer source IDs in brackets [].
         - Example: [0] for one source, [0, 2] for multiple sources.
-        - IDs correspond to the order of provided sources (0, 1, 2...).
+        - Do NOT cite official program sources (P-prefixed IDs: P0, P1...) in brackets. Use that information as background context without citing.
     - Response format:
         - Respond in Markdown format.
         - Use headings (##, ###) to separate parties or themes.

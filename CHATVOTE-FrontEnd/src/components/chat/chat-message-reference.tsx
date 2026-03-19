@@ -25,7 +25,10 @@ function ChatMessageReference({
       {numbers.map((number) => {
         const refNumber = Number.parseInt(number);
 
-        const name = getReferenceName?.(refNumber) ?? `Ref. ${number}`;
+        const name = getReferenceName?.(refNumber);
+        // Skip rendering if the source index is out of bounds (no matching source)
+        if (name == null) return null;
+
         const tooltip = getReferenceTooltip?.(refNumber) ?? name;
 
         return (

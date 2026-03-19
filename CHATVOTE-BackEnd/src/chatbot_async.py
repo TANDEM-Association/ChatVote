@@ -1187,17 +1187,19 @@ def get_combined_rag_context(
     """
     Build RAG context from both manifesto and candidate website documents.
 
-    Uses unified numbering (0, 1, 2...) across all sources for consistent citation matching.
-    Manifesto docs come first (0 to len(manifesto_docs)-1), then candidate docs continue the numbering.
+    Candidate docs are numbered 0, 1, 2... matching the sources array sent to the
+    frontend.  Manifesto docs use a "P" prefix (P0, P1, ...) so the LLM can reference
+    them for context but they won't produce numeric [ID] citations that collide with
+    candidate source indices.
 
     Returns a tuple of (manifesto_context, candidates_context).
     """
-    # Build manifesto context with unified numbering starting at 0
+    # Build manifesto context with "P" prefix IDs (background context, not citable)
     manifesto_context = ""
     for doc_num, doc in enumerate(manifesto_docs):
         party_id = doc.metadata.get("namespace", "")
         source_url = doc.metadata.get("url", "non spécifié")
-        context_obj = f"""- ID: {doc_num}
+        context_obj = f"""- ID: P{doc_num}
 - Type: Programme officiel
 - Parti: {party_id}
 - URL: {source_url}
@@ -1209,18 +1211,16 @@ def get_combined_rag_context(
     if manifesto_context == "":
         manifesto_context = "Aucune information trouvée dans les programmes officiels."
 
-    # Build candidates context - continue numbering from where manifesto left off
+    # Build candidates context — numbered from 0 to match the sources array
     candidates_context = ""
-    start_index = len(manifesto_docs)
     for doc_num, doc in enumerate(candidate_docs):
-        unified_id = start_index + doc_num
         candidate_name = doc.metadata.get("candidate_name", "Inconnu")
         municipality = doc.metadata.get("municipality_name", "")
         page_type = doc.metadata.get("page_type", "page")
         party_ids = doc.metadata.get("party_ids", [])
         party_str = ", ".join(party_ids) if party_ids else "Non affilié"
 
-        context_obj = f"""- ID: {unified_id}
+        context_obj = f"""- ID: {doc_num}
 - Type: Site web candidat
 - Candidat(e): {candidate_name}
 - Parti(s): {party_str}

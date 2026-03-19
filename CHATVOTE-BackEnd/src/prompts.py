@@ -1257,9 +1257,10 @@ def get_global_combined_answer_guidelines(scope: str, municipality_name: str = "
     - Structure ta réponse par parti ou par thème, selon ce qui est le plus clair.
     - Utilise des titres et puces pour une lecture facile.
     - Style de citation :
+        - Cite UNIQUEMENT les sources des sites web candidats (IDs numériques : 0, 1, 2...).
         - Après chaque phrase ou affirmation, indique les IDs entiers des sources entre crochets [].
         - Exemple : [0] pour une source, [0, 2] pour plusieurs sources.
-        - Les IDs correspondent à l'ordre des sources fournies (0, 1, 2...).
+        - Ne cite PAS les sources de programmes officiels (IDs préfixés P : P0, P1...) entre crochets. Utilise ces informations comme contexte sans les citer.
     - Format de réponse :
         - Réponds au format Markdown.
         - Utilise des titres (##, ###) pour séparer les partis ou thèmes.

@@ -487,18 +487,18 @@ class TestGetCombinedRagContext:
             in candidates_ctx
         )
 
-    def test_manifesto_docs_numbered_from_zero(self):
+    def test_manifesto_docs_use_p_prefix(self):
         docs = [make_document("Manifesto 1"), make_document("Manifesto 2")]
         manifesto_ctx, _ = get_combined_rag_context(docs, [])
-        assert "ID: 0" in manifesto_ctx
-        assert "ID: 1" in manifesto_ctx
+        assert "ID: P0" in manifesto_ctx
+        assert "ID: P1" in manifesto_ctx
 
-    def test_candidate_docs_continue_manifesto_numbering(self):
+    def test_candidate_docs_numbered_from_zero(self):
         manifesto_docs = [make_document("Manifesto 1"), make_document("Manifesto 2")]
         candidate_docs = [make_document("Candidate 1")]
         _, candidates_ctx = get_combined_rag_context(manifesto_docs, candidate_docs)
-        # candidate doc starts at index 2 (after 2 manifesto docs)
-        assert "ID: 2" in candidates_ctx
+        # candidate docs always start at 0, independent of manifesto count
+        assert "ID: 0" in candidates_ctx
 
     def test_manifesto_content_included(self):
         doc = make_document("Official programme content", {"namespace": "lfi"})
