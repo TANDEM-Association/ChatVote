@@ -58,7 +58,7 @@ async function searchDataGouv(query: string, limit = 5): Promise<DataGouvDataset
 }
 
 
-function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[] = [], candidateNames: Map<string, string> = new Map()) {
+function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[] = [], candidateNames: Map<string, string> = new Map(), selectedCandidateIds: string[] = []) {
   const features = enabledFeatures ?? ['rag'];
   const ragEnabled = features.includes('rag');
 
@@ -527,7 +527,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
         const result = await deepResearch({
           originalQuery: input.query,
           collections,
-          candidateIds: candidateIds.length > 0 ? candidateIds : undefined,
+          candidateIds: selectedCandidateIds.length > 0 ? selectedCandidateIds : candidateIds.length > 0 ? candidateIds : undefined,
         });
         const elapsed = Date.now() - start;
         return {
@@ -811,7 +811,7 @@ export async function POST(req: Request) {
 
   const iterativeSearchRules = `
 ## Stratégie de recherche itérative
-Tu disposes de **6 tours d'outils maximum**. Utilise-les intelligemment :
+Tu disposes de **12 tours d'outils maximum**. Utilise-les intelligemment :
 
 **Tour 1 — Recherche initiale** : Lance tes premières recherches en parallèle (plusieurs appels simultanés).
 **Tour 2 — Évaluation + approfondissement** : Examine les résultats. Si un candidat a 0 résultat ou si la couverture est faible :
@@ -928,7 +928,7 @@ ${respondInLanguage}${candidateContext}`;
     model,
     system: systemPrompt,
     messages,
-    stopWhen: stepCountIs(8),
+    stopWhen: stepCountIs(12),
     toolChoice: 'auto',
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);
@@ -985,7 +985,7 @@ ${respondInLanguage}${candidateContext}`;
         console.error('[ai-chat] Failed to persist conversation:', err);
       }
     },
-    tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap),
+    tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap, searchCandidateIds),
   });
 
   return result.toUIMessageStreamResponse({
