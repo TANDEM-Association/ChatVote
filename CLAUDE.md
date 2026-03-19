@@ -146,7 +146,7 @@ Langfuse self-hosted provides AI tracing (LLM calls, Qdrant retrieval spans, too
 
 Fallback: set `LANGCHAIN_TRACING=true` + `LANGCHAIN_API_KEY` for LangSmith cloud tracing instead. With neither set, tracing is disabled (no-op).
 
-Production Langfuse runs as v2 (Postgres-only) on the K8s cluster. K8s manifests in `k8s/prod/langfuse/`. Python backend instrumentation is deferred (separate PR).
+Production Langfuse runs as v3 (Postgres + ClickHouse + Redis) on the K8s cluster. K8s manifests in `k8s/prod/langfuse/`. Frontend tracing uses OTEL via `@langfuse/otel` LangfuseSpanProcessor + Langfuse SDK client for trace-level I/O. Python backend instrumentation is deferred (separate PR).
 
 ## Scraping & Indexing Pipeline
 
