@@ -9,20 +9,44 @@ type Props = {
     content?: string;
     sources?: Source[];
   };
+  /**
+   * When true, LLM citations are 1-based ([1], [2], …) and need -1 to map to
+   * the 0-based sources array. Used by the AI SDK path where tool results have
+   * `id: idx + 1`.
+   *
+   * When false (default), citations are 0-based ([0], [1], …) matching the
+   * Socket.IO backend convention.
+   */
+  oneBasedCitations?: boolean;
 };
 
-function ChatMarkdown({ message }: Props) {
+function ChatMarkdown({ message, oneBasedCitations = false }: Props) {
+  /** Convert the citation number the LLM wrote to a 0-based array index. */
+  const toIndex = (number: number) =>
+    oneBasedCitations ? number - 1 : number;
+
   const onReferenceClick = (number: number) => {
     if (!message.sources) {
       return;
     }
 
-    if (number < 0 || number >= message.sources.length) {
+    const index = toIndex(number);
+
+    if (index < 0 || index >= message.sources.length) {
       return;
     }
 
-    const source = message.sources[number];
+    const source = message.sources[index];
     if (!source) return;
+
+    if (process.env.NODE_ENV === "development") {
+      console.log(
+        `[source-click] Citation [${number}] → index ${index} → source:`,
+        source.source,
+        `party: ${source.party_id}`,
+        `url: ${source.url?.slice(0, 80)}`,
+      );
+    }
 
     const url = source.url;
     // Only open real HTTP URLs — skip .md filenames or empty values
@@ -47,11 +71,13 @@ function ChatMarkdown({ message }: Props) {
       return null;
     }
 
-    if (number < 0 || number >= message.sources.length) {
+    const index = toIndex(number);
+
+    if (index < 0 || index >= message.sources.length) {
       return null;
     }
 
-    const source = message.sources[number];
+    const source = message.sources[index];
     if (!source) {
       return null;
     }
@@ -64,16 +90,19 @@ function ChatMarkdown({ message }: Props) {
       return null;
     }
 
-    if (number < 0 || number >= message.sources.length) {
+    const index = toIndex(number);
+
+    if (index < 0 || index >= message.sources.length) {
       return null;
     }
 
-    const source = message.sources[number];
+    const source = message.sources[index];
     if (!source) {
       return null;
     }
 
-    return `${number + 1}`;
+    // Display the user-facing number (1-based for readability)
+    return `${oneBasedCitations ? number : number + 1}`;
   };
 
   const normalizedContent = unescapeString(message.content ?? "")

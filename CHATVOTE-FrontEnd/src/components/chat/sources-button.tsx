@@ -48,6 +48,8 @@ const SourcesButton = ({ sources, messageContent }: Props) => {
 
     const uniqueNumbers = [...new Set(numbers)];
 
+    // Socket.IO backend uses 0-based citations [0], [1], etc. — numbers map
+    // directly to sources array indices.
     const sourcesReferenced = uniqueNumbers
       .filter((number) => number < sources.length && sources[number] != null)
       .map((number) => ({

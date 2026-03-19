@@ -16,7 +16,17 @@ type Props = {
   onSendMessage?: (text: string) => void;
 };
 
-/** Collect all sources from search tool results in this message for inline [0],[1] badges */
+/**
+ * Collect all sources from search tool results in this message for inline [1],[2] badges.
+ *
+ * Sources are accumulated in part-traversal order (same order the LLM sees them).
+ * The LLM uses 1-based citations [1], [2], etc. The frontend resolves them via
+ * `sources[number - 1]` (see chat-markdown.tsx).
+ *
+ * For multi-tool calls (e.g. searchCandidateWebsite × 3), sources from all tools
+ * are concatenated sequentially. The prompt instructs the LLM to number citations
+ * globally across all tool results.
+ */
 function collectSources(parts: UIMessage["parts"]): Source[] {
   const sources: Source[] = [];
   for (const part of parts) {
@@ -25,7 +35,9 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
       (part as { state?: string }).state === "output-available" &&
       (getToolName(part) === "searchPartyManifesto" ||
         getToolName(part) === "searchCandidateWebsite" ||
-        getToolName(part) === "searchAllCandidates")
+        getToolName(part) === "searchAllCandidates" ||
+        getToolName(part) === "searchVotingRecords" ||
+        getToolName(part) === "searchParliamentaryQuestions")
     ) {
       const result = (part as { output?: unknown }).output as {
         results?: Array<{
@@ -35,6 +47,7 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
           url: string;
           page: number | string;
           party_id: string;
+          candidate_name?: string;
         }>;
       };
       if (result?.results) {
@@ -55,6 +68,14 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
       }
     }
   }
+
+  if (sources.length > 0 && process.env.NODE_ENV === "development") {
+    console.log(
+      `[collectSources] ${sources.length} sources collected:`,
+      sources.map((s, i) => `[${i + 1}] ${s.source} (${s.party_id}) → ${s.url?.slice(0, 60)}`),
+    );
+  }
+
   return sources;
 }
 
@@ -81,7 +102,10 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
             case "text":
               return (
                 <div key={index}>
-                  <ChatMarkdown message={{ content: part.text, sources }} />
+                  <ChatMarkdown
+                    message={{ content: part.text, sources }}
+                    oneBasedCitations
+                  />
                 </div>
               );
             case "source-url":

@@ -248,7 +248,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                       // LLM reranking: pick 12 most relevant from the 20 score-sorted results
                       const reranked = await rerankResults(scoreSorted, queries[0], 12);
 
-                      const candidatesWithResults = new Set(reranked.map((r) => (r as any).candidateId));
+                      const candidatesWithResults = new Set(reranked.map((r: any) => r.candidateId));
 
                       return {
                         results: reranked,
@@ -933,7 +933,7 @@ Date : ${currentDate}
 ${contextLine}
 
 # Principes fondamentaux
-1. **Rigueur factuelle** : Chaque affirmation doit être traçable à une source documentaire. Cite systématiquement [1], [2], etc. après chaque fait. Si aucune source ne couvre un sujet, dis-le clairement : "Aucun des candidats ne mentionne ce sujet dans les documents disponibles." N'invente jamais, ne déduis jamais au-delà de ce que les sources disent explicitement.
+1. **Rigueur factuelle** : Chaque affirmation doit être traçable à une source documentaire. Cite systématiquement [1], [2], etc. après chaque fait. **Numérotation des citations** : numérote tes sources de manière **séquentielle et globale en partant de 1**, dans l'ordre où tu les rencontres dans les résultats de recherche. Ignore le champ \`id\` des résultats individuels — utilise ta propre numérotation continue. Exemple : si tu appelles 2 outils qui retournent chacun 5 résultats, tes citations vont de [1] à [10]. Si aucune source ne couvre un sujet, dis-le clairement : "Aucun des candidats ne mentionne ce sujet dans les documents disponibles." N'invente jamais, ne déduis jamais au-delà de ce que les sources disent explicitement.
 2. **Neutralité absolue** : Tu ne juges pas, tu ne recommandes pas, tu ne classes pas les candidats. Pas d'adjectifs valorisants ("ambitieux", "courageux") ni dépréciatifs. Présente les faits et laisse le citoyen se forger son opinion.
 3. **Transparence sur les limites** : Si l'information est partielle, dis-le. Si un candidat n'a pas de position documentée sur un sujet, mentionne-le explicitement plutôt que de l'omettre silencieusement. Distingue "pas trouvé dans nos documents" de "le candidat n'en parle pas".
 
