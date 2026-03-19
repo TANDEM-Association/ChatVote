@@ -1,6 +1,7 @@
+import { observe } from '@langfuse/tracing';
+
 import { embedQuery } from './embedding';
 import { qdrantClient } from './qdrant-client';
-import { getLangfuse } from './tracing';
 
 // ── Types ────────────────────────────────────────────────────────────────────
 
@@ -36,8 +37,6 @@ interface SearchOptions {
   scoreThreshold?: number;
   /** Override the default must_not filter. Pass `null` to disable. */
   mustNot?: object[] | null;
-  /** Langfuse trace ID — when provided, spans nest under this parent trace. */
-  traceId?: string;
 }
 
 // ── Helpers ──────────────────────────────────────────────────────────────────
@@ -71,30 +70,25 @@ const DEFAULT_MUST_NOT = [{ key: 'metadata.fiabilite', range: { gt: 3 } }];
 
 // ── Scoped search (with namespace filter) ────────────────────────────────────
 
-export async function searchQdrant(
-  collection: string,
-  query: string,
-  filterKey: string,
-  filterValue: string,
-  limit: number,
-  precomputedVector?: number[],
-  options?: SearchOptions,
-): Promise<SearchResult[]> {
-  const scoreThreshold = options?.scoreThreshold ?? 0.35;
-  const mustNot = options?.mustNot === null ? undefined : (options?.mustNot ?? DEFAULT_MUST_NOT);
+export const searchQdrant = observe(
+  async function searchQdrant(
+    collection: string,
+    query: string,
+    filterKey: string,
+    filterValue: string,
+    limit: number,
+    precomputedVector?: number[],
+    options?: SearchOptions,
+  ): Promise<SearchResult[]> {
+    const scoreThreshold = options?.scoreThreshold ?? 0.35;
+    const mustNot = options?.mustNot === null ? undefined : (options?.mustNot ?? DEFAULT_MUST_NOT);
 
-  const start = Date.now();
-  console.log(`[ai-chat:qdrant] searching collection=${collection} ${filterKey}=${filterValue} limit=${limit} threshold=${scoreThreshold} q="${query.slice(0, 60)}"`);
+    const start = Date.now();
+    console.log(`[ai-chat:qdrant] searching collection=${collection} ${filterKey}=${filterValue} limit=${limit} threshold=${scoreThreshold} q="${query.slice(0, 60)}"`);
 
-  const langfuse = getLangfuse();
-  const traceId = options?.traceId;
-  const span = langfuse?.span({ name: 'qdrant-search', ...(traceId ? { traceId } : {}), input: { collection, query: query.slice(0, 200), filterKey, filterValue } });
+    const embedding = precomputedVector ?? (await embedQuery(query));
 
-  const embedding = precomputedVector ?? (await embedQuery(query));
-
-  let results;
-  try {
-    results = await qdrantClient.search(collection, {
+    const results = await qdrantClient.search(collection, {
       vector: { name: 'dense', vector: embedding },
       filter: {
         must: [{ key: filterKey, match: { value: filterValue } }],
@@ -104,105 +98,78 @@ export async function searchQdrant(
       limit,
       with_payload: true,
     });
-  } catch (err) {
-    console.error(`[ai-chat:qdrant] FAILED collection=${collection} ${filterKey}=${filterValue} ${Date.now() - start}ms`, err);
-    span?.end({ output: { error: String(err) } });
-    throw err;
-  }
 
-  console.log(`[ai-chat:qdrant] OK collection=${collection} ${filterKey}=${filterValue} results=${results.length} ${Date.now() - start}ms`);
-  const mapped = mapResults(results);
-  span?.end({ output: { resultCount: mapped.length, topScore: mapped[0]?.score } });
-  return mapped;
-}
+    console.log(`[ai-chat:qdrant] OK collection=${collection} ${filterKey}=${filterValue} results=${results.length} ${Date.now() - start}ms`);
+    return mapResults(results);
+  },
+  { name: 'qdrant-search', asType: 'retriever' },
+);
 
 // ── Broad search (no namespace filter) ───────────────────────────────────────
 
-export async function searchQdrantBroad(
-  collection: string,
-  query: string,
-  limit: number,
-  precomputedVector?: number[],
-  options?: SearchOptions,
-): Promise<SearchResult[]> {
-  const scoreThreshold = options?.scoreThreshold ?? 0.25;
-  const mustNot = options?.mustNot === null ? undefined : (options?.mustNot ?? DEFAULT_MUST_NOT);
+export const searchQdrantBroad = observe(
+  async function searchQdrantBroad(
+    collection: string,
+    query: string,
+    limit: number,
+    precomputedVector?: number[],
+    options?: SearchOptions,
+  ): Promise<SearchResult[]> {
+    const scoreThreshold = options?.scoreThreshold ?? 0.25;
+    const mustNot = options?.mustNot === null ? undefined : (options?.mustNot ?? DEFAULT_MUST_NOT);
 
-  const start = Date.now();
-  console.log(`[ai-chat:qdrant] broad-searching collection=${collection} limit=${limit} threshold=${scoreThreshold} q="${query.slice(0, 60)}"`);
+    const start = Date.now();
+    console.log(`[ai-chat:qdrant] broad-searching collection=${collection} limit=${limit} threshold=${scoreThreshold} q="${query.slice(0, 60)}"`);
 
-  const langfuse = getLangfuse();
-  const traceId = options?.traceId;
-  const span = langfuse?.span({ name: 'qdrant-search-broad', ...(traceId ? { traceId } : {}), input: { collection, query: query.slice(0, 200) } });
+    const embedding = precomputedVector ?? (await embedQuery(query));
 
-  const embedding = precomputedVector ?? (await embedQuery(query));
-
-  let results;
-  try {
-    results = await qdrantClient.search(collection, {
+    const results = await qdrantClient.search(collection, {
       vector: { name: 'dense', vector: embedding },
       ...(mustNot ? { filter: { must_not: mustNot } } : {}),
       score_threshold: scoreThreshold,
       limit,
       with_payload: true,
     });
-  } catch (err) {
-    console.error(`[ai-chat:qdrant] broad FAILED collection=${collection} ${Date.now() - start}ms`, err);
-    span?.end({ output: { error: String(err) } });
-    throw err;
-  }
 
-  console.log(`[ai-chat:qdrant] broad OK collection=${collection} results=${results.length} ${Date.now() - start}ms`);
-  const mapped = mapResults(results);
-  span?.end({ output: { resultCount: mapped.length, topScore: mapped[0]?.score } });
-  return mapped;
-}
+    console.log(`[ai-chat:qdrant] broad OK collection=${collection} results=${results.length} ${Date.now() - start}ms`);
+    return mapResults(results);
+  },
+  { name: 'qdrant-search-broad', asType: 'retriever' },
+);
 
 // ── Filterless search (with optional custom filter) ──────────────────────────
 // Used by parliamentary questions which have an optional filter and no must_not
 
-export async function searchQdrantRaw(
-  collection: string,
-  query: string,
-  limit: number,
-  options?: {
-    scoreThreshold?: number;
-    filter?: object;
-    /** Langfuse trace ID — when provided, spans nest under this parent trace. */
-    traceId?: string;
-  },
-): Promise<SearchResult[]> {
-  const scoreThreshold = options?.scoreThreshold ?? 0.35;
+export const searchQdrantRaw = observe(
+  async function searchQdrantRaw(
+    collection: string,
+    query: string,
+    limit: number,
+    options?: {
+      scoreThreshold?: number;
+      filter?: object;
+    },
+  ): Promise<SearchResult[]> {
+    const scoreThreshold = options?.scoreThreshold ?? 0.35;
 
-  const start = Date.now();
-  console.log(`[ai-chat:qdrant] raw-searching collection=${collection} limit=${limit} threshold=${scoreThreshold} q="${query.slice(0, 60)}"`);
+    const start = Date.now();
+    console.log(`[ai-chat:qdrant] raw-searching collection=${collection} limit=${limit} threshold=${scoreThreshold} q="${query.slice(0, 60)}"`);
 
-  const langfuse = getLangfuse();
-  const traceId = options?.traceId;
-  const span = langfuse?.span({ name: 'qdrant-search-raw', ...(traceId ? { traceId } : {}), input: { collection, query: query.slice(0, 200) } });
+    const embedding = await embedQuery(query);
 
-  const embedding = await embedQuery(query);
-
-  let results;
-  try {
-    results = await qdrantClient.search(collection, {
+    const results = await qdrantClient.search(collection, {
       vector: { name: 'dense', vector: embedding },
       ...(options?.filter ? { filter: options.filter } : {}),
       score_threshold: scoreThreshold,
       limit,
       with_payload: true,
     });
-  } catch (err) {
-    console.error(`[ai-chat:qdrant] raw FAILED collection=${collection} ${Date.now() - start}ms`, err);
-    span?.end({ output: { error: String(err) } });
-    throw err;
-  }
 
-  console.log(`[ai-chat:qdrant] raw OK collection=${collection} results=${results.length} ${Date.now() - start}ms`);
-  const mapped = mapResults(results);
-  span?.end({ output: { resultCount: mapped.length, topScore: mapped[0]?.score } });
-  return mapped;
-}
+    console.log(`[ai-chat:qdrant] raw OK collection=${collection} results=${results.length} ${Date.now() - start}ms`);
+    return mapResults(results);
+  },
+  { name: 'qdrant-search-raw', asType: 'retriever' },
+);
 
 // ── Deduplication helper ─────────────────────────────────────────────────────
 

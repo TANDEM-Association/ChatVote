@@ -8,35 +8,11 @@ import { wrapAISDK } from 'langsmith/experimental/vercel';
 // Tracing is handled by the LangfuseSpanProcessor registered in
 // instrumentation.ts (OpenTelemetry-based). All we need to do here is:
 //   1. Enable experimental_telemetry on every AI SDK call
-//   2. Expose the Langfuse SDK singleton for custom spans (e.g. Qdrant search)
+//   2. For custom spans (e.g. Qdrant search), use observe() from @langfuse/tracing
+//      directly in the calling module — no Langfuse SDK singleton needed here.
 //
 
-const LANGFUSE_SECRET_KEY = process.env.LANGFUSE_SECRET_KEY;
-const LANGFUSE_PUBLIC_KEY = process.env.LANGFUSE_PUBLIC_KEY;
-const LANGFUSE_BASEURL = process.env.LANGFUSE_BASEURL ?? 'http://localhost:8652';
-
-const langfuseEnabled = Boolean(LANGFUSE_SECRET_KEY);
-
-// Lazy singleton — only instantiated when Langfuse is enabled.
-// Used for custom spans (Qdrant search, etc.) outside of AI SDK calls.
-let _langfuseInstance: InstanceType<typeof import('langfuse').Langfuse> | null = null;
-
-export function getLangfuse(): InstanceType<typeof import('langfuse').Langfuse> | null {
-  if (!langfuseEnabled) return null;
-
-  if (!_langfuseInstance) {
-    // Dynamic require to avoid loading the module when not configured
-    // eslint-disable-next-line @typescript-eslint/no-require-imports
-    const { Langfuse } = require('langfuse') as typeof import('langfuse');
-    _langfuseInstance = new Langfuse({
-      secretKey: LANGFUSE_SECRET_KEY,
-      publicKey: LANGFUSE_PUBLIC_KEY,
-      baseUrl: LANGFUSE_BASEURL,
-    });
-  }
-
-  return _langfuseInstance;
-}
+const langfuseEnabled = Boolean(process.env.LANGFUSE_SECRET_KEY);
 
 // ── Wrapped streamText / generateText ────────────────────────────────────────
 
@@ -96,11 +72,3 @@ function makeGenerateText(): (params: GenerateTextParams) => GenerateTextReturn 
 
 export const streamText = makeStreamText();
 export const generateText = makeGenerateText();
-
-// ── Flush (call at end of serverless request) ────────────────────────────────
-
-export async function flushLangfuse(): Promise<void> {
-  if (_langfuseInstance) {
-    await _langfuseInstance.flushAsync();
-  }
-}

@@ -1,6 +1,9 @@
 import { google } from '@ai-sdk/google';
 import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, tool } from 'ai';
-import { streamText, flushLangfuse } from '@lib/ai/tracing';
+import { after } from 'next/server';
+import { observe, propagateAttributes } from '@langfuse/tracing';
+import { langfuseSpanProcessor } from '@lib/ai/langfuse-processor';
+import { streamText } from '@lib/ai/tracing';
 import { z } from 'zod/v4';
 
 import { deepResearch } from '@lib/ai/deep-research';
@@ -649,7 +652,7 @@ function checkRateLimit(uid: string): boolean {
 
 const CHAT_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
 
-export async function POST(req: Request) {
+const handleChat = observe(async function handleChat(req: Request) {
   // ── Auth: verify Firebase ID token (optional — anonymous users allowed) ──
   const authHeader = req.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -692,6 +695,16 @@ export async function POST(req: Request) {
   if (chatId && !CHAT_ID_REGEX.test(chatId)) {
     return new Response(JSON.stringify({ error: 'Invalid chatId format' }), { status: 400 });
   }
+
+  // ── Langfuse: propagate session/user to all child OTel spans ──────────
+  return propagateAttributes(
+    {
+      sessionId: chatId ?? undefined,
+      userId: uid,
+      traceName: 'ai-chat',
+      tags: municipalityCode ? ['municipal', municipalityCode] : undefined,
+    },
+    async () => {
 
   const messages = await convertToModelMessages(uiMessages ?? []);
 
@@ -990,8 +1003,6 @@ ${respondInLanguage}${candidateContext}`;
       } catch (err) {
         console.error('[ai-chat] Failed to persist conversation:', err);
       }
-      // Flush Langfuse spans before serverless function exits
-      await flushLangfuse();
     },
     tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap, searchCandidateIds),
   });
@@ -999,4 +1010,14 @@ ${respondInLanguage}${candidateContext}`;
   return result.toUIMessageStreamResponse({
     originalMessages: uiMessages ?? [],
   });
+
+  }); // end propagateAttributes
+}, { name: 'ai-chat', endOnExit: false }); // end observe
+
+export async function POST(req: Request) {
+  const response = await handleChat(req);
+  after(async () => {
+    await langfuseSpanProcessor.forceFlush();
+  });
+  return response;
 }
