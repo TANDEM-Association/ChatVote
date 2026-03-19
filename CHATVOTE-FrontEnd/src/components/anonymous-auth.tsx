@@ -13,6 +13,7 @@ import {
   getUser,
   updateUserData as updateUserDataFirebase,
 } from "@lib/firebase/firebase";
+import { setAnalyticsUserId, setAnalyticsUserProperties } from "@lib/firebase/analytics";
 import { type Auth, type User } from "@lib/types/auth";
 import { signInAnonymously } from "firebase/auth";
 import { useTranslations } from "next-intl";
@@ -83,6 +84,18 @@ export const AuthProvider = ({ children, initialAuth }: AuthProviderProps) => {
           isAnonymous: firebaseUser.isAnonymous,
           emailVerified: firebaseUser.emailVerified,
         });
+
+        // Track user identity for all auth types (including anonymous)
+        setAnalyticsUserId(firebaseUser.uid);
+        const providerId = firebaseUser.providerData[0]?.providerId;
+        const userType = firebaseUser.isAnonymous
+          ? "anonymous"
+          : providerId === "google.com"
+            ? "google"
+            : providerId === "microsoft.com"
+              ? "microsoft"
+              : "email";
+        setAnalyticsUserProperties({ user_type: userType });
 
         setUser((currentUser) => ({
           uid: firebaseUser.uid,

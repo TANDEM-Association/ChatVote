@@ -3,8 +3,8 @@
 import { useState } from "react";
 
 import { Button } from "@components/ui/button";
+import { trackMessageCopied } from "@lib/firebase/analytics";
 import { cn } from "@lib/utils";
-import { track } from "@vercel/analytics/react";
 import { type VariantProps } from "class-variance-authority";
 import { Check, Copy } from "lucide-react";
 import { useTranslations } from "next-intl";
@@ -36,9 +36,7 @@ function CopyButton({
     setIsCopied(true);
     toast.success(t("success"));
 
-    track("message_copied", {
-      message: text,
-    });
+    trackMessageCopied({ session_id: text.slice(0, 50) });
 
     setTimeout(() => {
       setIsCopied(false);

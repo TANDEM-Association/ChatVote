@@ -11,7 +11,6 @@ import { getTenant } from "@lib/firebase/firebase-admin";
 import { getAuth, getParties } from "@lib/firebase/firebase-server";
 import { getTheme } from "@lib/theme/getTheme";
 import { getAppUrl } from "@lib/url";
-import { GoogleAnalytics } from "@next/third-parties/google";
 import { NextIntlClientProvider } from "next-intl";
 import { getMessages } from "next-intl/server";
 
@@ -170,7 +169,6 @@ export default async function RootLayout({
           </AppProvider>
         </NextIntlClientProvider>
       </body>
-      <GoogleAnalytics gaId={config.googleAnalytics.gaId} />
     </html>
   );
 }

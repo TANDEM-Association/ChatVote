@@ -4,9 +4,9 @@ import { useState } from "react";
 
 import { createCheckoutSession } from "@lib/server-actions/stripe-create-session";
 import { formatAmountForDisplay } from "@lib/stripe/stripe-helpers";
+import { trackDonationStarted } from "@lib/firebase/analytics";
 import { cn } from "@lib/utils";
 import NumberFlow from "@number-flow/react";
-import { track } from "@vercel/analytics/react";
 import { EqualIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -31,9 +31,7 @@ const DonationForm = () => {
   const [customAmount, setCustomAmount] = useState(false);
 
   const handleDonate = async (data: FormData) => {
-    track("donation_started", {
-      amount: amount,
-    });
+    trackDonationStarted({ amount });
 
     const result = await createCheckoutSession(data);
 

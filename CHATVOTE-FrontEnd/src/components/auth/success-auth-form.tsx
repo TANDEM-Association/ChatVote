@@ -2,8 +2,8 @@
 
 import { useAnonymousAuth } from "@components/anonymous-auth";
 import { Button } from "@components/ui/button";
+import { trackNewsletterSubscribed, trackNewsletterUnsubscribed } from "@lib/firebase/analytics";
 import { userAllowNewsletter } from "@lib/firebase/firebase";
-import { track } from "@vercel/analytics/react";
 import { HeartHandshakeIcon, XIcon } from "lucide-react";
 import { useTranslations } from "next-intl";
 
@@ -17,7 +17,7 @@ const SuccessAuthForm = ({ onSuccess }: Props) => {
   const { user } = useAnonymousAuth();
 
   const handleSubscribe = async () => {
-    track("newsletter_subscribe");
+    trackNewsletterSubscribed();
     if (user) {
       await userAllowNewsletter(user.uid, true);
     }
@@ -26,7 +26,7 @@ const SuccessAuthForm = ({ onSuccess }: Props) => {
   };
 
   const handleUnsubscribe = async () => {
-    track("newsletter_unsubscribe");
+    trackNewsletterUnsubscribed();
 
     if (user) {
       await userAllowNewsletter(user.uid, false);

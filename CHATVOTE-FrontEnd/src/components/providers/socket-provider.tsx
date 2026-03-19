@@ -4,6 +4,7 @@ import { useEffect, useRef } from "react";
 
 import { type Locale } from "@i18n/config";
 import ChatSocket from "@lib/chat-socket";
+import { trackChatResponseReceived } from "@lib/firebase/analytics";
 import {
   type CandidateProConPerspectiveReadyPayload,
   type ChatSessionInitializedPayload,
@@ -154,6 +155,12 @@ function SocketProvider({ children }: Props) {
         data.party_id,
         data.complete_message,
       );
+      trackChatResponseReceived({
+        session_id: data.session_id,
+        party_id: data.party_id,
+        response_length: data.complete_message?.length ?? 0,
+        has_sources: false,
+      });
     }
 
     function onQuickRepliesAndTitleReady(

@@ -1,10 +1,10 @@
 "use client";
 import { useChatStore } from "@components/providers/chat-store-provider";
 import { Button } from "@components/ui/button";
+import { trackFeedbackGiven } from "@lib/firebase/analytics";
 import { type StreamingMessage } from "@lib/socket.types";
 import { type MessageItem } from "@lib/stores/chat-store.types";
 import { cn } from "@lib/utils";
-import { track } from "@vercel/analytics/react";
 import { ThumbsUp } from "lucide-react";
 
 import ChatDislikeFeedbackButton from "./chat-dislike-feedback-button";
@@ -17,18 +17,13 @@ function ChatMessageLikeDislikeButtons({ message }: Props) {
   const setMessageFeedback = useChatStore((state) => state.setMessageFeedback);
 
   const handleLike = () => {
-    track("message_liked", {
-      message: message.content ?? "empty-message",
-    });
+    trackFeedbackGiven({ session_id: message.id, message_id: message.id, sentiment: "like" });
     setMessageFeedback(message.id, { feedback: "like" });
   };
 
   const handleDislikeFeedback = (details: string) => {
     setMessageFeedback(message.id, { feedback: "dislike", detail: details });
-    track("message_disliked", {
-      message: message.content ?? "empty-message",
-      details,
-    });
+    trackFeedbackGiven({ session_id: message.id, message_id: message.id, sentiment: "dislike" });
   };
 
   const isLiked = message.feedback?.feedback === "like";

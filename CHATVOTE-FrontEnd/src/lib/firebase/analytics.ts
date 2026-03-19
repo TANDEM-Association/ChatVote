@@ -114,6 +114,8 @@ export function trackCommunePageView(params: {
     commune_code: params.commune_code,
     commune_name: params.commune_name,
   });
+  // Persist last visited commune as a user-level property
+  setAnalyticsUserProperties({ last_commune_code: params.commune_code });
 }
 
 export function trackElectoralListSelected(params: {
@@ -241,5 +243,89 @@ export function trackNewChatStarted(params: {
   trackEvent("new_chat_started", {
     scope: params.scope,
     party_count: params.party_count,
+  });
+}
+
+export function trackChatResponseReceived(params: {
+  session_id: string;
+  party_id: string;
+  response_length: number;
+  has_sources: boolean;
+}): void {
+  trackEvent("chat_response_received", {
+    session_id: params.session_id,
+    party_id: params.party_id,
+    response_length: params.response_length,
+    has_sources: params.has_sources ? 1 : 0,
+  });
+}
+
+export function trackErrorOccurred(params: {
+  error_type: string;
+  error_context?: string;
+}): void {
+  trackEvent("app_error", {
+    error_type: params.error_type,
+    ...(params.error_context ? { error_context: params.error_context } : {}),
+  });
+}
+
+export function trackFeedbackGiven(params: {
+  session_id: string;
+  message_id: string;
+  sentiment: "like" | "dislike";
+}): void {
+  trackEvent("feedback_given", {
+    session_id: params.session_id,
+    message_id: params.message_id,
+    sentiment: params.sentiment,
+  });
+}
+
+export function trackMessageCopied(params: {
+  session_id: string;
+  party_id?: string;
+}): void {
+  trackEvent("message_copied", {
+    session_id: params.session_id,
+    ...(params.party_id ? { party_id: params.party_id } : {}),
+  });
+}
+
+export function trackDonationStarted(params: {
+  amount: number;
+}): void {
+  trackEvent("donation_started", {
+    amount: params.amount,
+  });
+}
+
+export function trackNewsletterSubscribed(): void {
+  trackEvent("newsletter_subscribe");
+}
+
+export function trackNewsletterUnsubscribed(): void {
+  trackEvent("newsletter_unsubscribe");
+}
+
+export function trackSecondTourModeViewed(params: {
+  commune_code: string;
+  mode: "second_tour" | "elected_first_round";
+}): void {
+  trackEvent("second_tour_mode_viewed", {
+    commune_code: params.commune_code,
+    mode: params.mode,
+  });
+}
+
+export function trackCandidateSelectionChanged(params: {
+  commune_code: string;
+  candidate_id: string;
+  action: "added" | "removed";
+}): void {
+  trackEvent("candidate_selection_changed", {
+    commune_code: params.commune_code,
+    candidate_id: params.candidate_id,
+    action: params.action,
   });
 }
