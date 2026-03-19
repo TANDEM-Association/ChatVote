@@ -1,4 +1,4 @@
-import { trackChatMessageSent } from "@lib/firebase/analytics";
+import { trackChatMessageSent, trackErrorOccurred } from "@lib/firebase/analytics";
 import {
   addUserMessageToChatSession,
   createChatSession,
@@ -28,7 +28,7 @@ export const chatAddUserMessage: ChatStoreActionHandlerFor<"addUserMessage"> =
         set((state) => {
           state.initialQuestionError = message;
         });
-
+      trackErrorOccurred({ error_type: "socket_disconnected" });
       return;
     }
 
@@ -149,7 +149,10 @@ export const chatAddUserMessage: ChatStoreActionHandlerFor<"addUserMessage"> =
       chatViewScrollToBottom();
     } catch (error) {
       console.error(error);
-
+      trackErrorOccurred({
+        error_type: "message_failed",
+        error_context: error instanceof Error ? error.message : undefined,
+      });
       set((state) => {
         state.loading.newMessage = false;
         state.error = "Failed to get chat answer";

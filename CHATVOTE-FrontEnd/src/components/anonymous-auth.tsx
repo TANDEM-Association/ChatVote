@@ -10,6 +10,7 @@ import {
 
 import {
   setAnalyticsUserId,
+  setAnalyticsUserProperties,
   trackLogin,
   trackSignUp,
 } from "@lib/firebase/analytics";
@@ -84,6 +85,16 @@ export const AuthProvider = ({ children, initialAuth }: AuthProviderProps) => {
     const unsubscribe = auth.onAuthStateChanged(async (firebaseUser) => {
       if (firebaseUser !== null) {
         setAnalyticsUserId(firebaseUser.uid);
+
+        const providerId = firebaseUser.providerData[0]?.providerId;
+        const userType = firebaseUser.isAnonymous
+          ? "anonymous"
+          : providerId === "google.com"
+            ? "google"
+            : providerId === "microsoft.com"
+              ? "microsoft"
+              : "email";
+        setAnalyticsUserProperties({ user_type: userType });
 
         const method = firebaseUser.isAnonymous
           ? "anonymous"
