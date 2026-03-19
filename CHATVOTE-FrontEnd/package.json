@@ -16,7 +16,9 @@
     "format:check": "prettier --check .",
     "type:check": "npm run generate:types && tsc --noEmit",
     "test:e2e": "playwright test",
-    "test:e2e:ui": "playwright test --ui"
+    "test:e2e:ui": "playwright test --ui",
+    "test:eval": "vitest run --config vitest.config.eval.ts",
+    "test:eval:debug": "DEBUG_QUERIES=true vitest run --config vitest.config.eval.ts"
   },
   "dependencies": {
     "@ai-sdk/gateway": "^3.0.66",
@@ -74,6 +76,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@langfuse/client": "^5.0.1",
     "@next/third-parties": "^16.1.6",
     "@playwright/test": "^1.58.2",
     "@react-grab/claude-code": "^0.1.26",
@@ -85,6 +88,7 @@
     "@types/react-window": "^1.8.8",
     "@typescript-eslint/eslint-plugin": "^8.46.0",
     "@typescript-eslint/parser": "^8.46.0",
+    "autoevals": "^0.0.132",
     "eslint": "^9",
     "eslint-config-next": "16.0.0",
     "eslint-config-prettier": "^10.1.8",
@@ -102,7 +106,10 @@
     "socket.io": "^4.8.3",
     "tailwind-animate": "^0.2.10",
     "tailwindcss": "^4.1.18",
-    "typescript": "^5.7.2"
+    "typescript": "^5.7.2",
+    "vite": "^8.0.1",
+    "vitest": "^4.1.0",
+    "vitest-evals": "^0.6.0"
   },
   "overrides": {
     "@types/react": "19.0.1",
