@@ -28,13 +28,13 @@ resource "scaleway_k8s_cluster" "main" {
   }
 
   autoscaler_config {
-    disable_scale_down              = false
-    scale_down_delay_after_add      = "10m"
-    scale_down_unneeded_time        = "10m"
+    disable_scale_down               = false
+    scale_down_delay_after_add       = "10m"
+    scale_down_unneeded_time         = "10m"
     scale_down_utilization_threshold = 0.5
-    estimator                       = "binpacking"
-    expander                        = "random"
-    max_graceful_termination_sec    = 600
+    estimator                        = "binpacking"
+    expander                         = "random"
+    max_graceful_termination_sec     = 600
   }
 }
 
@@ -53,8 +53,8 @@ resource "scaleway_k8s_pool" "main" {
   max_size    = 2
   autohealing = true
 
-  container_runtime = "containerd"
-  root_volume_type  = "l_ssd"
+  container_runtime      = "containerd"
+  root_volume_type       = "l_ssd"
   root_volume_size_in_gb = 80
 
   upgrade_policy {
@@ -74,8 +74,8 @@ resource "scaleway_k8s_pool" "pipeline" {
   max_size    = 2
   autohealing = true
 
-  container_runtime = "containerd"
-  root_volume_type  = "sbs_5k"
+  container_runtime      = "containerd"
+  root_volume_type       = "sbs_5k"
   root_volume_size_in_gb = 40
 
   upgrade_policy {
@@ -123,6 +123,63 @@ resource "scaleway_object_bucket" "public_assets" {
 resource "scaleway_object_bucket_acl" "public_assets_acl" {
   bucket = scaleway_object_bucket.public_assets.name
   acl    = "public-read"
+}
+
+# ──────────────────────────────────────────────
+# Object Storage — Langfuse Blob Storage
+# ──────────────────────────────────────────────
+# Used by production Langfuse v2 for trace event and media storage.
+# Private bucket — accessed via S3 API from the K8s Langfuse pod.
+
+resource "scaleway_object_bucket" "langfuse_blobs" {
+  name = "chatvote-langfuse-blobs"
+
+  lifecycle_rule {
+    enabled = true
+    expiration {
+      days = 90
+    }
+  }
+}
+
+# ──────────────────────────────────────────────
+# Managed Database — Langfuse Postgres
+# ──────────────────────────────────────────────
+# Replaces the pod-based Postgres StatefulSet in k8s/prod/langfuse/.
+# Scaleway Managed Database handles backups, HA, and patching.
+
+resource "scaleway_rdb_instance" "langfuse" {
+  name           = "langfuse-db"
+  node_type      = "DB-DEV-S" # 1 vCPU, 2GB RAM — sufficient for Langfuse v2
+  engine         = "PostgreSQL-15"
+  is_ha_cluster  = false
+  disable_backup = false
+
+  volume_type       = "lssd"
+  volume_size_in_gb = 10
+
+  private_network {
+    pn_id = scaleway_vpc_private_network.main.id
+  }
+}
+
+resource "scaleway_rdb_database" "langfuse" {
+  instance_id = scaleway_rdb_instance.langfuse.id
+  name        = "langfuse"
+}
+
+resource "scaleway_rdb_user" "langfuse" {
+  instance_id = scaleway_rdb_instance.langfuse.id
+  name        = "langfuse"
+  password    = var.langfuse_db_password
+  is_admin    = false
+}
+
+resource "scaleway_rdb_privilege" "langfuse" {
+  instance_id   = scaleway_rdb_instance.langfuse.id
+  user_name     = scaleway_rdb_user.langfuse.name
+  database_name = scaleway_rdb_database.langfuse.name
+  permission    = "all"
 }
 
 # ──────────────────────────────────────────────

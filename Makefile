@@ -93,6 +93,7 @@ dev: dev-infra
 	@echo "  App:                http://localhost:3000"
 	@echo "  Qdrant dashboard:   http://localhost:6333/dashboard"
 	@echo "  Firebase emulators: http://localhost:4000"
+	@echo "  Langfuse dashboard: http://localhost:8652"
 	@echo ""
 	@echo "  Logs:  make logs           (tail all logs)"
 	@echo "  Stop:  make stop           (stop everything)"
@@ -138,6 +139,8 @@ dev-infra:
 		echo "Starting Firebase emulators in Docker (Firestore :8081, Auth :9099)..."; \
 		PROFILES="$$PROFILES --profile firebase"; \
 	fi; \
+	echo "Starting Langfuse observability (dashboard :3001)..."; \
+	PROFILES="$$PROFILES --profile langfuse"; \
 	docker compose -f docker-compose.dev.yml $$PROFILES up -d --wait
 
 # Backward-compat alias — Firebase emulators now run inside Docker via dev-infra
@@ -263,6 +266,8 @@ check:
 		(curl -sf http://localhost:8080/healthz > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 	@printf "  Frontend  (:3000)  ... " && \
 		(curl -sf -m 5 http://localhost:3000/ > /dev/null 2>&1 && echo "OK" || echo "FAIL")
+	@printf "  Langfuse  (:3001)  ... " && \
+		(curl -sf http://localhost:8652/api/public/health > /dev/null 2>&1 && echo "OK" || echo "FAIL")
 
 # ---------------------------------------------------------------------------
 # Logs
@@ -302,7 +307,7 @@ check-prod:
 
 stop:
 	@echo "Stopping all services..."
-	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase down
+	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase --profile langfuse down
 	@for svc in backend frontend; do \
 		if [ -f .logs/$$svc.pid ]; then \
 			kill $$(cat .logs/$$svc.pid) 2>/dev/null || true; \
@@ -346,4 +351,4 @@ eval-report-static:
 	cd CHATVOTE-BackEnd && poetry run python scripts/eval_report.py --tests static
 
 clean: stop
-	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase down -v
+	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase --profile langfuse down -v

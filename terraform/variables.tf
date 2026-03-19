@@ -152,6 +152,31 @@ variable "google_sheet_id" {
 }
 
 # ──────────────────────────────────────────────
+# Langfuse
+# ──────────────────────────────────────────────
+
+variable "langfuse_db_password" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Password for the Langfuse Managed Database user"
+}
+
+variable "langfuse_encryption_key" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Langfuse encryption key (64-char hex string)"
+}
+
+variable "langfuse_salt" {
+  type        = string
+  sensitive   = true
+  default     = ""
+  description = "Langfuse password salt"
+}
+
+# ──────────────────────────────────────────────
 # Serverless container
 # ──────────────────────────────────────────────
 

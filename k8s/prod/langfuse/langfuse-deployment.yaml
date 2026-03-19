@@ -1,0 +1,104 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: langfuse
+  namespace: chatvote-prod
+  labels:
+    app: langfuse
+spec:
+  replicas: 1
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: langfuse
+  template:
+    metadata:
+      labels:
+        app: langfuse
+    spec:
+      nodeSelector:
+        k8s.scaleway.com/pool-name: pool-par-2-8gb
+      containers:
+        - name: langfuse
+          # v2 = Postgres-only (no ClickHouse/Redis/MinIO needed)
+          # DATABASE_URL points to Scaleway Managed Database (terraform: scaleway_rdb_instance.langfuse)
+          image: ghcr.io/langfuse/langfuse:2
+          ports:
+            - containerPort: 3000
+              name: http
+          env:
+            - name: DATABASE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: database-url
+            - name: NEXTAUTH_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: nextauth-secret
+            - name: SALT
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: salt
+            - name: ENCRYPTION_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: encryption-key
+            - name: NEXTAUTH_URL
+              value: "https://langfuse.chatvote.fr"
+            - name: AUTH_DISABLE_SIGNUP
+              value: "true"
+            - name: LANGFUSE_S3_EVENT_UPLOAD_BUCKET
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: s3-bucket
+            - name: LANGFUSE_S3_EVENT_UPLOAD_REGION
+              value: "fr-par"
+            - name: LANGFUSE_S3_EVENT_UPLOAD_ACCESS_KEY_ID
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: s3-access-key-id
+            - name: LANGFUSE_S3_EVENT_UPLOAD_SECRET_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: langfuse-secrets
+                  key: s3-secret-access-key
+            - name: LANGFUSE_S3_EVENT_UPLOAD_ENDPOINT
+              value: "https://s3.fr-par.scw.cloud"
+          startupProbe:
+            httpGet:
+              path: /api/public/health
+              port: 3000
+            periodSeconds: 5
+            failureThreshold: 30
+            timeoutSeconds: 3
+          livenessProbe:
+            httpGet:
+              path: /api/public/health
+              port: 3000
+            periodSeconds: 15
+            failureThreshold: 3
+            timeoutSeconds: 5
+          readinessProbe:
+            httpGet:
+              path: /api/public/health
+              port: 3000
+            periodSeconds: 10
+            failureThreshold: 3
+            timeoutSeconds: 5
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "100m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"

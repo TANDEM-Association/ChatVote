@@ -19,3 +19,24 @@ output "registry_endpoint" {
 output "k8s_cluster_id" {
   value = scaleway_k8s_cluster.main.id
 }
+
+output "langfuse_blobs_bucket_endpoint" {
+  value       = "https://${scaleway_object_bucket.langfuse_blobs.name}.s3.${var.region}.scw.cloud"
+  description = "S3 endpoint for Langfuse blob storage"
+}
+
+output "langfuse_db_endpoint" {
+  value       = scaleway_rdb_instance.langfuse.endpoint_ip
+  description = "Langfuse Managed Database endpoint IP"
+}
+
+output "langfuse_db_port" {
+  value       = scaleway_rdb_instance.langfuse.endpoint_port
+  description = "Langfuse Managed Database port"
+}
+
+output "langfuse_db_connection_string" {
+  value       = "postgresql://langfuse:${var.langfuse_db_password}@${scaleway_rdb_instance.langfuse.endpoint_ip}:${scaleway_rdb_instance.langfuse.endpoint_port}/langfuse"
+  sensitive   = true
+  description = "Full DATABASE_URL for Langfuse deployment"
+}

@@ -16,6 +16,7 @@ ChatVote is an AI-powered political information chatbot for French elections. Ci
 ```bash
 make setup                         # One-time: init submodules, create .env, install deps
 make dev                           # Start everything (Docker, Firebase, backend, frontend)
+make dev                           # Includes Langfuse observability (dashboard: localhost:8652)
 make check                         # Health-check all services
 make logs                          # Tail all service logs
 make stop                          # Stop everything
@@ -134,6 +135,18 @@ Collections are environment-suffixed (`_dev` / `_prod`):
 Backend needs at minimum: `ENV` (dev/prod), one LLM API key (`GOOGLE_API_KEY` recommended), `QDRANT_URL`, Firebase credentials. See `CHATVOTE-BackEnd/.env.example`.
 
 Frontend needs: Firebase config (`NEXT_PUBLIC_FIREBASE_*`), `NEXT_PUBLIC_SOCKET_URL`, Stripe keys, `NEXT_PUBLIC_APP_URL`. See `CHATVOTE-FrontEnd/.env.local`.
+
+### Observability (Langfuse)
+
+Langfuse self-hosted provides AI tracing (LLM calls, Qdrant retrieval spans, tool invocations). Enabled by default in `make dev`. Dashboard at `http://localhost:8652` (login: `admin@chatvote.local` / `admin123`). Frontend env vars in `.env.local`:
+
+- `LANGFUSE_SECRET_KEY` — enables Langfuse tracing when set (local: `sk-lf-local`)
+- `LANGFUSE_PUBLIC_KEY` — Langfuse public key (local: `pk-lf-local`)
+- `LANGFUSE_BASEURL` — Langfuse server URL (local: `http://localhost:8652`)
+
+Fallback: set `LANGCHAIN_TRACING=true` + `LANGCHAIN_API_KEY` for LangSmith cloud tracing instead. With neither set, tracing is disabled (no-op).
+
+Production Langfuse runs as v2 (Postgres-only) on the K8s cluster. K8s manifests in `k8s/prod/langfuse/`. Python backend instrumentation is deferred (separate PR).
 
 ## Scraping & Indexing Pipeline
 

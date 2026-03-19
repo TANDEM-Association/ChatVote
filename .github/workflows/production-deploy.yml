@@ -215,6 +215,9 @@ jobs:
           SYNC_QDRANT_API_KEY: ${{ secrets.QDRANT_API_KEY }}
           SYNC_LANGCHAIN_TRACING: ${{ secrets.LANGCHAIN_TRACING }}
           SYNC_LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
+          SYNC_LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          SYNC_LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          SYNC_LANGFUSE_BASEURL: ${{ secrets.LANGFUSE_BASEURL }}
         run: |
           # Sync env vars BEFORE vercel pull so pulled .env has correct values
           sync_var() {
@@ -242,6 +245,9 @@ jobs:
           sync_var ENV "prod"
           sync_var LANGCHAIN_TRACING "$SYNC_LANGCHAIN_TRACING"
           sync_var LANGCHAIN_API_KEY "$SYNC_LANGCHAIN_API_KEY"
+          sync_var LANGFUSE_PUBLIC_KEY "$SYNC_LANGFUSE_PUBLIC_KEY"
+          sync_var LANGFUSE_SECRET_KEY "$SYNC_LANGFUSE_SECRET_KEY"
+          sync_var LANGFUSE_BASEURL "$SYNC_LANGFUSE_BASEURL"
 
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
@@ -278,6 +284,9 @@ jobs:
           ENV: prod
           LANGCHAIN_TRACING: ${{ secrets.LANGCHAIN_TRACING }}
           LANGCHAIN_API_KEY: ${{ secrets.LANGCHAIN_API_KEY }}
+          LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
+          LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
+          LANGFUSE_BASEURL: ${{ secrets.LANGFUSE_BASEURL }}
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy

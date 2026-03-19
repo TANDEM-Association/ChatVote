@@ -1,6 +1,6 @@
 import { google } from '@ai-sdk/google';
 import { stepCountIs, tool } from 'ai';
-import { generateText } from './langsmith';
+import { generateText } from './tracing';
 import { z } from 'zod/v4';
 
 import { COLLECTIONS } from './qdrant-client';
@@ -42,31 +42,36 @@ export async function deepResearch(params: {
   try {
     await generateText({
       model: google('gemini-2.5-flash'),
-      prompt: `Find relevant information for this query that returned insufficient results: "${originalQuery}"`,
-      system: `You are a research assistant. Given a query that returned insufficient results from a vector database, your job is to find relevant information by:
-1. Generating 2-3 alternative phrasings of the original query (synonyms, related terms, broader/narrower scope)
-2. Searching across the provided collections with these alternative queries
-3. Lowering the score threshold if initial searches return few results
-4. Compiling all findings
+      prompt: `Recherche approfondie pour : "${originalQuery}"`,
+      system: `Tu es un agent de recherche documentaire spécialisé dans les données politiques françaises (programmes électoraux, professions de foi, sites de campagne, votes parlementaires, questions au gouvernement).
 
-Available collections: ${collections.join(', ')}
-${candidateIds?.length ? `Candidate IDs for scoped search: ${candidateIds.join(', ')}` : ''}
-${partyIds?.length ? `Party IDs for scoped search: ${partyIds.join(', ')}` : ''}
+Ta mission : trouver un maximum d'informations pertinentes sur un sujet qui a retourné peu de résultats lors d'une première recherche vectorielle.
 
-Original query that returned insufficient results: "${originalQuery}"
+# Stratégie de recherche
+1. **Reformulation** : Génère 2-3 variantes de la requête originale en exploitant synonymes, termes officiels, et angles différents. Ex: "écologie" → "transition énergétique", "plan climat", "développement durable".
+2. **Élargissement progressif** : Commence par les collections ciblées, puis élargis. Baisse le seuil de score (scoreThreshold) si les premiers résultats sont insuffisants (0.35 → 0.30 → 0.25).
+3. **Recherche par namespace** : Si des candidateIds ou partyIds sont fournis, cherche d'abord dans leur namespace spécifique, puis sans namespace pour rattraper les documents mal catégorisés.
+4. **Arrêt intelligent** : Quand tu as ≥8 résultats pertinents OU que tu as épuisé tes variations, appelle compileResults.
 
-Search strategically: try different phrasings, try broader terms, try related concepts. When you have gathered enough results (or exhausted your search budget), call compileResults.`,
+# Contexte
+Collections disponibles : ${collections.join(', ')}
+${candidateIds?.length ? `IDs candidats (namespace) : ${candidateIds.join(', ')}` : 'Pas de filtre candidat — recherche large.'}
+${partyIds?.length ? `IDs partis (namespace) : ${partyIds.join(', ')}` : ''}
+
+Requête originale : "${originalQuery}"
+
+Sois méthodique : varie les formulations, essaie les termes en français courant ET administratif, et compile tes résultats dès que tu as assez de matière.`,
       stopWhen: stepCountIs(3),
       abortSignal: AbortSignal.timeout(25000),
       tools: {
         searchCollection: tool({
-          description: 'Search a Qdrant collection for relevant content. Use different queries and thresholds to find more results.',
+          description: 'Recherche vectorielle dans une collection Qdrant. Varie les requêtes (synonymes, termes officiels/courants) et ajuste le seuil de score pour maximiser le rappel.',
           inputSchema: z.object({
-            collection: z.enum(COLLECTION_NAMES as [string, ...string[]]).describe('Collection to search'),
-            query: z.string().describe('Search query — use varied phrasings for better recall'),
-            namespace: z.string().optional().describe('Optional namespace filter (party_id or candidate_id)'),
-            scoreThreshold: z.number().min(0.2).max(0.5).default(0.3).describe('Score threshold (lower = more results, less precise)'),
-            limit: z.number().min(1).max(15).default(8).describe('Max results to return'),
+            collection: z.enum(COLLECTION_NAMES as [string, ...string[]]).describe('Collection cible (programmes, sites candidats, votes, questions parlementaires)'),
+            query: z.string().describe('Requête de recherche — utilise des formulations variées à chaque appel'),
+            namespace: z.string().optional().describe('Filtre namespace optionnel (party_id ou candidate_id) — omets pour une recherche large'),
+            scoreThreshold: z.number().min(0.2).max(0.5).default(0.3).describe('Seuil de pertinence (0.2 = large, 0.5 = strict) — baisse progressivement si peu de résultats'),
+            limit: z.number().min(1).max(15).default(8).describe('Nombre max de résultats'),
           }),
           execute: async (input) => {
             if (qdrantCallCount >= QDRANT_BUDGET) {
@@ -104,11 +109,11 @@ Search strategically: try different phrasings, try broader terms, try related co
           },
         }),
         compileResults: tool({
-          description: 'Compile all research findings. Call this when you have gathered enough results or exhausted your search budget.',
+          description: 'Compile les résultats de recherche. Appelle quand tu as ≥8 résultats pertinents OU que tu as épuisé tes variations de requêtes.',
           inputSchema: z.object({
-            summary: z.string().describe('Brief summary of what was found and what was tried'),
-            queriesTried: z.array(z.string()).describe('All query variations that were attempted'),
-            collectionsSearched: z.array(z.string()).describe('All collections that were searched'),
+            summary: z.string().describe('Bilan concis : ce qui a été trouvé, ce qui manque, et les pistes essayées'),
+            queriesTried: z.array(z.string()).describe('Toutes les variantes de requêtes testées'),
+            collectionsSearched: z.array(z.string()).describe('Toutes les collections consultées'),
           }),
           execute: async (input) => {
             return {
