@@ -53,6 +53,7 @@ const ElectoralListsDrawer = ({ open, onOpenChange }: Props) => {
 
     fetch(`/api/electoral-lists?commune_code=${municipalityCode}`, {
       signal: controller.signal,
+      cache: "no-store",
     })
       .then((res) => {
         if (!res.ok) return null;
