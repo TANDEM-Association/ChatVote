@@ -180,6 +180,18 @@ const stageConfig: Record<string, { label: string; color: string }> = {
     label: "RAG Search",
     color: "bg-green-500/20 text-green-700 dark:text-green-300",
   },
+  rag_vector_search: {
+    label: "Vector Search",
+    color: "bg-emerald-500/20 text-emerald-700 dark:text-emerald-300",
+  },
+  rag_vector_results: {
+    label: "Vector Results",
+    color: "bg-teal-500/20 text-teal-700 dark:text-teal-300",
+  },
+  rag_rerank_results: {
+    label: "Rerank Results",
+    color: "bg-lime-500/20 text-lime-700 dark:text-lime-300",
+  },
   response_generation_start: {
     label: "Response Gen",
     color: "bg-orange-500/20 text-orange-700 dark:text-orange-300",

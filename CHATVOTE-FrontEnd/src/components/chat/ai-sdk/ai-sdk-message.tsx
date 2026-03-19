@@ -1,12 +1,15 @@
-'use client';
+"use client";
 
-import { type UIMessage, isToolUIPart, getToolName } from 'ai';
-import { useMemo } from 'react';
-import { cn } from '@lib/utils';
-import { type Source } from '@lib/stores/chat-store.types';
-import ChatMarkdown from '../chat-markdown';
-import AiSdkSourceChip from './ai-sdk-source-chip';
-import AiSdkToolResult from './ai-sdk-tool-result';
+import { useMemo } from "react";
+
+import { type Source } from "@lib/stores/chat-store.types";
+import { cn } from "@lib/utils";
+import { getToolName, isToolUIPart, type UIMessage } from "ai";
+
+import ChatMarkdown from "../chat-markdown";
+
+import AiSdkSourceChip from "./ai-sdk-source-chip";
+import AiSdkToolResult from "./ai-sdk-tool-result";
 
 type Props = {
   message: UIMessage;
@@ -14,17 +17,17 @@ type Props = {
 };
 
 /** Collect all sources from search tool results in this message for inline [0],[1] badges */
-function collectSources(parts: UIMessage['parts']): Source[] {
+function collectSources(parts: UIMessage["parts"]): Source[] {
   const sources: Source[] = [];
   for (const part of parts) {
     if (
       isToolUIPart(part) &&
-      (part as any).state === 'output-available' &&
-      (getToolName(part) === 'searchPartyManifesto' ||
-        getToolName(part) === 'searchCandidateWebsite' ||
-        getToolName(part) === 'searchAllCandidates')
+      (part as { state?: string }).state === "output-available" &&
+      (getToolName(part) === "searchPartyManifesto" ||
+        getToolName(part) === "searchCandidateWebsite" ||
+        getToolName(part) === "searchAllCandidates")
     ) {
-      const result = (part as any).output as {
+      const result = (part as { output?: unknown }).output as {
         results?: Array<{
           id: number;
           content: string;
@@ -39,10 +42,13 @@ function collectSources(parts: UIMessage['parts']): Source[] {
           sources.push({
             source: r.source,
             content_preview: r.content.slice(0, 200),
-            page: typeof r.page === 'number' ? r.page : parseInt(String(r.page)) || 0,
+            page:
+              typeof r.page === "number"
+                ? r.page
+                : parseInt(String(r.page)) || 0,
             url: r.url,
             source_document: r.source,
-            document_publish_date: '',
+            document_publish_date: "",
             party_id: r.party_id,
           });
         }
@@ -53,35 +59,43 @@ function collectSources(parts: UIMessage['parts']): Source[] {
 }
 
 export default function AiSdkMessage({ message, onSendMessage }: Props) {
-  const isUser = message.role === 'user';
+  const isUser = message.role === "user";
 
   // Collect sources from tool results for inline reference badges
   const sources = useMemo(() => collectSources(message.parts), [message.parts]);
 
   return (
-    <article className={cn('flex gap-3', isUser ? 'justify-end' : 'justify-start')}>
+    <article
+      className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}
+    >
       <div
         className={cn(
-          'max-w-[85%] rounded-2xl px-4 py-3',
-          isUser ? 'bg-primary text-primary-foreground' : 'bg-muted',
+          "max-w-[85%] rounded-2xl px-4 py-3",
+          isUser
+            ? "bg-primary text-primary-foreground"
+            : "border border-white/10 bg-white/5 backdrop-blur-sm",
         )}
       >
-{message.parts.map((part, index) => {
+        {message.parts.map((part, index) => {
           switch (part.type) {
-            case 'text':
+            case "text":
               return (
                 <div key={index}>
                   <ChatMarkdown message={{ content: part.text, sources }} />
                 </div>
               );
-            case 'source-url':
+            case "source-url":
               return (
                 <AiSdkSourceChip
                   key={index}
-                  source={{ url: part.url, title: part.title, id: part.sourceId }}
+                  source={{
+                    url: part.url,
+                    title: part.title,
+                    id: part.sourceId,
+                  }}
                 />
               );
-            case 'source-document':
+            case "source-document":
               return (
                 <AiSdkSourceChip
                   key={index}
@@ -90,7 +104,13 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
               );
             default:
               if (isToolUIPart(part)) {
-                return <AiSdkToolResult key={index} part={part} onSendMessage={onSendMessage} />;
+                return (
+                  <AiSdkToolResult
+                    key={index}
+                    part={part}
+                    onSendMessage={onSendMessage}
+                  />
+                );
               }
               return null;
           }
