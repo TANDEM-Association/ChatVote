@@ -29,11 +29,13 @@ export async function GET(request: NextRequest) {
   }
 
   const isDev = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
-  const cacheHeaders = {
+  const getCacheHeaders = (isSecondRound: boolean) => ({
     "Cache-Control": isDev
       ? "no-store"
-      : "public, max-age=3600, s-maxage=3600, stale-while-revalidate=86400",
-  };
+      : isSecondRound
+        ? "public, max-age=60, s-maxage=300, stale-while-revalidate=600"
+        : "public, max-age=300, s-maxage=3600, stale-while-revalidate=7200",
+  });
 
   try {
     // Fetch candidates and election config in parallel
@@ -52,7 +54,7 @@ export async function GET(request: NextRequest) {
     if (candidatesSnap.empty) {
       return NextResponse.json(
         { lists: [], source: "candidates" } satisfies CandidateListsResponse,
-        { headers: cacheHeaders },
+        { headers: getCacheHeaders(isSecondRoundActive) },
       );
     }
 
@@ -111,7 +113,7 @@ export async function GET(request: NextRequest) {
           lists: enrichedLists,
           source: "electoral_lists",
         } satisfies CandidateListsResponse,
-        { headers: cacheHeaders },
+        { headers: getCacheHeaders(isSecondRoundActive) },
       );
     }
 
@@ -139,7 +141,7 @@ export async function GET(request: NextRequest) {
 
     return NextResponse.json(
       { lists, source: "candidates" } satisfies CandidateListsResponse,
-      { headers: cacheHeaders },
+      { headers: getCacheHeaders(isSecondRoundActive) },
     );
   } catch (error) {
     console.error("[candidate-lists] Failed:", error);

@@ -67,14 +67,16 @@ export async function GET(request: NextRequest) {
     }
 
     const isDev = process.env.NEXT_PUBLIC_USE_FIREBASE_EMULATORS === "true";
-    // Reduce cache during active second round (data changes frequently)
-    const maxAge = isSecondRoundActive ? 300 : 86400;
+    // Short browser cache (max-age) so users see fresh data quickly,
+    // longer CDN cache (s-maxage) to absorb most Firestore reads.
+    const browserMaxAge = isSecondRoundActive ? 60 : 300;
+    const cdnMaxAge = isSecondRoundActive ? 300 : 3600;
 
     return NextResponse.json(responseData, {
       headers: {
         "Cache-Control": isDev
           ? "no-store"
-          : `public, max-age=${maxAge}, s-maxage=${maxAge}, stale-while-revalidate=${maxAge * 2}`,
+          : `public, max-age=${browserMaxAge}, s-maxage=${cdnMaxAge}, stale-while-revalidate=${cdnMaxAge * 2}`,
       },
     });
   } catch (error) {
