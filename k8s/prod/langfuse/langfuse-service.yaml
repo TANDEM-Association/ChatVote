@@ -6,7 +6,7 @@ metadata:
   labels:
     app: langfuse
 spec:
-  type: ClusterIP
+  type: LoadBalancer
   selector:
     app: langfuse
   ports:
