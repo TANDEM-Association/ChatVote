@@ -1,7 +1,7 @@
 import { google } from '@ai-sdk/google';
 import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, tool } from 'ai';
 import { after } from 'next/server';
-import { observe, propagateAttributes } from '@langfuse/tracing';
+import { observe, propagateAttributes, setActiveTraceIO } from '@langfuse/tracing';
 import { langfuseSpanProcessor } from '@lib/ai/langfuse-processor';
 import { streamText } from '@lib/ai/tracing';
 import { z } from 'zod/v4';
@@ -67,6 +67,16 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
   const features = enabledFeatures ?? ['rag'];
   const ragEnabled = features.includes('rag');
 
+  // Global source counter — shared across ALL tool calls so each source gets a
+  // unique sequential number (e.g. tool call 1 → [1-5], tool call 2 → [6-10]).
+  // This lets the LLM cite [1], [2], [3]… reliably without renumbering.
+  let globalSourceCounter = 0;
+
+  /** Assign globally unique sequential IDs to search results */
+  function assignGlobalIds<T>(results: T[]): (T & { id: number })[] {
+    return results.map((r) => ({ ...r, id: ++globalSourceCounter }));
+  }
+
   return {
     // ── RAG search tools (feature-gated) ────────────────────────────────────
     ...(ragEnabled
@@ -107,7 +117,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
                 // LLM reranking: pick the most relevant results for the actual question
-                const reranked = await rerankResults(results, query, 5);
+                const reranked = assignGlobalIds(await rerankResults(results, query, 5));
                 return { partyId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchPartyManifesto error:', err);
@@ -150,7 +160,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                const reranked = await rerankResults(results, query, 5);
+                const reranked = assignGlobalIds(await rerankResults(results, query, 5));
                 return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchCandidateWebsite error:', err);
@@ -242,11 +252,10 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
 
                       const scoreSorted = Array.from(seen.values())
                         .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-                        .slice(0, 20)
-                        .map((r, idx) => ({ ...r, id: idx + 1 }));
+                        .slice(0, 20);
 
                       // LLM reranking: pick 12 most relevant from the 20 score-sorted results
-                      const reranked = await rerankResults(scoreSorted, queries[0], 12);
+                      const reranked = assignGlobalIds(await rerankResults(scoreSorted, queries[0], 12));
 
                       const candidatesWithResults = new Set(reranked.map((r: any) => r.candidateId));
 
@@ -303,7 +312,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                const reranked = await rerankResults(results, input.query, 5);
+                const reranked = assignGlobalIds(await rerankResults(results, input.query, 5));
                 return { results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchVotingRecords error:', err);
@@ -369,7 +378,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                const reranked = await rerankResults(results, input.query, 5);
+                const reranked = assignGlobalIds(await rerankResults(results, input.query, 5));
                 return { partyId: input.partyId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchParliamentaryQuestions error:', err);
@@ -565,15 +574,16 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
           candidateIds: selectedCandidateIds.length > 0 ? selectedCandidateIds : candidateIds.length > 0 ? candidateIds : undefined,
         });
         const elapsed = Date.now() - start;
-        return {
-          findings: result.findings.slice(0, 12).map((r) => ({
+        const findings = assignGlobalIds(result.findings.slice(0, 12).map((r) => ({
             content: r.content.slice(0, 300),
             source: r.source,
             url: r.url,
             score: r.score,
             party_id: r.party_id,
             candidate_name: r.candidate_name,
-          })),
+          })));
+        return {
+          findings,
           totalFindings: result.findings.length,
           queriesTried: result.queriesTried,
           collectionsSearched: result.collectionsSearched,
@@ -721,6 +731,14 @@ const handleChat = observe(async function handleChat(req: Request) {
   };
 
   console.log('[ai-chat] POST', { chatId, municipalityCode, partyIds, enabledFeatures, locale, uid, msgCount: uiMessages?.length });
+
+  // ── Langfuse: set trace-level input ───────────────────────────────────────
+  const lastUserMessage = uiMessages?.[uiMessages.length - 1];
+  const inputText = lastUserMessage?.parts
+    ?.filter((p): p is { type: 'text'; text: string } => p.type === 'text')
+    .map((p) => p.text)
+    .join('') ?? '';
+  setActiveTraceIO({ input: inputText });
 
   // ── Validate chatId format ──────────────────────────────────────────────
   if (chatId && !CHAT_ID_REGEX.test(chatId)) {
@@ -933,7 +951,7 @@ Date : ${currentDate}
 ${contextLine}
 
 # Principes fondamentaux
-1. **Rigueur factuelle** : Chaque affirmation doit être traçable à une source documentaire. Cite systématiquement [1], [2], etc. après chaque fait. **Numérotation des citations** : numérote tes sources de manière **séquentielle et globale en partant de 1**, dans l'ordre où tu les rencontres dans les résultats de recherche. Ignore le champ \`id\` des résultats individuels — utilise ta propre numérotation continue. Exemple : si tu appelles 2 outils qui retournent chacun 5 résultats, tes citations vont de [1] à [10]. Si aucune source ne couvre un sujet, dis-le clairement : "Aucun des candidats ne mentionne ce sujet dans les documents disponibles." N'invente jamais, ne déduis jamais au-delà de ce que les sources disent explicitement.
+1. **Rigueur factuelle** : Chaque affirmation doit être traçable à une source documentaire. Cite systématiquement [N] après chaque fait, où N est le champ \`id\` du résultat. Les \`id\` sont déjà numérotés de manière **séquentielle et globale** à travers tous les appels d'outils — utilise-les directement. Exemple : si un outil retourne id:1,2,3 et un autre id:4,5,6, cite [1], [4], etc. Si aucune source ne couvre un sujet, dis-le clairement : "Aucun des candidats ne mentionne ce sujet dans les documents disponibles." N'invente jamais, ne déduis jamais au-delà de ce que les sources disent explicitement.
 2. **Neutralité absolue** : Tu ne juges pas, tu ne recommandes pas, tu ne classes pas les candidats. Pas d'adjectifs valorisants ("ambitieux", "courageux") ni dépréciatifs. Présente les faits et laisse le citoyen se forger son opinion.
 3. **Transparence sur les limites** : Si l'information est partielle, dis-le. Si un candidat n'a pas de position documentée sur un sujet, mentionne-le explicitement plutôt que de l'omettre silencieusement. Distingue "pas trouvé dans nos documents" de "le candidat n'en parle pas".
 
@@ -993,6 +1011,7 @@ ${respondInLanguage}${candidateContext}`;
       });
     },
     async onFinish({ text, usage }) {
+      setActiveTraceIO({ output: text });
       // Persist conversation to Firestore (fire-and-forget, never blocks the response)
       if (!chatId) return;
       try {
