@@ -19,9 +19,9 @@ import { db, auth } from '@lib/firebase/firebase-admin';
 export const maxDuration = 120;
 export const preferredRegion = 'cdg1';
 
-// ── data.gouv.fr MCP client ──────────────────────────────────────────────────
-// Uses the official data.gouv.fr MCP server (https://github.com/datagouv/datagouv-mcp)
-// Public endpoint: mcp.data.gouv.fr — free, no API key required
+// ── data.gouv.fr REST API client ─────────────────────────────────────────────
+// Uses the official data.gouv.fr REST API (https://www.data.gouv.fr/api/1/)
+// Public endpoint, no API key required
 interface DataGouvDataset {
   id: string;
   title: string;
@@ -33,65 +33,13 @@ interface DataGouvDataset {
   resources?: Array<{ title: string; format: string; url: string }>;
 }
 
-async function searchDataGouvMcp(query: string, limit = 5): Promise<DataGouvDataset[]> {
-  // Call the MCP server's search_datasets tool via JSON-RPC over SSE/HTTP
-  // The MCP endpoint exposes standard MCP protocol at mcp.data.gouv.fr/mcp
-  // Fallback to direct REST API if MCP call fails
-  try {
-    const mcpUrl = 'https://mcp.data.gouv.fr/mcp';
-    const res = await fetch(mcpUrl, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        jsonrpc: '2.0',
-        id: 1,
-        method: 'tools/call',
-        params: {
-          name: 'search_datasets',
-          arguments: { query, page_size: limit },
-        },
-      }),
-      signal: AbortSignal.timeout(10000),
-    });
-    if (res.ok) {
-      const json = await res.json();
-      const content = json?.result?.content;
-      if (Array.isArray(content) && content.length > 0) {
-        // MCP returns content as text blocks, parse the first one
-        const text = content[0]?.text ?? '';
-        try {
-          const parsed = JSON.parse(text);
-          const datasets = Array.isArray(parsed) ? parsed : parsed.data ?? [];
-          return datasets.slice(0, limit).map((d: any) => ({
-            id: d.id ?? '',
-            title: d.title ?? '',
-            description: (d.description ?? '').slice(0, 300),
-            url: d.url ?? d.page ?? `https://www.data.gouv.fr/fr/datasets/${d.id}/`,
-            organization: d.organization ? { name: d.organization.name ?? d.organization } : undefined,
-            frequency: d.frequency,
-            last_modified: d.last_modified,
-            resources: (d.resources ?? []).slice(0, 3).map((r: any) => ({
-              title: r.title ?? '',
-              format: r.format ?? '',
-              url: r.url ?? '',
-            })),
-          }));
-        } catch {
-          // MCP returned non-JSON text, wrap it as a single result
-          return [{ id: '1', title: query, description: text.slice(0, 300), url: 'https://www.data.gouv.fr' }];
-        }
-      }
-    }
-  } catch (err) {
-    console.warn('[ai-chat] MCP data.gouv.fr call failed, falling back to REST API:', err);
-  }
-
-  // Fallback: direct REST API
+async function searchDataGouv(query: string, limit = 5): Promise<DataGouvDataset[]> {
   const apiUrl = `https://www.data.gouv.fr/api/1/datasets/?q=${encodeURIComponent(query)}&page_size=${limit}`;
+  console.log('[data.gouv] Searching:', query);
   const res = await fetch(apiUrl, { signal: AbortSignal.timeout(8000) });
   if (!res.ok) throw new Error(`data.gouv.fr API returned ${res.status}`);
   const json = await res.json();
-  return (json.data ?? []).map((d: any) => ({
+  const results = (json.data ?? []).map((d: any) => ({
     id: d.id,
     title: d.title,
     description: (d.description ?? '').slice(0, 300),
@@ -105,6 +53,8 @@ async function searchDataGouvMcp(query: string, limit = 5): Promise<DataGouvData
       url: r.url,
     })),
   }));
+  console.log(`[data.gouv] Found ${results.length} datasets for "${query}"`);
+  return results;
 }
 
 
@@ -411,7 +361,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
             }),
             execute: async (input) => {
               try {
-                const datasets = await searchDataGouvMcp(input.query, 5);
+                const datasets = await searchDataGouv(input.query, 5);
                 return { datasets, count: datasets.length };
               } catch (err) {
                 console.error('[ai-chat] searchDataGouv error:', err);
