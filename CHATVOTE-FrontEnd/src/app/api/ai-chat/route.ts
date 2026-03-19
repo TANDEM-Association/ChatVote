@@ -9,6 +9,8 @@ import { z } from 'zod/v4';
 import { deepResearch } from '@lib/ai/deep-research';
 import { embedQuery } from '@lib/ai/embedding';
 import { COLLECTIONS } from '@lib/ai/qdrant-client';
+import { expandSearchQueries } from '@lib/ai/query-expansion';
+import { rerankResults } from '@lib/ai/rerank';
 import {
   type SearchResult,
   searchQdrant,
@@ -80,13 +82,17 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
               const { partyId, query } = input;
               const normalizedPartyId = partyId.toLowerCase();
               try {
-                let results = await searchQdrant(
-                  COLLECTIONS.allParties,
-                  query,
-                  'metadata.namespace',
-                  normalizedPartyId,
-                  8,
+                // Query expansion: generate 2-3 RAG-optimized variants
+                const queries = await expandSearchQueries(query, { entityName: partyId, entityType: 'party' });
+
+                // Search with all expanded queries in parallel
+                const allResults = await Promise.all(
+                  queries.map((q) =>
+                    searchQdrant(COLLECTIONS.allParties, q, 'metadata.namespace', normalizedPartyId, 8),
+                  ),
                 );
+                let results = deduplicateResults(allResults.flat());
+
                 // Tier 1: retry with lower threshold + broad scope
                 if (results.length < 3) {
                   console.log(`[qdrant:fallback] searchPartyManifesto: ${results.length} results at 0.35, retrying at 0.25 broad`);
@@ -100,7 +106,9 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                return { partyId, results, count: results.length };
+                // LLM reranking: pick the most relevant results for the actual question
+                const reranked = await rerankResults(results, query, 5);
+                return { partyId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchPartyManifesto error:', err);
                 return { partyId, results: [] as SearchResult[], count: 0, error: String(err) };
@@ -117,13 +125,18 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
               const { candidateId, query } = input;
               const normalizedCandidateId = candidateId.toLowerCase();
               try {
-                let results = await searchQdrant(
-                  COLLECTIONS.candidatesWebsites,
-                  query,
-                  'metadata.namespace',
-                  normalizedCandidateId,
-                  5,
+                // Query expansion: generate 2-3 RAG-optimized variants
+                const candidateName = candidateNames.get(normalizedCandidateId) ?? candidateId;
+                const queries = await expandSearchQueries(query, { entityName: candidateName, entityType: 'candidate' });
+
+                // Search with all expanded queries in parallel
+                const allResults = await Promise.all(
+                  queries.map((q) =>
+                    searchQdrant(COLLECTIONS.candidatesWebsites, q, 'metadata.namespace', normalizedCandidateId, 5),
+                  ),
                 );
+                let results = deduplicateResults(allResults.flat());
+
                 // Tier 1: retry with lower threshold + broad scope
                 if (results.length < 3) {
                   console.log(`[qdrant:fallback] searchCandidateWebsite: ${results.length} results at 0.35, retrying at 0.25 broad`);
@@ -137,7 +150,8 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results, count: results.length };
+                const reranked = await rerankResults(results, query, 5);
+                return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchCandidateWebsite error:', err);
                 return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results: [] as SearchResult[], count: 0, error: String(err) };
@@ -160,8 +174,16 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                       ),
                   }),
                   execute: async (input) => {
-                    const { queries } = input;
+                    const { queries: rawQueries } = input;
                     try {
+                      // Query expansion: expand each LLM query into 2-3 RAG-optimized variants
+                      const expandedSets = await Promise.all(
+                        rawQueries.map((q) => expandSearchQueries(q)),
+                      );
+                      // Flatten + deduplicate expanded queries (cap at 6 to limit cost)
+                      const queries = [...new Set(expandedSets.flat())].slice(0, 6);
+                      console.log(`[searchAllCandidates] Expanded ${rawQueries.length} → ${queries.length} queries`);
+
                       // Pre-embed all unique queries once (avoids N×M redundant embedding calls)
                       const vectors = await Promise.all(queries.map((q) => embedQuery(q)));
                       const queryVectors = new Map(queries.map((q, i) => [q, vectors[i]]));
@@ -218,16 +240,19 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                         }
                       }
 
-                      const merged = Array.from(seen.values())
+                      const scoreSorted = Array.from(seen.values())
                         .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
                         .slice(0, 20)
                         .map((r, idx) => ({ ...r, id: idx + 1 }));
 
-                      const candidatesWithResults = new Set(merged.map((r) => r.candidateId));
+                      // LLM reranking: pick 12 most relevant from the 20 score-sorted results
+                      const reranked = await rerankResults(scoreSorted, queries[0], 12);
+
+                      const candidatesWithResults = new Set(reranked.map((r) => (r as any).candidateId));
 
                       return {
-                        results: merged,
-                        count: merged.length,
+                        results: reranked,
+                        count: reranked.length,
                         queriesUsed: queries.length,
                         candidatesSearched: candidateIds.length,
                         candidatesWithResults: candidatesWithResults.size,
@@ -254,13 +279,17 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
             }),
             execute: async (input) => {
               try {
-                let results = await searchQdrant(
-                  COLLECTIONS.votingBehavior,
-                  input.query,
-                  'metadata.namespace',
-                  'vote_summary',
-                  8,
+                // Query expansion: generate 2-3 RAG-optimized variants
+                const queries = await expandSearchQueries(input.query);
+
+                // Search with all expanded queries in parallel
+                const allResults = await Promise.all(
+                  queries.map((q) =>
+                    searchQdrant(COLLECTIONS.votingBehavior, q, 'metadata.namespace', 'vote_summary', 8),
+                  ),
                 );
+                let results = deduplicateResults(allResults.flat());
+
                 // Tier 1: retry with lower threshold + broad scope
                 if (results.length < 3) {
                   console.log(`[qdrant:fallback] searchVotingRecords: ${results.length} results at 0.35, retrying at 0.25 broad`);
@@ -274,7 +303,8 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                return { results, count: results.length };
+                const reranked = await rerankResults(results, input.query, 5);
+                return { results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchVotingRecords error:', err);
                 return { results: [] as SearchResult[], count: 0, error: String(err) };
@@ -302,24 +332,24 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                 ? `${input.partyId}-parliamentary-questions`
                 : undefined;
               try {
-                let results: SearchResult[];
-                if (namespace) {
-                  results = await searchQdrant(
-                    COLLECTIONS.parliamentaryQuestions,
-                    input.query,
-                    'metadata.namespace',
-                    namespace,
-                    8,
-                    undefined,
-                    { mustNot: null },
-                  );
-                } else {
-                  results = await searchQdrantRaw(
-                    COLLECTIONS.parliamentaryQuestions,
-                    input.query,
-                    8,
-                  );
-                }
+                // Query expansion: generate 2-3 RAG-optimized variants
+                const queries = await expandSearchQueries(input.query);
+
+                // Search with all expanded queries in parallel
+                const allResults = await Promise.all(
+                  queries.map(async (q) => {
+                    if (namespace) {
+                      return searchQdrant(
+                        COLLECTIONS.parliamentaryQuestions, q,
+                        'metadata.namespace', namespace, 8,
+                        undefined, { mustNot: null },
+                      );
+                    } else {
+                      return searchQdrantRaw(COLLECTIONS.parliamentaryQuestions, q, 8);
+                    }
+                  }),
+                );
+                let results = deduplicateResults(allResults.flat());
                 // Tier 1: retry with lower threshold + broad scope
                 if (results.length < 3) {
                   console.log(`[qdrant:fallback] searchParliamentaryQuestions: ${results.length} results at 0.35, retrying at 0.25 broad`);
@@ -339,7 +369,8 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                return { partyId: input.partyId, results, count: results.length };
+                const reranked = await rerankResults(results, input.query, 5);
+                return { partyId: input.partyId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchParliamentaryQuestions error:', err);
                 return {
