@@ -105,7 +105,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
             },
           }),
           searchCandidateWebsite: tool({
-            description: "Recherche dans le contenu web d'un candidat spécifique (site officiel, profession de foi PDF, pages de campagne). Utilise cet outil quand l'utilisateur pose une question sur un candidat précis. Pour une recherche globale sur toute la commune, préfère searchAllCandidates.",
+            description: "Recherche dans TOUTES les sources d'un candidat : site officiel, profession de foi (PDF), documents de campagne uploadés, pages web scrapées. Utilise cet outil quand l'utilisateur pose une question sur un candidat précis. Pour une recherche globale sur toute la commune, préfère searchAllCandidates.",
             inputSchema: z.object({
               candidateId: z.string().describe('Identifiant du candidat — utilise les IDs fournis dans le contexte'),
               query: z.string().describe('Requête de recherche autonome et spécifique au candidat'),
@@ -146,7 +146,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
             ? {
                 searchAllCandidates: tool({
                   description:
-                    'Recherche simultanée dans TOUS les candidats de la commune. Accepte plusieurs requêtes pour une couverture maximale — chaque requête est classée indépendamment puis fusionnée. Utilise cet outil pour toute question comparative ou générale sur la commune. Stratégie optimale : 2-3 formulations variées couvrant synonymes et angles différents.',
+                    'Recherche simultanée dans TOUTES les sources de TOUS les candidats de la commune (sites web, professions de foi PDF, documents de campagne uploadés). Accepte plusieurs requêtes pour une couverture maximale — chaque requête est classée indépendamment puis fusionnée. Utilise cet outil pour toute question comparative ou générale. Stratégie optimale : 2-3 formulations variées couvrant synonymes et angles différents.',
                   inputSchema: z.object({
                     queries: z
                       .array(z.string())
@@ -514,7 +514,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
     }),
 
     runDeepResearch: tool({
-      description: "Lance une recherche approfondie multi-requêtes sur un sujet. Utilise quand les premières recherches ne donnent pas assez de résultats, ou quand l'utilisateur demande explicitement une analyse approfondie. Le sous-agent reformule automatiquement la requête avec synonymes et termes officiels pour maximiser le rappel.",
+      description: "Lance une recherche approfondie multi-requêtes dans toutes les sources des candidats sélectionnés (sites web, professions de foi, documents uploadés). Utilise quand les premières recherches ne donnent pas assez de résultats, ou quand l'utilisateur demande une analyse approfondie. Le sous-agent reformule automatiquement avec synonymes et termes officiels.",
       inputSchema: z.object({
         query: z.string().describe('Le sujet à approfondir — la requête originale de l\'utilisateur'),
         collections: z.array(z.string()).optional().describe('Collections cibles (optionnel — par défaut toutes)'),
@@ -832,7 +832,7 @@ Tu disposes de **12 tours d'outils maximum**. Utilise-les intelligemment :
     ? hasSelection && searchCandidateIds.length <= 3
       ? `# Protocole de recherche
 **Obligation** : Appelle searchCandidateWebsite pour CHAQUE candidat ci-dessous AVANT de rédiger ta réponse.
-- En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
+- En mode commune, n'utilise PAS searchPartyManifesto — les outils candidats (searchCandidateWebsite / searchAllCandidates) cherchent déjà dans toutes les sources : sites web, professions de foi PDF, documents de campagne.
 - L'utilisateur a sélectionné ces candidats via le panneau latéral — recherche UNIQUEMENT ces candidats.
 - Si un candidat n'a pas de résultats sur le sujet, reformule ta requête (synonymes, termes officiels). Si toujours rien, dis-le explicitement.
 
@@ -843,7 +843,7 @@ ${iterativeSearchRules}`
         ? `# Protocole de recherche
 **Obligation** : Appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
 - searchAllCandidates recherche automatiquement dans les candidats sélectionnés et re-classe par pertinence.
-- En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
+- En mode commune, n'utilise PAS searchPartyManifesto — les outils candidats (searchCandidateWebsite / searchAllCandidates) cherchent déjà dans toutes les sources : sites web, professions de foi PDF, documents de campagne.
 - L'utilisateur a sélectionné des candidats via le panneau latéral — concentre-toi EXCLUSIVEMENT sur eux.
 
 Candidats sélectionnés (${searchCandidateIds.length}) :
@@ -852,7 +852,7 @@ ${iterativeSearchRules}`
         : `# Protocole de recherche
 **Obligation** : Appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
 - searchAllCandidates recherche automatiquement dans TOUS les candidats et re-classe par pertinence.
-- En mode commune, n'utilise PAS searchPartyManifesto (les données candidats sont plus précises et locales).
+- En mode commune, n'utilise PAS searchPartyManifesto — les outils candidats (searchCandidateWebsite / searchAllCandidates) cherchent déjà dans toutes les sources : sites web, professions de foi PDF, documents de campagne.
 - Aucun candidat sélectionné — présente les positions de TOUS les candidats de la commune de manière équitable.
 - Ne demande JAMAIS à l'utilisateur de préciser quel candidat — recherche dans tous et présente les résultats.
 ${iterativeSearchRules}`
