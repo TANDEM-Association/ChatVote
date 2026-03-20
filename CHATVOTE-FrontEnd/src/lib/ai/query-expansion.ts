@@ -38,7 +38,7 @@ export const expandSearchQueries = observe(
 
     try {
       const result = await generateObject({
-        model: google('gemini-2.0-flash'),
+        model: google('gemini-2.5-flash'),
         schema: expansionSchema,
         experimental_telemetry: { isEnabled: true },
         system: `Tu es un expert en recherche documentaire pour les élections françaises.

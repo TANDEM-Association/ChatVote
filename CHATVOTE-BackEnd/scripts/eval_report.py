@@ -37,7 +37,7 @@ def _run_deepeval_tests(test_scope: str) -> dict:
     }
 
     judge_type = os.environ.get("DEEPEVAL_JUDGE", "ollama").lower()
-    results["judge_model"] = os.environ.get("OLLAMA_MODEL", "llama3.2") if judge_type != "gemini" else "gemini-2.0-flash"
+    results["judge_model"] = os.environ.get("OLLAMA_MODEL", "llama3.2") if judge_type != "gemini" else "gemini-2.5-flash"
 
     # Build judge model
     if judge_type == "gemini":
@@ -46,7 +46,7 @@ def _run_deepeval_tests(test_scope: str) -> dict:
         if not api_key or api_key.startswith("your_"):
             print("ERROR: GOOGLE_API_KEY not set")
             sys.exit(1)
-        judge = GeminiModel(model="gemini-2.0-flash", api_key=api_key, temperature=0.0)
+        judge = GeminiModel(model="gemini-2.5-flash", api_key=api_key, temperature=0.0)
     else:
         from deepeval.models import OllamaModel
         ollama_url = os.environ.get("OLLAMA_BASE_URL", "http://localhost:11434")
@@ -4229,7 +4229,7 @@ def _read_cached_results() -> dict | None:
             "failed": data.get("failed", 0),
             "skipped": 0,
         },
-        "judge_model": "gemini-2.0-flash",
+        "judge_model": "gemini-2.5-flash",
     }
 
     for r in data.get("results", []):

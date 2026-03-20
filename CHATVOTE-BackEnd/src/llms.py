@@ -199,10 +199,10 @@ _base_non_deterministic_llms: list[LLM] = []
 if google_gemini_2_flash is not None:
     _base_non_deterministic_llms.append(
         LLM(
-            name="google-gemini-2.0-flash",
+            name="google-gemini-2.5-flash",
             model=google_gemini_2_flash,
             sizes=[LLMSize.SMALL, LLMSize.LARGE],
-            priority=100,
+            priority=90,
             user_capacity_per_minute=CAPACITY_GEMINI_2_FLASH,
             is_at_rate_limit=False,
         )
@@ -288,7 +288,7 @@ if scaleway_chat is not None:
             name=f"scaleway-{_scaleway_llm_model}",
             model=scaleway_chat,
             sizes=[LLMSize.SMALL, LLMSize.LARGE],
-            priority=80,
+            priority=100,
             user_capacity_per_minute=60,
             is_at_rate_limit=False,
         )
@@ -402,10 +402,10 @@ _base_deterministic_llms: list[LLM] = []
 if google_gemini_2_flash_det is not None:
     _base_deterministic_llms.append(
         LLM(
-            name="google-gemini-2.0-flash-det",
+            name="google-gemini-2.5-flash-det",
             model=google_gemini_2_flash_det,
             sizes=[LLMSize.SMALL, LLMSize.LARGE],
-            priority=100,
+            priority=90,
             user_capacity_per_minute=CAPACITY_GEMINI_2_FLASH,
             is_at_rate_limit=False,
         )
@@ -465,7 +465,7 @@ if scaleway_chat_det is not None:
             name=f"scaleway-{_scaleway_llm_model}-det",
             model=scaleway_chat_det,
             sizes=[LLMSize.SMALL, LLMSize.LARGE],
-            priority=80,
+            priority=100,
             user_capacity_per_minute=60,
             is_at_rate_limit=False,
         )

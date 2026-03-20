@@ -113,7 +113,7 @@ export async function factualityScorer({ input, output, expected }: ScorerInput)
 // ── Custom political domain scorers (LLM-as-judge via Gemini) ────────────────
 
 const judgeModel: LanguageModel = process.env.GOOGLE_GENERATIVE_AI_API_KEY
-  ? google('gemini-2.0-flash')
+  ? google('gemini-2.5-flash')
   : scalewayChat;
 
 async function llmJudge(params: {

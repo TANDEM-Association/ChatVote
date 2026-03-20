@@ -94,7 +94,7 @@ def _build_model():
         if not api_key or api_key.startswith("your_"):
             print("ERROR: GOOGLE_API_KEY not set for Gemini golden generation")
             sys.exit(1)
-        gemini_model = os.environ.get("GOLDEN_GEMINI_MODEL", "gemini-2.0-flash")
+        gemini_model = os.environ.get("GOLDEN_GEMINI_MODEL", "gemini-2.5-flash")
         print(f"Using Gemini ({gemini_model}) for golden generation")
         return GeminiModel(model=gemini_model, api_key=api_key, temperature=0.3), "gemini"
 
@@ -135,7 +135,7 @@ def _call_gemini(prompt: str) -> str:
     from google import genai
 
     api_key = os.environ.get("GOOGLE_API_KEY")
-    gemini_model = os.environ.get("GOLDEN_GEMINI_MODEL", "gemini-2.0-flash")
+    gemini_model = os.environ.get("GOLDEN_GEMINI_MODEL", "gemini-2.5-flash")
     client = genai.Client(api_key=api_key)
     response = client.models.generate_content(
         model=gemini_model,
