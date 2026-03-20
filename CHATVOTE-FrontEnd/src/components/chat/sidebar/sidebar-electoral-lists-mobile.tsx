@@ -95,6 +95,8 @@ const ElectoralListsDrawer = ({ open, onOpenChange }: Props) => {
   );
 
   const hasSecondRound = !!data?.is_second_round_active;
+  const isFirstRoundDecided = !!data?.is_first_round_decided;
+  const firstRoundElectedPanel = data?.first_round_elected?.panel_number;
   const secondRoundPanelNumbers = useMemo(
     () => new Set(data?.lists?.map((l) => l.panel_number) ?? []),
     [data?.lists],
@@ -157,6 +159,7 @@ const ElectoralListsDrawer = ({ open, onOpenChange }: Props) => {
               selectedElectoralLists={selectedElectoralLists}
               hasSecondRound={hasSecondRound}
               secondRoundPanelNumbers={secondRoundPanelNumbers}
+              firstRoundElectedPanel={isFirstRoundDecided ? firstRoundElectedPanel : undefined}
               onSelect={handleSelectList}
             />
           )}

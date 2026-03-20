@@ -179,12 +179,14 @@ export function ElectoralListCardList({
   selectedElectoralLists,
   hasSecondRound,
   secondRoundPanelNumbers,
+  firstRoundElectedPanel,
   onSelect,
 }: {
   sortedLists: ElectoralList[];
   selectedElectoralLists: number[];
   hasSecondRound: boolean;
   secondRoundPanelNumbers: Set<number>;
+  firstRoundElectedPanel?: number;
   onSelect: (list: ElectoralList) => void;
 }) {
   return (
@@ -193,7 +195,8 @@ export function ElectoralListCardList({
         const isInSecondRound =
           hasSecondRound && secondRoundPanelNumbers.has(list.panel_number);
         const isElected =
-          isInSecondRound && secondRoundPanelNumbers.size === 1;
+          (isInSecondRound && secondRoundPanelNumbers.size === 1) ||
+          (firstRoundElectedPanel != null && list.panel_number === firstRoundElectedPanel);
         const prevIsSecondRound =
           idx > 0 &&
           hasSecondRound &&
