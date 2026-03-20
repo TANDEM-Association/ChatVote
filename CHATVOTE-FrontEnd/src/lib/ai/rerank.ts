@@ -71,7 +71,7 @@ ${docsContext}`,
         prompt: `Question de l'utilisateur : "${query}"
 
 Retourne les ${topK} indices les plus pertinents.`,
-        abortSignal: AbortSignal.timeout(8000),
+        abortSignal: AbortSignal.timeout(15000),
       });
       const { object } = result;
 

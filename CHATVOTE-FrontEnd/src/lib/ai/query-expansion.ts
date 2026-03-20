@@ -59,7 +59,7 @@ ${entityContext}
         prompt: `Question du citoyen : "${userQuery}"
 
 Génère les requêtes de recherche optimisées.`,
-        abortSignal: AbortSignal.timeout(5000),
+        abortSignal: AbortSignal.timeout(10000),
       });
 
       const queries = result.object.queries.slice(0, 3);
