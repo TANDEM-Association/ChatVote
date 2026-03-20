@@ -1,5 +1,6 @@
 "use client";
 
+import { motion } from "framer-motion";
 import { useAnonymousAuth } from "@components/anonymous-auth";
 import { useChatStore } from "@components/providers/chat-store-provider";
 import { trackInitialSuggestionClicked } from "@lib/firebase/analytics";
@@ -64,16 +65,31 @@ const ChatEmptyView = ({
 
       {/* Proposed questions as suggestion chips */}
       {!!municipalityCode && (
-        <div className="flex max-w-2xl flex-wrap gap-2 pl-[52px]">
+        <motion.div
+          className="flex max-w-2xl flex-wrap gap-2 pl-[52px]"
+          initial="hidden"
+          animate="visible"
+          variants={{
+            hidden: {},
+            visible: { transition: { staggerChildren: 0.07, delayChildren: 0.1 } },
+          }}
+        >
           {proposedQuestions?.map((question) => (
-            <InitialSuggestionBubble
+            <motion.div
               key={question.id}
-              onClick={() => handleSuggestionClick(question.content)}
+              variants={{
+                hidden: { opacity: 0, y: 10 },
+                visible: { opacity: 1, y: 0, transition: { duration: 0.3, ease: "easeOut" } },
+              }}
             >
-              {question.content}
-            </InitialSuggestionBubble>
+              <InitialSuggestionBubble
+                onClick={() => handleSuggestionClick(question.content)}
+              >
+                {question.content}
+              </InitialSuggestionBubble>
+            </motion.div>
           ))}
-        </div>
+        </motion.div>
       )}
 
     </div>

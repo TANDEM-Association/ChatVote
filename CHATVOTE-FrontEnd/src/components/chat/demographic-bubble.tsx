@@ -2,6 +2,7 @@
 
 import { useState } from "react";
 
+import { AnimatePresence, motion } from "framer-motion";
 import {
   trackDemographicAnswered,
   trackDemographicSkipped,
@@ -123,16 +124,6 @@ export default function DemographicBubble({ question, messageNumber }: Props) {
   const [skipped, setSkipped] = useState(false);
   const [selectedTopics, setSelectedTopics] = useState<string[]>([]);
 
-  if (answered) {
-    return (
-      <div className="flex justify-center py-1">
-        <span className="text-muted-foreground text-xs">Merci !</span>
-      </div>
-    );
-  }
-
-  if (skipped) return null;
-
   const handleSelect = (value: string) => {
     if (question.multiSelect) {
       setSelectedTopics((prev) =>
@@ -179,49 +170,71 @@ export default function DemographicBubble({ question, messageNumber }: Props) {
   };
 
   return (
-    <div className="flex justify-center py-2">
-      <div className="border-primary/20 bg-primary/5 max-w-md rounded-xl border px-4 py-3">
-        <p className="text-foreground mb-3 text-center text-sm">
-          {question.label}
-        </p>
-        <div className="flex flex-wrap justify-center gap-2">
-          {question.options.map((option) => (
-            <button
-              key={option.value}
-              type="button"
-              onClick={() => handleSelect(option.value)}
-              className={cn(
-                "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
-                question.multiSelect && selectedTopics.includes(option.value)
-                  ? "border-primary bg-primary text-white"
-                  : "border-primary/30 text-foreground hover:border-primary hover:bg-primary/10 bg-transparent",
-              )}
-            >
-              {option.label}
-            </button>
-          ))}
-        </div>
-        {question.multiSelect && selectedTopics.length > 0 && (
-          <div className="mt-3 flex justify-center">
-            <button
-              type="button"
-              onClick={handleValidateTopics}
-              className="bg-primary hover:bg-primary/80 rounded-full px-4 py-1.5 text-xs font-medium text-white transition-colors"
-            >
-              Valider
-            </button>
+    <AnimatePresence mode="wait">
+      {answered ? (
+        <motion.div
+          key="merci"
+          initial={{ opacity: 0, scale: 0.95 }}
+          animate={{ opacity: 1, scale: 1 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="flex justify-center py-1"
+        >
+          <span className="text-muted-foreground text-xs">Merci !</span>
+        </motion.div>
+      ) : skipped ? null : (
+        <motion.div
+          key="question"
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="flex justify-center py-2"
+        >
+          <div className="border-primary/20 bg-primary/5 max-w-md rounded-xl border px-4 py-3">
+            <p className="text-foreground mb-3 text-center text-sm">
+              {question.label}
+            </p>
+            <div className="flex flex-wrap justify-center gap-2">
+              {question.options.map((option) => (
+                <button
+                  key={option.value}
+                  type="button"
+                  onClick={() => handleSelect(option.value)}
+                  className={cn(
+                    "rounded-full border px-3 py-1.5 text-xs font-medium transition-all",
+                    question.multiSelect && selectedTopics.includes(option.value)
+                      ? "border-primary bg-primary text-white"
+                      : "border-primary/30 text-foreground hover:border-primary hover:bg-primary/10 bg-transparent",
+                  )}
+                >
+                  {option.label}
+                </button>
+              ))}
+            </div>
+            {question.multiSelect && selectedTopics.length > 0 && (
+              <div className="mt-3 flex justify-center">
+                <button
+                  type="button"
+                  onClick={handleValidateTopics}
+                  className="bg-primary hover:bg-primary/80 rounded-full px-4 py-1.5 text-xs font-medium text-white transition-colors"
+                >
+                  Valider
+                </button>
+              </div>
+            )}
+            <div className="mt-2 flex justify-center">
+              <button
+                type="button"
+                onClick={handleSkip}
+                className="text-muted-foreground text-xs underline-offset-2 hover:underline"
+              >
+                Passer
+              </button>
+            </div>
           </div>
-        )}
-        <div className="mt-2 flex justify-center">
-          <button
-            type="button"
-            onClick={handleSkip}
-            className="text-muted-foreground text-xs underline-offset-2 hover:underline"
-          >
-            Passer
-          </button>
-        </div>
-      </div>
-    </div>
+        </motion.div>
+      )}
+    </AnimatePresence>
   );
 }

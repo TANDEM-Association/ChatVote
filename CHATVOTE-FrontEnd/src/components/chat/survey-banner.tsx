@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 
+import { AnimatePresence, motion } from "framer-motion";
 import { useAnonymousAuth } from "@components/anonymous-auth";
 import { useChatStore } from "@components/providers/chat-store-provider";
 import { Button } from "@components/ui/button";
@@ -90,40 +91,46 @@ const SurveyBanner = () => {
     user?.survey_status?.timestamp,
   ]);
 
-  if (!optimisticShowSurveyBanner) {
-    return null;
-  }
-
   return (
-    <div className="bg-muted flex flex-col gap-2 rounded-lg p-4 group-data-has-message-background:mx-4 group-data-has-message-background:mb-4 group-data-has-message-background:bg-zinc-200 group-data-has-message-background:dark:bg-zinc-800">
-      <div className="flex items-center justify-between">
-        <h2 className="text-sm font-bold">👆🏼 {t("title")}</h2>
-
-        <Button
-          size="icon"
-          variant="ghost"
-          className="size-6"
-          onClick={handleForceCloseSurvey}
+    <AnimatePresence>
+      {optimisticShowSurveyBanner && (
+        <motion.div
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, scale: 0.95 }}
+          transition={{ duration: 0.3, ease: "easeOut" }}
+          className="bg-muted flex flex-col gap-2 rounded-lg p-4 group-data-has-message-background:mx-4 group-data-has-message-background:mb-4 group-data-has-message-background:bg-zinc-200 group-data-has-message-background:dark:bg-zinc-800"
         >
-          <XIcon />
-        </Button>
-      </div>
-      <p className="text-muted-foreground text-sm">{t("description")}</p>
-      <Button size="sm" variant="default" onClick={() => { setOpen(true); trackSurveyOpened({ session_id: sessionId ?? "" }); }}>
-        <MessageCircleHeartIcon />
-        {t("startSurvey")}
-      </Button>
-      {open && (
-        <FilloutPopupEmbed
-          filloutId="cGozfJUor9us"
-          onClose={handleCloseSurvey}
-          parameters={{
-            session_id: sessionId,
-          }}
-          inheritParameters
-        />
+          <div className="flex items-center justify-between">
+            <h2 className="text-sm font-bold">👆🏼 {t("title")}</h2>
+
+            <Button
+              size="icon"
+              variant="ghost"
+              className="size-6"
+              onClick={handleForceCloseSurvey}
+            >
+              <XIcon />
+            </Button>
+          </div>
+          <p className="text-muted-foreground text-sm">{t("description")}</p>
+          <Button size="sm" variant="default" onClick={() => { setOpen(true); trackSurveyOpened({ session_id: sessionId ?? "" }); }}>
+            <MessageCircleHeartIcon />
+            {t("startSurvey")}
+          </Button>
+          {open && (
+            <FilloutPopupEmbed
+              filloutId="cGozfJUor9us"
+              onClose={handleCloseSurvey}
+              parameters={{
+                session_id: sessionId,
+              }}
+              inheritParameters
+            />
+          )}
+        </motion.div>
       )}
-    </div>
+    </AnimatePresence>
   );
 };
 
