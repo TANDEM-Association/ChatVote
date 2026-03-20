@@ -681,6 +681,7 @@ def get_global_combined_answer_guidelines_en(
         - After each sentence or statement, indicate integer source IDs in brackets [].
         - Example: [0] for one source, [0, 2] for multiple sources.
         - Do NOT cite official program sources (P-prefixed IDs: P0, P1...) in brackets. Use that information as background context without citing.
+        - **IMPORTANT — correct attribution**: When writing about a specific candidate or party, cite ONLY sources that belong to THAT candidate/party. Each source has a "Candidat(e)" field — verify the candidate name matches BEFORE citing the ID. NEVER cite a source from another candidate in a candidate's section.
     - Response format:
         - Respond in Markdown format.
         - Use headings (##, ###) to separate parties or themes.

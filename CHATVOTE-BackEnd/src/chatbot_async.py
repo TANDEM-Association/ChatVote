@@ -2,6 +2,7 @@
 
 import logging
 import os
+from collections import OrderedDict
 from typing import AsyncIterator, List, Tuple, Dict, Union, Optional
 from datetime import datetime
 from urllib.parse import quote
@@ -1211,26 +1212,40 @@ def get_combined_rag_context(
     if manifesto_context == "":
         manifesto_context = "Aucune information trouvée dans les programmes officiels."
 
-    # Build candidates context — numbered from 0 to match the sources array
+    # Build candidates context — numbered from 0 to match the sources array.
+    # Group by candidate so the LLM sees clear boundaries and cites correctly.
     candidates_context = ""
+
+    # First pass: collect docs grouped by candidate while preserving global index
+    candidate_groups: OrderedDict[str, list[tuple[int, Document]]] = OrderedDict()
     for doc_num, doc in enumerate(candidate_docs):
         candidate_name = doc.metadata.get("candidate_name", "Inconnu")
-        municipality = doc.metadata.get("municipality_name", "")
-        page_type = doc.metadata.get("page_type", "page")
-        party_ids = doc.metadata.get("party_ids", [])
-        party_str = ", ".join(party_ids) if party_ids else "Non affilié"
+        if candidate_name not in candidate_groups:
+            candidate_groups[candidate_name] = []
+        candidate_groups[candidate_name].append((doc_num, doc))
 
-        context_obj = f"""- ID: {doc_num}
-- Type: Site web candidat
+    # Second pass: render grouped by candidate
+    for candidate_name, docs in candidate_groups.items():
+        first_doc = docs[0][1]
+        party_ids = first_doc.metadata.get("party_ids", [])
+        party_str = ", ".join(party_ids) if party_ids else "Non affilié"
+        municipality = first_doc.metadata.get("municipality_name", "")
+
+        candidates_context += f"#### {candidate_name} ({party_str})"
+        if municipality:
+            candidates_context += f" — {municipality}"
+        candidates_context += "\n"
+
+        for doc_num, doc in docs:
+            page_type = doc.metadata.get("page_type", "page")
+            context_obj = f"""- ID: {doc_num}
 - Candidat(e): {candidate_name}
-- Parti(s): {party_str}
-- Commune: {municipality}
 - Source: {doc.metadata.get("document_name", "Site web")} ({page_type})
 - URL: {doc.metadata.get("url", "non spécifié")}
 - Contenu: "{doc.page_content}"
 
 """
-        candidates_context += context_obj
+            candidates_context += context_obj
 
     if candidates_context == "":
         candidates_context = (

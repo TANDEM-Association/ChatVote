@@ -1261,6 +1261,7 @@ def get_global_combined_answer_guidelines(scope: str, municipality_name: str = "
         - Après chaque phrase ou affirmation, indique les IDs entiers des sources entre crochets [].
         - Exemple : [0] pour une source, [0, 2] pour plusieurs sources.
         - Ne cite PAS les sources de programmes officiels (IDs préfixés P : P0, P1...) entre crochets. Utilise ces informations comme contexte sans les citer.
+        - **IMPORTANT — attribution correcte** : Quand tu écris sur un candidat ou un parti spécifique, cite UNIQUEMENT les sources qui appartiennent à CE candidat/parti. Chaque source a un champ "Candidat(e)" — vérifie que le nom du candidat correspond AVANT de citer l'ID. Ne cite JAMAIS une source d'un autre candidat dans la section d'un candidat.
     - Format de réponse :
         - Réponds au format Markdown.
         - Utilise des titres (##, ###) pour séparer les partis ou thèmes.
