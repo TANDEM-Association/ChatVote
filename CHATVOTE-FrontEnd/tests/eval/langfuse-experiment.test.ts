@@ -45,6 +45,7 @@ async function getOrRunPipeline(item: EvalItem): Promise<ChatPipelineResult> {
   const result = await runChatPipeline({
     question: item.input,
     partyIds: item.metadata.party_ids.length > 0 ? item.metadata.party_ids : undefined,
+    candidateIds: item.metadata.candidate_ids.length > 0 ? item.metadata.candidate_ids : undefined,
     enabledFeatures: ['rag'],
   });
 

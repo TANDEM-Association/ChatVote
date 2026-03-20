@@ -255,6 +255,7 @@ export default function AiSdkChatView({
     (text: string) => {
       if (!text.trim() || status === "streaming") return;
       ensureChatId();
+      bodyRef.current.chatId = aiChatIdRef.current;
       sendMessage({ text });
     },
     [ensureChatId, sendMessage, status],
@@ -265,6 +266,7 @@ export default function AiSdkChatView({
     const text = input.trim();
     if (!text || status === "streaming") return;
     ensureChatId();
+    bodyRef.current.chatId = aiChatIdRef.current;
     sendMessage({ text });
     setInput("");
   };

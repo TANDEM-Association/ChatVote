@@ -108,7 +108,9 @@ export async function queryQualityScorer({ input, metadata }: EvalInput) {
   let totalQueries = 0;
 
   for (const tc of ragCalls) {
-    const query = String(tc.args.query ?? tc.args.queries ?? '');
+    // searchAllCandidates uses queries[] array, others use query string
+    const rawQuery = tc.args.queries ?? tc.args.query ?? '';
+    const query = Array.isArray(rawQuery) ? rawQuery.join(' ') : String(rawQuery);
     totalQueries++;
     if (
       query.trim().length > 5 &&

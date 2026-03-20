@@ -745,7 +745,12 @@ const handleChat = observe(async function handleChat(req: Request) {
     .join('') ?? '';
   const langfuseTraceId = getActiveTraceId();
   if (langfuse && langfuseTraceId) {
-    langfuse.trace({ id: langfuseTraceId, input: inputText });
+    langfuse.trace({
+      id: langfuseTraceId,
+      input: inputText,
+      sessionId: chatId ?? undefined,
+      userId: uid,
+    });
   }
 
   // ── Validate chatId format ──────────────────────────────────────────────
@@ -1033,14 +1038,14 @@ ${respondInLanguage}${candidateContext}`;
       if (!chatId) return;
       try {
         const now = new Date().toISOString();
-        const chatRef = db.collection('ai_sdk_chats').doc(chatId);
+        const chatRef = db.collection('chat_sessions').doc(chatId);
         const doc = await chatRef.get();
 
         // Build a slim message pair from the latest exchange
         const lastUserMsg = uiMessages.filter((m) => m.role === 'user').at(-1);
         const newMessages = [
           ...(lastUserMsg ? [{ role: 'user' as const, content: lastUserMsg.parts?.map((p) => ('text' in p ? p.text : '')).join('') ?? '', timestamp: now }] : []),
-          { role: 'assistant' as const, content: text, timestamp: now },
+          { role: 'assistant' as const, content: outputText, timestamp: now },
         ];
 
         if (doc.exists) {
@@ -1053,6 +1058,7 @@ ${respondInLanguage}${candidateContext}`;
             municipality_code: municipalityCode ?? data.municipality_code ?? null,
             party_ids: resolvedPartyIds.length > 0 ? resolvedPartyIds : data.party_ids ?? [],
             total_tokens: (data.total_tokens ?? 0) + (usage?.totalTokens ?? 0),
+            mode: 'ai',
           });
         } else {
           // Create new conversation document
@@ -1065,6 +1071,8 @@ ${respondInLanguage}${candidateContext}`;
             created_at: now,
             updated_at: now,
             total_tokens: usage?.totalTokens ?? 0,
+            mode: 'ai',
+            user_id: uid ?? null,
           });
         }
       } catch (err) {
