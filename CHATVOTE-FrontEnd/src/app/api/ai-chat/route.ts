@@ -1,5 +1,5 @@
 import { google } from '@ai-sdk/google';
-import { type UIMessage, type LanguageModel, convertToModelMessages, stepCountIs, tool } from 'ai';
+import { type UIMessage, type LanguageModel, convertToModelMessages, hasToolCall, stepCountIs, tool } from 'ai';
 import { after } from 'next/server';
 import { observe, propagateAttributes, getActiveTraceId } from '@langfuse/tracing';
 import { langfuseSpanProcessor } from '@lib/ai/langfuse-processor';
@@ -1003,7 +1003,7 @@ ${respondInLanguage}${candidateContext}`;
     model,
     system: systemPrompt,
     messages,
-    stopWhen: stepCountIs(12),
+    stopWhen: [stepCountIs(12), hasToolCall('suggestFollowUps')],
     toolChoice: 'auto',
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);

@@ -86,25 +86,6 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
   // Collect sources from tool results for inline reference badges
   const sources = useMemo(() => collectSources(message.parts), [message.parts]);
 
-  // In multi-step tool flows, the AI SDK creates a text part per step plus
-  // duplicate suggestFollowUps tool calls. We keep only the LONGEST text part
-  // (the substantive answer) and the last suggestFollowUps.
-  const { longestTextIndex, lastSuggestFollowUpsIndex } = useMemo(() => {
-    if (isUser) return { longestTextIndex: -1, lastSuggestFollowUpsIndex: -1 };
-    let longestIdx = -1;
-    let longestLen = -1;
-    let lastSuggest = -1;
-    for (let i = 0; i < message.parts.length; i++) {
-      const p = message.parts[i];
-      if (p.type === "text" && p.text.length > longestLen) {
-        longestLen = p.text.length;
-        longestIdx = i;
-      }
-      if (isToolUIPart(p) && getToolName(p) === "suggestFollowUps") lastSuggest = i;
-    }
-    return { longestTextIndex: longestIdx, lastSuggestFollowUpsIndex: lastSuggest };
-  }, [isUser, message.parts]);
-
   return (
     <article
       className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}
@@ -119,9 +100,10 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
       >
         {message.parts.map((part, index) => {
           switch (part.type) {
+            case "step-start":
+              return null;
             case "text":
-              // Keep only the longest text part (the substantive answer)
-              if (!isUser && index !== longestTextIndex) return null;
+              if (!part.text.trim()) return null;
               return (
                 <div key={index}>
                   <ChatMarkdown
@@ -150,12 +132,6 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
               );
             default:
               if (isToolUIPart(part)) {
-                // Skip intermediate suggestFollowUps (multi-step dedup)
-                if (
-                  !isUser &&
-                  getToolName(part) === "suggestFollowUps" &&
-                  index !== lastSuggestFollowUpsIndex
-                ) return null;
                 return (
                   <AiSdkToolResult
                     key={index}
