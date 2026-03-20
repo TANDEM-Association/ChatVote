@@ -85,6 +85,17 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
   // Collect sources from tool results for inline reference badges
   const sources = useMemo(() => collectSources(message.parts), [message.parts]);
 
+  // In multi-step tool flows, the AI SDK creates a text part per step.
+  // Only render the last text part (most complete answer) for assistant messages.
+  const lastTextIndex = useMemo(() => {
+    if (isUser) return -1;
+    let last = -1;
+    for (let i = 0; i < message.parts.length; i++) {
+      if (message.parts[i].type === "text") last = i;
+    }
+    return last;
+  }, [isUser, message.parts]);
+
   return (
     <article
       className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}
@@ -100,6 +111,8 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
         {message.parts.map((part, index) => {
           switch (part.type) {
             case "text":
+              // Skip intermediate text parts for assistant (multi-step dedup)
+              if (!isUser && index !== lastTextIndex) return null;
               return (
                 <div key={index}>
                   <ChatMarkdown
