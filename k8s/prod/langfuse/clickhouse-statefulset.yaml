@@ -69,11 +69,11 @@ spec:
             timeoutSeconds: 3
           resources:
             requests:
-              memory: "128Mi"
-              cpu: "100m"
-            limits:
               memory: "512Mi"
-              cpu: "500m"
+              cpu: "250m"
+            limits:
+              memory: "1Gi"
+              cpu: "1000m"
   volumeClaimTemplates:
     - metadata:
         name: clickhouse-storage
