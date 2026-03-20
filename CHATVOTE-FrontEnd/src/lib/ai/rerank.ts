@@ -44,7 +44,7 @@ export const rerankResults = observe(
         ]
           .filter(Boolean)
           .join(' | ');
-        return `[${i}] ${meta}\n${r.content.slice(0, 400)}`;
+        return `[${i}] ${meta}\n${r.content.slice(0, 1000)}`;
       })
       .join('\n---\n');
 

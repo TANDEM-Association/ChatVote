@@ -103,7 +103,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                 // Search with all expanded queries in parallel
                 const allResults = await Promise.all(
                   queries.map((q) =>
-                    searchQdrant(COLLECTIONS.allParties, q, 'metadata.namespace', normalizedPartyId, 8),
+                    searchQdrant(COLLECTIONS.allParties, q, 'metadata.namespace', normalizedPartyId, 15),
                   ),
                 );
                 let results = deduplicateResults(allResults.flat());
@@ -122,7 +122,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
                 // LLM reranking: pick the most relevant results for the actual question
-                const reranked = assignGlobalIds(await rerankResults(results, query, 5));
+                const reranked = assignGlobalIds(await rerankResults(results, query, 8));
                 return { partyId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchPartyManifesto error:', err);
@@ -147,7 +147,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                 // Search with all expanded queries in parallel
                 const allResults = await Promise.all(
                   queries.map((q) =>
-                    searchQdrant(COLLECTIONS.candidatesWebsites, q, 'metadata.namespace', normalizedCandidateId, 5),
+                    searchQdrant(COLLECTIONS.candidatesWebsites, q, 'metadata.namespace', normalizedCandidateId, 10),
                   ),
                 );
                 let results = deduplicateResults(allResults.flat());
@@ -165,7 +165,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                const reranked = assignGlobalIds(await rerankResults(results, query, 5));
+                const reranked = assignGlobalIds(await rerankResults(results, query, 8));
                 return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchCandidateWebsite error:', err);
@@ -217,7 +217,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                                 query,
                                 'metadata.namespace',
                                 cid.toLowerCase(),
-                                5,
+                                10,
                                 vec,
                               );
                               // Tier 1: retry at lower threshold (keep namespace scoping)
@@ -228,7 +228,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                                   query,
                                   'metadata.namespace',
                                   cid.toLowerCase(),
-                                  5,
+                                  10,
                                   vec,
                                   { scoreThreshold: 0.25 },
                                 );
@@ -262,8 +262,8 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                         .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
                         .slice(0, 20);
 
-                      // LLM reranking: pick 12 most relevant from the 20 score-sorted results
-                      const reranked = assignGlobalIds(await rerankResults(scoreSorted, queries[0], 12));
+                      // LLM reranking: pick 16 most relevant from the 20 score-sorted results
+                      const reranked = assignGlobalIds(await rerankResults(scoreSorted, queries[0], 16));
 
                       const candidatesWithResults = new Set(reranked.map((r: any) => r.candidateId));
 
@@ -320,7 +320,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                const reranked = assignGlobalIds(await rerankResults(results, input.query, 5));
+                const reranked = assignGlobalIds(await rerankResults(results, input.query, 8));
                 return { results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchVotingRecords error:', err);
@@ -386,7 +386,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   results = deduplicateResults([...results, ...research.findings]);
                   console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
                 }
-                const reranked = assignGlobalIds(await rerankResults(results, input.query, 5));
+                const reranked = assignGlobalIds(await rerankResults(results, input.query, 8));
                 return { partyId: input.partyId, results: reranked, count: reranked.length };
               } catch (err) {
                 console.error('[ai-chat] searchParliamentaryQuestions error:', err);
@@ -784,13 +784,18 @@ const handleChat = observe(async function handleChat(req: Request) {
   let candidateIds: string[] = [];
   const candidateNamesMap = new Map<string, string>();
   let allCandidatesData: Array<{ id: string; [key: string]: any }> = [];
+  let municipalityName: string | undefined;
 
   if (municipalityCode) {
     try {
-      const candidatesSnap = await db
-        .collection('candidates')
-        .where('municipality_code', '==', municipalityCode)
-        .get();
+      // Fetch municipality name and candidates in parallel
+      const [municipalitySnap, candidatesSnap] = await Promise.all([
+        db.collection('municipalities').where('code', '==', municipalityCode).limit(1).get(),
+        db.collection('candidates').where('municipality_code', '==', municipalityCode).get(),
+      ]);
+      if (!municipalitySnap.empty) {
+        municipalityName = (municipalitySnap.docs[0].data().nom as string | undefined) ?? municipalityCode;
+      }
 
       const candidates = candidatesSnap.docs.map((doc) => ({
         id: doc.id,
@@ -829,7 +834,7 @@ const handleChat = observe(async function handleChat(req: Request) {
           ? candidates.filter((c: any) => (c.party_ids ?? []).some((pid: string) => selectedPartySet.has(pid)))
           : candidates;
         candidateContext =
-          `\n\n# Candidats ${selectedPartySet.size > 0 ? 'sélectionnés' : 'disponibles'} dans cette commune (${municipalityCode})\n` +
+          `\n\n# Candidats ${selectedPartySet.size > 0 ? 'sélectionnés' : 'disponibles'} dans cette commune (${municipalityName ?? municipalityCode})\n` +
           `**IMPORTANT** : Les identifiants candidats (candidateId) sont des identifiants techniques internes. Ne les mentionne JAMAIS dans tes réponses à l'utilisateur. Utilise uniquement le nom complet du candidat.\n\n` +
           contextCandidates
             .map((c: any) => {
@@ -957,7 +962,7 @@ ${iterativeSearchRules}`;
     .map((id) => candidateNamesMap.get(id.toLowerCase()) ?? id)
     .join(', ');
   const contextLine = municipalityCode
-    ? `L'utilisateur consulte les candidats de la commune ${municipalityCode}. ${hasSelection ? `Candidats sélectionnés : ${selectedCandidateNames}` : 'Aucun candidat sélectionné — montre TOUS les candidats.'}`
+    ? `L'utilisateur consulte les candidats de la commune ${municipalityName ?? municipalityCode}. ${hasSelection ? `Candidats sélectionnés : ${selectedCandidateNames}` : 'Aucun candidat sélectionné — montre TOUS les candidats.'}`
     : `L'utilisateur a sélectionné ces partis : ${partiesList}`;
 
   const systemPrompt = `${searchInstructions}
