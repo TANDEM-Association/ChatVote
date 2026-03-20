@@ -203,12 +203,15 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                       const vectors = await Promise.all(queries.map((q) => embedQuery(q)));
                       const queryVectors = new Map(queries.map((q, i) => [q, vectors[i]]));
 
-                      // For each query, search all candidates in parallel and re-rank independently
+                      // Search only selected candidates (or all if none selected)
+                      const searchIds = selectedCandidateIds.length > 0 ? selectedCandidateIds : candidateIds;
+
+                      // For each query, search selected candidates in parallel and re-rank independently
                       const perQueryResults = await Promise.all(
                         queries.map(async (query) => {
                           const vec = queryVectors.get(query)!;
                           const allResults = await Promise.all(
-                            candidateIds.map(async (cid) => {
+                            searchIds.map(async (cid) => {
                               let results = await searchQdrant(
                                 COLLECTIONS.candidatesWebsites,
                                 query,
@@ -268,7 +271,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                         results: reranked,
                         count: reranked.length,
                         queriesUsed: queries.length,
-                        candidatesSearched: candidateIds.length,
+                        candidatesSearched: searchIds.length,
                         candidatesWithResults: candidatesWithResults.size,
                       };
                     } catch (err) {
@@ -819,12 +822,16 @@ const handleChat = observe(async function handleChat(req: Request) {
           partiesMap.set(doc.id, { id: doc.id, ...doc.data() });
         }
 
-        // Build rich candidate context for system prompt
+        // Build rich candidate context for system prompt — only selected candidates when user has a selection
         // Note: candidate IDs are internal identifiers for tool calls only — never show them to the user
+        const selectedPartySet = new Set(partyIds ?? []);
+        const contextCandidates = selectedPartySet.size > 0
+          ? candidates.filter((c: any) => (c.party_ids ?? []).some((pid: string) => selectedPartySet.has(pid)))
+          : candidates;
         candidateContext =
-          `\n\n# Candidats disponibles dans cette commune (${municipalityCode})\n` +
+          `\n\n# Candidats ${selectedPartySet.size > 0 ? 'sélectionnés' : 'disponibles'} dans cette commune (${municipalityCode})\n` +
           `**IMPORTANT** : Les identifiants candidats (candidateId) sont des identifiants techniques internes. Ne les mentionne JAMAIS dans tes réponses à l'utilisateur. Utilise uniquement le nom complet du candidat.\n\n` +
-          candidates
+          contextCandidates
             .map((c: any) => {
               const name = [c.first_name, c.last_name].filter(Boolean).join(' ') || c.id;
               const partyNames = (c.party_ids ?? [])
