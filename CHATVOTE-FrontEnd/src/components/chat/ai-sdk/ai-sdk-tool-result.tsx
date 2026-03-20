@@ -40,6 +40,7 @@ type SearchResult = {
   url: string;
   page: number | string;
   party_id: string;
+  candidate_name?: string;
 };
 
 type ToolPart = {
@@ -624,6 +625,20 @@ function SourceResultCard({
                 {i + 1}
               </span>
               <div className="min-w-0 flex-1">
+                {(src.candidate_name || src.party_id) && (
+                  <div className="mb-1 flex flex-wrap items-center gap-1">
+                    {src.candidate_name && (
+                      <span className="inline-block rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-medium text-purple-200">
+                        {src.candidate_name}
+                      </span>
+                    )}
+                    {src.party_id && (
+                      <span className="inline-block rounded bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-200">
+                        {src.party_id.toUpperCase()}
+                      </span>
+                    )}
+                  </div>
+                )}
                 <p className="text-foreground/80 line-clamp-3 leading-snug">
                   {src.content.length > 150
                     ? src.content.slice(0, 150) + "…"

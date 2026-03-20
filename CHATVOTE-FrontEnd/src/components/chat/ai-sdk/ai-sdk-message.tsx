@@ -63,6 +63,7 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
             source_document: r.source,
             document_publish_date: "",
             party_id: r.party_id,
+            candidate_name: r.candidate_name,
           });
         }
       }
@@ -85,18 +86,23 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
   // Collect sources from tool results for inline reference badges
   const sources = useMemo(() => collectSources(message.parts), [message.parts]);
 
-  // In multi-step tool flows, the AI SDK creates a text part and suggestFollowUps
-  // tool call per step. Only render the last of each to avoid duplicate content.
-  const { lastTextIndex, lastSuggestFollowUpsIndex } = useMemo(() => {
-    if (isUser) return { lastTextIndex: -1, lastSuggestFollowUpsIndex: -1 };
-    let lastText = -1;
+  // In multi-step tool flows, the AI SDK creates a text part per step plus
+  // duplicate suggestFollowUps tool calls. We keep only the LONGEST text part
+  // (the substantive answer) and the last suggestFollowUps.
+  const { longestTextIndex, lastSuggestFollowUpsIndex } = useMemo(() => {
+    if (isUser) return { longestTextIndex: -1, lastSuggestFollowUpsIndex: -1 };
+    let longestIdx = -1;
+    let longestLen = -1;
     let lastSuggest = -1;
     for (let i = 0; i < message.parts.length; i++) {
       const p = message.parts[i];
-      if (p.type === "text") lastText = i;
+      if (p.type === "text" && p.text.length > longestLen) {
+        longestLen = p.text.length;
+        longestIdx = i;
+      }
       if (isToolUIPart(p) && getToolName(p) === "suggestFollowUps") lastSuggest = i;
     }
-    return { lastTextIndex: lastText, lastSuggestFollowUpsIndex: lastSuggest };
+    return { longestTextIndex: longestIdx, lastSuggestFollowUpsIndex: lastSuggest };
   }, [isUser, message.parts]);
 
   return (
@@ -114,8 +120,8 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
         {message.parts.map((part, index) => {
           switch (part.type) {
             case "text":
-              // Skip intermediate text parts for assistant (multi-step dedup)
-              if (!isUser && index !== lastTextIndex) return null;
+              // Keep only the longest text part (the substantive answer)
+              if (!isUser && index !== longestTextIndex) return null;
               return (
                 <div key={index}>
                   <ChatMarkdown
