@@ -1,3 +1,4 @@
+import { VercelToolbar } from "@vercel/toolbar/next";
 import { type Metadata } from "next";
 import { Merriweather, Merriweather_Sans } from "next/font/google";
 import { headers } from "next/headers";
@@ -135,6 +136,8 @@ export default async function RootLayout({
   const tenantId = requestHeaders.get(TENANT_ID_HEADER);
   const tenant = await getTenant(tenantId);
   const auth = await getAuth();
+  const shouldShowToolbar =
+    process.env.NODE_ENV === 'development' || process.env.VERCEL_ENV === 'preview';
 
   return (
     <html lang={locale} data-theme={theme}>
@@ -168,6 +171,7 @@ export default async function RootLayout({
             {children}
           </AppProvider>
         </NextIntlClientProvider>
+        {shouldShowToolbar && <VercelToolbar />}
       </body>
     </html>
   );
