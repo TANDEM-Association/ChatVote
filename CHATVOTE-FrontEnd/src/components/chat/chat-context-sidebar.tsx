@@ -2,7 +2,7 @@
 
 import { useCallback, useEffect, useMemo, useState } from "react";
 
-import { type ElectoralList } from "@lib/election/election.types";
+import { type ElectoralList, type Municipality } from "@lib/election/election.types";
 import { trackElectoralListSelected } from "@lib/firebase/analytics";
 import { cn } from "@lib/utils";
 import { useTranslations } from "next-intl";
@@ -29,6 +29,7 @@ const ChatContextSidebar = () => {
     (s) => s.setSelectedElectoralLists,
   );
   const [data, setData] = useState<ElectoralListsApiResponse | null>(null);
+  const [municipality, setMunicipality] = useState<Municipality | null>(null);
   const [isLoading, setIsLoading] = useState(false);
   const [hasNoData, setHasNoData] = useState(false);
   const [filterMode, setFilterMode] = useState<FilterMode>("second-round");
@@ -36,6 +37,7 @@ const ChatContextSidebar = () => {
   useEffect(() => {
     if (!municipalityCode) {
       setData(null);
+      setMunicipality(null);
       setHasNoData(false);
       setSecondRoundPartyIds(null);
       return;
@@ -44,6 +46,13 @@ const ChatContextSidebar = () => {
     const controller = new AbortController();
     setIsLoading(true);
     setHasNoData(false);
+
+    fetch(`/api/municipalities?code=${municipalityCode}`)
+      .then((res) => (res.ok ? res.json() : null))
+      .then((m: Municipality | null) => {
+        if (m && !controller.signal.aborted) setMunicipality(m);
+      })
+      .catch(() => {});
 
     fetch(`/api/electoral-lists?commune_code=${municipalityCode}`, {
       signal: controller.signal,
@@ -151,16 +160,29 @@ const ChatContextSidebar = () => {
       <div className="flex h-full w-56 flex-col overflow-y-auto lg:w-72">
         {/* Header */}
         <div className="border-border sticky top-0 z-10 border-b bg-inherit px-3 pt-3 pb-2">
-          <div className="flex items-baseline justify-between">
-            <h2 className="text-foreground text-xs font-semibold uppercase tracking-wider">
-              {t("lists")}
-            </h2>
-            {data && (
-              <span className="text-muted-foreground truncate text-[10px]">
-                {data.commune_name}
-              </span>
-            )}
-          </div>
+          {municipality ? (
+            <div className="mb-2">
+              <h2 className="text-foreground text-sm font-bold leading-tight">
+                {municipality.nom}
+              </h2>
+              <p className="text-muted-foreground mt-0.5 text-[10px] leading-tight">
+                {municipality.codesPostaux?.[0]}
+                {municipality.departement?.nom ? ` · ${municipality.departement.nom}` : ""}
+                {municipality.population ? ` · ${municipality.population.toLocaleString()} hab.` : ""}
+              </p>
+            </div>
+          ) : (
+            <div className="flex items-baseline justify-between">
+              <h2 className="text-foreground text-xs font-semibold uppercase tracking-wider">
+                {t("lists")}
+              </h2>
+              {data && (
+                <span className="text-muted-foreground truncate text-[10px]">
+                  {data.commune_name}
+                </span>
+              )}
+            </div>
+          )}
 
           {hasSecondRound && !isLoading && (
             <RoundFilterToggle
