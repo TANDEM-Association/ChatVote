@@ -8,7 +8,6 @@ import { cn } from "@lib/utils";
 import { ArrowUp } from "lucide-react";
 import { useTranslations } from "next-intl";
 
-import ChatInputAddPartiesButton from "./chat-input-add-parties-button";
 import MessageLoadingBorderTrail from "./message-loading-border-trail";
 
 type Props = {
@@ -69,10 +68,9 @@ const ChatInput = ({ disabled }: Props) => {
     >
       {quickReplies.length > 0 && !disabled && (
         <>
-          <ChatInputAddPartiesButton disabled={loading} />
           <div
             className={cn(
-              "ml-7 flex gap-1 overflow-x-auto px-2 pt-2 whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
+              "flex gap-1 overflow-x-auto px-2 pt-2 whitespace-nowrap [-ms-overflow-style:none] [scrollbar-width:none] [&::-webkit-scrollbar]:hidden",
               loading && "z-0 opacity-50",
             )}
           >

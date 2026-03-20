@@ -1,12 +1,9 @@
 "use client";
 
-import React, { useEffect, useState } from "react";
-
-import Link from "next/link";
+import { useEffect, useState } from "react";
 
 import { toTitleCase } from "@lib/utils";
 import {
-  ArrowRight,
   BarChart3,
   Layers,
   MessageCircle,
@@ -197,11 +194,8 @@ export default function MiniDashboardCard({ communeCode, communeName }: Props) {
   const topThemes = taxonomy.themes.slice(0, 3);
 
   return (
-    <Link
-      href={`/commune/${communeCode}`}
-      className="group block w-full max-w-sm"
-    >
-      <div className="border-border-subtle bg-surface hover:border-primary/40 hover:shadow-primary/5 relative overflow-hidden rounded-2xl border transition-all duration-200 hover:shadow-lg">
+    <div className="w-full max-w-sm">
+      <div className="border-border-subtle bg-surface relative overflow-hidden rounded-2xl border">
         {/* Top accent bar */}
         <div className="from-primary h-[3px] w-full bg-gradient-to-r via-violet-500 to-indigo-400" />
 
@@ -220,9 +214,6 @@ export default function MiniDashboardCard({ communeCode, communeName }: Props) {
                   Tableau de bord
                 </p>
               </div>
-            </div>
-            <div className="bg-primary/10 text-primary flex size-7 items-center justify-center rounded-full opacity-0 transition-opacity group-hover:opacity-100">
-              <ArrowRight className="size-3.5" />
             </div>
           </div>
 
@@ -326,14 +317,8 @@ export default function MiniDashboardCard({ communeCode, communeName }: Props) {
             </div>
           </div>
 
-          {/* CTA footer */}
-          <div className="bg-primary/5 text-primary group-hover:bg-primary/10 mt-3 flex items-center justify-center gap-1.5 rounded-lg py-1.5 text-xs font-medium transition-colors">
-            <BarChart3 className="size-3" />
-            Voir le tableau de bord complet
-            <ArrowRight className="size-3 transition-transform group-hover:translate-x-0.5" />
-          </div>
         </div>
       </div>
-    </Link>
+    </div>
   );
 }
