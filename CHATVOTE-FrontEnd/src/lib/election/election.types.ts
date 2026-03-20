@@ -83,6 +83,15 @@ export type ElectoralList = {
   head_last_name: string;
 };
 
+export type FirstRoundElected = {
+  panel_number: number;
+  list_label: string;
+  list_short_label: string;
+  nuance_code: string;
+  voix: number;
+  pct_voix_exprimes: number;
+};
+
 export type ElectoralListsByCommune = {
   commune_code: string;
   commune_name: string;
@@ -90,6 +99,8 @@ export type ElectoralListsByCommune = {
   lists: ElectoralList[];
   lists_round_2?: ElectoralList[];
   list_count_round_2?: number;
+  first_round_elected?: FirstRoundElected;
+  is_first_round_decided?: boolean;
 };
 
 // Helper to check if a candidate is in a coalition
