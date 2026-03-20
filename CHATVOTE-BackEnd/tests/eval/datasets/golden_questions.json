@@ -77,10 +77,10 @@
       "category": "bianchi_environnement"
     },
     {
-      "input": "Quels sont les candidats aux municipales à Clermont-Ferrand ?",
-      "expected_output": "Parmi les candidats à Clermont-Ferrand figurent Olivier Bianchi (union de la gauche), Marianne Maximi, Marie Savre, Yannick Cartailler et Julien Bony.",
-      "candidate_ids": ["cand-63113-6", "cand-63113-5", "cand-63113-2", "cand-63113-4"],
-      "category": "candidats_clermont"
+      "input": "Que propose Olivier Bianchi sur la petite enfance et l'éducation à Clermont-Ferrand ?",
+      "expected_output": "Olivier Bianchi propose d'ouvrir deux nouvelles crèches, une nouvelle école maternelle et de fournir un goûter sain et équilibré aux écoliers.",
+      "candidate_ids": ["cand-63113-6"],
+      "category": "bianchi_education"
     },
     {
       "input": "Que propose le candidat pour les services publics à Clermont-Ferrand ?",
