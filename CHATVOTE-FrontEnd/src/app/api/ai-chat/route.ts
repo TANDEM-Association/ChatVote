@@ -258,12 +258,45 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                         }
                       }
 
-                      const scoreSorted = Array.from(seen.values())
-                        .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-                        .slice(0, 20);
+                      const allDeduped = Array.from(seen.values());
 
-                      // LLM reranking: pick 16 most relevant from the 20 score-sorted results
-                      const reranked = assignGlobalIds(await rerankResults(scoreSorted, queries[0], 16));
+                      // ── Per-candidate reranking for fair representation ──
+                      // Group results by candidate, rerank each group independently,
+                      // then interleave so every candidate gets equal representation.
+                      const byCandidateMap = new Map<string, typeof allDeduped>();
+                      for (const r of allDeduped) {
+                        const cid = (r as any).candidateId ?? r.party_id ?? 'unknown';
+                        if (!byCandidateMap.has(cid)) byCandidateMap.set(cid, []);
+                        byCandidateMap.get(cid)!.push(r);
+                      }
+
+                      const candidateGroups = Array.from(byCandidateMap.entries());
+                      const perCandidateTopK = Math.max(3, Math.ceil(16 / Math.max(candidateGroups.length, 1)));
+
+                      // Rerank each candidate's results in parallel, preserving candidateId
+                      const perCandidateReranked = await Promise.all(
+                        candidateGroups.map(async ([candidateId, results]) => {
+                          const sorted = results.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 12);
+                          const top = sorted.length <= perCandidateTopK
+                            ? sorted
+                            : await rerankResults(sorted, queries[0], perCandidateTopK);
+                          // Re-attach candidateId since rerankResults returns plain SearchResult[]
+                          return top.map((r) => ({ ...r, candidateId }));
+                        }),
+                      );
+
+                      // Round-robin interleave to ensure fair representation
+                      const interleaved: Array<SearchResult & { candidateId: string }> = [];
+                      const maxLen = Math.max(...perCandidateReranked.map((g) => g.length));
+                      for (let i = 0; i < maxLen && interleaved.length < 16; i++) {
+                        for (const group of perCandidateReranked) {
+                          if (i < group.length && interleaved.length < 16) {
+                            interleaved.push(group[i]);
+                          }
+                        }
+                      }
+
+                      const reranked = assignGlobalIds(interleaved);
 
                       const candidatesWithResults = new Set(reranked.map((r: any) => r.candidateId));
 
