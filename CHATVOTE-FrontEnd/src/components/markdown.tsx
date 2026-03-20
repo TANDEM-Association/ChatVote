@@ -227,6 +227,7 @@ const NonMemoizedMarkdown = ({
         </h6>
       );
     },
+    hr: () => null,
   };
 
   return (
