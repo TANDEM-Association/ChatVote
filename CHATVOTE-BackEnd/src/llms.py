@@ -120,6 +120,7 @@ google_gemini_2_flash = (
         model=GEMINI_2_FLASH,
         api_key=_google_api_key,
         max_retries=0,
+        thinking_budget=0,
     )
     if _google_api_key
     else None
@@ -333,6 +334,7 @@ google_gemini_2_flash_det = (
         api_key=_google_api_key,
         temperature=0.0,
         max_retries=0,
+        thinking_budget=0,
     )
     if _google_api_key
     else None
