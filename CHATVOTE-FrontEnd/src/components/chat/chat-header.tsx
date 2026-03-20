@@ -25,8 +25,8 @@ function ChatHeader() {
   const [displayBanner, setDisplayBanner] = useState(true);
   const params = useSearchParams();
   const urlModeOverride = params.get("mode") === "ai";
-  // Show toggle only when env-flag enabled AND not forced via URL param
-  const showToggle = AI_SDK_ENABLED && !urlModeOverride;
+  // Toggle hidden — mode is now controlled by env var only
+  const showToggle = false && AI_SDK_ENABLED && !urlModeOverride;
 
   if (IS_EMBEDDED) {
     return <ChatEmbedHeader />;
