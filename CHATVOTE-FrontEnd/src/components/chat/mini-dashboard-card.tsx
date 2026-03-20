@@ -120,12 +120,18 @@ type Props = {
   communeName: string;
 };
 
+// Feature-gated: hidden until NEXT_PUBLIC_ENABLE_COMMUNE_DASHBOARD=true
+const COMMUNE_DASHBOARD_ENABLED =
+  process.env.NEXT_PUBLIC_ENABLE_COMMUNE_DASHBOARD === "true";
+
 export default function MiniDashboardCard({ communeCode, communeName }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
   const [hasEnoughData, setHasEnoughData] = useState(false);
 
   useEffect(() => {
+    if (!COMMUNE_DASHBOARD_ENABLED) return;
+
     setLoading(true);
     setHasEnoughData(false);
     setData(null);
@@ -161,6 +167,10 @@ export default function MiniDashboardCard({ communeCode, communeName }: Props) {
       abortController.abort();
     };
   }, [communeCode]);
+
+  if (!COMMUNE_DASHBOARD_ENABLED) {
+    return null;
+  }
 
   // Loading skeleton
   if (loading) {
