@@ -77,244 +77,147 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
   // This lets the LLM cite [1], [2], [3]… reliably without renumbering.
   let globalSourceCounter = 0;
 
+
+
   /** Assign globally unique sequential IDs to search results */
   function assignGlobalIds<T>(results: T[]): (T & { id: number })[] {
     return results.map((r) => ({ ...r, id: ++globalSourceCounter }));
   }
 
+
   return {
     // ── RAG search tools (feature-gated) ────────────────────────────────────
     ...(ragEnabled
       ? {
-          searchPartyManifesto: tool({
+          searchDocuments: tool({
             description:
-              "Recherche dans le programme/manifeste PDF d'un parti politique. Contient les engagements officiels, propositions thématiques et priorités du parti. Appelle cet outil pour CHAQUE parti pertinent — les appels simultanés sont possibles et recommandés.",
+              "Recherche unifiée dans tous les documents politiques : programmes de parti (PDF), sites web de candidats, professions de foi, documents de campagne. L'outil effectue automatiquement des reformulations internes et du re-classement par pertinence. **UN SEUL appel suffit** — passe tous les candidats/partis à rechercher en une fois. Ne rappelle JAMAIS cet outil avec les mêmes filtres.",
             inputSchema: z.object({
-              partyId: z.string().describe('Identifiant du parti (ex: "ps", "lr") — utilise les IDs fournis dans le contexte'),
               query: z.string().describe('Requête de recherche autonome et complète — pas de pronoms ni références implicites'),
+              candidateIds: z
+                .array(z.string())
+                .optional()
+                .describe('Filtrer par candidats (IDs fournis dans le contexte). Si omis et partyIds omis, recherche tous les candidats de la commune.'),
+              partyIds: z
+                .array(z.string())
+                .optional()
+                .describe('Filtrer par partis (IDs fournis dans le contexte). Recherche dans les programmes/manifestes nationaux des partis.'),
             }),
             execute: async (input) => {
-              const { partyId, query } = input;
-              const normalizedPartyId = partyId.toLowerCase();
+              const { query, candidateIds: filterCandidateIds, partyIds: filterPartyIds } = input;
+
               try {
                 // Query expansion: generate 2-3 RAG-optimized variants
-                const queries = await expandSearchQueries(query, { entityName: partyId, entityType: 'party' });
-
-                // Search with all expanded queries in parallel
-                const allResults = await Promise.all(
-                  queries.map((q) =>
-                    searchQdrant(COLLECTIONS.allParties, q, 'metadata.namespace', normalizedPartyId, 15),
-                  ),
-                );
-                let results = deduplicateResults(allResults.flat());
-
-                // Tier 1: retry with lower threshold + broad scope
-                if (results.length < 3) {
-                  console.log(`[qdrant:fallback] searchPartyManifesto: ${results.length} results at 0.35, retrying at 0.25 broad`);
-                  const broadResults = await searchQdrantBroad(COLLECTIONS.allParties, query, 8);
-                  results = deduplicateResults([...results, ...broadResults]);
+                const queries = await expandSearchQueries(query);
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`[searchDocuments] ${queries.length} expanded queries for "${query.slice(0, 60)}"`);
                 }
-                // Tier 2: deep research sub-agent
-                if (results.length < 3) {
-                  console.log(`[deep-research] searchPartyManifesto: ${results.length} results after Tier 1, launching deep research`);
-                  const research = await deepResearch({ originalQuery: query, collections: [COLLECTIONS.allParties] });
-                  results = deduplicateResults([...results, ...research.findings]);
-                  console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
+
+                // Pre-embed all queries once
+                const vectors = await Promise.all(queries.map((q) => embedQuery(q)));
+                const queryVectors = new Map(queries.map((q, i) => [q, vectors[i]]));
+
+                const allEntityResults: Array<SearchResult & { entityId: string; entityType: 'candidate' | 'party'; entityName: string }> = [];
+
+                // ── Search candidate documents ──
+                const searchCids = filterCandidateIds?.map((id) => id.toLowerCase())
+                  ?? ((!filterPartyIds || filterPartyIds.length === 0)
+                    ? (selectedCandidateIds.length > 0 ? selectedCandidateIds : candidateIds)
+                    : []);
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`[searchDocuments] searchCids=${JSON.stringify(searchCids)} (${searchCids.length} entities)`);
                 }
-                // LLM reranking: pick the most relevant results for the actual question
-                const reranked = assignGlobalIds(await rerankResults(results, query, 8));
-                return { partyId, results: reranked, count: reranked.length };
-              } catch (err) {
-                console.error('[ai-chat] searchPartyManifesto error:', err);
-                return { partyId, results: [] as SearchResult[], count: 0, error: String(err) };
-              }
-            },
-          }),
-          searchCandidateWebsite: tool({
-            description: "Recherche dans TOUTES les sources d'un candidat : site officiel, profession de foi (PDF), documents de campagne uploadés, pages web scrapées. Utilise cet outil quand l'utilisateur pose une question sur un candidat précis. Pour une recherche globale sur toute la commune, préfère searchAllCandidates.",
-            inputSchema: z.object({
-              candidateId: z.string().describe('Identifiant du candidat — utilise les IDs fournis dans le contexte'),
-              query: z.string().describe('Requête de recherche autonome et spécifique au candidat'),
-            }),
-            execute: async (input) => {
-              const { candidateId, query } = input;
-              const normalizedCandidateId = candidateId.toLowerCase();
-              try {
-                // Query expansion: generate 2-3 RAG-optimized variants
-                const candidateName = candidateNames.get(normalizedCandidateId) ?? candidateId;
-                const queries = await expandSearchQueries(query, { entityName: candidateName, entityType: 'candidate' });
 
-                // Search with all expanded queries in parallel
-                const allResults = await Promise.all(
-                  queries.map((q) =>
-                    searchQdrant(COLLECTIONS.candidatesWebsites, q, 'metadata.namespace', normalizedCandidateId, 10),
-                  ),
-                );
-                let results = deduplicateResults(allResults.flat());
-
-                // Tier 1: retry with lower threshold + broad scope
-                if (results.length < 3) {
-                  console.log(`[qdrant:fallback] searchCandidateWebsite: ${results.length} results at 0.35, retrying at 0.25 broad`);
-                  const broadResults = await searchQdrantBroad(COLLECTIONS.candidatesWebsites, query, 8);
-                  results = deduplicateResults([...results, ...broadResults]);
-                }
-                // Tier 2: deep research sub-agent
-                if (results.length < 3) {
-                  console.log(`[deep-research] searchCandidateWebsite: ${results.length} results after Tier 1, launching deep research`);
-                  const research = await deepResearch({ originalQuery: query, collections: [COLLECTIONS.candidatesWebsites], candidateIds: [candidateId] });
-                  results = deduplicateResults([...results, ...research.findings]);
-                  console.log(`[deep-research] Found ${research.findings.length} additional results via sub-agent`);
-                }
-                const reranked = assignGlobalIds(await rerankResults(results, query, 8));
-                return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results: reranked, count: reranked.length };
-              } catch (err) {
-                console.error('[ai-chat] searchCandidateWebsite error:', err);
-                return { candidateId, candidateName: candidateNames.get(candidateId.toLowerCase()) ?? candidateId, results: [] as SearchResult[], count: 0, error: String(err) };
-              }
-            },
-          }),
-          // Search ALL candidates in the commune with multi-query support, each query re-ranked independently
-          ...(candidateIds.length > 0
-            ? {
-                searchAllCandidates: tool({
-                  description:
-                    'Recherche simultanée dans TOUTES les sources de TOUS les candidats de la commune (sites web, professions de foi PDF, documents de campagne uploadés). Accepte plusieurs requêtes pour une couverture maximale — chaque requête est classée indépendamment puis fusionnée. Utilise cet outil pour toute question comparative ou générale. Stratégie optimale : 2-3 formulations variées couvrant synonymes et angles différents.',
-                  inputSchema: z.object({
-                    queries: z
-                      .array(z.string())
-                      .min(1)
-                      .max(5)
-                      .describe(
-                        'Requêtes de recherche variées pour maximiser le rappel. Utilise 2-3 formulations différentes couvrant le même sujet (ex: ["transports en commun plan vélo", "mobilité urbaine piste cyclable", "stationnement voiture circulation"])',
-                      ),
-                  }),
-                  execute: async (input) => {
-                    const { queries: rawQueries } = input;
-                    try {
-                      // Query expansion: expand each LLM query into 2-3 RAG-optimized variants
-                      const expandedSets = await Promise.all(
-                        rawQueries.map((q) => expandSearchQueries(q)),
-                      );
-                      // Flatten + deduplicate expanded queries (cap at 6 to limit cost)
-                      const queries = [...new Set(expandedSets.flat())].slice(0, 6);
-                      console.log(`[searchAllCandidates] Expanded ${rawQueries.length} → ${queries.length} queries`);
-
-                      // Pre-embed all unique queries once (avoids N×M redundant embedding calls)
-                      const vectors = await Promise.all(queries.map((q) => embedQuery(q)));
-                      const queryVectors = new Map(queries.map((q, i) => [q, vectors[i]]));
-
-                      // Search only selected candidates (or all if none selected)
-                      const searchIds = selectedCandidateIds.length > 0 ? selectedCandidateIds : candidateIds;
-
-                      // For each query, search selected candidates in parallel and re-rank independently
-                      const perQueryResults = await Promise.all(
-                        queries.map(async (query) => {
-                          const vec = queryVectors.get(query)!;
-                          const allResults = await Promise.all(
-                            searchIds.map(async (cid) => {
-                              let results = await searchQdrant(
-                                COLLECTIONS.candidatesWebsites,
-                                query,
-                                'metadata.namespace',
-                                cid.toLowerCase(),
-                                10,
-                                vec,
-                              );
-                              // Tier 1: retry at lower threshold (keep namespace scoping)
-                              if (results.length < 3) {
-                                console.log(`[qdrant:fallback] searchAllCandidates/${cid}: ${results.length} results at 0.35, retrying at 0.25`);
-                                const retryResults = await searchQdrant(
-                                  COLLECTIONS.candidatesWebsites,
-                                  query,
-                                  'metadata.namespace',
-                                  cid.toLowerCase(),
-                                  10,
-                                  vec,
-                                  { scoreThreshold: 0.25 },
-                                );
-                                results = deduplicateResults([...results, ...retryResults]);
-                              }
-                              return results.map((r) => ({ ...r, candidateId: cid }));
-                            }),
+                if (searchCids.length > 0) {
+                  const candidateResults = await Promise.all(
+                    searchCids.map(async (cid) => {
+                      const perQuery = await Promise.all(
+                        queries.map(async (q) => {
+                          const vec = queryVectors.get(q)!;
+                          // Use 0.25 threshold — LLM reranking filters out irrelevant results later
+                          return searchQdrant(
+                            COLLECTIONS.candidatesWebsites, q, 'metadata.namespace', cid, 10, vec, { scoreThreshold: 0.25 },
                           );
-                          // Re-rank this query's results by score, take top 10 per query
-                          return allResults
-                            .flat()
-                            .sort((a, b) => (b.score ?? 0) - (a.score ?? 0))
-                            .slice(0, 10);
                         }),
                       );
+                      const deduped = deduplicateResults(perQuery.flat());
+                      const name = candidateNames.get(cid) ?? cid;
+                      return deduped.map((r) => ({ ...r, entityId: cid, entityType: 'candidate' as const, entityName: name }));
+                    }),
+                  );
+                  allEntityResults.push(...candidateResults.flat());
+                }
 
-                      // Merge all queries, deduplicate by candidate + content fingerprint, keep highest score
-                      const seen = new Map<string, (typeof perQueryResults)[0][0]>();
-                      for (const results of perQueryResults) {
-                        for (const r of results) {
-                          // Use candidateId (namespace) + first 200 chars of content for robust dedup
-                          const key = `${(r as any).candidateId ?? r.party_id}:${r.content.slice(0, 200).replace(/\s+/g, ' ').trim()}`;
-                          const existing = seen.get(key);
-                          if (!existing || (r.score ?? 0) > (existing.score ?? 0)) {
-                            seen.set(key, r);
-                          }
-                        }
-                      }
+                // ── Search party manifesto documents ──
+                const searchPids = filterPartyIds?.map((id) => id.toLowerCase()) ?? [];
 
-                      const allDeduped = Array.from(seen.values());
-
-                      // ── Per-candidate reranking for fair representation ──
-                      // Group results by candidate, rerank each group independently,
-                      // then interleave so every candidate gets equal representation.
-                      const byCandidateMap = new Map<string, typeof allDeduped>();
-                      for (const r of allDeduped) {
-                        const cid = (r as any).candidateId ?? r.party_id ?? 'unknown';
-                        if (!byCandidateMap.has(cid)) byCandidateMap.set(cid, []);
-                        byCandidateMap.get(cid)!.push(r);
-                      }
-
-                      const candidateGroups = Array.from(byCandidateMap.entries());
-                      const perCandidateTopK = Math.max(3, Math.ceil(16 / Math.max(candidateGroups.length, 1)));
-
-                      // Rerank each candidate's results in parallel, preserving candidateId
-                      const perCandidateReranked = await Promise.all(
-                        candidateGroups.map(async ([candidateId, results]) => {
-                          const sorted = results.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 12);
-                          const top = sorted.length <= perCandidateTopK
-                            ? sorted
-                            : await rerankResults(sorted, queries[0], perCandidateTopK);
-                          // Re-attach candidateId since rerankResults returns plain SearchResult[]
-                          return top.map((r) => ({ ...r, candidateId }));
-                        }),
+                if (searchPids.length > 0) {
+                  const partyResults = await Promise.all(
+                    searchPids.map(async (pid) => {
+                      const perQuery = await Promise.all(
+                        queries.map((q) => searchQdrant(COLLECTIONS.allParties, q, 'metadata.namespace', pid, 10, undefined, { scoreThreshold: 0.25 })),
                       );
+                      const deduped = deduplicateResults(perQuery.flat());
+                      return deduped.map((r) => ({ ...r, entityId: pid, entityType: 'party' as const, entityName: pid }));
+                    }),
+                  );
+                  allEntityResults.push(...partyResults.flat());
+                }
 
-                      // Round-robin interleave to ensure fair representation
-                      const interleaved: Array<SearchResult & { candidateId: string }> = [];
-                      const maxLen = Math.max(...perCandidateReranked.map((g) => g.length));
-                      for (let i = 0; i < maxLen && interleaved.length < 16; i++) {
-                        for (const group of perCandidateReranked) {
-                          if (i < group.length && interleaved.length < 16) {
-                            interleaved.push(group[i]);
-                          }
-                        }
-                      }
+                if (allEntityResults.length === 0) {
+                  return { results: [] as SearchResult[], count: 0, message: 'Aucun document trouvé pour ces filtres.' };
+                }
 
-                      const reranked = assignGlobalIds(interleaved);
+                // ── Per-entity reranking for fair representation ──
+                const byEntityMap = new Map<string, typeof allEntityResults>();
+                for (const r of allEntityResults) {
+                  if (!byEntityMap.has(r.entityId)) byEntityMap.set(r.entityId, []);
+                  byEntityMap.get(r.entityId)!.push(r);
+                }
 
-                      const candidatesWithResults = new Set(reranked.map((r: any) => r.candidateId));
+                const entityGroups = Array.from(byEntityMap.entries());
+                const perEntityTopK = Math.max(3, Math.ceil(16 / Math.max(entityGroups.length, 1)));
 
-                      return {
-                        results: reranked,
-                        count: reranked.length,
-                        queriesUsed: queries.length,
-                        candidatesSearched: searchIds.length,
-                        candidatesWithResults: candidatesWithResults.size,
-                      };
-                    } catch (err) {
-                      console.error('[ai-chat] searchAllCandidates error:', err);
-                      return { results: [] as SearchResult[], count: 0, error: String(err) };
+                const perEntityReranked = await Promise.all(
+                  entityGroups.map(async ([entityId, results]) => {
+                    const sorted = results.sort((a, b) => (b.score ?? 0) - (a.score ?? 0)).slice(0, 10);
+                    const top = sorted.length <= perEntityTopK
+                      ? sorted
+                      : await rerankResults(sorted, query, perEntityTopK);
+                    return top.map((r) => ({ ...r, entityId, entityName: results[0].entityName, entityType: results[0].entityType }));
+                  }),
+                );
+
+                // Round-robin interleave for fair representation
+                const interleaved: typeof allEntityResults = [];
+                const maxLen = Math.max(...perEntityReranked.map((g) => g.length));
+                for (let i = 0; i < maxLen && interleaved.length < 16; i++) {
+                  for (const group of perEntityReranked) {
+                    if (i < group.length && interleaved.length < 16) {
+                      interleaved.push(group[i]);
                     }
-                  },
-                }),
+                  }
+                }
+
+                const reranked = assignGlobalIds(interleaved);
+                const entitiesWithResults = new Set(reranked.map((r: any) => r.entityId));
+
+                if (process.env.NODE_ENV === 'development') {
+                  console.log(`[searchDocuments] Done: ${allEntityResults.length} raw → ${reranked.length} final across ${entitiesWithResults.size} entities`);
+                }
+
+                return {
+                  results: reranked,
+                  count: reranked.length,
+                  entitiesSearched: entityGroups.length,
+                  entitiesWithResults: entitiesWithResults.size,
+                };
+              } catch (err) {
+                console.error('[ai-chat] searchDocuments error:', err);
+                return { results: [] as SearchResult[], count: 0, error: String(err) };
               }
-            : {}),
+            },
+          }),
         }
       : {}),
 
@@ -599,7 +502,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
     }),
 
     runDeepResearch: tool({
-      description: "Lance une recherche approfondie multi-requêtes dans toutes les sources des candidats sélectionnés (sites web, professions de foi, documents uploadés). Utilise quand les premières recherches ne donnent pas assez de résultats, ou quand l'utilisateur demande une analyse approfondie. Le sous-agent reformule automatiquement avec synonymes et termes officiels.",
+      description: "Recherche approfondie multi-sources. **N'utilise cet outil QUE si l'utilisateur demande EXPLICITEMENT une analyse approfondie** (ex: 'analyse en profondeur', 'recherche complète'). Pour les questions normales, searchDocuments suffit — il gère déjà la reformulation et le re-classement.",
       inputSchema: z.object({
         query: z.string().describe('Le sujet à approfondir — la requête originale de l\'utilisateur'),
         collections: z.array(z.string()).optional().describe('Collections cibles (optionnel — par défaut toutes)'),
@@ -930,66 +833,40 @@ const handleChat = observe(async function handleChat(req: Request) {
     return name ? `  - ${name} (candidateId: "${id}")` : `  - candidateId: "${id}"`;
   }).join('\n');
 
-  const iterativeSearchRules = `
-## Stratégie de recherche itérative
-Tu disposes de **12 tours d'outils maximum**. Utilise-les intelligemment :
-
-**Tour 1 — Recherche initiale** : Lance tes premières recherches en parallèle (plusieurs appels simultanés).
-**Tour 2 — Évaluation + approfondissement** : Examine les résultats. Si un candidat a 0 résultat ou si la couverture est faible :
-  - Reformule avec des synonymes (ex : "écologie" → "environnement", "transition énergétique", "développement durable")
-  - Essaie des termes plus spécifiques ou plus généraux
-  - Appelle runDeepResearch si < 3 résultats au total
-**Tour 3+ — Compléments ciblés** : Recherches additionnelles pour combler les trous identifiés.
-**Dernier tour — Réponse** : Rédige ta réponse + appelle suggestFollowUps.
-
-**Règles anti-doublons (CRITIQUE)** :
-- **N'appelle JAMAIS searchAllCandidates plus d'une fois.** Cet outil accepte plusieurs requêtes en une seule invocation — passe toutes tes formulations d'un coup dans le champ \`queries\`.
-- **N'appelle JAMAIS searchCandidateWebsite deux fois pour le même candidat** sauf si tu reformules avec un angle RADICALEMENT différent (ex : Tour 1 = "budget municipal" → Tour 2 = "plan d'investissement infrastructures").
-- Les requêtes du champ \`queries\` doivent couvrir des **angles distincts**, pas des synonymes proches. Mauvais : ["transport urbain", "transports en commun", "mobilité urbaine"]. Bon : ["plan vélo pistes cyclables", "stationnement voiture parking", "transports en commun bus tramway"].
-- Si tu relances une recherche au tour 2+, c'est UNIQUEMENT pour un sujet non couvert au tour 1 (ex : un candidat manquant, un thème connexe).
-
-**Autres règles** :
-- Lance TOUJOURS plusieurs recherches en parallèle au premier tour (pas une seule requête).
-- Après chaque tour, évalue : "Ai-je assez de matière pour chaque candidat concerné ?" Si non, relance avec un angle DIFFÉRENT.
-- Ne rédige ta réponse que quand tu as suffisamment de données OU que tu as épuisé tes reformulations.
-- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.`;
-
   const searchInstructions = municipalityCode && hasCandidates
-    ? hasSelection && searchCandidateIds.length <= 3
-      ? `# Protocole de recherche
-**Obligation** : Appelle searchCandidateWebsite pour CHAQUE candidat ci-dessous AVANT de rédiger ta réponse.
-- En mode commune, n'utilise PAS searchPartyManifesto — les outils candidats (searchCandidateWebsite / searchAllCandidates) cherchent déjà dans toutes les sources : sites web, professions de foi PDF, documents de campagne.
-- L'utilisateur a sélectionné ces candidats via le panneau latéral — recherche UNIQUEMENT ces candidats.
-- Si un candidat n'a pas de résultats sur le sujet, reformule ta requête (synonymes, termes officiels). Si toujours rien, dis-le explicitement.
-
-Candidats sélectionnés :
+    ? `# Protocole de recherche
+**Obligation** : Appelle \`searchDocuments\` AVANT de rédiger ta réponse.
+- UN SEUL appel suffit — passe tous les candidats à rechercher dans le champ \`candidateIds\`.
+- L'outil effectue automatiquement des reformulations internes, du re-classement par pertinence, et une représentation équitable de chaque candidat.
+- **N'appelle JAMAIS searchDocuments deux fois avec les mêmes candidateIds.** Si les résultats sont insuffisants, relance avec une query RADICALEMENT différente.
+- Si un candidat n'a aucun résultat, mentionne-le explicitement dans ta réponse.
+${hasSelection
+  ? `- L'utilisateur a sélectionné ces candidats — recherche EXCLUSIVEMENT ceux-ci :
 ${searchCandidateLabels}
-${iterativeSearchRules}`
-      : hasSelection
-        ? `# Protocole de recherche
-**Obligation** : Appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
-- searchAllCandidates recherche automatiquement dans les candidats sélectionnés et re-classe par pertinence.
-- En mode commune, n'utilise PAS searchPartyManifesto — les outils candidats (searchCandidateWebsite / searchAllCandidates) cherchent déjà dans toutes les sources : sites web, professions de foi PDF, documents de campagne.
-- L'utilisateur a sélectionné des candidats via le panneau latéral — concentre-toi EXCLUSIVEMENT sur eux.
 
-Candidats sélectionnés (${searchCandidateIds.length}) :
-${searchCandidateLabels}
-${iterativeSearchRules}`
-        : `# Protocole de recherche
-**Obligation** : Appelle searchAllCandidates avec 2-3 formulations variées de la requête AVANT de rédiger ta réponse.
-- searchAllCandidates recherche automatiquement dans TOUS les candidats et re-classe par pertinence.
-- En mode commune, n'utilise PAS searchPartyManifesto — les outils candidats (searchCandidateWebsite / searchAllCandidates) cherchent déjà dans toutes les sources : sites web, professions de foi PDF, documents de campagne.
-- Aucun candidat sélectionné — présente les positions de TOUS les candidats de la commune de manière équitable.
-- Ne demande JAMAIS à l'utilisateur de préciser quel candidat — recherche dans tous et présente les résultats.
-${iterativeSearchRules}`
+Appel recommandé :
+\`searchDocuments({ query: "ta question", candidateIds: [${searchCandidateIds.map((id) => `"${id}"`).join(', ')}] })\``
+  : `- Aucun candidat sélectionné — ne passe PAS de candidateIds pour rechercher dans TOUS les candidats.
+- Présente les positions de TOUS les candidats de manière équitable.`}
+
+## Règles
+- Ne rédige ta réponse que quand tu as des résultats. Si la couverture est faible, relance avec une formulation différente.
+- **Ne mentionne JAMAIS les identifiants techniques (candidateId, party_id) dans tes réponses.** Utilise uniquement les noms des candidats et des partis.
+- Appelle \`suggestFollowUps\` à la fin de chaque réponse.`
     : `# Protocole de recherche
-**Obligation** : Appelle searchPartyManifesto pour CHAQUE parti ci-dessous AVANT de rédiger ta réponse.
-- Ne demande JAMAIS à l'utilisateur de préciser quel parti — recherche dans TOUS systématiquement.
-- Si un parti n'a pas de résultats sur le sujet, reformule ta requête avec des synonymes avant de conclure.
+**Obligation** : Appelle \`searchDocuments\` avec les partis à rechercher AVANT de rédiger ta réponse.
+- UN SEUL appel suffit — passe tous les partis dans le champ \`partyIds\`.
+- Si un parti n'a pas de résultats, reformule ta requête avec des synonymes avant de conclure.
 
-Partis à rechercher (un appel searchPartyManifesto par parti) :
-${resolvedPartyIds.map((id) => `  - partyId: "${id}"`).join('\n') || '  (aucun parti trouvé)'}
-${iterativeSearchRules}`;
+Partis à rechercher :
+${resolvedPartyIds.map((id) => `  - "${id}"`).join('\n') || '  (aucun parti trouvé)'}
+
+Appel recommandé :
+\`searchDocuments({ query: "ta question", partyIds: [${resolvedPartyIds.map((id) => `"${id}"`).join(', ')}] })\`
+
+## Règles
+- **Ne mentionne JAMAIS les identifiants techniques dans tes réponses.** Utilise uniquement les noms des partis.
+- Appelle \`suggestFollowUps\` à la fin de chaque réponse.`;
 
   const selectedCandidateNames = searchCandidateIds
     .map((id) => candidateNamesMap.get(id.toLowerCase()) ?? id)
@@ -1021,8 +898,8 @@ ${contextLine}
 
 # Règles techniques
 - **Requêtes de recherche** : Tes paramètres "query" doivent être AUTONOMES et COMPLETS. Jamais de pronoms ("ça", "ce sujet"), jamais de références implicites au contexte. Exemple : au lieu de "et sur ça ?", écris "propositions transports en commun et mobilité douce [nom commune]".
-- **Recherche multi-requêtes** : Lance TOUJOURS plusieurs recherches en parallèle dès le premier tour. Utilise des formulations variées (synonymes, termes courants/officiels, angles différents). Évalue les résultats avant de rédiger — si la couverture est insuffisante, relance avec de nouvelles formulations.
-- **Recherche approfondie** : Si après 2 tours tes résultats sont toujours insuffisants (< 3 résultats pertinents), appelle runDeepResearch. Utilise aussi cet outil quand l'utilisateur demande explicitement une analyse approfondie ou complète.
+- **UN SEUL appel searchDocuments suffit** : L'outil effectue automatiquement la reformulation en 2-3 requêtes variées, la recherche parallèle, et le re-classement par pertinence. **N'appelle PAS searchDocuments plusieurs fois** — les résultats seront identiques. Rédige ta réponse directement après le premier appel.
+- **Recherche approfondie** : Appelle runDeepResearch UNIQUEMENT quand l'utilisateur demande explicitement une analyse approfondie ou complète. Ne l'utilise PAS automatiquement après searchDocuments.
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.
 - **Protection des données** : Ne demande jamais d'intentions de vote, d'opinions personnelles, ni de données personnelles.
@@ -1048,7 +925,7 @@ ${respondInLanguage}${candidateContext}`;
     model,
     system: systemPrompt,
     messages,
-    stopWhen: [stepCountIs(12), hasToolCall('suggestFollowUps')],
+    stopWhen: [stepCountIs(8), hasToolCall('suggestFollowUps'), hasToolCall('presentOptions')],
     toolChoice: 'auto',
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);

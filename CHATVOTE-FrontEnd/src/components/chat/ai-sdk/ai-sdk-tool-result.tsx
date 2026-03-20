@@ -59,9 +59,7 @@ type Props = {
 };
 
 const TOOL_LOADING_LABELS: Record<string, string> = {
-  searchPartyManifesto: "Programme de",
-  searchCandidateWebsite: "Recherche candidat",
-  searchAllCandidates: "Recherche tous candidats",
+  searchDocuments: "Recherche documents",
   suggestFollowUps: "Génération de suggestions",
   presentOptions: "Préparation des options",
   runDeepResearch: "Recherche approfondie en cours",
@@ -86,20 +84,21 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
     part.state === "input-available" ||
     part.state === "input-streaming"
   ) {
-    const input = (part.input ?? part.args ?? {}) as Record<string, string>;
-    const partyId = input.partyId;
-    const candidateId = input.candidateId;
-    const query = input.query;
+    const input = (part.input ?? part.args ?? {}) as Record<string, unknown>;
 
     const baseLabel = TOOL_LOADING_LABELS[toolName] ?? "Traitement en cours";
 
     // Show partyId (readable) or candidateId for now (name will appear in result)
     let displayLabel = baseLabel;
-    if (toolName === "searchPartyManifesto" && partyId) {
-      displayLabel = `${baseLabel} ${partyId.toUpperCase()}`;
-    } else if (toolName === "searchCandidateWebsite" && candidateId) {
-      // candidateId is ugly — just show generic label, the result card will show the name
-      displayLabel = baseLabel;
+    if (toolName === "searchDocuments") {
+      // Show filter info if available
+      const candidateIds = (input as any).candidateIds;
+      const partyIds = (input as any).partyIds;
+      if (candidateIds?.length) {
+        displayLabel = `${baseLabel} (${candidateIds.length} candidat${candidateIds.length > 1 ? 's' : ''})`;
+      } else if (partyIds?.length) {
+        displayLabel = `${baseLabel} (${partyIds.length} parti${partyIds.length > 1 ? 's' : ''})`;
+      }
     }
 
     return (
@@ -112,9 +111,9 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
         <span className="text-muted-foreground">
           {displayLabel}...
         </span>
-        {query && (
+        {(input as any).query && (
           <span className="text-muted-foreground/50 truncate italic">
-            &quot;{query}&quot;
+            &quot;{String((input as any).query)}&quot;
           </span>
         )}
       </div>
@@ -263,9 +262,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   // ── RAG search results (manifestos + candidate websites) ───────────────────
   if (
     part.state === "output-available" &&
-    (toolName === "searchPartyManifesto" ||
-      toolName === "searchCandidateWebsite" ||
-      toolName === "searchAllCandidates")
+    toolName === "searchDocuments"
   ) {
     return (
       <SourceResultCard

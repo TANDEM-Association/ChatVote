@@ -23,7 +23,7 @@ type Props = {
  * The LLM uses 1-based citations [1], [2], etc. The frontend resolves them via
  * `sources[number - 1]` (see chat-markdown.tsx).
  *
- * For multi-tool calls (e.g. searchCandidateWebsite × 3), sources from all tools
+ * For multi-tool calls, sources from all tools
  * are concatenated sequentially. The prompt instructs the LLM to number citations
  * globally across all tool results.
  */
@@ -33,9 +33,7 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
     if (
       isToolUIPart(part) &&
       (part as { state?: string }).state === "output-available" &&
-      (getToolName(part) === "searchPartyManifesto" ||
-        getToolName(part) === "searchCandidateWebsite" ||
-        getToolName(part) === "searchAllCandidates" ||
+      (getToolName(part) === "searchDocuments" ||
         getToolName(part) === "searchVotingRecords" ||
         getToolName(part) === "searchParliamentaryQuestions")
     ) {

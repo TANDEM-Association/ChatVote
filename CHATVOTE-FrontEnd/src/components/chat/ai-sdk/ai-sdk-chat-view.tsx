@@ -185,11 +185,15 @@ export default function AiSdkChatView({
   });
 
   // Apply context tool results to the store when messages arrive
+  const processedToolCallsRef = useRef(new Set<string>());
   useEffect(() => {
     for (const message of messages) {
       if (message.role !== "assistant") continue;
       for (const part of message.parts) {
         if (!isToolUIPart(part) || part.state !== "output-available") continue;
+        const toolCallId = (part as { toolCallId?: string }).toolCallId;
+        if (toolCallId && processedToolCallsRef.current.has(toolCallId)) continue;
+        if (toolCallId) processedToolCallsRef.current.add(toolCallId);
         const toolName = getToolName(part);
 
         if (toolName === "changeCity") {
