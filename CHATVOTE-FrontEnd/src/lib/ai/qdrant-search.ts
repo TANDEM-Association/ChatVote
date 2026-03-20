@@ -46,7 +46,8 @@ function mapResults(results: Array<{ payload?: Record<string, unknown> | null; s
     const payload = (r.payload ?? {}) as QdrantPayload;
     const meta = payload.metadata ?? {};
 
-    let url = String(meta.url ?? '');
+    // Try metadata.url first, fall back to metadata.source (old LangChain chunks store URL there)
+    let url = String(meta.url ?? meta.source ?? '');
     if (url && !url.startsWith('http')) {
       url = '';
     }

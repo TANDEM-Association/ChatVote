@@ -33,7 +33,7 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
     if (
       isToolUIPart(part) &&
       (part as { state?: string }).state === "output-available" &&
-      (getToolName(part) === "searchDocuments" ||
+      (getToolName(part) === "searchDocumentsWithRerank" ||
         getToolName(part) === "searchVotingRecords" ||
         getToolName(part) === "searchParliamentaryQuestions")
     ) {
@@ -46,6 +46,8 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
           page: number | string;
           party_id: string;
           candidate_name?: string;
+          document_name?: string;
+          source_document?: string;
         }>;
       };
       if (result?.results) {
@@ -58,7 +60,7 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
                 ? r.page
                 : parseInt(String(r.page)) || 0,
             url: r.url,
-            source_document: r.source,
+            source_document: r.source_document ?? r.source,
             document_publish_date: "",
             party_id: r.party_id,
             candidate_name: r.candidate_name,
@@ -66,13 +68,6 @@ function collectSources(parts: UIMessage["parts"]): Source[] {
         }
       }
     }
-  }
-
-  if (sources.length > 0 && process.env.NODE_ENV === "development") {
-    console.log(
-      `[collectSources] ${sources.length} sources collected:`,
-      sources.map((s, i) => `[${i + 1}] ${s.source} (${s.party_id}) → ${s.url?.slice(0, 60)}`),
-    );
   }
 
   return sources;
