@@ -53,6 +53,9 @@ export const rerankResults = observe(
         model: google('gemini-2.5-flash'),
         schema: rerankSchema,
         experimental_telemetry: { isEnabled: true },
+        providerOptions: {
+          google: { thinkingConfig: { thinkingBudget: 0 } },
+        },
         system: `Tu es un expert en pertinence documentaire pour les élections françaises.
 
 On te donne ${results.length} extraits de documents (programmes, professions de foi, sites de campagne, votes parlementaires).
@@ -71,7 +74,7 @@ ${docsContext}`,
         prompt: `Question de l'utilisateur : "${query}"
 
 Retourne les ${topK} indices les plus pertinents.`,
-        abortSignal: AbortSignal.timeout(15000),
+        abortSignal: AbortSignal.timeout(8000),
       });
       const { object } = result;
 

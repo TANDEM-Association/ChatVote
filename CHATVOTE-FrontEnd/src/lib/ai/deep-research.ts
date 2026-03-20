@@ -42,6 +42,9 @@ export async function deepResearch(params: {
   try {
     await generateText({
       model: google('gemini-2.5-flash'),
+      providerOptions: {
+        google: { thinkingConfig: { thinkingBudget: 0 } },
+      },
       prompt: `Recherche approfondie pour : "${originalQuery}"`,
       system: `Tu es un agent de recherche documentaire spécialisé dans les données politiques françaises (programmes électoraux, professions de foi, sites de campagne, votes parlementaires, questions au gouvernement).
 

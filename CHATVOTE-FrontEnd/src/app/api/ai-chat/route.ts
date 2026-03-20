@@ -927,6 +927,9 @@ ${respondInLanguage}${candidateContext}`;
     messages,
     stopWhen: [stepCountIs(8), hasToolCall('suggestFollowUps'), hasToolCall('presentOptions')],
     toolChoice: 'auto',
+    providerOptions: {
+      google: { thinkingConfig: { thinkingBudget: 0 } },
+    },
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);
     },

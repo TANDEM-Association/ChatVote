@@ -41,6 +41,9 @@ export const expandSearchQueries = observe(
         model: google('gemini-2.5-flash'),
         schema: expansionSchema,
         experimental_telemetry: { isEnabled: true },
+        providerOptions: {
+          google: { thinkingConfig: { thinkingBudget: 0 } },
+        },
         system: `Tu es un expert en recherche documentaire pour les élections françaises.
 On te donne une question d'un citoyen. Génère 2-3 requêtes de recherche vectorielle OPTIMISÉES pour retrouver les passages pertinents dans des documents politiques (programmes, professions de foi, sites web de campagne, votes parlementaires).
 ${entityContext}
@@ -59,7 +62,7 @@ ${entityContext}
         prompt: `Question du citoyen : "${userQuery}"
 
 Génère les requêtes de recherche optimisées.`,
-        abortSignal: AbortSignal.timeout(10000),
+        abortSignal: AbortSignal.timeout(5000),
       });
 
       const queries = result.object.queries.slice(0, 3);

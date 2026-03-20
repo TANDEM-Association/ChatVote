@@ -872,6 +872,9 @@ export async function runChatPipeline(params: ChatPipelineParams): Promise<ChatP
     tools,
     toolChoice: 'auto',
     stopWhen: stepCountIs(12),
+    providerOptions: {
+      google: { thinkingConfig: { thinkingBudget: 0 } },
+    },
     experimental_telemetry: langfuseTraceId
       ? { isEnabled: true, metadata: { langfuseTraceId } }
       : undefined,
