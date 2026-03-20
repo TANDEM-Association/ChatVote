@@ -184,16 +184,18 @@ export default function AiSdkChatView({
     transport,
   });
 
-  // Apply context tool results to the store when messages arrive
+  // Apply context tool results to the store when messages arrive.
+  // Key: `${message.id}:${partIndex}` — works even if toolCallId is undefined.
   const processedToolCallsRef = useRef(new Set<string>());
   useEffect(() => {
     for (const message of messages) {
       if (message.role !== "assistant") continue;
-      for (const part of message.parts) {
+      for (let i = 0; i < message.parts.length; i++) {
+        const part = message.parts[i];
         if (!isToolUIPart(part) || part.state !== "output-available") continue;
-        const toolCallId = (part as { toolCallId?: string }).toolCallId;
-        if (toolCallId && processedToolCallsRef.current.has(toolCallId)) continue;
-        if (toolCallId) processedToolCallsRef.current.add(toolCallId);
+        const key = `${message.id}:${i}`;
+        if (processedToolCallsRef.current.has(key)) continue;
+        processedToolCallsRef.current.add(key);
         const toolName = getToolName(part);
 
         if (toolName === "changeCity") {
@@ -208,10 +210,10 @@ export default function AiSdkChatView({
               selectedElectoralLists: [],
               partyIds: new Set<string>(),
             });
-            // Update URL so the prop also changes (no reload)
-            const next = new URLSearchParams(searchParams.toString());
+            // Shallow URL update — avoids Next.js re-render from router.replace
+            const next = new URLSearchParams(window.location.search);
             next.set("municipality_code", result.municipalityCode);
-            router.replace(`${pathname}?${next.toString()}`, { scroll: false });
+            window.history.replaceState(null, "", `${window.location.pathname}?${next.toString()}`);
           }
         } else if (toolName === "changeCandidates") {
           const result = part.output as {
