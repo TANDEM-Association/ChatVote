@@ -85,15 +85,18 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
   // Collect sources from tool results for inline reference badges
   const sources = useMemo(() => collectSources(message.parts), [message.parts]);
 
-  // In multi-step tool flows, the AI SDK creates a text part per step.
-  // Only render the last text part (most complete answer) for assistant messages.
-  const lastTextIndex = useMemo(() => {
-    if (isUser) return -1;
-    let last = -1;
+  // In multi-step tool flows, the AI SDK creates a text part and suggestFollowUps
+  // tool call per step. Only render the last of each to avoid duplicate content.
+  const { lastTextIndex, lastSuggestFollowUpsIndex } = useMemo(() => {
+    if (isUser) return { lastTextIndex: -1, lastSuggestFollowUpsIndex: -1 };
+    let lastText = -1;
+    let lastSuggest = -1;
     for (let i = 0; i < message.parts.length; i++) {
-      if (message.parts[i].type === "text") last = i;
+      const p = message.parts[i];
+      if (p.type === "text") lastText = i;
+      if (isToolUIPart(p) && getToolName(p) === "suggestFollowUps") lastSuggest = i;
     }
-    return last;
+    return { lastTextIndex: lastText, lastSuggestFollowUpsIndex: lastSuggest };
   }, [isUser, message.parts]);
 
   return (
@@ -141,6 +144,12 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
               );
             default:
               if (isToolUIPart(part)) {
+                // Skip intermediate suggestFollowUps (multi-step dedup)
+                if (
+                  !isUser &&
+                  getToolName(part) === "suggestFollowUps" &&
+                  index !== lastSuggestFollowUpsIndex
+                ) return null;
                 return (
                   <AiSdkToolResult
                     key={index}
