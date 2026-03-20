@@ -373,9 +373,9 @@ export default function AiSdkChatView({
                   data-testid="quick-suggestions"
                 >
                   {[
+                    "Quels sont les engagements des candidats pour ma commune ?",
                     "Que proposent les candidats sur la sécurité ?",
-                    "Quelles sont les positions sur l'écologie ?",
-                    "Comment améliorer l'éducation dans ma commune ?",
+                    "Quelles sont les positions des candidats sur l'écologie ?",
                     "Que disent les candidats sur le pouvoir d'achat ?",
                   ].map((q) => (
                     <button
