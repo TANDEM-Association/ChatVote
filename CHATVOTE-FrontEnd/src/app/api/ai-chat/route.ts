@@ -987,17 +987,11 @@ Appelle renderWidget APRÈS avoir obtenu les données (via searchDataGouv, RAG, 
 
 ${respondInLanguage}${candidateContext}`;
 
-  // Model fallback: Gemini 2.5 Flash (primary) → Scaleway Qwen3 235B (fallback)
-  let model: LanguageModel = google('gemini-2.5-flash');
-  try {
-    // Test that the Google provider is configured (key present)
-    if (!process.env.GOOGLE_GENERATIVE_AI_API_KEY) {
-      console.warn('[ai-chat] GOOGLE_GENERATIVE_AI_API_KEY missing, falling back to Scaleway');
-      model = scalewayChat;
-    }
-  } catch {
-    console.warn('[ai-chat] Google provider init failed, falling back to Scaleway');
-    model = scalewayChat;
+  // Model: Scaleway Qwen3 235B (primary) → Gemini 2.5 Flash (fallback)
+  let model: LanguageModel = scalewayChat;
+  if (!process.env.SCALEWAY_EMBED_API_KEY) {
+    console.warn('[ai-chat] SCALEWAY_EMBED_API_KEY missing, falling back to Gemini');
+    model = google('gemini-2.5-flash');
   }
 
   const result = streamText({
@@ -1009,16 +1003,25 @@ ${respondInLanguage}${candidateContext}`;
     onError({ error }) {
       console.error('[ai-chat] streamText error:', error);
     },
-    onStepFinish({ stepNumber, toolCalls, finishReason, usage }) {
+    onStepFinish({ stepNumber, text, toolCalls, finishReason, usage, response }) {
       console.log('[ai-chat:step]', {
         chatId,
         stepNumber,
+        textLen: text?.length ?? 0,
+        textPreview: text?.slice(0, 100),
         toolCalls: toolCalls?.map((t) => t?.toolName),
         finishReason,
         usage,
+        responseMessages: response?.messages?.length,
       });
     },
     async onFinish({ text, steps, usage }) {
+      console.log('[ai-chat:finish]', {
+        textLen: text?.length ?? 0,
+        textPreview: text?.slice(0, 200),
+        stepsCount: steps?.length,
+        stepTexts: steps?.map((s, i) => `step${i}: textLen=${s.text?.length ?? 0} reasoning=${JSON.stringify((s as any).reasoning)?.slice(0, 80)} tools=${s.toolCalls?.map(t => t.toolName).join(',') || 'none'}`),
+      });
       // In multi-step tool-calling flows, `text` may be empty.
       // Collect text from all steps as the final output.
       const outputText = text || steps?.map((s) => s.text).filter(Boolean).join('\n') || '';
