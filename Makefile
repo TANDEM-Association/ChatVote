@@ -141,6 +141,10 @@ dev-infra:
 	fi; \
 	echo "Starting Langfuse observability (dashboard :3001)..."; \
 	PROFILES="$$PROFILES --profile langfuse"; \
+	if [ "$$RAGFLOW" = "1" ]; then \
+		echo "Starting RAGFlow (web UI :8680, API :9380)..."; \
+		PROFILES="$$PROFILES --profile ragflow"; \
+	fi; \
 	docker compose -f docker-compose.dev.yml $$PROFILES up -d --wait
 
 # Backward-compat alias — Firebase emulators now run inside Docker via dev-infra
@@ -307,7 +311,7 @@ check-prod:
 
 stop:
 	@echo "Stopping all services..."
-	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase --profile langfuse down
+	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase --profile langfuse --profile ragflow down
 	@for svc in backend frontend; do \
 		if [ -f .logs/$$svc.pid ]; then \
 			kill $$(cat .logs/$$svc.pid) 2>/dev/null || true; \
@@ -351,4 +355,4 @@ eval-report-static:
 	cd CHATVOTE-BackEnd && poetry run python scripts/eval_report.py --tests static
 
 clean: stop
-	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase --profile langfuse down -v
+	docker compose -f docker-compose.dev.yml --profile ollama --profile firebase --profile langfuse --profile ragflow down -v

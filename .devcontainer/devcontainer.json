@@ -17,14 +17,16 @@
       "nodeGypDependencies": false
     }
   },
-  "forwardPorts": [3000, 8080, 6333, 8081, 9099, 8652],
+  "forwardPorts": [3000, 8080, 6333, 8081, 9099, 8652, 8680, 9380],
   "portsAttributes": {
     "3000": { "label": "Frontend (Next.js)", "onAutoForward": "notify" },
     "8080": { "label": "Backend (aiohttp)", "onAutoForward": "notify" },
     "6333": { "label": "Qdrant", "onAutoForward": "silent" },
     "8081": { "label": "Firestore Emulator", "onAutoForward": "silent" },
     "9099": { "label": "Auth Emulator", "onAutoForward": "silent" },
-    "8652": { "label": "Langfuse Dashboard", "onAutoForward": "notify" }
+    "8652": { "label": "Langfuse Dashboard", "onAutoForward": "notify" },
+    "8680": { "label": "RAGFlow Web UI", "onAutoForward": "notify" },
+    "9380": { "label": "RAGFlow API", "onAutoForward": "silent" }
   },
   "mounts": [
     "source=chatvote-pnpm-store,target=/home/vscode/.local/share/pnpm/store,type=volume",

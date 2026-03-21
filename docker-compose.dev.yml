@@ -238,9 +238,148 @@ services:
       ENCRYPTION_KEY: df0497ff0150f5714db7aa833261d4444e691cc5210b58aade8127dc52244d43
       NEXTAUTH_URL: http://localhost:8652
 
+  # ── RAGFlow stack ──────────────────────────────────────────────────────────
+  # Opt-in via: RAGFLOW=1 make dev  (or docker compose --profile ragflow up)
+  # Web UI: http://localhost:8680  |  API: http://localhost:9380
+
+  ragflow-es:
+    profiles: ["ragflow"]
+    image: elasticsearch:8.11.3
+    environment:
+      - node.name=ragflow-es
+      - ELASTIC_PASSWORD=infini_rag_flow
+      - bootstrap.memory_lock=false
+      - discovery.type=single-node
+      - xpack.security.enabled=true
+      - xpack.security.http.ssl.enabled=false
+      - xpack.security.transport.ssl.enabled=false
+      - cluster.routing.allocation.disk.watermark.low=5gb
+      - cluster.routing.allocation.disk.watermark.high=3gb
+      - cluster.routing.allocation.disk.watermark.flood_stage=2gb
+    mem_limit: 8073741824
+    ports:
+      - "1200:9200"
+    volumes:
+      - ragflow_es_data:/usr/share/elasticsearch/data
+    healthcheck:
+      test: ["CMD-SHELL", "curl http://localhost:9200"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    restart: unless-stopped
+
+  ragflow-mysql:
+    profiles: ["ragflow"]
+    image: mysql:8.0.39
+    environment:
+      - MYSQL_ROOT_PASSWORD=infini_rag_flow
+    command: >
+      --max_connections=1000
+      --character-set-server=utf8mb4
+      --collation-server=utf8mb4_unicode_ci
+      --default-authentication-plugin=mysql_native_password
+      --tls_version="TLSv1.2,TLSv1.3"
+      --init-file=/data/application/init.sql
+      --binlog_expire_logs_seconds=604800
+    ports:
+      - "5455:3306"
+    volumes:
+      - ragflow_mysql_data:/var/lib/mysql
+      - ./ragflow/init.sql:/data/application/init.sql
+    healthcheck:
+      test: ["CMD", "mysqladmin", "ping", "-uroot", "-pinfini_rag_flow"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    restart: unless-stopped
+
+  ragflow-redis:
+    profiles: ["ragflow"]
+    image: valkey/valkey:8
+    command: ["redis-server", "--requirepass", "infini_rag_flow", "--maxmemory", "128mb", "--maxmemory-policy", "allkeys-lru"]
+    ports:
+      - "6381:6379"
+    volumes:
+      - ragflow_redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "-a", "infini_rag_flow", "ping"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    restart: unless-stopped
+
+  ragflow-minio:
+    profiles: ["ragflow"]
+    image: quay.io/minio/minio:RELEASE.2025-06-13T11-33-47Z
+    command: ["server", "--console-address", ":9001", "/data"]
+    environment:
+      - MINIO_ROOT_USER=rag_flow
+      - MINIO_ROOT_PASSWORD=infini_rag_flow
+    ports:
+      - "9020:9000"
+      - "9021:9001"
+    volumes:
+      - ragflow_minio_data:/data
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 10s
+      retries: 120
+    restart: unless-stopped
+
+  ragflow:
+    profiles: ["ragflow"]
+    depends_on:
+      ragflow-mysql:
+        condition: service_healthy
+      ragflow-es:
+        condition: service_healthy
+      ragflow-redis:
+        condition: service_healthy
+      ragflow-minio:
+        condition: service_healthy
+    image: infiniflow/ragflow:v0.24.0
+    command:
+      - --enable-adminserver
+    environment:
+      - MYSQL_HOST=ragflow-mysql
+      - MYSQL_PORT=3306
+      - MYSQL_PASSWORD=infini_rag_flow
+      - MYSQL_DBNAME=rag_flow
+      - ES_HOST=ragflow-es
+      - ES_PORT=9200
+      - ELASTIC_PASSWORD=infini_rag_flow
+      - REDIS_HOST=ragflow-redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=infini_rag_flow
+      - MINIO_HOST=ragflow-minio
+      - MINIO_PORT=9000
+      - MINIO_USER=rag_flow
+      - MINIO_PASSWORD=infini_rag_flow
+      - DOC_ENGINE=elasticsearch
+      - HF_ENDPOINT=https://huggingface.co
+      - MACOS=
+    ports:
+      - "8680:80"
+      - "9380:9380"
+      - "9381:9381"
+    volumes:
+      - ./ragflow/logs:/ragflow/logs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -qO- http://localhost:80/ || wget -qO- http://$(hostname):80/"]
+      interval: 15s
+      timeout: 10s
+      retries: 30
+      start_period: 120s
+    restart: unless-stopped
+
 volumes:
   qdrant_dev_data:
   ollama_dev_data:
   langfuse_postgres_data:
   langfuse_clickhouse_data:
   langfuse_minio_data:
+  ragflow_es_data:
+  ragflow_mysql_data:
+  ragflow_redis_data:
+  ragflow_minio_data:
