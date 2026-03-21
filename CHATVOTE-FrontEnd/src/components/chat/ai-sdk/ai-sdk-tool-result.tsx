@@ -59,7 +59,7 @@ type Props = {
 };
 
 const TOOL_LOADING_LABELS: Record<string, string> = {
-  searchDocuments: "Recherche documents",
+  searchDocumentsWithRerank: "Recherche documents",
   suggestFollowUps: "Génération de suggestions",
   presentOptions: "Préparation des options",
   runDeepResearch: "Recherche approfondie en cours",
@@ -90,7 +90,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
 
     // Show partyId (readable) or candidateId for now (name will appear in result)
     let displayLabel = baseLabel;
-    if (toolName === "searchDocuments") {
+    if (toolName === "searchDocumentsWithRerank") {
       // Show filter info if available
       const candidateIds = (input as any).candidateIds;
       const partyIds = (input as any).partyIds;
@@ -262,7 +262,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
   // ── RAG search results (manifestos + candidate websites) ───────────────────
   if (
     part.state === "output-available" &&
-    toolName === "searchDocuments"
+    toolName === "searchDocumentsWithRerank"
   ) {
     return (
       <SourceResultCard
@@ -578,8 +578,12 @@ function SourceResultCard({
 
   const sources = result?.results ?? [];
   const count = result?.count ?? result?.documents?.length ?? sources.length;
-  // Show candidateName (human-readable) or partyId — never raw candidateId
-  const entityLabel = result?.candidateName ?? result?.partyId;
+  // Extract unique candidate names from results for display
+  const candidateNames = [...new Set(sources.map((s) => s.candidate_name).filter(Boolean))];
+  // Show candidate names from results, or top-level candidateName, or partyId — never raw candidateId
+  const entityLabel = candidateNames.length > 0
+    ? candidateNames.join(", ")
+    : result?.candidateName ?? result?.partyId;
 
   return (
     <div
@@ -594,7 +598,7 @@ function SourceResultCard({
           {entityLabel ? (
             <>
               <span className="text-foreground font-medium">
-                {result?.candidateName ? entityLabel : entityLabel.toUpperCase()}
+                {candidateNames.length > 0 || result?.candidateName ? entityLabel : entityLabel.toUpperCase()}
               </span>
               {" — "}
               {count} {count !== 1 ? labelPlural : label}
