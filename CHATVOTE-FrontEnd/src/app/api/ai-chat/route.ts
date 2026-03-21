@@ -749,6 +749,12 @@ const handleChat = observe(async function handleChat(req: Request) {
     enabledFeatures?: string[];
   };
 
+  // Apply admin config overrides to features
+  let resolvedFeatures = enabledFeatures ?? ['rag'];
+  if (aiConfig.enablePerplexity && !resolvedFeatures.includes('perplexity')) {
+    resolvedFeatures = [...resolvedFeatures, 'perplexity'];
+  }
+
   console.log('[ai-chat] POST', { chatId, municipalityCode, partyIds, enabledFeatures, locale, uid, msgCount: uiMessages?.length });
 
   // ── Langfuse: set trace-level input via SDK (OTEL setActiveTraceIO doesn't populate trace I/O) ──
@@ -983,7 +989,7 @@ ${contextLine}
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.
 - **Protection des données** : Ne demande jamais d'intentions de vote, d'opinions personnelles, ni de données personnelles.
-${(enabledFeatures ?? []).includes('widgets') ? `
+${resolvedFeatures.includes('widgets') ? `
 # Visualisation (renderWidget)
 Quand tu disposes de données chiffrées comparables (scores, pourcentages, budgets, résultats électoraux, statistiques démographiques…), appelle **renderWidget** pour les afficher sous forme de graphique interactif.
 - **bar** : comparaison entre candidats/partis/communes (le plus fréquent)
@@ -1080,7 +1086,7 @@ ${respondInLanguage}${candidateContext}`;
             municipality_code: municipalityCode ?? null,
             party_ids: resolvedPartyIds,
             locale: locale ?? 'fr',
-            enabled_features: enabledFeatures ?? [],
+            enabled_features: resolvedFeatures,
             created_at: now,
             updated_at: now,
             total_tokens: usage?.totalTokens ?? 0,
@@ -1092,7 +1098,7 @@ ${respondInLanguage}${candidateContext}`;
         console.error('[ai-chat] Failed to persist conversation:', err);
       }
     },
-    tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap, searchCandidateIds, aiConfig),
+    tools: buildTools(resolvedFeatures, candidateIds, candidateNamesMap, searchCandidateIds, aiConfig),
   });
 
   return result.toUIMessageStreamResponse({

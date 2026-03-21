@@ -48,6 +48,10 @@ export async function PUT(request: NextRequest) {
       validated.fallbackModel = body.fallbackModel;
     }
 
+    if ('enablePerplexity' in body) {
+      validated.enablePerplexity = Boolean(body.enablePerplexity);
+    }
+
     await db.collection('system_status').doc('ai_config').set(validated, { merge: true });
 
     const updated = await db.collection('system_status').doc('ai_config').get();

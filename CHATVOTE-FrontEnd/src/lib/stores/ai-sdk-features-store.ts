@@ -32,7 +32,7 @@ const DEFAULT_FEATURES: AiSdkFeature[] = [
     label: 'Web Search',
     icon: 'Globe',
     description: "Recherche web pour l'actualité",
-    enabled: false,
+    enabled: true,
     toolNames: ['webSearch'],
   },
   {
