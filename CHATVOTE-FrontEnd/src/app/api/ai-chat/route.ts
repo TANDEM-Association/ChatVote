@@ -750,10 +750,17 @@ const handleChat = observe(async function handleChat(req: Request) {
   };
 
   // Apply admin config overrides to features
-  let resolvedFeatures = enabledFeatures ?? ['rag'];
-  if (aiConfig.enablePerplexity && !resolvedFeatures.includes('perplexity')) {
-    resolvedFeatures = [...resolvedFeatures, 'perplexity'];
-  }
+  const featureMap: Record<string, boolean> = {
+    rag: aiConfig.enableRag,
+    perplexity: aiConfig.enablePerplexity,
+    'data-gouv': aiConfig.enableDataGouv,
+    widgets: aiConfig.enableWidgets,
+    'voting-records': aiConfig.enableVotingRecords,
+    parliamentary: aiConfig.enableParliamentary,
+  };
+  let resolvedFeatures = Object.entries(featureMap)
+    .filter(([, enabled]) => enabled)
+    .map(([id]) => id);
 
   console.log('[ai-chat] POST', { chatId, municipalityCode, partyIds, enabledFeatures, locale, uid, msgCount: uiMessages?.length });
 

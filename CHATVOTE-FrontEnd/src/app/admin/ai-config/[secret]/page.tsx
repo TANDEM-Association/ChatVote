@@ -15,7 +15,12 @@ interface AiConfig {
   primaryModel: string;
   fallbackModel: string;
   rateLimitMax: number;
+  enableRag: boolean;
   enablePerplexity: boolean;
+  enableDataGouv: boolean;
+  enableWidgets: boolean;
+  enableVotingRecords: boolean;
+  enableParliamentary: boolean;
 }
 
 const MODEL_OPTIONS = [
@@ -34,8 +39,22 @@ const DEFAULTS: AiConfig = {
   primaryModel: "scaleway-qwen",
   fallbackModel: "gemini-2.5-flash",
   rateLimitMax: 20,
-  enablePerplexity: false,
+  enableRag: true,
+  enablePerplexity: true,
+  enableDataGouv: false,
+  enableWidgets: false,
+  enableVotingRecords: false,
+  enableParliamentary: false,
 };
+
+const FEATURE_TOGGLES: Array<{ key: keyof AiConfig; label: string; description: string }> = [
+  { key: "enableRag", label: "RAG Search", description: "Recherche dans les programmes et sites des candidats" },
+  { key: "enablePerplexity", label: "Web Search (Perplexity)", description: "Recherche web pour l'actualité et les événements récents" },
+  { key: "enableDataGouv", label: "data.gouv.fr", description: "Données ouvertes gouvernementales" },
+  { key: "enableWidgets", label: "Widgets", description: "Visualisations et graphiques interactifs" },
+  { key: "enableVotingRecords", label: "Votes parlementaires", description: "Historique des votes de l'Assemblée nationale" },
+  { key: "enableParliamentary", label: "Questions parlementaires", description: "Questions posées au gouvernement" },
+];
 
 export default function AiConfigPage() {
   const { secret } = useParams<{ secret: string }>();
@@ -161,26 +180,28 @@ export default function AiConfigPage() {
               </Section>
 
               {/* Features */}
-              <Section title="Features">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="text-sm font-medium">Perplexity Web Search</p>
-                    <p className="text-muted-foreground text-xs">Enable web search for current events and news</p>
-                  </div>
-                  <button
-                    type="button"
-                    onClick={() => setField("enablePerplexity", !form.enablePerplexity)}
-                    className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
-                      form.enablePerplexity ? "bg-primary" : "bg-muted"
-                    }`}
-                  >
-                    <span
-                      className={`pointer-events-none inline-block size-5 rounded-full bg-white shadow ring-0 transition-transform ${
-                        form.enablePerplexity ? "translate-x-5" : "translate-x-0"
+              <Section title="Features (Tools)">
+                {FEATURE_TOGGLES.map((ft) => (
+                  <div key={ft.key} className="flex items-center justify-between">
+                    <div>
+                      <p className="text-sm font-medium">{ft.label}</p>
+                      <p className="text-muted-foreground text-xs">{ft.description}</p>
+                    </div>
+                    <button
+                      type="button"
+                      onClick={() => setField(ft.key, !(form[ft.key] as boolean))}
+                      className={`relative inline-flex h-6 w-11 shrink-0 cursor-pointer rounded-full border-2 border-transparent transition-colors ${
+                        form[ft.key] ? "bg-primary" : "bg-muted"
                       }`}
-                    />
-                  </button>
-                </div>
+                    >
+                      <span
+                        className={`pointer-events-none inline-block size-5 rounded-full bg-white shadow ring-0 transition-transform ${
+                          form[ft.key] ? "translate-x-5" : "translate-x-0"
+                        }`}
+                      />
+                    </button>
+                  </div>
+                ))}
               </Section>
 
               {/* Rate Limiting */}

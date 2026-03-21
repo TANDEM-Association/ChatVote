@@ -48,8 +48,14 @@ export async function PUT(request: NextRequest) {
       validated.fallbackModel = body.fallbackModel;
     }
 
-    if ('enablePerplexity' in body) {
-      validated.enablePerplexity = Boolean(body.enablePerplexity);
+    const booleanFields = [
+      'enableRag', 'enablePerplexity', 'enableDataGouv',
+      'enableWidgets', 'enableVotingRecords', 'enableParliamentary',
+    ] as const;
+    for (const key of booleanFields) {
+      if (key in body) {
+        validated[key] = Boolean(body[key]);
+      }
     }
 
     await db.collection('system_status').doc('ai_config').set(validated, { merge: true });

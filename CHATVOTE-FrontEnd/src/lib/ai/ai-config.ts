@@ -10,7 +10,13 @@ export interface AiConfig {
   primaryModel: string;
   fallbackModel: string;
   rateLimitMax: number;
+  // Feature toggles (override client-side defaults)
+  enableRag: boolean;
   enablePerplexity: boolean;
+  enableDataGouv: boolean;
+  enableWidgets: boolean;
+  enableVotingRecords: boolean;
+  enableParliamentary: boolean;
 }
 
 export const AI_CONFIG_DEFAULTS: AiConfig = {
@@ -23,7 +29,12 @@ export const AI_CONFIG_DEFAULTS: AiConfig = {
   primaryModel: 'scaleway-qwen',
   fallbackModel: 'gemini-2.5-flash',
   rateLimitMax: 20,
-  enablePerplexity: false,
+  enableRag: true,
+  enablePerplexity: true,
+  enableDataGouv: false,
+  enableWidgets: false,
+  enableVotingRecords: false,
+  enableParliamentary: false,
 };
 
 let cached: AiConfig | null = null;
