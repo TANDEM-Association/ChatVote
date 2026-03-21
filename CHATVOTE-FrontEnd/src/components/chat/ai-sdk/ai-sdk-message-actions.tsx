@@ -24,26 +24,32 @@ export default function AiSdkMessageActions({ messageId, messageContent }: Props
   const [feedback, setFeedback] = useState<"like" | "dislike" | null>(null);
   const [feedbackDetail, setFeedbackDetail] = useState<string>();
 
-  const handleCopy = () => {
-    navigator.clipboard.writeText(messageContent);
-    setIsCopied(true);
-    toast.success(t("success"));
-    track("message_copied", { message: messageContent });
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(messageContent);
+      setIsCopied(true);
+      toast.success(t("success"));
+      setTimeout(() => setIsCopied(false), 2000);
+    } catch {
+      // Clipboard API may fail in non-HTTPS contexts
+    }
+    track("message_copied", { messageLength: messageContent.length });
     trackMessageCopied();
-    setTimeout(() => setIsCopied(false), 2000);
   };
 
   const handleLike = () => {
+    if (feedback) return;
     setFeedback("like");
-    track("message_liked", { message: messageContent });
+    track("message_liked", { messageLength: messageContent.length });
     trackMessageLiked({ session_id: messageId });
     scoreFeedback(messageId, "like");
   };
 
   const handleDislike = (details: string) => {
+    if (feedback) return;
     setFeedback("dislike");
     setFeedbackDetail(details);
-    track("message_disliked", { message: messageContent, details });
+    track("message_disliked", { messageLength: messageContent.length, has_detail: details.length > 0 });
     trackMessageDisliked({ session_id: messageId, has_detail: details.length > 0 });
     scoreFeedback(messageId, "dislike", details || undefined);
   };
@@ -63,6 +69,7 @@ export default function AiSdkMessageActions({ messageId, messageContent }: Props
         size="icon"
         className="group/like size-7"
         onClick={handleLike}
+        disabled={feedback !== null}
       >
         <ThumbsUp className={cn("size-3.5", feedback === "like" && "fill-foreground/30")} />
       </Button>
