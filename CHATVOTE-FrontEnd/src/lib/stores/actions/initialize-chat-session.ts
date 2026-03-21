@@ -32,8 +32,10 @@ export const initializeChatSession: ChatStoreActionHandlerFor<
 
   const chatHistory = messages.flatMap((message) =>
     message.messages.map((innerMessage) => ({
-      ...innerMessage,
+      id: innerMessage.id,
+      content: innerMessage.content,
       role: innerMessage.role,
+      sources: [],  // Send empty — full RAG sources bloat the payload past HTTP body limits
       created_at: message.created_at,
       quick_replies: message.quick_replies,
     })),
