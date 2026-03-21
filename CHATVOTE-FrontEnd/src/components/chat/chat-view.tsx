@@ -40,7 +40,7 @@ async function ChatView({
     sessionId ? getChatSession(sessionId) : Promise.resolve(undefined),
   ]);
 
-  const sessionMode = chatSession?.mode ?? "socket";
+  const sessionMode = chatSession?.mode;
 
   const aiMessages =
     sessionId && sessionMode === "ai"
