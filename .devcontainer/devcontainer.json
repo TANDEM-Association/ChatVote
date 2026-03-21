@@ -1,0 +1,58 @@
+{
+  "name": "ChatVote",
+  "build": {
+    "dockerfile": "Dockerfile",
+    "context": "..",
+    "options": ["--build-arg", "BUILDKIT_INLINE_CACHE=1"],
+    "cacheFrom": "chatvote-devcontainer"
+  },
+  "features": {
+    "ghcr.io/devcontainers/features/docker-in-docker:2": {
+      "dockerDashComposeVersion": "v2",
+      "installDockerBuildx": true
+    },
+    "ghcr.io/devcontainers/features/github-cli:1": {},
+    "ghcr.io/devcontainers/features/node:1": {
+      "version": "22",
+      "nodeGypDependencies": false
+    }
+  },
+  "forwardPorts": [3000, 8080, 6333, 8081, 9099, 8652],
+  "portsAttributes": {
+    "3000": { "label": "Frontend (Next.js)", "onAutoForward": "notify" },
+    "8080": { "label": "Backend (aiohttp)", "onAutoForward": "notify" },
+    "6333": { "label": "Qdrant", "onAutoForward": "silent" },
+    "8081": { "label": "Firestore Emulator", "onAutoForward": "silent" },
+    "9099": { "label": "Auth Emulator", "onAutoForward": "silent" },
+    "8652": { "label": "Langfuse Dashboard", "onAutoForward": "notify" }
+  },
+  "mounts": [
+    "source=chatvote-pnpm-store,target=/home/vscode/.local/share/pnpm/store,type=volume",
+    "source=chatvote-poetry-cache,target=/home/vscode/.cache/pypoetry,type=volume",
+    "source=chatvote-npm-cache,target=/home/vscode/.npm,type=volume"
+  ],
+  "postCreateCommand": "bash .devcontainer/post-create.sh",
+  "postStartCommand": "bash .devcontainer/post-start.sh",
+  "customizations": {
+    "vscode": {
+      "extensions": [
+        "dbaeumer.vscode-eslint",
+        "esbenp.prettier-vscode",
+        "ms-python.python",
+        "ms-python.vscode-pylance",
+        "charliermarsh.ruff",
+        "bradlc.vscode-tailwindcss",
+        "ms-azuretools.vscode-docker"
+      ],
+      "settings": {
+        "python.defaultInterpreterPath": "/usr/bin/python3.12",
+        "editor.formatOnSave": true,
+        "[python]": { "editor.defaultFormatter": "charliermarsh.ruff" },
+        "[typescript]": { "editor.defaultFormatter": "esbenp.prettier-vscode" },
+        "[typescriptreact]": { "editor.defaultFormatter": "esbenp.prettier-vscode" }
+      }
+    }
+  },
+  "remoteUser": "vscode",
+  "workspaceFolder": "/workspace"
+}
