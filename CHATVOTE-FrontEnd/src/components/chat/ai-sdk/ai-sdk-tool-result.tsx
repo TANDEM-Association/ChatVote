@@ -272,6 +272,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
         setExpanded={setExpanded}
         icon={<Search className="size-3.5 shrink-0 text-purple-300" />}
         accentColor="border-l-purple-400/60"
+        fiabilityLabel="🥈 Documents officiels"
       />
     );
   }
@@ -426,6 +427,9 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
         >
           <Globe className="size-3.5 shrink-0 text-sky-300" />
           <span className="text-foreground/80 flex-1">
+            <span className="text-muted-foreground/60 flex items-center gap-2 text-[10px]">
+              <span className="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-medium text-amber-300">⚠️ Non vérifié</span>
+            </span>
             {count} résultat{count !== 1 ? "s" : ""} web
           </span>
           {webResults.length > 0 &&
@@ -560,6 +564,7 @@ function SourceResultCard({
   accentColor,
   label = "source",
   labelPlural = "sources",
+  fiabilityLabel,
 }: {
   output: unknown;
   query?: string;
@@ -569,6 +574,7 @@ function SourceResultCard({
   accentColor: string;
   label?: string;
   labelPlural?: string;
+  fiabilityLabel?: string;
 }) {
   const result = output as {
     partyId?: string;
@@ -598,9 +604,10 @@ function SourceResultCard({
       >
         {icon}
         <span className="text-foreground/80 flex-1">
-          {query && (
-            <span className="text-muted-foreground/60 block truncate text-[10px] italic">
-              {query}
+          {(query || fiabilityLabel) && (
+            <span className="text-muted-foreground/60 flex items-center gap-2 text-[10px]">
+              {query && <span className="truncate italic">{query}</span>}
+              {fiabilityLabel && <span className="shrink-0 rounded bg-white/5 px-1.5 py-0.5 text-[9px] font-medium">{fiabilityLabel}</span>}
             </span>
           )}
           {entityLabel ? (
