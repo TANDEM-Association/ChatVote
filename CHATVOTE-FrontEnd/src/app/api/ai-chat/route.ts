@@ -929,7 +929,7 @@ const handleChat = observe(async function handleChat(req: Request) {
 - L'outil effectue automatiquement des reformulations internes, du re-classement par pertinence PER-CANDIDAT, et une représentation équitable.
 - Tu peux faire **plusieurs appels pour des THÉMATIQUES DIFFÉRENTES** (ex: transports + écologie). Mais ne répète PAS la même query — le cache retournera un résultat identique.
 - Passe \`depth: "deep"\` pour une analyse détaillée ou un candidat unique, \`"shallow"\` (défaut) pour les comparaisons.
-- Si un candidat n'a aucun résultat, mentionne-le explicitement dans ta réponse.
+- Si un candidat n'a aucun résultat dans les documents RAG, lance immédiatement une recherche web (webSearch) pour ce candidat avant de conclure qu'il n'y a pas d'information.
 ${hasSelection
   ? `- L'utilisateur a sélectionné ces candidats — recherche EXCLUSIVEMENT ceux-ci :
 ${searchCandidateLabels}
@@ -947,7 +947,7 @@ Appel recommandé :
 **Obligation** : Appelle \`searchDocumentsWithRerank\` avec les partis à rechercher AVANT de rédiger ta réponse.
 - Tu peux faire **plusieurs appels pour des THÉMATIQUES DIFFÉRENTES**. Mais ne répète PAS la même query.
 - Passe \`depth: "deep"\` pour une analyse détaillée d'un seul parti, \`"shallow"\` (défaut) pour les comparaisons.
-- Si un parti n'a pas de résultats, reformule ta requête avec des synonymes avant de conclure.
+- Si un parti n'a pas de résultats, reformule ta requête avec des synonymes. Si toujours rien, lance une recherche web (webSearch) avant de conclure.
 
 Partis à rechercher :
 ${resolvedPartyIds.map((id) => `  - "${id}"`).join('\n') || '  (aucun parti trouvé)'}
@@ -1014,7 +1014,7 @@ Tu disposes d'un maximum de **${aiConfig.maxSearchCalls} appels de recherche** e
 - **Appels multiples UNIQUEMENT pour des THÉMATIQUES DIFFÉRENTES** : Tu peux appeler plusieurs fois si la question couvre des sujets distincts (ex: un appel "transports mobilité" + un appel "écologie environnement"). Mais **n'appelle PAS plusieurs fois pour le même sujet** — les résultats seront identiques (cache automatique).
 - **Profondeur** : Passe \`depth: "deep"\` quand la question demande une analyse détaillée ou cible un seul candidat. Utilise \`depth: "shallow"\` (défaut) pour les comparaisons multi-candidats.
 - **Ciblage par candidateId** : Passe un seul candidateId UNIQUEMENT quand l'utilisateur demande spécifiquement les positions d'UN candidat ("Que propose Dupont sur X ?"). Pour les comparaisons, ne passe PAS de candidateIds — l'outil cherche dans tous automatiquement.
-- **Recherche web complémentaire** : Si un candidat n'a PAS de résultats dans les documents RAG (aucune source trouvée), utilise webSearch pour chercher des informations sur ce candidat spécifiquement. Indique clairement que ces informations proviennent du web (⚠️ NON VÉRIFIÉ).
+- **Recherche web complémentaire (OBLIGATOIRE)** : NE DIS JAMAIS "aucune information disponible" sans avoir d'abord tenté une recherche web. Si searchDocumentsWithRerank retourne peu ou pas de résultats, appelle IMMÉDIATEMENT webSearch avec une requête pertinente. Indique clairement que ces informations proviennent du web (⚠️ NON VÉRIFIÉ). Ne conclus "pas d'information" qu'APRÈS avoir épuisé RAG ET webSearch.
 - **Recherche approfondie** : Appelle runDeepResearch UNIQUEMENT quand l'utilisateur demande explicitement une analyse approfondie ou complète. Ne l'utilise PAS automatiquement après searchDocumentsWithRerank.
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.
