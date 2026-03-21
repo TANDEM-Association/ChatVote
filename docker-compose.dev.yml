@@ -195,8 +195,8 @@ services:
       test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/public/health > /dev/null"]
       interval: 10s
       timeout: 5s
-      retries: 15
-      start_period: 30s
+      retries: 30
+      start_period: 120s
 
   langfuse-worker:
     image: langfuse/langfuse-worker:3
