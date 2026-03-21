@@ -288,6 +288,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
         accentColor="border-l-violet-400/60"
         label="vote parlementaire"
         labelPlural="votes parlementaires"
+        fiabilityLabel="🥇 FIABILITÉ maximale : Sources gouvernementales"
       />
     );
   }
@@ -304,6 +305,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
         setExpanded={setExpanded}
         icon={<MessageSquare className="size-3.5 shrink-0 text-indigo-300" />}
         accentColor="border-l-indigo-400/60"
+        fiabilityLabel="🥇 FIABILITÉ maximale : Sources gouvernementales"
         label="question parlementaire"
         labelPlural="questions parlementaires"
       />
@@ -607,7 +609,12 @@ function SourceResultCard({
           {(query || fiabilityLabel) && (
             <span className="text-muted-foreground/60 flex items-center gap-2 text-[10px]">
               {query && <span className="truncate italic">{query}</span>}
-              {fiabilityLabel && <span className="shrink-0 rounded bg-white/5 px-1.5 py-0.5 text-[9px] font-medium">{fiabilityLabel}</span>}
+              {fiabilityLabel && <span className={`shrink-0 rounded px-1.5 py-0.5 text-[9px] font-medium ${
+                fiabilityLabel.startsWith('🥇') ? 'bg-emerald-500/15 text-emerald-300' :
+                fiabilityLabel.startsWith('🥈') ? 'bg-blue-500/15 text-blue-300' :
+                fiabilityLabel.startsWith('🥉') ? 'bg-orange-500/15 text-orange-300' :
+                'bg-amber-500/15 text-amber-300'
+              }`}>{fiabilityLabel}</span>}
             </span>
           )}
           {entityLabel ? (
