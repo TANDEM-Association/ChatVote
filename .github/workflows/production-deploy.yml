@@ -289,6 +289,8 @@ jobs:
           LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
           LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
           LANGFUSE_BASEURL: ${{ secrets.LANGFUSE_BASEURL }}
+          NEXT_PUBLIC_ENABLE_AI_SDK: "true"
+          NEXT_PUBLIC_ENABLE_COMMUNE_DASHBOARD: "true"
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy
