@@ -99,13 +99,27 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
       ? {
           searchDocumentsWithRerank: tool({
             description:
-              "Recherche dans les documents politiques (programmes, professions de foi, sites web) avec reformulation automatique et re-classement par pertinence PER-CANDIDAT pour une représentation équitable.",
+              `Recherche dans les documents politiques (programmes, professions de foi, sites web) avec reformulation automatique et re-classement par pertinence PER-CANDIDAT pour une représentation équitable.
+
+UN SEUL APPEL recherche dans TOUS les candidats en parallèle — ne fais PAS un appel par candidat.
+La query doit être THÉMATIQUE (le sujet), JAMAIS le nom d'un candidat ou parti.
+
+Exemples CORRECTS :
+- searchDocumentsWithRerank({ query: "sécurité police municipale vidéoprotection" }) → cherche dans TOUS les candidats
+- searchDocumentsWithRerank({ query: "logement rénovation thermique loyers" }) → tous les candidats
+- searchDocumentsWithRerank({ query: "engagements programme propositions", depth: "deep" }) → analyse approfondie tous candidats
+- searchDocumentsWithRerank({ query: "écologie transition énergétique", candidateIds: ["cand-63113-3"] }) → UN candidat ciblé uniquement
+
+Exemples INCORRECTS (ne fais JAMAIS ça) :
+- searchDocumentsWithRerank({ query: "Pierre BERNARD Rassemblement National programme" }) ← NOM dans query
+- Appeler 5 fois pour 5 candidats différents ← UN appel suffit pour TOUS
+- searchDocumentsWithRerank({ query: "programme engagements", candidateIds: ["cand-1","cand-2","cand-3","cand-4","cand-5"] }) ← inutile, sans candidateIds ça cherche déjà dans tous`,
             inputSchema: z.object({
-              query: z.string().describe('Requête de recherche autonome et complète — pas de pronoms ni références implicites'),
+              query: z.string().describe('Requête THÉMATIQUE : décris le sujet recherché, JAMAIS de noms de candidats/partis. Ex: "sécurité police municipale", "écologie transition énergétique"'),
               candidateIds: z
                 .array(z.string())
                 .optional()
-                .describe('Filtrer par candidats (IDs fournis dans le contexte). Si omis et partyIds omis, recherche tous les candidats de la commune. Passe UN SEUL candidat pour une question ciblée.'),
+                .describe('Filtrer par candidats (IDs fournis dans le contexte). Si omis et partyIds omis, recherche TOUS les candidats automatiquement. Passe UN SEUL candidat uniquement si l\'utilisateur demande spécifiquement les positions d\'un candidat précis.'),
               partyIds: z
                 .array(z.string())
                 .optional()
@@ -572,7 +586,8 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
 
     changeCity: tool({
       description:
-        "Change la commune de l'utilisateur. Utilise quand l'utilisateur mentionne une autre ville ou demande à changer de commune. Déclenche le rechargement des candidats disponibles dans la nouvelle commune.",
+        `Change la commune de l'utilisateur. Utilise quand l'utilisateur mentionne une autre ville ou demande à changer de commune.
+IMPORTANT : Après changeCity, NE FAIS PAS de searchDocumentsWithRerank dans le même tour — les candidats ne seront mis à jour qu'au prochain message. Annonce le changement et propose des questions à l'utilisateur via suggestFollowUps.`,
       inputSchema: z.object({
         cityName: z.string().describe('Nom de la commune (ex: "Marseille", "Lyon 3e")'),
         municipalityCode: z
@@ -612,10 +627,35 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
           }
         }
 
+        // Fetch candidates for the new city so the LLM knows who's available
+        let newCandidates: Array<{ id: string; name: string; party_ids: string[] }> = [];
+        if (code) {
+          try {
+            const candidatesSnap = await db
+              .collection('candidates')
+              .where('municipality_code', '==', code)
+              .get();
+            newCandidates = candidatesSnap.docs.map((d) => {
+              const data = d.data();
+              return {
+                id: d.id,
+                name: `${data.first_name ?? ''} ${data.last_name ?? ''}`.trim(),
+                party_ids: data.party_ids ?? [],
+              };
+            });
+          } catch (err) {
+            console.error('[ai-chat] changeCity candidate fetch failed:', err);
+          }
+        }
+
         return {
           action: 'changeCity',
           cityName: input.cityName,
           municipalityCode: code,
+          candidates: newCandidates,
+          message: newCandidates.length > 0
+            ? `Commune changée pour ${input.cityName} (${code}). ${newCandidates.length} candidats disponibles : ${newCandidates.map((c) => c.name).join(', ')}. Les recherches utiliseront ces candidats au prochain message.`
+            : `Commune changée pour ${input.cityName} (${code}). Aucun candidat trouvé pour cette commune.`,
         };
       },
     }),
@@ -934,11 +974,11 @@ ${contextLine}
 - **Proactivité** : Si la question est vague, fais un choix raisonnable et agis plutôt que de poser des questions. Maximum 1 question de clarification.
 
 # Règles techniques
-- **Requêtes de recherche** : Tes paramètres "query" doivent être AUTONOMES et COMPLETS. Jamais de pronoms ("ça", "ce sujet"), jamais de références implicites au contexte. Exemple : au lieu de "et sur ça ?", écris "propositions transports en commun et mobilité douce [nom commune]".
-- **searchDocumentsWithRerank** effectue automatiquement la reformulation en 2-3 requêtes, la recherche parallèle par candidat, et le re-classement par pertinence PER-CANDIDAT pour garantir une représentation équitable.
-- **Appels multiples autorisés pour des SUJETS DIFFÉRENTS** : Tu peux appeler plusieurs fois si la question couvre des thématiques distinctes (ex: transports + écologie). Mais **n'appelle PAS deux fois avec la même query** — les résultats seront identiques (cache automatique).
+- **Requêtes de recherche** : Le paramètre "query" doit être THÉMATIQUE — décris le SUJET, pas le candidat. N'inclus JAMAIS de noms de candidats, de partis ou de nuances dans la query. L'outil recherche automatiquement dans TOUS les candidats en parallèle. Exemple CORRECT : "engagements sécurité transports écologie". Exemple INCORRECT : "Pierre BERNARD Rassemblement National programme engagements".
+- **UN seul appel suffit pour TOUS les candidats** : searchDocumentsWithRerank recherche automatiquement dans le namespace de CHAQUE candidat séparément et retourne les meilleurs résultats per-candidat. Ne fais PAS un appel par candidat — un seul appel couvre tout.
+- **Appels multiples UNIQUEMENT pour des THÉMATIQUES DIFFÉRENTES** : Tu peux appeler plusieurs fois si la question couvre des sujets distincts (ex: un appel "transports mobilité" + un appel "écologie environnement"). Mais **n'appelle PAS plusieurs fois pour le même sujet** — les résultats seront identiques (cache automatique).
 - **Profondeur** : Passe \`depth: "deep"\` quand la question demande une analyse détaillée ou cible un seul candidat. Utilise \`depth: "shallow"\` (défaut) pour les comparaisons multi-candidats.
-- **Ciblage** : Tu peux passer un seul candidateId pour une question ciblée ("Que propose X sur Y ?") ou tous les candidats pour une comparaison.
+- **Ciblage par candidateId** : Passe un seul candidateId UNIQUEMENT quand l'utilisateur demande spécifiquement les positions d'UN candidat ("Que propose Dupont sur X ?"). Pour les comparaisons, ne passe PAS de candidateIds — l'outil cherche dans tous automatiquement.
 - **Recherche approfondie** : Appelle runDeepResearch UNIQUEMENT quand l'utilisateur demande explicitement une analyse approfondie ou complète. Ne l'utilise PAS automatiquement après searchDocumentsWithRerank.
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.

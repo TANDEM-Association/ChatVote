@@ -82,7 +82,9 @@ function ChatMarkdown({ message, oneBasedCitations = false }: Props) {
       return null;
     }
 
-    return `${source.source} - Page: ${source.page}`;
+    const name = source.candidate_name || source.source_document || source.source || "Source";
+    const page = source.page ? ` - Page: ${source.page}` : "";
+    return `${name}${page}`;
   };
 
   const getReferenceName = (number: number) => {

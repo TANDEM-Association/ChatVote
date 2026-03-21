@@ -3,35 +3,48 @@
 import { useSearchParams } from "next/navigation";
 
 import { AI_SDK_ENABLED } from "@lib/ai/feature-flags";
-import { useChatModeStore } from "@lib/stores/chat-mode-store";
 import { useAppContext } from "@components/providers/app-provider";
 
 import AiSdkChatView from "./ai-sdk/ai-sdk-chat-view";
 
+type AiMessage = { role: string; content: string };
+
 type Props = {
   sessionId?: string;
   municipalityCode?: string;
+  sessionMode?: "ai" | "socket";
+  initialMessages?: AiMessage[];
   children: React.ReactNode;
 };
 
-/** Returns true when AI SDK mode should be active (URL override or store). */
-export function useIsAiSdkActive(): boolean {
+/** Returns true when AI SDK mode should be active (env var, URL override, or session). */
+export function useIsAiSdkActive(sessionMode?: string): boolean {
   const params = useSearchParams();
-  const { chatMode } = useChatModeStore();
   const urlOverride = params.get("mode") === "ai";
-  return urlOverride || (AI_SDK_ENABLED && chatMode === "ai-sdk");
+  // For existing sessions: respect the stored mode (old socket chats stay socket)
+  if (sessionMode === "socket") return false;
+  if (sessionMode === "ai") return true;
+  // For new chats (no session): use env var or URL override
+  return AI_SDK_ENABLED || urlOverride;
 }
 
 /**
  * Client-side switcher between Classic (Socket.IO) and AI SDK chat modes.
- * Supports ?mode=ai URL param to force AI SDK mode without env var.
+ * Supports ?mode=ai URL param, session mode from Firestore, or store flag.
  */
-export default function ChatViewSwitcher({ sessionId, municipalityCode, children }: Props) {
-  const active = useIsAiSdkActive();
+export default function ChatViewSwitcher({ sessionId, municipalityCode, sessionMode, initialMessages, children }: Props) {
+  const active = useIsAiSdkActive(sessionMode);
   const { locale } = useAppContext();
 
   if (active) {
-    return <AiSdkChatView chatId={sessionId} locale={locale} municipalityCode={municipalityCode} />;
+    return (
+      <AiSdkChatView
+        chatId={sessionId}
+        locale={locale}
+        municipalityCode={municipalityCode}
+        initialMessages={initialMessages}
+      />
+    );
   }
 
   return <>{children}</>;

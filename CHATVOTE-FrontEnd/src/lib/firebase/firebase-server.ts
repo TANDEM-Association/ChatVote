@@ -185,9 +185,21 @@ export async function getChatSession(sessionId: string) {
     tenant_id: data.tenant_id,
     municipality_code: data.municipality_code,
     scope: data.scope,
+    mode: (data.mode ?? "socket") as "ai" | "socket",
     updated_at: firestoreTimestampToDate(data.updated_at),
     created_at: firestoreTimestampToDate(data.created_at),
   } as ChatSession;
+}
+
+export async function getAiChatMessages(
+  sessionId: string,
+): Promise<Array<{ role: string; content: string }> | undefined> {
+  const docSnap = await db.collection("chat_sessions").doc(sessionId).get();
+  if (!docSnap.exists) return undefined;
+  const data = docSnap.data();
+  const messages = data?.messages;
+  if (!Array.isArray(messages)) return undefined;
+  return messages as Array<{ role: string; content: string }>;
 }
 
 export async function getUsersChatSessions(

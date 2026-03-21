@@ -267,6 +267,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
     return (
       <SourceResultCard
         output={part.output}
+        query={(part.input as Record<string, unknown>)?.query as string ?? (part.args as Record<string, unknown>)?.query as string}
         expanded={expanded}
         setExpanded={setExpanded}
         icon={<Search className="size-3.5 shrink-0 text-purple-300" />}
@@ -552,6 +553,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
 
 function SourceResultCard({
   output,
+  query,
   expanded,
   setExpanded,
   icon,
@@ -560,6 +562,7 @@ function SourceResultCard({
   labelPlural = "sources",
 }: {
   output: unknown;
+  query?: string;
   expanded: boolean;
   setExpanded: (fn: (prev: boolean) => boolean) => void;
   icon: React.ReactNode;
@@ -595,6 +598,11 @@ function SourceResultCard({
       >
         {icon}
         <span className="text-foreground/80 flex-1">
+          {query && (
+            <span className="text-muted-foreground/60 block truncate text-[10px] italic">
+              {query}
+            </span>
+          )}
           {entityLabel ? (
             <>
               <span className="text-foreground font-medium">
@@ -622,18 +630,18 @@ function SourceResultCard({
         <ul className="divide-y divide-white/5 border-t border-white/10">
           {sources.map((src, i) => (
             <li key={src.id ?? i} className="flex gap-2 p-3">
-              <span className="bg-primary/15 text-primary flex size-5 shrink-0 items-center justify-center rounded-full text-[10px] font-semibold">
+              <span className="flex size-5 shrink-0 items-center justify-center rounded-full bg-purple-500/30 text-[10px] font-semibold text-purple-200">
                 {i + 1}
               </span>
               <div className="min-w-0 flex-1">
-                {(src.candidate_name || src.party_id) && (
+                {(src.candidate_name || (src.party_id && !src.party_id.startsWith("cand-"))) && (
                   <div className="mb-1 flex flex-wrap items-center gap-1">
                     {src.candidate_name && (
                       <span className="inline-block rounded bg-purple-500/20 px-1.5 py-0.5 text-[10px] font-medium text-purple-200">
                         {src.candidate_name}
                       </span>
                     )}
-                    {src.party_id && (
+                    {src.party_id && !src.party_id.startsWith("cand-") && (
                       <span className="inline-block rounded bg-blue-500/20 px-1.5 py-0.5 text-[10px] font-medium text-blue-200">
                         {src.party_id.toUpperCase()}
                       </span>

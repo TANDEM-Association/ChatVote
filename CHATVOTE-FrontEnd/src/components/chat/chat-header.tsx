@@ -36,7 +36,11 @@ function ChatHeader() {
       trackShareClicked({ content_type: "chat_permalink", session_id: chatId });
     }
     if (navigator.canShare?.({ url })) {
-      await navigator.share({ title: "Mon chat ChatVote", url });
+      try {
+        await navigator.share({ title: "Mon chat ChatVote", url });
+      } catch {
+        // User cancelled share sheet — ignore
+      }
     } else {
       await navigator.clipboard.writeText(url);
       // Brief visual feedback via button text change handled by state

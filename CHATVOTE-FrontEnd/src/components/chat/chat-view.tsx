@@ -2,7 +2,12 @@ import { Suspense } from "react";
 
 import AiDisclaimer from "@components/legal/ai-disclaimer";
 import LoadingSpinner from "@components/loading-spinner";
-import { getAuth, getSystemStatus } from "@lib/firebase/firebase-server";
+import {
+  getAuth,
+  getAiChatMessages,
+  getChatSession,
+  getSystemStatus,
+} from "@lib/firebase/firebase-server";
 import ChatSidebar from "./sidebar/chat-sidebar";
 import ChatSidebarDesktop from "./sidebar/chat-sidebar-desktop";
 import ChatContextSidebar from "./chat-context-sidebar";
@@ -29,10 +34,18 @@ async function ChatView({
   initialQuestion,
   municipalityCode,
 }: Props) {
-  const [systemStatus, auth] = await Promise.all([
+  const [systemStatus, auth, chatSession] = await Promise.all([
     getSystemStatus(),
     getAuth(),
+    sessionId ? getChatSession(sessionId) : Promise.resolve(undefined),
   ]);
+
+  const sessionMode = chatSession?.mode ?? "socket";
+
+  const aiMessages =
+    sessionId && sessionMode === "ai"
+      ? await getAiChatMessages(sessionId)
+      : undefined;
 
   return (
     <div className="relative flex size-full h-full items-stretch overflow-hidden">
@@ -47,7 +60,7 @@ async function ChatView({
         <ChatHeader />
         {/* Main content - adds padding when sidebar is expanded */}
         <ChatMainContent>
-          <ChatViewSwitcher sessionId={sessionId} municipalityCode={municipalityCode}>
+          <ChatViewSwitcher sessionId={sessionId} municipalityCode={municipalityCode} sessionMode={sessionMode} initialMessages={aiMessages}>
             <Suspense
               fallback={
                 <div className="flex min-h-0 flex-1 flex-col items-center justify-center gap-2">

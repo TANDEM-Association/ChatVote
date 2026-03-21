@@ -75,7 +75,7 @@ export function generateUuid() {
 }
 
 export function firestoreTimestampToDate(
-  timestamp: Timestamp | Date | undefined,
+  timestamp: Timestamp | Date | string | undefined,
 ) {
   if (!timestamp) {
     return;
@@ -83,6 +83,11 @@ export function firestoreTimestampToDate(
 
   if (timestamp instanceof Date) {
     return timestamp;
+  }
+
+  // Handle ISO string timestamps (e.g. from AI SDK chat sessions)
+  if (typeof timestamp === "string") {
+    return new Date(timestamp);
   }
 
   return timestamp.toDate();

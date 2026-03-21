@@ -15,7 +15,13 @@ import { useTranslations } from "next-intl";
 
 import "@fillout/react/style.css";
 
+let surveyRenderCount = 0;
 const SurveyBanner = () => {
+  if (process.env.NODE_ENV === "development") {
+    surveyRenderCount++;
+    if (surveyRenderCount % 10 === 0) console.warn(`[SurveyBanner] render #${surveyRenderCount}`);
+    if (surveyRenderCount > 50) { console.error(`[SurveyBanner] INFINITE LOOP DETECTED at render #${surveyRenderCount}`); console.trace(); }
+  }
   const t = useTranslations("chat.survey");
   const sessionId = useChatStore((state) => state.chatId);
   const [open, setOpen] = useState(false);

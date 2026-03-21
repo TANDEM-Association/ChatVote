@@ -30,16 +30,20 @@ import AiSdkFeatureRibbon from "./ai-sdk-feature-ribbon";
 import AiSdkMessage from "./ai-sdk-message";
 import AiSdkStreamingIndicator from "./ai-sdk-streaming-indicator";
 
+type AiMessage = { role: string; content: string };
+
 type Props = {
   chatId?: string;
   locale: string;
   municipalityCode?: string;
+  initialMessages?: AiMessage[];
 };
 
 export default function AiSdkChatView({
   chatId,
   locale,
   municipalityCode: municipalityCodeProp,
+  initialMessages,
 }: Props) {
   const partyIds = useChatStore((s) => s.partyIds);
   const scope = useChatStore((s) => s.scope);
@@ -178,8 +182,25 @@ export default function AiSdkChatView({
     [],
   );
 
+  // Convert Firestore flat messages to UIMessage format for useChat initialMessages.
+  // Only computed once on mount (useMemo with empty deps) so it doesn't re-run on re-renders.
+  const convertedInitialMessages = useMemo(() => {
+    if (!initialMessages?.length) return undefined;
+    return initialMessages.map((m, i) => ({
+      id: `restored-${i}`,
+      role: m.role as "user" | "assistant",
+      parts: [{ type: "text" as const, text: m.content }],
+      createdAt: new Date(),
+    }));
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const { messages, sendMessage, regenerate, stop, status, error } = useChat({
     transport,
+    // Throttle UI updates to prevent "Maximum update depth exceeded" on long
+    // streaming responses (known AI SDK issue: github.com/vercel/ai/issues/1610)
+    experimental_throttle: 50,
+    ...(convertedInitialMessages ? { messages: convertedInitialMessages } : {}),
   });
 
   // Apply context tool results to the store when messages arrive.
@@ -193,14 +214,14 @@ export default function AiSdkChatView({
       if (message.role !== "assistant") continue;
       for (let i = 0; i < message.parts.length; i++) {
         const part = message.parts[i];
-        if (!isToolUIPart(part) || part.state !== "output-available") continue;
+        if (!isToolUIPart(part) || (part as { state?: string }).state !== "output-available") continue;
         const key = `${message.id}:${i}`;
         if (processedToolCallsRef.current.has(key)) continue;
         processedToolCallsRef.current.add(key);
         const toolName = getToolName(part);
 
         if (toolName === "changeCity") {
-          const result = part.output as {
+          const result = (part as { output?: unknown }).output as {
             municipalityCode?: string;
             cityName?: string;
           };
@@ -218,7 +239,7 @@ export default function AiSdkChatView({
             });
           }
         } else if (toolName === "changeCandidates") {
-          const result = part.output as {
+          const result = (part as { output?: unknown }).output as {
             partyIds: string[];
             operation: string;
           };
@@ -416,6 +437,7 @@ export default function AiSdkChatView({
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
               <p className="text-sm text-red-800 dark:text-red-200">
                 {error.message}
+                {(() => { console.error('[ai-sdk-error]', error.message); console.trace('[ai-sdk-error] Stack trace:'); return null; })()}
                 <button
                   onClick={() => regenerate()}
                   className="ml-2 font-medium underline hover:no-underline"

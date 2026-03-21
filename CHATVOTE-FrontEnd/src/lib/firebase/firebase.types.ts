@@ -12,6 +12,7 @@ export type ChatSession = {
   tenant_id?: string;
   municipality_code?: string;
   scope?: "national" | "local";
+  mode?: "ai" | "socket";
 };
 
 export type ProposedQuestion = {
