@@ -1,33 +1,34 @@
-import {
-  type Analytics,
-  getAnalytics,
-  isSupported,
-  logEvent,
-  setUserId,
-  setUserProperties,
-} from "firebase/analytics";
-import { getApp } from "firebase/app";
+// Analytics via gtag() — loaded by <GoogleAnalytics gaId={GA_MEASUREMENT_ID}> in layout.tsx
+//
+// WHY THIS APPROACH:
+// Firebase Analytics SDK fetches the GA4 measurement ID dynamically from Firebase's
+// remote project configuration, making it impossible to control which GA4 property
+// receives events via env vars alone. By using gtag() directly (loaded by
+// @next/third-parties/google), all events are guaranteed to go to G-9BFRV4Z8KN
+// (the TANDEM / app.chatvote.org GA4 property).
+//
+// All public function signatures are unchanged — no call-sites need to be updated.
 
-let analyticsInstance: Analytics | null = null;
+declare global {
+  function gtag(
+    command: "event",
+    action: string,
+    params?: Record<string, unknown>,
+  ): void;
+  function gtag(command: "set", params: Record<string, unknown>): void;
+  function gtag(
+    command: "set",
+    target: string,
+    params: Record<string, unknown>,
+  ): void;
+}
 
 export async function initAnalytics(): Promise<void> {
   if (typeof window === "undefined") return;
-
-  try {
-    const supported = await isSupported();
-    if (!supported) return;
-
-    if (analyticsInstance) return;
-
-    analyticsInstance = getAnalytics(getApp());
-
-    captureUtmParams(analyticsInstance);
-  } catch {
-    // Analytics may fail in dev/emulator — silently ignore
-  }
+  captureUtmParams();
 }
 
-function captureUtmParams(analytics: Analytics): void {
+function captureUtmParams(): void {
   const SESSION_KEY = "utm_captured";
   if (sessionStorage.getItem(SESSION_KEY)) return;
 
@@ -37,7 +38,7 @@ function captureUtmParams(analytics: Analytics): void {
   const utmCampaign = params.get("utm_campaign");
 
   if (utmSource ?? utmMedium ?? utmCampaign) {
-    logEvent(analytics, "referral_source", {
+    trackEvent("referral_source", {
       ...(utmSource ? { utm_source: utmSource } : {}),
       ...(utmMedium ? { utm_medium: utmMedium } : {}),
       ...(utmCampaign ? { utm_campaign: utmCampaign } : {}),
@@ -51,8 +52,8 @@ export function trackEvent(
   name: string,
   params?: Record<string, string | number>,
 ): void {
-  if (!analyticsInstance) return;
-  logEvent(analyticsInstance, name, params);
+  if (typeof window === "undefined" || typeof gtag === "undefined") return;
+  gtag("event", name, params);
 }
 
 export function trackPageView(pagePath: string, pageTitle: string): void {
@@ -134,15 +135,15 @@ export function trackElectoralListSelected(params: {
 }
 
 export function setAnalyticsUserId(userId: string): void {
-  if (!analyticsInstance) return;
-  setUserId(analyticsInstance, userId);
+  if (typeof window === "undefined" || typeof gtag === "undefined") return;
+  gtag("set", { user_id: userId });
 }
 
 export function setAnalyticsUserProperties(
   properties: Record<string, string>,
 ): void {
-  if (!analyticsInstance) return;
-  setUserProperties(analyticsInstance, properties);
+  if (typeof window === "undefined" || typeof gtag === "undefined") return;
+  gtag("set", "user_properties", properties);
 }
 
 export function trackLogin(params: { method: string }): void {

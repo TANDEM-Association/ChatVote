@@ -3,6 +3,7 @@ import { type Metadata } from "next";
 import { Merriweather, Merriweather_Sans } from "next/font/google";
 import { headers } from "next/headers";
 import Script from "next/script";
+import { GoogleAnalytics } from "@next/third-parties/google";
 
 import { getLocale } from "@actions/i18n/getLocale";
 import { TENANT_ID_HEADER } from "@lib/constants";
@@ -172,6 +173,7 @@ export default async function RootLayout({
         </NextIntlClientProvider>
         {shouldShowToolbar && <VercelToolbar />}
       </body>
+      <GoogleAnalytics gaId="G-9BFRV4Z8KN" />
     </html>
   );
 }
