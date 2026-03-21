@@ -418,52 +418,54 @@ Exemples INCORRECTS (ne fais JAMAIS ça) :
             }),
             execute: async (input) => {
               try {
-                // Use Google Custom Search JSON API if available, otherwise DuckDuckGo lite
-                const googleApiKey = process.env.GOOGLE_API_KEY;
-                const googleCseId = process.env.GOOGLE_CSE_ID;
-
-                if (googleApiKey && googleCseId) {
-                  const url = `https://www.googleapis.com/customsearch/v1?key=${googleApiKey}&cx=${googleCseId}&q=${encodeURIComponent(input.query)}&num=5&lr=lang_fr`;
-                  const res = await fetch(url, { signal: AbortSignal.timeout(8000) });
+                const perplexityKey = process.env.PERPLEXITY_API_KEY;
+                if (perplexityKey) {
+                  // Use Perplexity Sonar API for web search
+                  const res = await fetch('https://api.perplexity.ai/chat/completions', {
+                    method: 'POST',
+                    headers: {
+                      'Authorization': `Bearer ${perplexityKey}`,
+                      'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                      model: 'sonar',
+                      messages: [
+                        { role: 'system', content: 'Tu es un assistant de recherche web. Réponds en français avec des faits précis et sourcés. Cite les URLs des sources.' },
+                        { role: 'user', content: input.query },
+                      ],
+                    }),
+                    signal: AbortSignal.timeout(15000),
+                  });
                   if (res.ok) {
                     const json = await res.json();
-                    const results = (json.items ?? []).map((item: any, idx: number) => ({
+                    const content = json.choices?.[0]?.message?.content ?? '';
+                    const citations = (json.citations ?? []) as string[];
+                    const results = citations.map((url: string, idx: number) => ({
                       id: idx + 1,
-                      title: item.title,
-                      snippet: item.snippet,
-                      url: item.link,
+                      title: url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0],
+                      snippet: '',
+                      url,
                     }));
-                    return { results, count: results.length };
+                    // Add the main response as first result if no citations
+                    if (results.length === 0 && content) {
+                      results.push({ id: 1, title: 'Résultat Perplexity', snippet: content.slice(0, 500), url: '' });
+                    }
+                    return { results, count: results.length, summary: content };
                   }
                 }
 
-                // Fallback: use DuckDuckGo instant answer API
+                // Fallback: DuckDuckGo instant answer API
                 const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(input.query)}&format=json&no_html=1&skip_disambig=1`;
                 const ddgRes = await fetch(ddgUrl, { signal: AbortSignal.timeout(8000) });
                 if (ddgRes.ok) {
                   const ddgJson = await ddgRes.json();
-                  const results: Array<{
-                    id: number;
-                    title: string;
-                    snippet: string;
-                    url: string;
-                  }> = [];
+                  const results: Array<{ id: number; title: string; snippet: string; url: string }> = [];
                   if (ddgJson.Abstract) {
-                    results.push({
-                      id: 1,
-                      title: ddgJson.Heading ?? input.query,
-                      snippet: ddgJson.Abstract,
-                      url: ddgJson.AbstractURL ?? '',
-                    });
+                    results.push({ id: 1, title: ddgJson.Heading ?? input.query, snippet: ddgJson.Abstract, url: ddgJson.AbstractURL ?? '' });
                   }
                   for (const topic of ddgJson.RelatedTopics?.slice(0, 4) ?? []) {
                     if (topic.Text) {
-                      results.push({
-                        id: results.length + 1,
-                        title: topic.FirstURL?.split('/').pop() ?? '',
-                        snippet: topic.Text,
-                        url: topic.FirstURL ?? '',
-                      });
+                      results.push({ id: results.length + 1, title: topic.FirstURL?.split('/').pop() ?? '', snippet: topic.Text, url: topic.FirstURL ?? '' });
                     }
                   }
                   return { results, count: results.length };
@@ -979,6 +981,22 @@ ${contextLine}
 2. **Neutralité absolue** : Tu ne juges pas, tu ne recommandes pas, tu ne classes pas les candidats. Pas d'adjectifs valorisants ("ambitieux", "courageux") ni dépréciatifs. Présente les faits et laisse le citoyen se forger son opinion.
 3. **Transparence sur les limites** : Si l'information est partielle, dis-le. Si un candidat n'a pas de position documentée sur un sujet, mentionne-le explicitement plutôt que de l'omettre silencieusement. Distingue "pas trouvé dans nos documents" de "le candidat n'en parle pas".
 
+# Fiabilité des sources
+Indique le niveau de fiabilité pour chaque type de source utilisée :
+- 🥇 **FIABILITÉ maximale** : Sources gouvernementales (data.gouv.fr, résultats officiels)
+- 🥈 **FIABILITÉ élevée** : Documents officiels des candidats (programmes, professions de foi, sites de campagne)
+- 🥉 **FIABILITÉ modérée** : Informations vérifiables mais interprétatives (médias, presse)
+- ⚠️ **NON VÉRIFIÉ** : Informations provenant du web (webSearch) — peuvent être inexactes ou partiales
+
+Quand tu utilises des résultats de **webSearch**, ajoute un avertissement : "ℹ️ Ces informations proviennent du web et peuvent contenir des inexactitudes. Vérifiez auprès de sources officielles."
+
+# Limite d'appels d'outils
+Tu disposes d'un maximum de **${aiConfig.maxSearchCalls} appels de recherche** et **10 étapes au total** par réponse. Planifie tes recherches efficacement :
+- Fais UN appel thématique large plutôt que plusieurs appels étroits
+- Après tes recherches, tu DOIS : 1) rédiger ta réponse textuelle, 2) appeler suggestFollowUps
+- **OBLIGATION ABSOLUE** : Tu DOIS toujours produire un résumé textuel complet, même si les résultats sont partiels. Une réponse vide ou tronquée est INACCEPTABLE.
+- **Séquence obligatoire** : Recherche(s) → Réponse textuelle → suggestFollowUps. JAMAIS de recherche après avoir commencé à écrire ta réponse.
+
 # Format de réponse
 - **Comparatif par défaut** : Quand plusieurs candidats sont concernés, structure ta réponse candidat par candidat avec des puces ou un tableau comparatif.
 - **Détaillé et concret** : 3-5 puces par candidat avec les propositions clés, les mesures précises et les chiffres quand disponibles. Développe chaque point pour donner une vision complète.
@@ -1026,7 +1044,7 @@ ${respondInLanguage}${candidateContext}`;
     model,
     system: systemPrompt,
     messages,
-    stopWhen: [stepCountIs(8), hasToolCall('suggestFollowUps'), hasToolCall('presentOptions')],
+    stopWhen: [stepCountIs(10), hasToolCall('suggestFollowUps'), hasToolCall('presentOptions')],
     toolChoice: 'auto',
     providerOptions: {
       google: { thinkingConfig: { thinkingBudget: 0 } },
