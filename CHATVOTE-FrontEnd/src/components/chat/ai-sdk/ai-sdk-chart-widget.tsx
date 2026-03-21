@@ -98,6 +98,8 @@ function BarChartWidget({
             color: '#ffffff',
             backdropFilter: 'blur(8px)',
           }}
+          itemStyle={{ color: '#ffffff' }}
+          labelStyle={{ color: '#ffffff', fontWeight: 600 }}
         />
         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
           {data.map((entry, index) => (
@@ -139,6 +141,8 @@ function PieChartWidget({ data }: { data: RechartsData[] }) {
             color: '#ffffff',
             backdropFilter: 'blur(8px)',
           }}
+          itemStyle={{ color: '#ffffff' }}
+          labelStyle={{ color: '#ffffff', fontWeight: 600 }}
         />
         <Legend wrapperStyle={{ fontSize: '12px' }} />
       </PieChart>
@@ -168,6 +172,8 @@ function RadarChartWidget({ data }: { data: RechartsData[] }) {
             color: '#ffffff',
             backdropFilter: 'blur(8px)',
           }}
+          itemStyle={{ color: '#ffffff' }}
+          labelStyle={{ color: '#ffffff', fontWeight: 600 }}
         />
       </RadarChart>
     </ResponsiveContainer>
@@ -216,6 +222,8 @@ function LineChartWidget({
             color: '#ffffff',
             backdropFilter: 'blur(8px)',
           }}
+          itemStyle={{ color: '#ffffff' }}
+          labelStyle={{ color: '#ffffff', fontWeight: 600 }}
         />
         <Line
           type="monotone"

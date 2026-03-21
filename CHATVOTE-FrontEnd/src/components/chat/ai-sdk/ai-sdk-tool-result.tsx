@@ -272,7 +272,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
         setExpanded={setExpanded}
         icon={<Search className="size-3.5 shrink-0 text-purple-300" />}
         accentColor="border-l-purple-400/60"
-        fiabilityLabel="🥈 Documents officiels"
+        fiabilityLabel="🥈 FIABILITÉ élevée : Documents officiels des candidats"
       />
     );
   }
@@ -428,7 +428,7 @@ export default function AiSdkToolResult({ part, onSendMessage }: Props) {
           <Globe className="size-3.5 shrink-0 text-sky-300" />
           <span className="text-foreground/80 flex-1">
             <span className="text-muted-foreground/60 flex items-center gap-2 text-[10px]">
-              <span className="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-medium text-amber-300">⚠️ Non vérifié</span>
+              <span className="shrink-0 rounded bg-amber-500/10 px-1.5 py-0.5 text-[9px] font-medium text-amber-300">⚠️ NON FIABLE : Informations non vérifiées (internet)</span>
             </span>
             {count} résultat{count !== 1 ? "s" : ""} web
           </span>
