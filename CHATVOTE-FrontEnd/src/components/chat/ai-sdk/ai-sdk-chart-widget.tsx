@@ -89,11 +89,12 @@ function BarChartWidget({
           stroke="rgba(255,255,255,0.2)"
         />
         <Tooltip
+          cursor={{ fill: 'rgba(255,255,255,0.06)' }}
           contentStyle={{
             borderRadius: '8px',
             fontSize: '12px',
-            border: '1px solid rgba(255,255,255,0.15)',
-            background: 'rgba(15, 15, 30, 0.95)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'rgba(10, 10, 25, 0.95)',
             color: '#ffffff',
             backdropFilter: 'blur(8px)',
           }}
@@ -129,11 +130,12 @@ function PieChartWidget({ data }: { data: RechartsData[] }) {
           ))}
         </Pie>
         <Tooltip
+          cursor={{ fill: 'rgba(255,255,255,0.06)' }}
           contentStyle={{
             borderRadius: '8px',
             fontSize: '12px',
-            border: '1px solid rgba(255,255,255,0.15)',
-            background: 'rgba(15, 15, 30, 0.95)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'rgba(10, 10, 25, 0.95)',
             color: '#ffffff',
             backdropFilter: 'blur(8px)',
           }}
@@ -157,11 +159,12 @@ function RadarChartWidget({ data }: { data: RechartsData[] }) {
           fillOpacity={0.35}
         />
         <Tooltip
+          cursor={{ fill: 'rgba(255,255,255,0.06)' }}
           contentStyle={{
             borderRadius: '8px',
             fontSize: '12px',
-            border: '1px solid rgba(255,255,255,0.15)',
-            background: 'rgba(15, 15, 30, 0.95)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'rgba(10, 10, 25, 0.95)',
             color: '#ffffff',
             backdropFilter: 'blur(8px)',
           }}
@@ -204,11 +207,12 @@ function LineChartWidget({
           stroke="rgba(255,255,255,0.2)"
         />
         <Tooltip
+          cursor={{ fill: 'rgba(255,255,255,0.06)' }}
           contentStyle={{
             borderRadius: '8px',
             fontSize: '12px',
-            border: '1px solid rgba(255,255,255,0.15)',
-            background: 'rgba(15, 15, 30, 0.95)',
+            border: '1px solid rgba(255,255,255,0.2)',
+            background: 'rgba(10, 10, 25, 0.95)',
             color: '#ffffff',
             backdropFilter: 'blur(8px)',
           }}
