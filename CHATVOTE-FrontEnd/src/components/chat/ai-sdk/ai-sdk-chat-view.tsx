@@ -310,9 +310,11 @@ export default function AiSdkChatView({
     if (!aiChatIdRef.current) {
       const newChatId = generateUuid();
       aiChatIdRef.current = newChatId;
+      // Use path format /chat/[chatId] so shared URLs work with the [chatId] route
       const params = new URLSearchParams(window.location.search);
-      params.set("chat_id", newChatId);
-      window.history.replaceState(null, "", `${window.location.pathname}?${params.toString()}`);
+      params.delete("chat_id");
+      const queryString = params.toString();
+      window.history.replaceState(null, "", `/chat/${newChatId}${queryString ? `?${queryString}` : ''}`);
     }
   }, []);
 
