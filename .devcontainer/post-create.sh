@@ -16,6 +16,10 @@ poetry config virtualenvs.in-project true
 echo "==> Installing Firebase CLI..."
 npm install -g firebase-tools
 
+# Set dummy Firebase credentials for emulator (avoids DefaultCredentialsError)
+echo 'export GOOGLE_APPLICATION_CREDENTIALS="/workspace/.devcontainer/firebase-dummy-credentials.json"' >> "$HOME/.bashrc"
+export GOOGLE_APPLICATION_CREDENTIALS="/workspace/.devcontainer/firebase-dummy-credentials.json"
+
 echo "==> Creating .env files if missing..."
 cd /workspace
 [ ! -f CHATVOTE-BackEnd/.env ] && cp CHATVOTE-BackEnd/.env.example CHATVOTE-BackEnd/.env 2>/dev/null || true
