@@ -192,7 +192,7 @@ services:
     ports:
       - "8652:3000"
     healthcheck:
-      test: ["CMD-SHELL", "curl -sf http://localhost:3000/api/public/health > /dev/null"]
+      test: ["CMD-SHELL", "wget -qO- http://localhost:3000/api/public/health || wget -qO- http://$(hostname):3000/api/public/health"]
       interval: 10s
       timeout: 5s
       retries: 30
