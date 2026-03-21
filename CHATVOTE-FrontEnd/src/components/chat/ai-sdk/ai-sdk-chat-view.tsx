@@ -24,8 +24,6 @@ import { auth as firebaseAuth } from "@lib/firebase/firebase";
 import { useAiSdkFeaturesStore } from "@lib/stores/ai-sdk-features-store";
 import { generateUuid } from "@lib/utils";
 import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
-import { Plus } from "lucide-react";
-
 import SponsorPartners from "../sponsor-partners";
 
 import AiSdkFeatureRibbon from "./ai-sdk-feature-ribbon";
@@ -185,9 +183,12 @@ export default function AiSdkChatView({
   });
 
   // Apply context tool results to the store when messages arrive.
-  // Key: `${message.id}:${partIndex}` — works even if toolCallId is undefined.
+  // Deferred via setTimeout to prevent synchronous re-render loops:
+  // messages change → effect → setState → Zustand re-render → new messages ref → effect → loop
   const processedToolCallsRef = useRef(new Set<string>());
   useEffect(() => {
+    const pendingUpdates: Array<() => void> = [];
+
     for (const message of messages) {
       if (message.role !== "assistant") continue;
       for (let i = 0; i < message.parts.length; i++) {
@@ -204,42 +205,52 @@ export default function AiSdkChatView({
             cityName?: string;
           };
           if (result.municipalityCode && storeApi) {
-            storeApi.setState({
-              municipalityCode: result.municipalityCode,
-              scope: "local",
-              selectedElectoralLists: [],
-              partyIds: new Set<string>(),
+            pendingUpdates.push(() => {
+              storeApi.setState({
+                municipalityCode: result.municipalityCode,
+                scope: "local",
+                selectedElectoralLists: [],
+                partyIds: new Set<string>(),
+              });
+              const next = new URLSearchParams(window.location.search);
+              next.set("municipality_code", result.municipalityCode!);
+              window.history.replaceState(null, "", `${window.location.pathname}?${next.toString()}`);
             });
-            // Shallow URL update — avoids Next.js re-render from router.replace
-            const next = new URLSearchParams(window.location.search);
-            next.set("municipality_code", result.municipalityCode);
-            window.history.replaceState(null, "", `${window.location.pathname}?${next.toString()}`);
           }
         } else if (toolName === "changeCandidates") {
           const result = part.output as {
             partyIds: string[];
             operation: string;
           };
-          if (result.operation === "set") {
-            setPartyIds(result.partyIds);
-          } else if (result.operation === "add") {
-            const current = Array.from(storeApi?.getState().partyIds ?? []);
-            setPartyIds([...new Set([...current, ...result.partyIds])]);
-          } else if (result.operation === "remove") {
-            const current = Array.from(storeApi?.getState().partyIds ?? []);
-            setPartyIds(current.filter((id) => !result.partyIds.includes(id)));
-          }
+          pendingUpdates.push(() => {
+            if (result.operation === "set") {
+              setPartyIds(result.partyIds);
+            } else if (result.operation === "add") {
+              const current = Array.from(storeApi?.getState().partyIds ?? []);
+              setPartyIds([...new Set([...current, ...result.partyIds])]);
+            } else if (result.operation === "remove") {
+              const current = Array.from(storeApi?.getState().partyIds ?? []);
+              setPartyIds(current.filter((id) => !result.partyIds.includes(id)));
+            }
+          });
         } else if (toolName === "removeRestrictions") {
-          if (storeApi) {
-            storeApi.setState({
-              municipalityCode: undefined,
-              scope: "national",
-            });
-          }
-          setPartyIds([]);
+          pendingUpdates.push(() => {
+            if (storeApi) {
+              storeApi.setState({
+                municipalityCode: undefined,
+                scope: "national",
+              });
+            }
+            setPartyIds([]);
+          });
         }
       }
     }
+
+    if (pendingUpdates.length === 0) return;
+    // Defer store updates to break the synchronous re-render cycle
+    const id = setTimeout(() => pendingUpdates.forEach((fn) => fn()), 0);
+    return () => clearTimeout(id);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [messages]);
 
@@ -329,17 +340,7 @@ export default function AiSdkChatView({
     <div className="flex h-full flex-col">
       {/* Candidate selection is handled by ChatContextSidebar */}
 
-      {messages.length > 0 && (
-        <div className="flex justify-end px-3 py-1.5 md:px-9">
-          <button
-            onClick={() => window.location.reload()}
-            className="text-muted-foreground hover:text-foreground inline-flex items-center gap-1.5 rounded-full border border-white/10 bg-white/5 px-3 py-1 text-xs transition-colors hover:border-white/20 hover:bg-white/10"
-          >
-            <Plus className="size-3" />
-            Nouveau chat
-          </button>
-        </div>
-      )}
+      {/* New chat button removed — use header button instead */}
 
       {/* Messages */}
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-3 py-4 md:px-9">

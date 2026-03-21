@@ -9,24 +9,41 @@ import { Button } from "@components/ui/button";
 import { SidebarTrigger } from "@components/ui/sidebar";
 
 import { IS_EMBEDDED } from "@lib/utils";
-import { Heart, HelpCircleIcon, XIcon } from "lucide-react";
+import { Heart, HelpCircleIcon, Share, SquarePenIcon, XIcon } from "lucide-react";
 
 import { useSearchParams } from "next/navigation";
 
 import { AI_SDK_ENABLED } from "@lib/ai/feature-flags";
+import { trackShareClicked } from "@lib/firebase/analytics";
 
 import ChatEmbedHeader from "./chat-embed-header";
 import { ChatModeToggle } from "./chat-mode-toggle";
-import CreateNewChatDropdownButton from "./create-new-chat-dropdown-button";
 import SocketDisconnectedBanner from "./socket-disconnected-banner";
 import { ThemeModeToggle } from "./theme-mode-toggle";
 
 function ChatHeader() {
   const [displayBanner, setDisplayBanner] = useState(true);
+  const [shareCopied, setShareCopied] = useState(false);
   const params = useSearchParams();
   const urlModeOverride = params.get("mode") === "ai";
   // Toggle hidden — mode is now controlled by env var only
   const showToggle = false && AI_SDK_ENABLED && !urlModeOverride;
+  const chatId = params.get("chat_id");
+
+  const handleShare = async () => {
+    const url = window.location.href;
+    if (chatId) {
+      trackShareClicked({ content_type: "chat_permalink", session_id: chatId });
+    }
+    if (navigator.canShare?.({ url })) {
+      await navigator.share({ title: "Mon chat ChatVote", url });
+    } else {
+      await navigator.clipboard.writeText(url);
+      // Brief visual feedback via button text change handled by state
+      setShareCopied(true);
+      setTimeout(() => setShareCopied(false), 2000);
+    }
+  };
 
   if (IS_EMBEDDED) {
     return <ChatEmbedHeader />;
@@ -87,7 +104,30 @@ function ChatHeader() {
                 <HelpCircleIcon />
               </Button>
             </HowToDialog>
-            <CreateNewChatDropdownButton />
+            {chatId && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="size-8"
+                onClick={handleShare}
+                title={shareCopied ? "Lien copié !" : "Partager ce chat"}
+              >
+                {shareCopied ? (
+                  <span className="text-xs font-medium text-green-400">✓</span>
+                ) : (
+                  <Share className="size-4" />
+                )}
+              </Button>
+            )}
+            <Button
+              variant="outline"
+              size="sm"
+              className="gap-1.5"
+              onClick={() => window.location.href = '/chat'}
+            >
+              <SquarePenIcon className="size-3.5" />
+              <span>Nouveau Chat</span>
+            </Button>
           </div>
         </div>
 
