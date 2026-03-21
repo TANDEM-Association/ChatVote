@@ -21,6 +21,7 @@ import {
 } from '@lib/ai/qdrant-search';
 import { scalewayChat } from '@lib/ai/providers';
 import { db, auth } from '@lib/firebase/firebase-admin';
+import { getAiConfig } from '@lib/ai/ai-config';
 
 export const maxDuration = 120;
 export const preferredRegion = 'cdg1';
@@ -68,7 +69,7 @@ async function searchDataGouv(query: string, limit = 5): Promise<DataGouvDataset
 }
 
 
-function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[] = [], _candidateNames: Map<string, string> = new Map(), selectedCandidateIds: string[] = []) {
+function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[] = [], _candidateNames: Map<string, string> = new Map(), selectedCandidateIds: string[] = [], aiConfig = { maxSearchCalls: 3, docsPerCandidateShallow: 3, docsPerCandidateDeep: 5, docsPerSearchShallow: 6, docsPerSearchDeep: 8, scoreThreshold: 0.25 as number }) {
   const features = enabledFeatures ?? ['rag'];
   const ragEnabled = features.includes('rag');
 
@@ -82,7 +83,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
   // Also tracks total calls to cap runaway models (Qwen3).
   const searchCache = new Map<string, Promise<{ results: SearchResult[]; count: number }>>();
   let searchCallCount = 0;
-  const MAX_SEARCH_CALLS = 3; // allow up to 3 distinct topic searches per request
+  const MAX_SEARCH_CALLS = aiConfig.maxSearchCalls; // allow up to N distinct topic searches per request
 
 
 
@@ -139,8 +140,8 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                 }
               }
               searchCallCount++;
-              const docsPerCandidate = depth === 'deep' ? 5 : 3;
-              const docsPerSearch = depth === 'deep' ? 8 : 6;
+              const docsPerCandidate = depth === 'deep' ? aiConfig.docsPerCandidateDeep : aiConfig.docsPerCandidateShallow;
+              const docsPerSearch = depth === 'deep' ? aiConfig.docsPerSearchDeep : aiConfig.docsPerSearchShallow;
 
               const promise = (async () => {
                 // Query expansion: generate 2-3 RAG-optimized variants
@@ -163,7 +164,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   const candidateResults = await Promise.all(
                     searchCids.flatMap((cid) =>
                       queries.map((q) =>
-                        searchQdrant(COLLECTIONS.candidatesWebsites, q, 'metadata.namespace', cid, docsPerSearch, queryVectors.get(q)!, { scoreThreshold: 0.25 })
+                        searchQdrant(COLLECTIONS.candidatesWebsites, q, 'metadata.namespace', cid, docsPerSearch, queryVectors.get(q)!, { scoreThreshold: aiConfig.scoreThreshold })
                           .then((results) => ({ cid, results })),
                       ),
                     ),
@@ -183,7 +184,7 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
                   const partyResults = await Promise.all(
                     searchPids.flatMap((pid) =>
                       queries.map((q) =>
-                        searchQdrant(COLLECTIONS.allParties, q, 'metadata.namespace', pid, docsPerSearch, queryVectors.get(q), { scoreThreshold: 0.25 }),
+                        searchQdrant(COLLECTIONS.allParties, q, 'metadata.namespace', pid, docsPerSearch, queryVectors.get(q), { scoreThreshold: aiConfig.scoreThreshold }),
                       ),
                     ),
                   );
@@ -652,17 +653,16 @@ function buildTools(enabledFeatures: string[] | undefined, candidateIds: string[
 
 // ── Rate limiting (in-memory, per Vercel function instance) ────────────────
 const RATE_LIMIT_WINDOW_MS = 60_000;
-const RATE_LIMIT_MAX = 20;
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>();
 
-function checkRateLimit(uid: string): boolean {
+function checkRateLimit(uid: string, rateLimitMax: number): boolean {
   const now = Date.now();
   const entry = rateLimitMap.get(uid);
   if (!entry || now > entry.resetAt) {
     rateLimitMap.set(uid, { count: 1, resetAt: now + RATE_LIMIT_WINDOW_MS });
     return true;
   }
-  if (entry.count >= RATE_LIMIT_MAX) return false;
+  if (entry.count >= rateLimitMax) return false;
   entry.count++;
   return true;
 }
@@ -670,6 +670,9 @@ function checkRateLimit(uid: string): boolean {
 const CHAT_ID_REGEX = /^[a-zA-Z0-9_-]{1,128}$/;
 
 const handleChat = observe(async function handleChat(req: Request) {
+  // ── Load AI config (cached, falls back to defaults) ──────────────────────
+  const aiConfig = await getAiConfig();
+
   // ── Auth: verify Firebase ID token (optional — anonymous users allowed) ──
   const authHeader = req.headers.get('authorization');
   const token = authHeader?.startsWith('Bearer ') ? authHeader.slice(7) : null;
@@ -686,7 +689,7 @@ const handleChat = observe(async function handleChat(req: Request) {
 
   // ── Rate limit (by uid or IP for anonymous) ─────────────────────────────
   const rateLimitKey = uid !== 'anonymous' ? uid : (req.headers.get('x-forwarded-for') ?? 'unknown');
-  if (!checkRateLimit(rateLimitKey)) {
+  if (!checkRateLimit(rateLimitKey, aiConfig.rateLimitMax)) {
     return new Response(JSON.stringify({ error: 'Rate limit exceeded' }), { status: 429 });
   }
 
@@ -951,10 +954,18 @@ Appelle renderWidget APRÈS avoir obtenu les données (via searchDataGouv, RAG, 
 
 ${respondInLanguage}${candidateContext}`;
 
-  // Model: Scaleway Qwen 3.5 397B (primary) → Gemini 2.5 Flash (fallback)
-  let model: LanguageModel = scalewayChat;
+  // Model: resolved from aiConfig (primary → fallback if Scaleway key missing)
+  const modelName = process.env.SCALEWAY_EMBED_API_KEY ? aiConfig.primaryModel : aiConfig.fallbackModel;
   if (!process.env.SCALEWAY_EMBED_API_KEY) {
-    console.warn('[ai-chat] SCALEWAY_EMBED_API_KEY missing, falling back to Gemini');
+    console.warn('[ai-chat] SCALEWAY_EMBED_API_KEY missing, falling back to', aiConfig.fallbackModel);
+  }
+  let model: LanguageModel;
+  if (modelName === 'scaleway-qwen') {
+    model = scalewayChat;
+  } else if (modelName === 'gemini-2.0-flash') {
+    model = google('gemini-2.0-flash');
+  } else {
+    // default: gemini-2.5-flash
     model = google('gemini-2.5-flash');
   }
 
@@ -1041,7 +1052,7 @@ ${respondInLanguage}${candidateContext}`;
         console.error('[ai-chat] Failed to persist conversation:', err);
       }
     },
-    tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap, searchCandidateIds),
+    tools: buildTools(enabledFeatures, candidateIds, candidateNamesMap, searchCandidateIds, aiConfig),
   });
 
   return result.toUIMessageStreamResponse({
