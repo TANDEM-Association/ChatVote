@@ -248,6 +248,8 @@ jobs:
           sync_var LANGFUSE_PUBLIC_KEY "$SYNC_LANGFUSE_PUBLIC_KEY"
           sync_var LANGFUSE_SECRET_KEY "$SYNC_LANGFUSE_SECRET_KEY"
           sync_var LANGFUSE_BASEURL "$SYNC_LANGFUSE_BASEURL"
+          sync_var NEXT_PUBLIC_ENABLE_AI_SDK "true"
+          sync_var NEXT_PUBLIC_ENABLE_COMMUNE_DASHBOARD "true"
 
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
