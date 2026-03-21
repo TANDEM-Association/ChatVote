@@ -412,10 +412,10 @@ export default function AiSdkChatView({
 
           {status === "streaming" && <AiSdkStreamingIndicator onStop={stop} />}
 
-          {error && (
+          {error && process.env.NODE_ENV === "development" && (
             <div className="rounded-lg border border-red-200 bg-red-50 p-4 dark:border-red-900 dark:bg-red-950">
               <p className="text-sm text-red-800 dark:text-red-200">
-                Une erreur est survenue.
+                {error.message}
                 <button
                   onClick={() => regenerate()}
                   className="ml-2 font-medium underline hover:no-underline"
@@ -423,11 +423,6 @@ export default function AiSdkChatView({
                   Réessayer
                 </button>
               </p>
-              {process.env.NODE_ENV === "development" && (
-                <pre className="mt-2 max-h-24 overflow-auto text-xs text-red-600 opacity-70 dark:text-red-400">
-                  {error.message}
-                </pre>
-              )}
             </div>
           )}
           <div ref={bottomRef} />
