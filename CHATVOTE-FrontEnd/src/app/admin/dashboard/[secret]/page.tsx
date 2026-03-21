@@ -209,6 +209,13 @@ export default function AdminDashboard() {
       <div className="bg-card flex items-center justify-between border-b px-6 py-4">
         <h1 className="text-foreground text-xl font-bold">Admin Dashboard</h1>
         <div className="flex items-center gap-4">
+          {/* AI Config */}
+          <a
+            href={`/admin/ai-config/${secret}`}
+            className="flex items-center gap-1.5 rounded border border-blue-500/40 bg-blue-500/10 px-3 py-1.5 text-xs font-medium text-blue-400 transition-colors hover:bg-blue-500/20"
+          >
+            AI Config
+          </a>
           {/* Reset Rate Limit */}
           <button
             type="button"
