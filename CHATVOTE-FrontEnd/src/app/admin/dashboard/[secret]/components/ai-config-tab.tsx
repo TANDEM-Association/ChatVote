@@ -49,8 +49,6 @@ const FEATURE_TOGGLES: Array<{ key: keyof AiConfig; label: string; description: 
   { key: "enablePerplexity", label: "Web Search (Perplexity)", description: "Recherche web pour l'actualité" },
   { key: "enableDataGouv", label: "data.gouv.fr", description: "Données ouvertes gouvernementales" },
   { key: "enableWidgets", label: "Widgets", description: "Visualisations et graphiques interactifs" },
-  { key: "enableVotingRecords", label: "Votes parlementaires", description: "Historique des votes de l'Assemblée nationale" },
-  { key: "enableParliamentary", label: "Questions parlementaires", description: "Questions posées au gouvernement" },
 ];
 
 export default function AiConfigTab() {
