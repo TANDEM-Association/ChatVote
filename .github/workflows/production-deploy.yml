@@ -254,6 +254,11 @@ jobs:
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
 
+      - name: Ensure feature flags in env
+        run: |
+          echo "NEXT_PUBLIC_ENABLE_AI_SDK=true" >> .vercel/.env.production.local
+          echo "NEXT_PUBLIC_ENABLE_COMMUNE_DASHBOARD=true" >> .vercel/.env.production.local
+
       - name: Cache Next.js build
         uses: actions/cache@v4
         with:
