@@ -218,6 +218,7 @@ jobs:
           SYNC_LANGFUSE_PUBLIC_KEY: ${{ secrets.LANGFUSE_PUBLIC_KEY }}
           SYNC_LANGFUSE_SECRET_KEY: ${{ secrets.LANGFUSE_SECRET_KEY }}
           SYNC_LANGFUSE_BASEURL: ${{ secrets.LANGFUSE_BASEURL }}
+          SYNC_PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
         run: |
           # Sync env vars BEFORE vercel pull so pulled .env has correct values
           sync_var() {
@@ -250,6 +251,7 @@ jobs:
           sync_var LANGFUSE_BASEURL "$SYNC_LANGFUSE_BASEURL"
           sync_var NEXT_PUBLIC_ENABLE_AI_SDK "true"
           sync_var NEXT_PUBLIC_ENABLE_COMMUNE_DASHBOARD "true"
+          sync_var PERPLEXITY_API_KEY "$SYNC_PERPLEXITY_API_KEY"
 
       - name: Pull Vercel environment
         run: vercel pull --yes --environment=production --token=${{ secrets.VERCEL_TOKEN }}
@@ -296,6 +298,7 @@ jobs:
           LANGFUSE_BASEURL: ${{ secrets.LANGFUSE_BASEURL }}
           NEXT_PUBLIC_ENABLE_AI_SDK: "true"
           NEXT_PUBLIC_ENABLE_COMMUNE_DASHBOARD: "true"
+          PERPLEXITY_API_KEY: ${{ secrets.PERPLEXITY_API_KEY }}
         run: vercel build --prod --token=${{ secrets.VERCEL_TOKEN }}
 
       - name: Deploy

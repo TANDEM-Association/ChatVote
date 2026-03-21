@@ -10,6 +10,7 @@ export interface AiConfig {
   primaryModel: string;
   fallbackModel: string;
   rateLimitMax: number;
+  enablePerplexity: boolean;
 }
 
 export const AI_CONFIG_DEFAULTS: AiConfig = {
@@ -22,6 +23,7 @@ export const AI_CONFIG_DEFAULTS: AiConfig = {
   primaryModel: 'scaleway-qwen',
   fallbackModel: 'gemini-2.5-flash',
   rateLimitMax: 20,
+  enablePerplexity: false,
 };
 
 let cached: AiConfig | null = null;
