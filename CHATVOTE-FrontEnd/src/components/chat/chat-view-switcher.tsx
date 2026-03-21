@@ -7,7 +7,7 @@ import { useAppContext } from "@components/providers/app-provider";
 
 import AiSdkChatView from "./ai-sdk/ai-sdk-chat-view";
 
-type AiMessage = { role: string; content: string };
+type AiMessage = { role: string; content: string; parts?: Array<Record<string, unknown>> };
 
 type Props = {
   sessionId?: string;

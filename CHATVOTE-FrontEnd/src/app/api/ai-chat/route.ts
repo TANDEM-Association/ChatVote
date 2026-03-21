@@ -1010,6 +1010,7 @@ Tu disposes d'un maximum de **${aiConfig.maxSearchCalls} appels de recherche** e
 - **Appels multiples UNIQUEMENT pour des THÉMATIQUES DIFFÉRENTES** : Tu peux appeler plusieurs fois si la question couvre des sujets distincts (ex: un appel "transports mobilité" + un appel "écologie environnement"). Mais **n'appelle PAS plusieurs fois pour le même sujet** — les résultats seront identiques (cache automatique).
 - **Profondeur** : Passe \`depth: "deep"\` quand la question demande une analyse détaillée ou cible un seul candidat. Utilise \`depth: "shallow"\` (défaut) pour les comparaisons multi-candidats.
 - **Ciblage par candidateId** : Passe un seul candidateId UNIQUEMENT quand l'utilisateur demande spécifiquement les positions d'UN candidat ("Que propose Dupont sur X ?"). Pour les comparaisons, ne passe PAS de candidateIds — l'outil cherche dans tous automatiquement.
+- **Recherche web complémentaire** : Si un candidat n'a PAS de résultats dans les documents RAG (aucune source trouvée), utilise webSearch pour chercher des informations sur ce candidat spécifiquement. Indique clairement que ces informations proviennent du web (⚠️ NON VÉRIFIÉ).
 - **Recherche approfondie** : Appelle runDeepResearch UNIQUEMENT quand l'utilisateur demande explicitement une analyse approfondie ou complète. Ne l'utilise PAS automatiquement après searchDocumentsWithRerank.
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.
@@ -1065,11 +1066,26 @@ ${respondInLanguage}${candidateContext}`;
       });
     },
     async onFinish({ text, steps, usage }) {
+      // Debug: log full step structure to understand property names
+      if (process.env.NODE_ENV === 'development' && steps?.length) {
+        for (const [si, step] of steps.entries()) {
+          const sAny = step as any;
+          console.log(`[persist-debug] step ${si}: keys=${Object.keys(sAny).join(',')}`);
+          if (sAny.toolCalls?.length) {
+            const tc = sAny.toolCalls[0];
+            console.log(`[persist-debug]   toolCall[0] keys=${Object.keys(tc).join(',')}`);
+            console.log(`[persist-debug]   toolCall[0] toolName=${tc.toolName}`);
+          }
+          if (sAny.toolResults?.length) {
+            const tr = sAny.toolResults[0];
+            console.log(`[persist-debug]   toolResult[0] keys=${Object.keys(tr).join(',')}`);
+          }
+        }
+      }
       console.log('[ai-chat:finish]', {
         textLen: text?.length ?? 0,
         textPreview: text?.slice(0, 200),
         stepsCount: steps?.length,
-        stepTexts: steps?.map((s, i) => `step${i}: textLen=${s.text?.length ?? 0} reasoning=${JSON.stringify((s as any).reasoning)?.slice(0, 80)} tools=${s.toolCalls?.map(t => t.toolName).join(',') || 'none'}`),
       });
       // In multi-step tool-calling flows, `text` may be empty.
       // Collect text from all steps as the final output.
@@ -1085,11 +1101,44 @@ ${respondInLanguage}${candidateContext}`;
         const chatRef = db.collection('chat_sessions').doc(chatId);
         const doc = await chatRef.get();
 
-        // Build a slim message pair from the latest exchange
+        // Build message pair with full parts for UI reconstruction on reload
         const lastUserMsg = uiMessages.filter((m) => m.role === 'user').at(-1);
+
+        // Collect assistant parts from all steps (text + tool results)
+        const assistantParts: Array<Record<string, unknown>> = [];
+        for (const step of steps ?? []) {
+          if (step.text) {
+            assistantParts.push({ type: 'text', text: step.text });
+          }
+          for (const tc of step.toolCalls ?? []) {
+            const tcAny = tc as any;
+            const toolResult = step.toolResults?.find((tr: any) => tr.toolCallId === tc.toolCallId) as any;
+            // Log structure to debug
+            if (process.env.NODE_ENV === 'development') {
+              console.log('[persist] toolCall keys:', Object.keys(tcAny), 'toolResult keys:', toolResult ? Object.keys(toolResult) : 'none');
+            }
+            assistantParts.push({
+              type: 'tool',
+              toolName: tc.toolName,
+              args: tcAny.args ?? tcAny.input ?? null,
+              state: 'output-available',
+              output: toolResult?.result ?? toolResult?.output ?? null,
+            });
+          }
+        }
+
         const newMessages = [
-          ...(lastUserMsg ? [{ role: 'user' as const, content: lastUserMsg.parts?.map((p) => ('text' in p ? p.text : '')).join('') ?? '', timestamp: now }] : []),
-          { role: 'assistant' as const, content: outputText, timestamp: now },
+          ...(lastUserMsg ? [{
+            role: 'user' as const,
+            content: lastUserMsg.parts?.map((p) => ('text' in p ? p.text : '')).join('') ?? '',
+            timestamp: now,
+          }] : []),
+          {
+            role: 'assistant' as const,
+            content: outputText,
+            parts: assistantParts,
+            timestamp: now,
+          },
         ];
 
         if (doc.exists) {

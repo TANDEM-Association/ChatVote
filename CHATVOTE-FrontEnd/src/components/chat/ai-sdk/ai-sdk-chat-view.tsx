@@ -31,7 +31,7 @@ import AiSdkFeatureRibbon from "./ai-sdk-feature-ribbon";
 import AiSdkMessage from "./ai-sdk-message";
 import AiSdkStreamingIndicator from "./ai-sdk-streaming-indicator";
 
-type AiMessage = { role: string; content: string };
+type AiMessage = { role: string; content: string; parts?: Array<Record<string, unknown>> };
 
 type Props = {
   chatId?: string;
@@ -183,16 +183,43 @@ export default function AiSdkChatView({
     [],
   );
 
-  // Convert Firestore flat messages to UIMessage format for useChat initialMessages.
-  // Only computed once on mount (useMemo with empty deps) so it doesn't re-run on re-renders.
+  // Convert Firestore messages to UIMessage format for useChat initialMessages.
+  // Reconstructs full parts (text + tool results) when saved parts are available.
   const convertedInitialMessages = useMemo(() => {
     if (!initialMessages?.length) return undefined;
-    return initialMessages.map((m, i) => ({
-      id: `restored-${i}`,
-      role: m.role as "user" | "assistant",
-      parts: [{ type: "text" as const, text: m.content }],
-      createdAt: new Date(),
-    }));
+    return initialMessages.map((m, i) => {
+      // If saved parts exist (new format), reconstruct them
+      if (m.parts?.length) {
+        const uiParts: Array<any> = [];
+        for (const p of m.parts) {
+          if (p.type === 'text' && String(p.text ?? '').trim()) {
+            uiParts.push({ type: 'text', text: String(p.text) });
+          } else if (p.type === 'tool') {
+            uiParts.push({
+              type: `tool-${p.toolName}`,
+              toolCallId: `restored-tc-${i}-${uiParts.length}`,
+              toolName: String(p.toolName ?? ''),
+              state: 'output-available',
+              input: p.args ?? {},
+              output: p.output ?? null,
+            });
+          }
+        }
+        return {
+          id: `restored-${i}`,
+          role: m.role as 'user' | 'assistant',
+          parts: uiParts.length > 0 ? uiParts : [{ type: 'text', text: m.content }],
+          createdAt: new Date(),
+        };
+      }
+      // Fallback: text-only (old format)
+      return {
+        id: `restored-${i}`,
+        role: m.role as 'user' | 'assistant',
+        parts: [{ type: 'text' as const, text: m.content }],
+        createdAt: new Date(),
+      };
+    });
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
@@ -461,17 +488,17 @@ export default function AiSdkChatView({
       </div>
 
       {/* Input */}
-      <div className="px-3 py-3 md:px-9">
+      <div className={`px-3 py-3 md:px-9 ${!municipalityCode ? 'pointer-events-none opacity-40 blur-[1px]' : ''}`}>
         <form
           onSubmit={handleSubmit}
           className="relative mx-auto flex max-w-3xl items-center gap-4 overflow-hidden rounded-4xl border border-white/10 bg-white/5 px-4 py-3 transition-colors focus-within:border-white/20"
         >
           <input
             className="placeholder:text-muted-foreground flex-1 text-base whitespace-pre focus-visible:ring-0 focus-visible:outline-none disabled:cursor-not-allowed"
-            placeholder="Posez une question..."
+            placeholder={municipalityCode ? "Posez une question..." : "Sélectionnez une commune d'abord..."}
             value={input}
             onChange={(e) => setInput(e.target.value)}
-            disabled={status === "streaming"}
+            disabled={status === "streaming" || !municipalityCode}
           />
           {status === "streaming" ? (
             <button

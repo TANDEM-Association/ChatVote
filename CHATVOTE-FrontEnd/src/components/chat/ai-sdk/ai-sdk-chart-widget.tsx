@@ -68,33 +68,34 @@ function BarChartWidget({
   return (
     <ResponsiveContainer width="100%" height={260}>
       <BarChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 24 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 12 }}
+          tick={{ fontSize: 11, fill: '#94a3b8' }}
           label={
             xAxisLabel
-              ? { value: xAxisLabel, position: 'insideBottom', offset: -16, fontSize: 11 }
+              ? { value: xAxisLabel, position: 'insideBottom', offset: -16, fontSize: 11, fill: '#94a3b8' }
               : undefined
           }
-          className="fill-muted-foreground"
+          stroke="rgba(255,255,255,0.2)"
         />
         <YAxis
-          tick={{ fontSize: 12 }}
+          tick={{ fontSize: 11, fill: '#94a3b8' }}
           label={
             yAxisLabel
-              ? { value: yAxisLabel, angle: -90, position: 'insideLeft', fontSize: 11 }
+              ? { value: yAxisLabel, angle: -90, position: 'insideLeft', fontSize: 11, fill: '#94a3b8' }
               : undefined
           }
-          className="fill-muted-foreground"
+          stroke="rgba(255,255,255,0.2)"
         />
         <Tooltip
           contentStyle={{
             borderRadius: '8px',
             fontSize: '12px',
-            border: '1px solid hsl(var(--border))',
-            background: 'hsl(var(--popover))',
-            color: 'hsl(var(--popover-foreground))',
+            border: '1px solid rgba(255,255,255,0.15)',
+            background: 'rgba(15, 15, 30, 0.95)',
+            color: '#ffffff',
+            backdropFilter: 'blur(8px)',
           }}
         />
         <Bar dataKey="value" radius={[4, 4, 0, 0]}>
@@ -131,9 +132,10 @@ function PieChartWidget({ data }: { data: RechartsData[] }) {
           contentStyle={{
             borderRadius: '8px',
             fontSize: '12px',
-            border: '1px solid hsl(var(--border))',
-            background: 'hsl(var(--popover))',
-            color: 'hsl(var(--popover-foreground))',
+            border: '1px solid rgba(255,255,255,0.15)',
+            background: 'rgba(15, 15, 30, 0.95)',
+            color: '#ffffff',
+            backdropFilter: 'blur(8px)',
           }}
         />
         <Legend wrapperStyle={{ fontSize: '12px' }} />
@@ -158,9 +160,10 @@ function RadarChartWidget({ data }: { data: RechartsData[] }) {
           contentStyle={{
             borderRadius: '8px',
             fontSize: '12px',
-            border: '1px solid hsl(var(--border))',
-            background: 'hsl(var(--popover))',
-            color: 'hsl(var(--popover-foreground))',
+            border: '1px solid rgba(255,255,255,0.15)',
+            background: 'rgba(15, 15, 30, 0.95)',
+            color: '#ffffff',
+            backdropFilter: 'blur(8px)',
           }}
         />
       </RadarChart>
@@ -180,33 +183,34 @@ function LineChartWidget({
   return (
     <ResponsiveContainer width="100%" height={260}>
       <LineChart data={data} margin={{ top: 4, right: 16, left: 0, bottom: 24 }}>
-        <CartesianGrid strokeDasharray="3 3" className="stroke-border/50" />
+        <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.1)" />
         <XAxis
           dataKey="label"
-          tick={{ fontSize: 12 }}
+          tick={{ fontSize: 11, fill: '#94a3b8' }}
           label={
             xAxisLabel
-              ? { value: xAxisLabel, position: 'insideBottom', offset: -16, fontSize: 11 }
+              ? { value: xAxisLabel, position: 'insideBottom', offset: -16, fontSize: 11, fill: '#94a3b8' }
               : undefined
           }
-          className="fill-muted-foreground"
+          stroke="rgba(255,255,255,0.2)"
         />
         <YAxis
-          tick={{ fontSize: 12 }}
+          tick={{ fontSize: 11, fill: '#94a3b8' }}
           label={
             yAxisLabel
-              ? { value: yAxisLabel, angle: -90, position: 'insideLeft', fontSize: 11 }
+              ? { value: yAxisLabel, angle: -90, position: 'insideLeft', fontSize: 11, fill: '#94a3b8' }
               : undefined
           }
-          className="fill-muted-foreground"
+          stroke="rgba(255,255,255,0.2)"
         />
         <Tooltip
           contentStyle={{
             borderRadius: '8px',
             fontSize: '12px',
-            border: '1px solid hsl(var(--border))',
-            background: 'hsl(var(--popover))',
-            color: 'hsl(var(--popover-foreground))',
+            border: '1px solid rgba(255,255,255,0.15)',
+            background: 'rgba(15, 15, 30, 0.95)',
+            color: '#ffffff',
+            backdropFilter: 'blur(8px)',
           }}
         />
         <Line
