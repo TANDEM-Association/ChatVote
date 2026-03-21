@@ -1194,6 +1194,7 @@ ${respondInLanguage}${candidateContext}`;
 
   return result.toUIMessageStreamResponse({
     originalMessages: uiMessages ?? [],
+    generateMessageId: () => langfuseTraceId || crypto.randomUUID(),
   });
 
   }); // end propagateAttributes

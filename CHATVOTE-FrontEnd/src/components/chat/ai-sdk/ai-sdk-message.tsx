@@ -8,6 +8,7 @@ import { getToolName, isToolUIPart, type UIMessage } from "ai";
 
 import ChatMarkdown from "../chat-markdown";
 
+import AiSdkMessageActions from "./ai-sdk-message-actions";
 import AiSdkSourceChip from "./ai-sdk-source-chip";
 import AiSdkToolResult from "./ai-sdk-tool-result";
 
@@ -79,6 +80,17 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
   // Collect sources from tool results for inline reference badges
   const sources = useMemo(() => collectSources(message.parts), [message.parts]);
 
+  // Concatenate all text parts for the copy button
+  const fullText = useMemo(
+    () =>
+      message.parts
+        .filter((p): p is { type: "text"; text: string } => p.type === "text")
+        .map((p) => p.text)
+        .join("\n")
+        .trim(),
+    [message.parts],
+  );
+
   return (
     <article
       className={cn("flex gap-3", isUser ? "justify-end" : "justify-start")}
@@ -136,6 +148,9 @@ export default function AiSdkMessage({ message, onSendMessage }: Props) {
               return null;
           }
         })}
+        {!isUser && fullText && (
+          <AiSdkMessageActions messageId={message.id} messageContent={fullText} />
+        )}
       </div>
     </article>
   );

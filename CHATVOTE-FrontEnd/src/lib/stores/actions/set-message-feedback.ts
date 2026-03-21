@@ -1,4 +1,5 @@
 import { updateMessageFeedback } from "@lib/firebase/firebase";
+import { scoreFeedback } from "@lib/langfuse-web";
 import { type ChatStoreActionHandlerFor } from "@lib/stores/chat-store.types";
 
 export const setMessageFeedback: ChatStoreActionHandlerFor<
@@ -28,4 +29,7 @@ export const setMessageFeedback: ChatStoreActionHandlerFor<
   const groupedMessageId = messages[indexOfGroupedMessage].id;
 
   await updateMessageFeedback(chatId, groupedMessageId, messageId, feedback);
+
+  // Send score to Langfuse (no-op if Langfuse is not configured)
+  scoreFeedback(messageId, feedback.feedback, feedback.detail);
 };
