@@ -28,16 +28,13 @@ const SurveyBanner = () => {
   );
   const [optimisticShowSurveyBanner, setOptimisticShowSurveyBanner] =
     useState(showSurveyBanner);
-  const [prevShowSurveyBanner, setPrevShowSurveyBanner] =
-    useState(showSurveyBanner);
 
-  // Adjust state during render (React-recommended pattern for prop/state transitions)
-  if (prevShowSurveyBanner !== showSurveyBanner) {
-    setPrevShowSurveyBanner(showSurveyBanner);
+  // Sync optimistic state when showSurveyBanner becomes true
+  useEffect(() => {
     if (showSurveyBanner) {
       setOptimisticShowSurveyBanner(true);
     }
-  }
+  }, [showSurveyBanner]);
 
   const handleCloseSurvey = () => {
     setOpen(false);
