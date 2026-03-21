@@ -9,5 +9,5 @@ const scaleway = createOpenAICompatible({
 
 export const embeddingModel = scaleway.textEmbeddingModel('qwen3-embedding-8b');
 
-// Scaleway chat model — used as fallback when primary Gemini model fails
-export const scalewayChat = scaleway.languageModel('qwen3-235b-a22b-instruct-2507');
+// Scaleway chat model — Qwen 3.5 397B MoE (250k context, 16k output)
+export const scalewayChat = scaleway.languageModel('qwen3.5-397b-a17b');

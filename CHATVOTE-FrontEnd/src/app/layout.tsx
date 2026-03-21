@@ -137,7 +137,7 @@ export default async function RootLayout({
   const tenantId = requestHeaders.get(TENANT_ID_HEADER);
   const tenant = await getTenant(tenantId);
   const auth = await getAuth();
-  const shouldShowToolbar = true;
+  const shouldShowToolbar = process.env.NODE_ENV === "development";
 
   return (
     <html lang={locale} data-theme={theme}>

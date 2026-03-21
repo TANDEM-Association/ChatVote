@@ -142,14 +142,14 @@ export const AuthProvider = ({ children, initialAuth }: AuthProviderProps) => {
     return unsubscribe;
   }, [createSession]);
 
-  async function updateUser(data: Partial<User>) {
+  const updateUser = useCallback(async (data: Partial<User>) => {
     if (!session?.uid) {
       return;
     }
 
     await updateUserDataFirebase(session.uid, data);
     await fetchUser(session.uid);
-  }
+  }, [session?.uid]);
 
   async function refreshUser() {
     setLoading(true);

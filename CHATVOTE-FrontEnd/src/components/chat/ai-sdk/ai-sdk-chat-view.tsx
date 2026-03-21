@@ -24,6 +24,7 @@ import { auth as firebaseAuth } from "@lib/firebase/firebase";
 import { useAiSdkFeaturesStore } from "@lib/stores/ai-sdk-features-store";
 import { generateUuid } from "@lib/utils";
 import { DefaultChatTransport, getToolName, isToolUIPart } from "ai";
+import ChatPostcodePrompt from "../chat-postcode-prompt";
 import SponsorPartners from "../sponsor-partners";
 
 import AiSdkFeatureRibbon from "./ai-sdk-feature-ribbon";
@@ -418,6 +419,14 @@ export default function AiSdkChatView({
               )}
 
               <SponsorPartners />
+            </div>
+          )}
+
+          {messages.length > 0 && (
+            <div className="flex justify-center">
+              <div className="w-full max-w-2xl">
+                <ChatPostcodePrompt />
+              </div>
             </div>
           )}
 
