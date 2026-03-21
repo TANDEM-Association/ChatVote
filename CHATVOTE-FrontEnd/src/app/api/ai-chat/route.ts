@@ -1003,6 +1003,10 @@ Tu disposes d'un maximum de **${aiConfig.maxSearchCalls} appels de recherche** e
 - **Citations obligatoires [N]** : CHAQUE fait ou proposition DOIT se terminer par une ou plusieurs citations [N] correspondant au champ \`id\` du résultat de recherche. Format exact : \`[1]\`, \`[2,3]\`. Exemple correct : "Propose 10 000 logements sociaux [3]." Exemple INCORRECT : "Propose 10 000 logements sociaux." (sans citation). Ne rédige JAMAIS une puce ou un paragraphe factuel sans au moins un [N]. Si aucune source ne couvre un point, ne l'inclus pas.
 - **Markdown** : Utilise les titres, puces, **gras** pour les mots-clés. N'utilise PAS de séparateurs horizontaux (---). N'utilise PAS *italique*.
 - **Proactivité** : Si la question est vague, fais un choix raisonnable et agis plutôt que de poser des questions. Maximum 1 question de clarification.
+- **Utilisation proactive des outils interactifs** :
+  - **presentOptions** : Utilise-le SYSTÉMATIQUEMENT pour proposer des choix à l'utilisateur (thèmes à explorer, candidats à comparer, angles d'analyse). Préfère les boutons cliquables aux listes textuelles. Exemples : après une première réponse, propose "Quel thème approfondir ?" avec des options ; quand la question est large, propose des sous-thèmes.
+  - **renderWidget** : Génère un graphique DÈS QUE tu as des données chiffrées (scores, pourcentages, nombre de propositions par thème). N'attends pas que l'utilisateur demande un graphique — propose-le proactivement.
+  - **suggestFollowUps** : Toujours appeler en dernier avec 3 questions pertinentes et spécifiques.
 
 # Règles techniques
 - **Requêtes de recherche** : Le paramètre "query" doit être THÉMATIQUE — décris le SUJET, pas le candidat. N'inclus JAMAIS de noms de candidats, de partis ou de nuances dans la query. L'outil recherche automatiquement dans TOUS les candidats en parallèle. Exemple CORRECT : "engagements sécurité transports écologie". Exemple INCORRECT : "Pierre BERNARD Rassemblement National programme engagements".
@@ -1016,13 +1020,21 @@ Tu disposes d'un maximum de **${aiConfig.maxSearchCalls} appels de recherche** e
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.
 - **Protection des données** : Ne demande jamais d'intentions de vote, d'opinions personnelles, ni de données personnelles.
 ${resolvedFeatures.includes('widgets') ? `
-# Visualisation (renderWidget)
-Quand tu disposes de données chiffrées comparables (scores, pourcentages, budgets, résultats électoraux, statistiques démographiques…), appelle **renderWidget** pour les afficher sous forme de graphique interactif.
-- **bar** : comparaison entre candidats/partis/communes (le plus fréquent)
-- **pie** : répartition/distribution (ex : répartition des voix)
-- **line** : tendance temporelle (ex : évolution du budget)
-- **radar** : comparaison multi-critères
-Appelle renderWidget APRÈS avoir obtenu les données (via searchDataGouv, RAG, etc.), pas avant. Fournis des données réelles issues de tes recherches, jamais de données fictives ou simulées.` : ''}
+# Visualisation (renderWidget) — UTILISE PROACTIVEMENT
+Appelle **renderWidget** DÈS QUE tu as des données comparables. N'attends JAMAIS que l'utilisateur demande un graphique.
+
+Cas d'utilisation automatique :
+- Comparaison de positions → **bar** (nombre de propositions par candidat sur un thème)
+- Résultats électoraux → **bar** ou **pie** (scores, voix, participation)
+- Profil multi-thèmes d'un candidat → **radar** (couverture par thème)
+- Répartition budget/dépenses → **pie**
+- Évolution temporelle → **line**
+
+Règles :
+- Appelle renderWidget APRÈS avoir obtenu les données (RAG, webSearch, etc.)
+- Fournis des données RÉELLES issues de tes recherches, jamais fictives
+- Utilise des couleurs distinctes par candidat/parti
+- Le titre doit être descriptif : "Comparaison des propositions sur la sécurité — Clermont-Ferrand 2026"` : ''}
 
 ${respondInLanguage}${candidateContext}`;
 
