@@ -19,6 +19,7 @@ import {
   searchQdrantRaw,
   deduplicateResults,
 } from '@lib/ai/qdrant-search';
+import { searchRagflow } from '@lib/ai/ragflow-client';
 import { scalewayChat } from '@lib/ai/providers';
 import { db, auth } from '@lib/firebase/firebase-admin';
 import { getAiConfig } from '@lib/ai/ai-config';
@@ -484,6 +485,46 @@ Exemples INCORRECTS (ne fais JAMAIS ça) :
         }
       : {}),
 
+    // ── RAGFlow knowledge base search (feature-gated) ──────────────────────
+    ...(features.includes('ragflow')
+      ? {
+          searchRagflowKnowledgeBase: tool({
+            description:
+              "Recherche dans la base de connaissances RAGFlow — documents enrichis avec parsing avancé (tableaux, mise en page, OCR). Complémentaire à searchDocumentsWithRerank. Utilise quand searchDocumentsWithRerank ne retourne pas assez de résultats ou pour des documents complexes (tableaux, infographies).",
+            inputSchema: z.object({
+              query: z.string().describe('Requête thématique en français'),
+              datasetIds: z
+                .array(z.string())
+                .optional()
+                .describe('IDs de datasets RAGFlow spécifiques (optionnel — cherche dans tous par défaut)'),
+            }),
+            execute: async (input) => {
+              try {
+                const chunks = await searchRagflow(input.query, input.datasetIds);
+                const results = chunks.map((chunk) => ({
+                  id: 0,
+                  content: chunk.content,
+                  source: chunk.document_name,
+                  url: '',
+                  page: '',
+                  score: chunk.similarity_score,
+                  party_id: (chunk.metadata?.party_id as string) ?? '',
+                  candidate_name: (chunk.metadata?.candidate_name as string) ?? '',
+                  document_name: chunk.document_name,
+                  source_document: chunk.dataset_name,
+                } satisfies SearchResult));
+                const withIds = assignGlobalIds(results);
+                console.log(`[ragflow] searchRagflowKnowledgeBase: ${withIds.length} results for "${input.query.slice(0, 50)}"`);
+                return { results: withIds, count: withIds.length };
+              } catch (err) {
+                console.error('[ai-chat] searchRagflowKnowledgeBase error:', err);
+                return { results: [] as SearchResult[], count: 0, error: String(err) };
+              }
+            },
+          }),
+        }
+      : {}),
+
     // ── Widget / chart rendering ─────────────────────────────────────────────
     ...(features.includes('widgets')
       ? {
@@ -762,6 +803,7 @@ const handleChat = observe(async function handleChat(req: Request) {
     widgets: aiConfig.enableWidgets,
     'voting-records': aiConfig.enableVotingRecords,
     parliamentary: aiConfig.enableParliamentary,
+    ragflow: aiConfig.enableRagflow,
   };
   let resolvedFeatures = Object.entries(featureMap)
     .filter(([, enabled]) => enabled)
@@ -1032,6 +1074,7 @@ ${resolvedFeatures.includes('perplexity') ? `- **⚠️ Recherche web complémen
   - Actualités → webSearch({ query: "actualités campagne municipales [commune] 2026" })
   Le premier tour a eu lieu le 15 mars 2026 — les résultats SONT disponibles sur le web. Ne dis JAMAIS que les élections n'ont pas encore eu lieu.
   **En résumé** : Tu ne peux conclure "pas d'information" QUE si searchDocumentsWithRerank ET webSearch n'ont rien trouvé. Dans ce cas, dis : "Malgré une recherche dans nos documents et sur le web, je n'ai pas trouvé d'information sur ce sujet."` : `- Si les documents ne couvrent pas un sujet, dis-le honnêtement : "Les documents disponibles ne mentionnent pas ce sujet." Reformule ta requête avec des synonymes avant de conclure.`}
+${resolvedFeatures.includes('ragflow') ? `- **RAGFlow (base de connaissances enrichie)** : Appelle searchRagflowKnowledgeBase quand searchDocumentsWithRerank ne retourne pas assez de résultats ou pour des questions portant sur des documents complexes (tableaux, graphiques dans les programmes). Les résultats RAGFlow utilisent un parsing avancé (OCR, extraction de tableaux) et peuvent contenir des informations complémentaires. Les résultats sont numérotés avec des IDs globaux — cite-les avec [N] comme les autres sources.` : ''}
 - **Recherche approfondie** : Appelle runDeepResearch UNIQUEMENT quand l'utilisateur demande explicitement une analyse approfondie ou complète. Ne l'utilise PAS automatiquement après searchDocumentsWithRerank.
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.

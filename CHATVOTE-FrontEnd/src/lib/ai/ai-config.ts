@@ -17,6 +17,7 @@ export interface AiConfig {
   enableWidgets: boolean;
   enableVotingRecords: boolean;
   enableParliamentary: boolean;
+  enableRagflow: boolean;
 }
 
 export const AI_CONFIG_DEFAULTS: AiConfig = {
@@ -35,6 +36,7 @@ export const AI_CONFIG_DEFAULTS: AiConfig = {
   enableWidgets: false,
   enableVotingRecords: false,
   enableParliamentary: false,
+  enableRagflow: false,
 };
 
 let cached: AiConfig | null = null;

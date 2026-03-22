@@ -18,6 +18,7 @@ interface AiConfig {
   enableWidgets: boolean;
   enableVotingRecords: boolean;
   enableParliamentary: boolean;
+  enableRagflow: boolean;
 }
 
 const MODEL_OPTIONS = [
@@ -42,6 +43,7 @@ const DEFAULTS: AiConfig = {
   enableWidgets: false,
   enableVotingRecords: false,
   enableParliamentary: false,
+  enableRagflow: false,
 };
 
 const FEATURE_TOGGLES: Array<{ key: keyof AiConfig; label: string; description: string }> = [
@@ -49,6 +51,7 @@ const FEATURE_TOGGLES: Array<{ key: keyof AiConfig; label: string; description: 
   { key: "enablePerplexity", label: "Web Search (Perplexity)", description: "Recherche web pour l'actualité" },
   { key: "enableDataGouv", label: "data.gouv.fr", description: "Données ouvertes gouvernementales" },
   { key: "enableWidgets", label: "Widgets", description: "Visualisations et graphiques interactifs" },
+  { key: "enableRagflow", label: "RAGFlow", description: "Base de connaissances enrichie avec parsing avancé (OCR, tableaux)" },
 ];
 
 export default function AiConfigTab() {

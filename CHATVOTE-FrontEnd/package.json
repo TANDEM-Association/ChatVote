@@ -17,6 +17,7 @@
     "type:check": "npm run generate:types && tsc --noEmit",
     "test:e2e": "playwright test",
     "test:e2e:ui": "playwright test --ui",
+    "test:unit": "vitest run --config vitest.config.unit.ts",
     "test:eval": "vitest run --config vitest.config.eval.ts",
     "test:eval:debug": "DEBUG_QUERIES=true vitest run --config vitest.config.eval.ts"
   },

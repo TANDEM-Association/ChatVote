@@ -21,6 +21,7 @@ interface AiConfig {
   enableWidgets: boolean;
   enableVotingRecords: boolean;
   enableParliamentary: boolean;
+  enableRagflow: boolean;
 }
 
 const MODEL_OPTIONS = [
@@ -45,6 +46,7 @@ const DEFAULTS: AiConfig = {
   enableWidgets: false,
   enableVotingRecords: false,
   enableParliamentary: false,
+  enableRagflow: false,
 };
 
 const FEATURE_TOGGLES: Array<{ key: keyof AiConfig; label: string; description: string }> = [
@@ -54,6 +56,7 @@ const FEATURE_TOGGLES: Array<{ key: keyof AiConfig; label: string; description: 
   { key: "enableWidgets", label: "Widgets", description: "Visualisations et graphiques interactifs" },
   { key: "enableVotingRecords", label: "Votes parlementaires", description: "Historique des votes de l'Assemblée nationale" },
   { key: "enableParliamentary", label: "Questions parlementaires", description: "Questions posées au gouvernement" },
+  { key: "enableRagflow", label: "RAGFlow", description: "Base de connaissances enrichie avec parsing avancé (OCR, tableaux)" },
 ];
 
 export default function AiConfigPage() {

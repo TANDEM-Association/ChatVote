@@ -51,6 +51,7 @@ export async function PUT(request: NextRequest) {
     const booleanFields = [
       'enableRag', 'enablePerplexity', 'enableDataGouv',
       'enableWidgets', 'enableVotingRecords', 'enableParliamentary',
+      'enableRagflow',
     ] as const;
     for (const key of booleanFields) {
       if (key in body) {
