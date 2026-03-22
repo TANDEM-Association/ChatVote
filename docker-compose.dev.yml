@@ -338,7 +338,7 @@ services:
         condition: service_healthy
       ragflow-minio:
         condition: service_healthy
-    image: infiniflow/ragflow:v0.24.0
+    image: infiniflow/ragflow:nightly
     command:
       - --enable-adminserver
     environment:
