@@ -39,6 +39,8 @@ PID_BACKEND=$!
   cd /workspace/CHATVOTE-FrontEnd
   echo "[frontend] pnpm install..."
   pnpm install --frozen-lockfile
+  # Rebuild native binaries for current platform (devcontainer may differ from host)
+  pnpm rebuild @parcel/watcher 2>/dev/null || true
   echo "[frontend] done"
 ) &
 PID_FRONTEND=$!

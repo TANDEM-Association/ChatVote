@@ -116,7 +116,8 @@ export async function listDatasets(): Promise<RagflowDataset[]> {
     }
 
     const json = await res.json();
-    return (json.data ?? []).map((d: any) => ({
+    const datasets = Array.isArray(json.data) ? json.data : [];
+    return datasets.map((d: any) => ({
       id: d.id,
       name: d.name,
       chunk_method: d.chunk_method ?? d.parser_id ?? 'naive',

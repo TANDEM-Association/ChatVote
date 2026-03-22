@@ -46,6 +46,8 @@ if (getApps().length === 0) {
     const cred = JSON.parse(Buffer.from(credBase64, 'base64').toString());
     initializeApp({ credential: cert(cred) });
   } else {
+    // Local dev: connect to emulator (same logic as firebase-admin.ts)
+    process.env.FIRESTORE_EMULATOR_HOST ??= 'localhost:8081';
     initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'chat-vote-dev' });
   }
 }
