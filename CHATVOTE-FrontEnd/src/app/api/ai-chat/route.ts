@@ -206,7 +206,7 @@ Exemples INCORRECTS (ne fais JAMAIS ça) :
                 }
 
                 if (perCandidateResults.size === 0 && manifestoResults.length === 0) {
-                  return { results: [] as SearchResult[], count: 0, message: 'Aucun document trouvé pour ces filtres.' };
+                  return { results: [] as SearchResult[], count: 0, message: 'Aucun document trouvé dans la base documentaire. Tu DOIS maintenant appeler webSearch pour chercher cette information sur le web avant de répondre à l\'utilisateur. Ne dis JAMAIS "aucune information disponible" sans avoir essayé webSearch.' };
                 }
 
                 // ── Per-candidate dedup + rerank (like Python backend) ──
@@ -407,79 +407,75 @@ Exemples INCORRECTS (ne fais JAMAIS ça) :
         }
       : {}),
 
-    // ── Web search (Google Gemini grounding) ──────────────────────────────────
-    ...(features.includes('perplexity')
-      ? {
-          webSearch: tool({
-            description:
-              "Recherche web pour l'actualité récente et les informations non présentes dans la base documentaire. Utilise pour : actualités de campagne, déclarations récentes, sondages, événements locaux, faits divers liés à la commune. Complément aux outils RAG, pas un substitut.",
-            inputSchema: z.object({
-              query: z.string().describe('Recherche web en français — privilégie des termes précis et datés si possible'),
-            }),
-            execute: async (input) => {
-              try {
-                const perplexityKey = process.env.PERPLEXITY_API_KEY;
-                if (perplexityKey) {
-                  // Use Perplexity Sonar API for web search
-                  const res = await fetch('https://api.perplexity.ai/chat/completions', {
-                    method: 'POST',
-                    headers: {
-                      'Authorization': `Bearer ${perplexityKey}`,
-                      'Content-Type': 'application/json',
-                    },
-                    body: JSON.stringify({
-                      model: 'sonar',
-                      messages: [
-                        { role: 'system', content: 'Tu es un assistant de recherche web. Réponds en français avec des faits précis et sourcés. Cite les URLs des sources.' },
-                        { role: 'user', content: input.query },
-                      ],
-                    }),
-                    signal: AbortSignal.timeout(15000),
-                  });
-                  if (res.ok) {
-                    const json = await res.json();
-                    const content = json.choices?.[0]?.message?.content ?? '';
-                    const citations = (json.citations ?? []) as string[];
-                    const results = citations.map((url: string, idx: number) => ({
-                      id: idx + 1,
-                      title: url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0],
-                      snippet: '',
-                      url,
-                    }));
-                    // Add the main response as first result if no citations
-                    if (results.length === 0 && content) {
-                      results.push({ id: 1, title: 'Résultat Perplexity', snippet: content.slice(0, 500), url: '' });
-                    }
-                    return { results, count: results.length, summary: content };
-                  }
-                }
-
-                // Fallback: DuckDuckGo instant answer API
-                const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(input.query)}&format=json&no_html=1&skip_disambig=1`;
-                const ddgRes = await fetch(ddgUrl, { signal: AbortSignal.timeout(8000) });
-                if (ddgRes.ok) {
-                  const ddgJson = await ddgRes.json();
-                  const results: Array<{ id: number; title: string; snippet: string; url: string }> = [];
-                  if (ddgJson.Abstract) {
-                    results.push({ id: 1, title: ddgJson.Heading ?? input.query, snippet: ddgJson.Abstract, url: ddgJson.AbstractURL ?? '' });
-                  }
-                  for (const topic of ddgJson.RelatedTopics?.slice(0, 4) ?? []) {
-                    if (topic.Text) {
-                      results.push({ id: results.length + 1, title: topic.FirstURL?.split('/').pop() ?? '', snippet: topic.Text, url: topic.FirstURL ?? '' });
-                    }
-                  }
-                  return { results, count: results.length };
-                }
-
-                return { results: [], count: 0, error: 'Search API unavailable' };
-              } catch (err) {
-                console.error('[ai-chat] webSearch error:', err);
-                return { results: [], count: 0, error: String(err) };
+    // ── Web search (always available — Perplexity primary, DuckDuckGo fallback) ──
+    webSearch: tool({
+      description:
+        "Recherche web — OBLIGATOIRE quand searchDocumentsWithRerank ne retourne aucun résultat ou pas assez d'information sur un candidat/parti. Utilise aussi pour : actualités de campagne, déclarations récentes, résultats électoraux, sondages, événements locaux. NE DIS JAMAIS à l'utilisateur qu'il n'y a pas d'information sans avoir d'abord appelé cet outil.",
+      inputSchema: z.object({
+        query: z.string().describe('Recherche web en français — privilégie des termes précis et datés si possible'),
+      }),
+      execute: async (input) => {
+        try {
+          const perplexityKey = process.env.PERPLEXITY_API_KEY;
+          if (perplexityKey) {
+            // Use Perplexity Sonar API for web search
+            const res = await fetch('https://api.perplexity.ai/chat/completions', {
+              method: 'POST',
+              headers: {
+                'Authorization': `Bearer ${perplexityKey}`,
+                'Content-Type': 'application/json',
+              },
+              body: JSON.stringify({
+                model: 'sonar',
+                messages: [
+                  { role: 'system', content: 'Tu es un assistant de recherche web. Réponds en français avec des faits précis et sourcés. Cite les URLs des sources.' },
+                  { role: 'user', content: input.query },
+                ],
+              }),
+              signal: AbortSignal.timeout(15000),
+            });
+            if (res.ok) {
+              const json = await res.json();
+              const content = json.choices?.[0]?.message?.content ?? '';
+              const citations = (json.citations ?? []) as string[];
+              const results = citations.map((url: string, idx: number) => ({
+                id: idx + 1,
+                title: url.replace(/^https?:\/\/(www\.)?/, '').split('/')[0],
+                snippet: '',
+                url,
+              }));
+              // Add the main response as first result if no citations
+              if (results.length === 0 && content) {
+                results.push({ id: 1, title: 'Résultat Perplexity', snippet: content.slice(0, 500), url: '' });
               }
-            },
-          }),
+              return { results, count: results.length, summary: content };
+            }
+          }
+
+          // Fallback: DuckDuckGo instant answer API
+          const ddgUrl = `https://api.duckduckgo.com/?q=${encodeURIComponent(input.query)}&format=json&no_html=1&skip_disambig=1`;
+          const ddgRes = await fetch(ddgUrl, { signal: AbortSignal.timeout(8000) });
+          if (ddgRes.ok) {
+            const ddgJson = await ddgRes.json();
+            const results: Array<{ id: number; title: string; snippet: string; url: string }> = [];
+            if (ddgJson.Abstract) {
+              results.push({ id: 1, title: ddgJson.Heading ?? input.query, snippet: ddgJson.Abstract, url: ddgJson.AbstractURL ?? '' });
+            }
+            for (const topic of ddgJson.RelatedTopics?.slice(0, 4) ?? []) {
+              if (topic.Text) {
+                results.push({ id: results.length + 1, title: topic.FirstURL?.split('/').pop() ?? '', snippet: topic.Text, url: topic.FirstURL ?? '' });
+              }
+            }
+            return { results, count: results.length };
+          }
+
+          return { results: [], count: 0, error: 'Search API unavailable' };
+        } catch (err) {
+          console.error('[ai-chat] webSearch error:', err);
+          return { results: [], count: 0, error: String(err) };
         }
-      : {}),
+      },
+    }),
 
     // ── Widget / chart rendering ─────────────────────────────────────────────
     ...(features.includes('widgets')
@@ -929,7 +925,7 @@ const handleChat = observe(async function handleChat(req: Request) {
 - L'outil effectue automatiquement des reformulations internes, du re-classement par pertinence PER-CANDIDAT, et une représentation équitable.
 - Tu peux faire **plusieurs appels pour des THÉMATIQUES DIFFÉRENTES** (ex: transports + écologie). Mais ne répète PAS la même query — le cache retournera un résultat identique.
 - Passe \`depth: "deep"\` pour une analyse détaillée ou un candidat unique, \`"shallow"\` (défaut) pour les comparaisons.
-- Si un candidat n'a aucun résultat dans les documents RAG, lance immédiatement une recherche web (webSearch) pour ce candidat avant de conclure qu'il n'y a pas d'information.
+- **OBLIGATOIRE** : Si un candidat n'a AUCUN résultat dans les documents RAG, tu DOIS appeler webSearch({ query: "[nom du candidat] élections municipales [commune] 2026 programme propositions" }) AVANT de rédiger ta réponse. Ne dis JAMAIS "pas d'information sur ce candidat" sans avoir fait cette recherche web.
 ${hasSelection
   ? `- L'utilisateur a sélectionné ces candidats — recherche EXCLUSIVEMENT ceux-ci :
 ${searchCandidateLabels}
@@ -947,7 +943,7 @@ Appel recommandé :
 **Obligation** : Appelle \`searchDocumentsWithRerank\` avec les partis à rechercher AVANT de rédiger ta réponse.
 - Tu peux faire **plusieurs appels pour des THÉMATIQUES DIFFÉRENTES**. Mais ne répète PAS la même query.
 - Passe \`depth: "deep"\` pour une analyse détaillée d'un seul parti, \`"shallow"\` (défaut) pour les comparaisons.
-- Si un parti n'a pas de résultats, reformule ta requête avec des synonymes. Si toujours rien, lance une recherche web (webSearch) avant de conclure.
+- **OBLIGATOIRE** : Si un parti n'a pas de résultats, reformule ta requête avec des synonymes. Si toujours rien, tu DOIS appeler webSearch({ query: "[nom du parti] élections municipales 2026 programme propositions" }) AVANT de rédiger ta réponse. Ne dis JAMAIS "pas d'information" sans avoir fait cette recherche web.
 
 Partis à rechercher :
 ${resolvedPartyIds.map((id) => `  - "${id}"`).join('\n') || '  (aucun parti trouvé)'}
@@ -1015,11 +1011,20 @@ Tu disposes d'un maximum de **${aiConfig.maxSearchCalls} appels de recherche** e
 - **Appels multiples UNIQUEMENT pour des THÉMATIQUES DIFFÉRENTES** : Tu peux appeler plusieurs fois si la question couvre des sujets distincts (ex: un appel "transports mobilité" + un appel "écologie environnement"). Mais **n'appelle PAS plusieurs fois pour le même sujet** — les résultats seront identiques (cache automatique).
 - **Profondeur** : Passe \`depth: "deep"\` quand la question demande une analyse détaillée ou cible un seul candidat. Utilise \`depth: "shallow"\` (défaut) pour les comparaisons multi-candidats.
 - **Ciblage par candidateId** : Passe un seul candidateId UNIQUEMENT quand l'utilisateur demande spécifiquement les positions d'UN candidat ("Que propose Dupont sur X ?"). Pour les comparaisons, ne passe PAS de candidateIds — l'outil cherche dans tous automatiquement.
-- **Recherche web complémentaire (OBLIGATOIRE)** : NE DIS JAMAIS "aucune information disponible" ou "je ne peux pas trouver" sans avoir d'abord appelé webSearch. Si searchDocumentsWithRerank ne retourne pas l'information demandée, appelle IMMÉDIATEMENT webSearch — NE DEMANDE PAS à l'utilisateur ce qu'il veut chercher. Exemples de cas où tu DOIS appeler webSearch automatiquement :
-  - "résultats du premier tour" → webSearch({ query: "résultats premier tour élections municipales [commune] 2026 scores candidats" })
-  - "sondages" → webSearch({ query: "sondages élections municipales [commune] 2026" })
-  - "actualités" → webSearch({ query: "actualités campagne municipales [commune] 2026" })
+- **⚠️ Recherche web complémentaire (OBLIGATOIRE — RÈGLE LA PLUS IMPORTANTE)** :
+  **INTERDICTION ABSOLUE** de dire "aucune information disponible", "je n'ai pas trouvé", "les documents ne mentionnent pas", "pas d'information sur ce candidat" ou toute formulation similaire SANS avoir d'abord appelé webSearch.
+  **Protocole obligatoire quand RAG ne suffit pas** :
+  1. Si searchDocumentsWithRerank retourne 0 résultats → appelle webSearch IMMÉDIATEMENT
+  2. Si un candidat spécifique n'a aucun résultat RAG mais d'autres en ont → appelle webSearch pour ce candidat : webSearch({ query: "[nom candidat] élections municipales [commune] 2026 programme propositions" })
+  3. Si la question porte sur un sujet non couvert par les documents → appelle webSearch
+  4. NE DEMANDE PAS à l'utilisateur s'il veut une recherche web — fais-la automatiquement
+  **Exemples de requêtes webSearch** :
+  - Candidat sans résultat RAG → webSearch({ query: "Pierre DUPONT candidat élections municipales Clermont-Ferrand 2026" })
+  - Résultats du premier tour → webSearch({ query: "résultats premier tour élections municipales [commune] 2026 scores candidats" })
+  - Sondages → webSearch({ query: "sondages élections municipales [commune] 2026" })
+  - Actualités → webSearch({ query: "actualités campagne municipales [commune] 2026" })
   Le premier tour a eu lieu le 15 mars 2026 — les résultats SONT disponibles sur le web. Ne dis JAMAIS que les élections n'ont pas encore eu lieu.
+  **En résumé** : Tu ne peux conclure "pas d'information" QUE si searchDocumentsWithRerank ET webSearch n'ont rien trouvé. Dans ce cas, dis : "Malgré une recherche dans nos documents et sur le web, je n'ai pas trouvé d'information sur ce sujet."
 - **Recherche approfondie** : Appelle runDeepResearch UNIQUEMENT quand l'utilisateur demande explicitement une analyse approfondie ou complète. Ne l'utilise PAS automatiquement après searchDocumentsWithRerank.
 - **Suggestions de suivi** : À la fin de CHAQUE réponse, appelle l'outil suggestFollowUps avec 3 questions pertinentes. N'écris JAMAIS les suggestions dans le texte de ta réponse — utilise TOUJOURS l'outil pour que l'utilisateur puisse cliquer dessus.
 - **Choix interactifs** : Quand tu veux proposer des options, appelle l'outil presentOptions avec un label (la question) et les options. N'écris PAS la question ni les options dans le texte — l'outil affiche tout sous forme de boutons cliquables. Termine ton texte AVANT l'appel, ne répète rien après.
