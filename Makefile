@@ -90,13 +90,34 @@ dev: dev-infra
 	@echo ""
 	@$(MAKE) check
 	@echo ""
-	@echo "  App:                http://localhost:3000"
-	@echo "  Qdrant dashboard:   http://localhost:6333/dashboard"
-	@echo "  Firebase emulators: http://localhost:4000"
-	@echo "  Langfuse dashboard: http://localhost:8652"
-	@echo ""
-	@echo "  Logs:  make logs           (tail all logs)"
-	@echo "  Stop:  make stop           (stop everything)"
+	@echo "  ┌─────────────────────────────────────────────────────────────┐"
+	@echo "  │                    Local Dev URLs                          │"
+	@echo "  ├─────────────────────────────────────────────────────────────┤"
+	@echo "  │  App:                http://localhost:3000                  │"
+	@echo "  │  Backend API:        http://localhost:8080                  │"
+	@echo "  │  Qdrant dashboard:   http://localhost:6333/dashboard        │"
+	@echo "  │  Firebase emulators: http://localhost:4000                  │"
+	@echo "  │  Langfuse dashboard: http://localhost:8652                  │"
+	@if [ "$$RAGFLOW" = "1" ]; then \
+	echo "  │  RAGFlow UI:          http://localhost:8680                  │"; \
+	fi
+	@echo "  ├─────────────────────────────────────────────────────────────┤"
+	@echo "  │                 Default Credentials                        │"
+	@echo "  ├─────────────────────────────────────────────────────────────┤"
+	@echo "  │  Langfuse:  admin@chatvote.local / admin123                │"
+	@if [ "$$RAGFLOW" = "1" ]; then \
+	echo "  │  RAGFlow:   admin@chatvote.local / chatvote123              │"; \
+	echo "  │             (API key: Settings → API Keys after login)      │"; \
+	fi
+	@echo "  ├─────────────────────────────────────────────────────────────┤"
+	@echo "  │                    Commands                                │"
+	@echo "  ├─────────────────────────────────────────────────────────────┤"
+	@echo "  │  make logs            Tail all logs                        │"
+	@echo "  │  make stop            Stop everything                      │"
+	@echo "  │  make check           Health-check all services            │"
+	@echo "  │  make seed            Re-seed Firestore + Qdrant           │"
+	@echo "  │  RAGFLOW=1 make dev   Start with RAGFlow enabled           │"
+	@echo "  └─────────────────────────────────────────────────────────────┘"
 	@echo ""
 
 dev-infra:
