@@ -53,6 +53,7 @@ export async function searchRagflow(
   datasetIds?: string[],
   topK = 6,
   similarityThreshold = 0.2,
+  useKg = false,
 ): Promise<RagflowChunk[]> {
   if (!checkKey()) return [];
 
@@ -60,6 +61,7 @@ export async function searchRagflow(
     question: query,
     top_k: topK,
     similarity_threshold: similarityThreshold,
+    use_kg: useKg,
   };
   if (datasetIds?.length) {
     body.dataset_ids = datasetIds;

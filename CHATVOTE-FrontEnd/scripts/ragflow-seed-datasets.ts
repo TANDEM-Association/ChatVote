@@ -1,13 +1,11 @@
 #!/usr/bin/env npx tsx
 /**
- * Seed RAGFlow datasets via API.
+ * Seed RAGFlow datasets with Knowledge Graph configuration.
  *
- * Creates:
- *   - One dataset per party (chunk_method: "laws") — for political manifestos
- *   - One "all-manifestos" global dataset (chunk_method: "laws")
- *   - One "candidates-websites" dataset (chunk_method: "naive") — for scraped content
+ * Creates datasets with GraphRAG enabled (political entity types) and applies
+ * parser_config from the versioned knowledge-graph/config.ts presets.
  *
- * Idempotent: skips datasets that already exist by name.
+ * Idempotent: creates missing datasets, updates config on existing ones.
  *
  * Usage:
  *   npx tsx scripts/ragflow-seed-datasets.ts
@@ -35,70 +33,57 @@ try {
   console.warn('⚠️  Could not read .env.local — using existing env vars');
 }
 
-import { createDataset, listDatasets } from '../src/lib/ai/ragflow-client';
+import { syncDatasets } from '../src/lib/knowledge-graph/setup';
+import { POLITICAL_ENTITY_TYPES } from '../src/lib/knowledge-graph/config';
+import { listDatasets } from '../src/lib/ai/ragflow-client';
 import { initializeApp, cert, getApps } from 'firebase-admin/app';
 import { getFirestore } from 'firebase-admin/firestore';
 
-// ── Firebase Admin init (reuse pattern from firebase-admin.ts) ───────────────
+// ── Firebase Admin init ──────────────────────────────────────────────────────
 if (getApps().length === 0) {
   const credBase64 = process.env.FIREBASE_CREDENTIALS_BASE64;
   if (credBase64) {
     const cred = JSON.parse(Buffer.from(credBase64, 'base64').toString());
     initializeApp({ credential: cert(cred) });
   } else {
-    // Local dev: uses FIREBASE_AUTH_EMULATOR_HOST / FIRESTORE_EMULATOR_HOST
     initializeApp({ projectId: process.env.NEXT_PUBLIC_FIREBASE_PROJECT_ID ?? 'chat-vote-dev' });
   }
 }
 const db = getFirestore();
 
 async function main() {
-  console.log('🔍 Fetching existing RAGFlow datasets...');
-  const existing = await listDatasets();
-  if (existing.length === 0 && !process.env.RAGFLOW_API_KEY) {
+  // Verify API key
+  const testDs = await listDatasets();
+  if (testDs.length === 0 && !process.env.RAGFLOW_API_KEY) {
     console.error('❌ RAGFLOW_API_KEY is not set. Get it from RAGFlow UI → Settings → API Keys (http://localhost:8680)');
     process.exit(1);
   }
-  const existingNames = new Set(existing.map((d) => d.name));
-  console.log(`   Found ${existing.length} existing datasets: ${[...existingNames].join(', ') || '(none)'}`);
 
-  // ── Fetch party IDs from Firestore ─────────────────────────────────────────
+  console.log(`📊 Knowledge Graph entity types: ${POLITICAL_ENTITY_TYPES.join(', ')}`);
+
+  // Fetch party IDs from Firestore
   console.log('🔍 Fetching parties from Firestore...');
   const partiesSnap = await db.collection('parties').get();
-  const parties = partiesSnap.docs.map((doc) => ({
-    id: doc.id,
-    name: (doc.data().name as string) ?? doc.id,
-  }));
-  console.log(`   Found ${parties.length} parties`);
-
-  // ── Create datasets ────────────────────────────────────────────────────────
-  let created = 0;
-
-  // Global datasets
-  for (const { name, method } of [
-    { name: 'all-manifestos', method: 'laws' },
-    { name: 'candidates-websites', method: 'naive' },
-  ]) {
-    if (existingNames.has(name)) {
-      console.log(`   ⏭️  "${name}" already exists — skipping`);
-    } else {
-      const result = await createDataset(name, method, 'French');
-      if (result) created++;
-    }
+  const partyIds: string[] = [];
+  const partyNames = new Map<string, string>();
+  for (const doc of partiesSnap.docs) {
+    partyIds.push(doc.id);
+    const name = (doc.data().name as string) ?? doc.id;
+    partyNames.set(doc.id, name);
   }
+  console.log(`   Found ${partyIds.length} parties: ${partyIds.join(', ')}`);
 
-  // Per-party datasets
-  for (const party of parties) {
-    const dsName = `manifesto-${party.id}`;
-    if (existingNames.has(dsName)) {
-      console.log(`   ⏭️  "${dsName}" already exists — skipping`);
-    } else {
-      const result = await createDataset(dsName, 'laws', 'French');
-      if (result) created++;
-    }
-  }
+  // Sync datasets with KG config
+  const result = await syncDatasets(partyIds, partyNames);
 
-  console.log(`\n✅ Done. Created ${created} new dataset(s). Upload documents via RAGFlow UI at http://localhost:8680`);
+  console.log('\n📋 Results:');
+  if (result.created.length) console.log(`   ✅ Created: ${result.created.join(', ')}`);
+  if (result.updated.length) console.log(`   🔄 Updated: ${result.updated.join(', ')}`);
+  if (result.skipped.length) console.log(`   ⏭️  Skipped: ${result.skipped.join(', ')}`);
+  if (result.errors.length) console.log(`   ❌ Errors: ${result.errors.join(', ')}`);
+
+  console.log('\n✅ Done. Upload documents via RAGFlow UI at http://localhost:8680');
+  console.log('   GraphRAG will auto-extract political entities during document parsing.');
 }
 
 main().catch((err) => {

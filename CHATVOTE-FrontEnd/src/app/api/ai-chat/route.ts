@@ -497,10 +497,14 @@ Exemples INCORRECTS (ne fais JAMAIS ça) :
                 .array(z.string())
                 .optional()
                 .describe('IDs de datasets RAGFlow spécifiques (optionnel — cherche dans tous par défaut)'),
+              useKnowledgeGraph: z
+                .boolean()
+                .optional()
+                .describe('Activer la recherche multi-hop via le Knowledge Graph (pour les questions complexes impliquant plusieurs entités liées)'),
             }),
             execute: async (input) => {
               try {
-                const chunks = await searchRagflow(input.query, input.datasetIds);
+                const chunks = await searchRagflow(input.query, input.datasetIds, 6, 0.2, input.useKnowledgeGraph ?? false);
                 const results = chunks.map((chunk) => ({
                   id: 0,
                   content: chunk.content,
