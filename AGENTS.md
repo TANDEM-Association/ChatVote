@@ -74,7 +74,7 @@ Browser (Next.js :3000) ── Socket.IO ──→ Backend (:8080) ──→ Qdr
 ### Common Patterns
 
 - Zero cloud keys needed for local dev (Ollama + Firebase emulators + Qdrant in Docker)
-- Langfuse enabled by default in `make dev` — login: `admin@chatvote.local` / `admin123`
+- Langfuse enabled by default in `make dev` — login: `admin@chatvote.local` / `chatvote123`
 - Data seeding: `make seed` (Firestore + Qdrant embeddings), `make seed-local` (Ollama), `make seed-qwen` (Scaleway)
 - Provider detection: Makefile checks for Ollama native, falls back to Docker, detects cloud LLM API keys in `.env`
 

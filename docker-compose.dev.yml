@@ -187,7 +187,7 @@ services:
       LANGFUSE_INIT_PROJECT_PUBLIC_KEY: pk-lf-local
       LANGFUSE_INIT_PROJECT_SECRET_KEY: sk-lf-local
       LANGFUSE_INIT_USER_EMAIL: admin@chatvote.local
-      LANGFUSE_INIT_USER_PASSWORD: admin123
+      LANGFUSE_INIT_USER_PASSWORD: chatvote123
       LANGFUSE_INIT_USER_NAME: Admin
     ports:
       - "8652:3000"

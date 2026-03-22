@@ -104,7 +104,7 @@ dev: dev-infra
 	@echo "  ├─────────────────────────────────────────────────────────────┤"
 	@echo "  │                 Default Credentials                        │"
 	@echo "  ├─────────────────────────────────────────────────────────────┤"
-	@echo "  │  Langfuse:  admin@chatvote.local / admin123                │"
+	@echo "  │  Langfuse:  admin@chatvote.local / chatvote123                │"
 	@if [ "$$RAGFLOW" = "1" ]; then \
 	echo "  │  RAGFlow:   admin@chatvote.local / chatvote123              │"; \
 	echo "  │             (API key: Settings → API Keys after login)      │"; \

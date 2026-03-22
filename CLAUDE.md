@@ -138,7 +138,7 @@ Frontend needs: Firebase config (`NEXT_PUBLIC_FIREBASE_*`), `NEXT_PUBLIC_SOCKET_
 
 ### Observability (Langfuse)
 
-Langfuse self-hosted provides AI tracing (LLM calls, Qdrant retrieval spans, tool invocations). Enabled by default in `make dev`. Dashboard at `http://localhost:8652` (login: `admin@chatvote.local` / `admin123`). Frontend env vars in `.env.local`:
+Langfuse self-hosted provides AI tracing (LLM calls, Qdrant retrieval spans, tool invocations). Enabled by default in `make dev`. Dashboard at `http://localhost:8652` (login: `admin@chatvote.local` / `chatvote123`). Frontend env vars in `.env.local`:
 
 - `LANGFUSE_SECRET_KEY` — enables Langfuse tracing when set (local: `sk-lf-local`)
 - `LANGFUSE_PUBLIC_KEY` — Langfuse public key (local: `pk-lf-local`)
