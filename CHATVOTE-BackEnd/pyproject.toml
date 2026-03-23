@@ -61,6 +61,7 @@ google-genai = "^1.66.0"
 playwright = "^1.40.0"
 pytest-cov = "^6.0"
 watchfiles = "^1.1.1"
+vulture = "^2.15"
 
 [tool.mypy]
 ignore_missing_imports = true

@@ -26,6 +26,16 @@ repos:
           - pydantic  # Ensure pydantic is available for the plugin
         files: \.py$
 
+  # Vulture for dead code detection
+  - repo: local
+    hooks:
+      - id: vulture
+        name: Vulture (dead code)
+        entry: bash -c 'cd CHATVOTE-BackEnd && poetry run vulture src/ --min-confidence 80'
+        language: system
+        files: \.py$
+        pass_filenames: false
+
   # Additional best practices
   - repo: https://github.com/pre-commit/pre-commit-hooks
     rev: v5.0.0
