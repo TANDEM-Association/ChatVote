@@ -1,7 +1,6 @@
 import { ASSISTANT_ID } from "@lib/constants";
 import { updateChatSession } from "@lib/firebase/firebase";
-import { type StreamingMessage } from "@lib/chat.types";
-import { type ChatStoreActionHandlerFor } from "@lib/stores/chat-store.types";
+import { type ChatStoreActionHandlerFor, type StreamingMessage } from "@lib/stores/chat-store.types";
 import { generateUuid } from "@lib/utils";
 
 export const selectRespondingParties: ChatStoreActionHandlerFor<

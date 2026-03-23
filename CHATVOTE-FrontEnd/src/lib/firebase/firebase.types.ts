@@ -1,4 +1,4 @@
-import { type LLMSize } from "@lib/chat.types";
+import { type LLMSize } from "@lib/generated/backend-types.generated";
 
 export type ChatSession = {
   id: string;

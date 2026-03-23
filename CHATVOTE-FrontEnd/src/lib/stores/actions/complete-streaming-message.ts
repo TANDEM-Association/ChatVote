@@ -1,9 +1,9 @@
 import { addMessageToGroupedMessageOfChatSession } from "@lib/firebase/firebase";
-import { type StreamingMessage } from "@lib/chat.types";
 import {
   type ChatStoreActionHandlerFor,
   type GroupedMessage,
   type MessageItem,
+  type StreamingMessage,
 } from "@lib/stores/chat-store.types";
 import { generateUuid } from "@lib/utils";
 import { Timestamp } from "firebase/firestore";

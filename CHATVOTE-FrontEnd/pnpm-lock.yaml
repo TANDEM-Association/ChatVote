@@ -8,9 +8,6 @@ importers:
 
   .:
     dependencies:
-      '@ai-sdk/gateway':
-        specifier: ^3.0.66
-        version: 3.0.66(zod@4.3.6)
       '@ai-sdk/google':
         specifier: ^3.0.43
         version: 3.0.43(zod@4.3.6)
@@ -20,9 +17,6 @@ importers:
       '@ai-sdk/react':
         specifier: ^3.0.118
         version: 3.0.118(react@19.2.3)(zod@4.3.6)
-      '@fillout/react':
-        specifier: ^1.1.2
-        version: 1.2.11
       '@langfuse/otel':
         specifier: ^5.0.1
         version: 5.0.1(@opentelemetry/api@1.9.0)(@opentelemetry/core@2.6.0(@opentelemetry/api@1.9.0))(@opentelemetry/exporter-trace-otlp-http@0.213.0(@opentelemetry/api@1.9.0))(@opentelemetry/sdk-trace-base@2.6.0(@opentelemetry/api@1.9.0))
@@ -42,7 +36,7 @@ importers:
         specifier: ^1.17.0
         version: 1.17.0(typescript@5.9.3)
       '@radix-ui/react-collapsible':
-        specifier: ^1.1.2
+        specifier: ^1.1.12
         version: 1.1.12(@types/react-dom@19.0.1)(@types/react@19.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@radix-ui/react-label':
         specifier: ^2.1.0
@@ -60,7 +54,7 @@ importers:
         specifier: ^1.1.1
         version: 1.2.4(@types/react@19.0.1)(react@19.2.3)
       '@radix-ui/react-visually-hidden':
-        specifier: ^1.1.1
+        specifier: ^1.2.4
         version: 1.2.4(@types/react-dom@19.0.1)(@types/react@19.0.1)(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       '@tanstack/react-virtual':
         specifier: ^3.13.21
@@ -83,14 +77,8 @@ importers:
       clsx:
         specifier: ^2.1.1
         version: 2.1.1
-      embla-carousel:
-        specifier: ^8.6.0
-        version: 8.6.0
-      embla-carousel-auto-height:
-        specifier: ^8.5.1
-        version: 8.6.0(embla-carousel@8.6.0)
       embla-carousel-react:
-        specifier: ^8.5.1
+        specifier: ^8.6.0
         version: 8.6.0(react@19.2.3)
       firebase:
         specifier: ^11.0.2
@@ -98,9 +86,6 @@ importers:
       firebase-admin:
         specifier: ^13.0.2
         version: 13.7.0
-      framer-motion:
-        specifier: ^12.38.0
-        version: 12.38.0(react-dom@19.2.3(react@19.2.3))(react@19.2.3)
       immer:
         specifier: ^10.1.1
         version: 10.2.0
@@ -455,9 +440,6 @@ packages:
 
   '@fastify/busboy@3.2.0':
     resolution: {integrity: sha512-m9FVDXU3GT2ITSe0UaMA5rU3QkfC/UXtCU8y0gSN/GugTqtVldOBWIB5V6V3sbmenVZUIpU6f+mPEO2+m5iTaA==}
-
-  '@fillout/react@1.2.11':
-    resolution: {integrity: sha512-k3aIbPJPnh09XCwbyeSu5vWTCcSE+Dj9w03UcYW95H4j4JTIxKLxPx8rryxegpNAp8HeDGwfOH90bq/yqG6ulQ==}
 
   '@firebase/ai@1.4.1':
     resolution: {integrity: sha512-bcusQfA/tHjUjBTnMx6jdoPMpDl3r8K15Z+snHz9wq0Foox0F/V+kNLXucEOHoTL2hTc9l+onZCyBJs2QoIC3g==}
@@ -3345,11 +3327,6 @@ packages:
 
   electron-to-chromium@1.5.307:
     resolution: {integrity: sha512-5z3uFKBWjiNR44nFcYdkcXjKMbg5KXNdciu7mhTPo9tB7NbqSNP2sSnGR+fqknZSCwKkBN+oxiiajWs4dT6ORg==}
-
-  embla-carousel-auto-height@8.6.0:
-    resolution: {integrity: sha512-/HrJQOEM6aol/oF33gd2QlINcXy3e19fJWvHDuHWp2bpyTa+2dm9tVVJak30m2Qy6QyQ6Fc8DkImtv7pxWOJUQ==}
-    peerDependencies:
-      embla-carousel: 8.6.0
 
   embla-carousel-react@8.6.0:
     resolution: {integrity: sha512-0/PjqU7geVmo6F734pmPqpyHqiM99olvyecY7zdweCw+6tKEXnrE90pBiBbMMU8s5tICemzpQ3hi5EpxzGW+JA==}
@@ -6530,8 +6507,6 @@ snapshots:
 
   '@fastify/busboy@3.2.0': {}
 
-  '@fillout/react@1.2.11': {}
-
   '@firebase/ai@1.4.1(@firebase/app-types@0.9.3)(@firebase/app@0.13.2)':
     dependencies:
       '@firebase/app': 0.13.2
@@ -9189,10 +9164,6 @@ snapshots:
       safe-buffer: 5.2.1
 
   electron-to-chromium@1.5.307: {}
-
-  embla-carousel-auto-height@8.6.0(embla-carousel@8.6.0):
-    dependencies:
-      embla-carousel: 8.6.0
 
   embla-carousel-react@8.6.0(react@19.2.3):
     dependencies:
