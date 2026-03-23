@@ -8,8 +8,6 @@ const BASE_PORT = 10_000;
 export interface E2EPorts {
   /** Next.js test server */
   frontend: number;
-  /** Mock Socket.IO server */
-  mockSocket: number;
 }
 
 /** Check if a TCP port is available synchronously using a subprocess. */
@@ -54,8 +52,8 @@ export function getOrAllocatePorts(): E2EPorts {
   }
 
   // Allocate fresh ports
-  const [frontend, mockSocket] = findAvailablePortsSync(2, BASE_PORT);
-  const ports: E2EPorts = { frontend, mockSocket };
+  const [frontend] = findAvailablePortsSync(1, BASE_PORT);
+  const ports: E2EPorts = { frontend };
   fs.writeFileSync(PORT_FILE, JSON.stringify(ports));
   return ports;
 }

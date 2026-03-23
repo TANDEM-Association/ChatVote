@@ -23,7 +23,7 @@ export async function selectMunicipality(page: Page, name = "Paris") {
   await expect(resultButton).toBeVisible({ timeout: 10000 });
   await resultButton.click();
 
-  // Wait for chat input to become enabled (auth + socket ready)
+  // Wait for chat input to become enabled
   const chatInput = getChatInput(page);
   await expect(chatInput).toBeEnabled({ timeout: 10000 });
 }
@@ -54,23 +54,11 @@ export async function setupChat(page: Page, municipalityCode = "75056") {
   // ChatDynamicChatInput is outside the Suspense boundary, so it renders immediately
   // with the server-side municipalityCode prop — no need to wait for the logo first.
   await expect(getChatInput(page)).toBeEnabled({ timeout: 30000 });
-  // Wait for Socket.IO to be fully connected before allowing message sends.
-  // addUserMessage returns early (silently) if socket.io?.connected is false.
-  await page.waitForSelector('[data-testid="socket-connected"]', {
-    timeout: 15000,
-  });
   // Wait for anonymous Firebase auth to complete.
-  // The chat input form gets data-testid="chat-form-ready" once user.uid is available.
-  // Without this, handleSubmit silently returns early because user?.uid is null.
   await page.waitForSelector('[data-testid="chat-form-ready"]', {
     timeout: 15000,
   });
-  // Wait for the full session initialization round-trip to complete.
-  // The socket connects early (setSocketConnected → initializeChatSession) but the
-  // store's municipalityCode isn't set until hydrateChatSession runs (after Suspense
-  // resolves and ChatMessagesView mounts). The session-initialized indicator appears
-  // only when both chatId AND municipalityCode are set, ensuring the session was
-  // initialized with the correct scope (local + municipality).
+  // Wait for session initialization to complete.
   await page.waitForSelector('[data-testid="session-initialized"]', {
     timeout: 30000,
   });

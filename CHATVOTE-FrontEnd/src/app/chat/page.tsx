@@ -2,7 +2,6 @@ import { type NextPage } from "next";
 import { redirect } from "next/navigation";
 
 import ChatView from "@components/chat/chat-view";
-import { getParties } from "@lib/firebase/firebase-server";
 import { generateOgImageUrl } from "@lib/utils";
 
 export async function generateMetadata({
@@ -41,8 +40,7 @@ type ChatPageProps = {
   }>;
 };
 const ChatPage: NextPage<ChatPageProps> = async ({ searchParams }) => {
-  const { party_id, q, chat_id, municipality_code, mode } = await searchParams;
-  const parties = await getParties();
+  const { chat_id, municipality_code, mode } = await searchParams;
 
   if (chat_id) {
     // Preserve query params (mode=ai, municipality_code) through the redirect
@@ -53,20 +51,8 @@ const ChatPage: NextPage<ChatPageProps> = async ({ searchParams }) => {
     redirect(`/chat/${chat_id}${qs ? `?${qs}` : ''}`);
   }
 
-  let normalizedPartyIds = Array.isArray(party_id)
-    ? party_id
-    : party_id
-      ? [party_id]
-      : undefined;
-
-  normalizedPartyIds = normalizedPartyIds?.filter((id) =>
-    parties.some((p) => p.party_id === id),
-  );
-
   return (
     <ChatView
-      partyIds={normalizedPartyIds}
-      initialQuestion={q}
       municipalityCode={municipality_code}
     />
   );

@@ -2,7 +2,7 @@
 
 import { useMemo } from "react";
 
-import { type Vote } from "@lib/socket.types";
+import { type Vote } from "@lib/chat.types";
 import { toTitleCase } from "@lib/utils";
 import { useTranslations } from "next-intl";
 

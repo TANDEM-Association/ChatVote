@@ -1,18 +1,38 @@
-import type ChatSocket from "@lib/chat-socket";
 import { type ElectoralList } from "@lib/election/election.types";
 import { type ChatSession, type Tenant } from "@lib/firebase/firebase.types";
 import { type UserDemographics } from "@lib/firebase/user-profile";
-import { type PartyDetails } from "@lib/party-details";
 import {
   type ChatScope,
-  type DebugLlmCallPayload,
   type LLMSize,
-  type PartyResponseChunkReadyPayload,
-  type StreamingMessage,
+  type PartyResponseChunkDto,
   type Vote,
-} from "@lib/socket.types";
+} from "@lib/generated";
+import { type PartyDetails } from "@lib/party-details";
 import { type Timestamp } from "firebase/firestore";
 import { type WritableDraft } from "immer";
+
+/** Alias kept for consumers that use PartyResponseChunkReadyPayload */
+export type PartyResponseChunkReadyPayload = PartyResponseChunkDto;
+
+export type StreamingMessage = {
+  id: string;
+  role: "assistant";
+  content?: string;
+  sources?: Source[];
+  party_id?: string;
+  chunking_complete?: boolean;
+  pro_con_perspective?: MessageItem;
+  voting_behavior?: VotingBehavior;
+  feedback?: MessageFeedback;
+};
+
+/** Debug-only: LLM/RAG call metadata emitted by backend in local dev. */
+export type DebugLlmCallPayload = {
+  session_id: string;
+  stage: string;
+  timestamp: number;
+  [key: string]: unknown;
+};
 
 export type Source = {
   source: string;
@@ -95,7 +115,6 @@ export type ChatStoreState = {
     proConPerspective: string | undefined;
     votingBehaviorSummary: string | undefined;
     chatSession: boolean;
-    initializingChatSocketSession: boolean;
   };
   pendingStreamingMessageTimeoutHandler: {
     interval?: NodeJS.Timeout;
@@ -107,12 +126,6 @@ export type ChatStoreState = {
   currentQuickReplies: string[];
   currentChatTitle?: string;
   chatSessionIsPublic?: boolean;
-  socket: {
-    io?: ChatSocket;
-    connected?: boolean;
-    error?: string;
-    isConnecting?: boolean;
-  };
   currentStreamingMessages?: CurrentStreamingMessages;
   currentStreamedVotingBehavior?: CurrentStreamedVotingBehavior;
   clickedProConButton?: boolean;
@@ -178,11 +191,6 @@ export type ChatStoreActions = {
   setChatSessionIsPublic: (isPublic: boolean) => Promise<void>;
   setMessageFeedback: (messageId: string, feedback: MessageFeedback) => void;
   setPreSelectedParties: (parties: PartyDetails[]) => void;
-  setSocket: (socket: ChatSocket) => void;
-  setSocketConnecting: (isConnecting: boolean) => void;
-  setSocketConnected: (connected: boolean) => void;
-  setSocketError: (error: string) => void;
-  initializeChatSession: () => Promise<void>;
   initializedChatSession: (sessionId: string) => void;
   selectRespondingParties: (sessionId: string, partyIds: string[]) => void;
   streamingMessageSourcesReady: (

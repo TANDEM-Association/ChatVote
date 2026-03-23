@@ -5,7 +5,6 @@ import logging
 import os
 import time as _time
 from datetime import datetime, timezone
-from typing import Any
 
 from src.services.data_pipeline.base import NodeConfig
 from src.services.data_pipeline.indexer.progress import PhaseTracker
@@ -32,7 +31,7 @@ async def run_social_phase(
     logger.info("[indexer] starting social media indexing phase...")
     social_indexed = 0
 
-    from src.services.data_pipeline.social_scraper import detect_platform, scrape_social_candidates
+    from src.services.data_pipeline.social_scraper import scrape_social_candidates
     from src.services.data_pipeline.crawl_scraper import CrawlScraperNode, _get_crawl_credentials
     from src.services.candidate_indexer import index_candidate_website
     import aiohttp

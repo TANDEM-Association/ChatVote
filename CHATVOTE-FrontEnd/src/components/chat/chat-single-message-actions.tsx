@@ -1,6 +1,6 @@
 import { Separator } from "@components/ui/separator";
 import { ASSISTANT_ID } from "@lib/constants";
-import { type StreamingMessage } from "@lib/socket.types";
+import { type StreamingMessage } from "@lib/chat.types";
 import { type MessageItem } from "@lib/stores/chat-store.types";
 
 import { useChatStore } from "../providers/chat-store-provider";
@@ -27,16 +27,7 @@ function ChatSingleMessageActions({
   partyId,
   candidateId,
 }: Props) {
-  const _isLoadingProConPerspective = useChatStore(
-    (state) => state.loading.proConPerspective === message.id,
-  );
-  const _isLoadingVotingBehaviorSummary = useChatStore(
-    (state) => state.loading.votingBehaviorSummary === message.id,
-  );
-
   if (!showMessageActions) return null;
-
-  const _isAssistantMessage = partyId === ASSISTANT_ID;
 
   // TODO: Re-enable when pro/con evaluation feature is ready
   // const showProConButton =

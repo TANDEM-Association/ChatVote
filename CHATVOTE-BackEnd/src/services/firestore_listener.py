@@ -39,7 +39,7 @@ _listener_unsubscribe: Optional[Callable] = None
 _is_running = False
 
 
-def _on_parties_snapshot(doc_snapshots, changes, read_time) -> None:
+def _on_parties_snapshot(_doc_snapshots, changes, _read_time) -> None:
     """
     Callback for Firestore listener on parties collection.
 
@@ -97,7 +97,7 @@ def _on_parties_snapshot(doc_snapshots, changes, read_time) -> None:
             logger.error(f"Error processing party change for {party_id}: {e}")
 
 
-def _on_candidates_snapshot(doc_snapshots, changes, read_time) -> None:
+def _on_candidates_snapshot(_doc_snapshots, changes, _read_time) -> None:
     """
     Callback for Firestore listener on candidates collection.
 

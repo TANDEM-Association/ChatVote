@@ -1,4 +1,4 @@
-import { type LLMSize } from "@lib/socket.types";
+import { type LLMSize } from "@lib/chat.types";
 
 export type ChatSession = {
   id: string;

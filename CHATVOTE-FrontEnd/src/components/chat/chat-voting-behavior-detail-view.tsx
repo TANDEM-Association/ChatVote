@@ -4,9 +4,9 @@ import { useState } from "react";
 
 import Link from "next/link";
 
-import { type Vote } from "@lib/socket.types";
+import { type Vote } from "@lib/chat.types";
 import { prettifiedUrlName } from "@lib/utils";
-import { ArrowUpRightIcon } from "lucide-react";
+import { ArrowUpRightIcon } from "@components/icons";
 import { useTranslations } from "next-intl";
 
 import { ChatVotingDetailsProvider } from "../providers/chat-voting-details-provider";

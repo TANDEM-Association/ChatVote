@@ -13,8 +13,6 @@ from __future__ import annotations
 import logging
 import os
 import re
-from datetime import datetime, timezone
-from typing import Any
 from urllib.parse import urlparse
 
 from src.services.candidate_website_scraper import ScrapedPage, ScrapedWebsite
@@ -266,7 +264,7 @@ def _twitter_to_pages(url: str, items: list[dict]) -> list[ScrapedPage]:
             tweet_url = item.get("tweetUrl") or item.get("url") or url
             pages.append(ScrapedPage(
                 url=tweet_url,
-                title=f"Tweet",
+                title="Tweet",
                 content=full_text,
                 page_type="social_post",
             ))
@@ -437,7 +435,7 @@ if __name__ == "__main__":
 
         # Summary
         print(f"\n{'=' * 50}")
-        print(f"Social Media Scraping Results")
+        print("Social Media Scraping Results")
         print(f"{'=' * 50}")
         total_pages = 0
         total_chars = 0

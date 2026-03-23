@@ -22,7 +22,6 @@ export const hydrateChatSession: ChatStoreActionHandlerFor<
       chatId: currentChatId,
       partyIds: currentPartyIds,
       loadChatSession,
-      initializeChatSession,
     } = get();
 
     const partyIds = new Set(preSelectedPartyIds ?? []);
@@ -117,7 +116,6 @@ export const hydrateChatSession: ChatStoreActionHandlerFor<
           loading: {
             ...state.loading,
             chatSession: false,
-            initializingChatSession: false,
             newMessage: false,
           },
         };
@@ -147,8 +145,7 @@ export const hydrateChatSession: ChatStoreActionHandlerFor<
             loading: {
               ...state.loading,
               chatSession: false,
-              initializingChatSession: false,
-            },
+              },
           };
         }
 
@@ -162,8 +159,7 @@ export const hydrateChatSession: ChatStoreActionHandlerFor<
             loading: {
               ...state.loading,
               chatSession: false,
-              initializingChatSession: false,
-            },
+              },
           };
         }
 
@@ -176,17 +172,10 @@ export const hydrateChatSession: ChatStoreActionHandlerFor<
           loading: {
             ...state.loading,
             chatSession: false,
-            initializingChatSession: false,
             newMessage: false,
           },
         };
       });
     }
 
-    // Skip re-initialization if we're actively streaming — a new
-    // chat_session_init would reset the backend session mid-response.
-    const { loading: currentLoading, currentStreamingMessages: csm } = get();
-    if (!(currentLoading.newMessage || csm !== undefined)) {
-      initializeChatSession();
-    }
   };

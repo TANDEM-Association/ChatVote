@@ -9,7 +9,7 @@ import { Button } from "@components/ui/button";
 import { SidebarTrigger } from "@components/ui/sidebar";
 
 import { IS_EMBEDDED } from "@lib/utils";
-import { Heart, HelpCircleIcon, Share, SquarePenIcon, XIcon } from "lucide-react";
+import { Heart, HelpCircleIcon, Share, SquarePenIcon, XIcon } from "@components/icons";
 
 import { useSearchParams } from "next/navigation";
 
@@ -18,7 +18,6 @@ import { trackShareClicked } from "@lib/firebase/analytics";
 
 import ChatEmbedHeader from "./chat-embed-header";
 import { ChatModeToggle } from "./chat-mode-toggle";
-import SocketDisconnectedBanner from "./socket-disconnected-banner";
 import { ThemeModeToggle } from "./theme-mode-toggle";
 
 function ChatHeader() {
@@ -135,7 +134,6 @@ function ChatHeader() {
           </div>
         </div>
 
-        <SocketDisconnectedBanner />
       </header>
 
     </React.Fragment>

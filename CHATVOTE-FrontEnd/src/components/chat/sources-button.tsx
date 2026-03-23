@@ -12,7 +12,7 @@ import {
 import { trackSourceClicked } from "@lib/firebase/analytics";
 import { type Source } from "@lib/stores/chat-store.types";
 import { buildPdfUrl, cn, prettyDate } from "@lib/utils";
-import { BookMarkedIcon } from "lucide-react";
+import { BookMarkedIcon } from "@components/icons";
 import { useTranslations } from "next-intl";
 
 import { ChatMessageIcon } from "./chat-message-icon";

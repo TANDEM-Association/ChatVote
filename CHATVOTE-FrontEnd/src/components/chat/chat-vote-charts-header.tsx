@@ -1,5 +1,5 @@
 import useCarouselCurrentIndex from "@lib/hooks/use-carousel-current-index";
-import { type Vote } from "@lib/socket.types";
+import { type Vote } from "@lib/chat.types";
 import { useTranslations } from "next-intl";
 
 import { Separator } from "../ui/separator";

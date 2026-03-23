@@ -21,10 +21,10 @@ import {
   chatViewScrollToProConPerspectiveContainer,
   scrollMessageIntoView,
 } from "@lib/scroll-utils";
-import { type StreamingMessage } from "@lib/socket.types";
+import { type StreamingMessage } from "@lib/chat.types";
 import { type MessageItem } from "@lib/stores/chat-store.types";
 import { cn, prettifiedUrlName } from "@lib/utils";
-import { ArrowUpDown, Eye, EyeClosed, SparkleIcon } from "lucide-react";
+import { ArrowUpDown, Eye, EyeClosed, SparkleIcon } from "@components/icons";
 import { useTranslations } from "next-intl";
 
 import AnimatedMessageSequence from "./animated-message-sequence";

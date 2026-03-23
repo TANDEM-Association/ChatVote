@@ -6,16 +6,11 @@ import { createStore } from "zustand/vanilla";
 import { addVotingBehaviorResult } from "./actions/add-voting-behavior-result";
 import { addVotingBehaviorSummaryChunk } from "./actions/add-voting-behavior-summary-chunk";
 import { cancelStreamingMessages } from "./actions/cancel-streaming-messages";
-import { chatAddUserMessage } from "./actions/chat-add-user-message";
 import { completeCandidateProConPerspective } from "./actions/complete-candidate-pro-con-perspective";
 import { completeProConPerspective } from "./actions/complete-pro-con-perspective";
 import { completeStreamingMessage } from "./actions/complete-streaming-message";
 import { completeVotingBehavior } from "./actions/complete-voting-behavior";
-import { generateCandidateProConPerspective } from "./actions/generate-candidate-pro-con-perspective";
-import { generateProConPerspective } from "./actions/generate-pro-con-perspective";
-import { generateVotingBehaviorSummary } from "./actions/generate-voting-behavior-summary";
 import { hydrateChatSession } from "./actions/hydrate-chat-session";
-import { initializeChatSession } from "./actions/initialize-chat-session";
 import { initializedChatSession } from "./actions/initialized-chat-session";
 import { loadChatSession } from "./actions/load-chat-session";
 import { mergeStreamingChunkPayloadForMessage } from "./actions/merge-streaming-chunk-payload-for-message";
@@ -28,10 +23,6 @@ import { setInput } from "./actions/set-input";
 import { setMessageFeedback } from "./actions/set-message-feedback";
 import { setPartyIds } from "./actions/set-party-ids";
 import { setPreSelectedParties } from "./actions/set-pre-selected-parties";
-import { setSocket } from "./actions/set-socket";
-import { setSocketConnected } from "./actions/set-socket-connected";
-import { setSocketConnecting } from "./actions/set-socket-connecting";
-import { setSocketError } from "./actions/set-socket-error";
 import { startTimeoutForStreamingMessages } from "./actions/start-timeout-for-streaming-messages";
 import { streamingMessageSourcesReady } from "./actions/streaming-message-sources-ready";
 import { updateQuickRepliesAndTitleForCurrentStreamingMessage } from "./actions/update-quick-replies-and-title-for-current-streaming-message";
@@ -53,7 +44,6 @@ const defaultState: ChatStoreState = {
   input: "",
   loading: {
     general: false,
-    initializingChatSocketSession: false,
     chatSession: false,
     proConPerspective: undefined,
     newMessage: false,
@@ -66,7 +56,6 @@ const defaultState: ChatStoreState = {
   currentChatTitle: undefined,
   chatSessionIsPublic: false,
   preSelectedParties: undefined,
-  socket: {},
   currentStreamingMessages: undefined,
   tenant: undefined,
   scope: "national",
@@ -89,17 +78,14 @@ export function createChatStore(initialState?: Partial<ChatStore>) {
         setIsAnonymous: (isAnonymous: boolean) => set({ isAnonymous }),
         setLocale: (locale: string) => set({ locale }),
         setInput: setInput(get, set),
-        addUserMessage: chatAddUserMessage(get, set),
+        addUserMessage: () => {},
         setChatId: setChatId(get, set),
         newChat: newChat(get, set),
         selectRespondingParties: selectRespondingParties(get, set),
         loadChatSession: loadChatSession(get, set),
         hydrateChatSession: hydrateChatSession(get, set),
-        generateProConPerspective: generateProConPerspective(get, set),
-        generateCandidateProConPerspective: generateCandidateProConPerspective(
-          get,
-          set,
-        ),
+        generateProConPerspective: async () => {},
+        generateCandidateProConPerspective: async () => {},
         completeCandidateProConPerspective: completeCandidateProConPerspective(
           get,
           set,
@@ -107,11 +93,6 @@ export function createChatStore(initialState?: Partial<ChatStore>) {
         setChatSessionIsPublic: setChatSessionIsPublic(get, set),
         setMessageFeedback: setMessageFeedback(get, set),
         setPreSelectedParties: setPreSelectedParties(get, set),
-        setSocket: setSocket(get, set),
-        setSocketConnecting: setSocketConnecting(get, set),
-        setSocketConnected: setSocketConnected(get, set),
-        setSocketError: setSocketError(get, set),
-        initializeChatSession: initializeChatSession(get, set),
         initializedChatSession: initializedChatSession(get, set),
         streamingMessageSourcesReady: streamingMessageSourcesReady(get, set),
         mergeStreamingChunkPayloadForMessage:
@@ -125,7 +106,7 @@ export function createChatStore(initialState?: Partial<ChatStore>) {
           set,
         ),
         completeProConPerspective: completeProConPerspective(get, set),
-        generateVotingBehaviorSummary: generateVotingBehaviorSummary(get, set),
+        generateVotingBehaviorSummary: () => {},
         addVotingBehaviorResult: addVotingBehaviorResult(get, set),
         addVotingBehaviorSummaryChunk: addVotingBehaviorSummaryChunk(get, set),
         completeVotingBehavior: completeVotingBehavior(get, set),

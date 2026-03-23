@@ -32,10 +32,7 @@ async def run_candidate_phase(
 
     from src.services.candidate_indexer import (
         aget_candidates_with_website,
-        index_candidate_website,
-        _get_indexed_candidate_counts,
     )
-    from src.services.data_pipeline.crawl_scraper import load_scraped_from_drive
 
     scraped = get_context("scraped_websites")
 

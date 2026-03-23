@@ -42,7 +42,7 @@ from src.services.candidate_indexer import (
 from src.services.manifesto_indexer import extract_pages_from_pdf
 from src.vector_store_helper import qdrant_client
 
-from src.services.content_processing import is_metadata_only, is_real_content
+from src.services.content_processing import is_real_content
 
 logger = logging.getLogger(__name__)
 

@@ -366,16 +366,14 @@ async def admin_migrate_manifesto_namespaces(request):
                 # After each batch, updated points no longer match the
                 # old_ns filter, so we always scroll from offset=None.
                 migrated = 0
-                while True:
-                    points, _ = qdrant_client.scroll(
-                        collection_name=PARTY_INDEX_NAME,
-                        scroll_filter=ns_filter,
-                        limit=100,
-                        with_payload=True,
-                        with_vectors=False,
-                    )
-                    if not points:
-                        break
+                points, _ = qdrant_client.scroll(
+                    collection_name=PARTY_INDEX_NAME,
+                    scroll_filter=ns_filter,
+                    limit=100,
+                    with_payload=True,
+                    with_vectors=False,
+                )
+                while points:
                     for p in points:
                         meta = (p.payload or {}).get("metadata", {})
                         meta["namespace"] = new_ns
@@ -386,6 +384,13 @@ async def admin_migrate_manifesto_namespaces(request):
                             points=[p.id],
                         )
                     migrated += len(points)
+                    points, _ = qdrant_client.scroll(
+                        collection_name=PARTY_INDEX_NAME,
+                        scroll_filter=ns_filter,
+                        limit=100,
+                        with_payload=True,
+                        with_vectors=False,
+                    )
                 entry["status"] = "migrated"
                 entry["points_migrated"] = migrated
                 logger.info(f"Migrated {migrated} points: {old_ns} → {new_ns}")

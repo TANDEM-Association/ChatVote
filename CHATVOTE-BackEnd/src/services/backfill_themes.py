@@ -30,7 +30,7 @@ from dataclasses import dataclass
 from typing import Any
 
 from qdrant_client import QdrantClient
-from qdrant_client.models import PointIdsList, SetPayloadOperation, SetPayload
+from qdrant_client.models import SetPayloadOperation, SetPayload
 
 from src.services.theme_classifier import classify_chunks, ThemeResult
 

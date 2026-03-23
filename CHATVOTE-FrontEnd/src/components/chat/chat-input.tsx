@@ -5,7 +5,7 @@ import { useChatStore } from "@components/providers/chat-store-provider";
 import { Button } from "@components/ui/button";
 import { trackQuickReplyClicked } from "@lib/firebase/analytics";
 import { cn } from "@lib/utils";
-import { ArrowUp } from "lucide-react";
+import { ArrowUp } from "@components/icons";
 import { useTranslations } from "next-intl";
 
 import MessageLoadingBorderTrail from "./message-loading-border-trail";
@@ -24,12 +24,7 @@ const ChatInput = ({ disabled }: Props) => {
   const chatId = useChatStore((state) => state.chatId);
   const loading = useChatStore((state) => {
     const loading = state.loading;
-    return (
-      loading.general ||
-      loading.newMessage ||
-      loading.chatSession ||
-      loading.initializingChatSocketSession
-    );
+    return loading.general || loading.newMessage || loading.chatSession;
   });
 
   const handleSubmit = async (

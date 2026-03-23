@@ -2,7 +2,7 @@
 
 import React, { useMemo } from "react";
 
-import { type Vote } from "@lib/socket.types";
+import { type Vote } from "@lib/chat.types";
 import { useTranslations } from "next-intl";
 
 import VoteChart from "./vote-chart";

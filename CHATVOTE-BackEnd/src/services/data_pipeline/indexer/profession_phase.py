@@ -29,7 +29,7 @@ async def run_profession_phase(
 
     logger.info("[indexer] starting profession de foi indexing phase...")
 
-    from src.services.profession_indexer import index_commune_professions, _PDF_CACHE_DIR
+    from src.services.profession_indexer import _PDF_CACHE_DIR
 
     has_local_cache = _PDF_CACHE_DIR.exists() and any(_PDF_CACHE_DIR.iterdir())
 
@@ -98,7 +98,7 @@ async def _get_commune_codes_from_firestore(
     commune_codes: set[str] = set()
     for doc in cand_docs:
         data = doc.to_dict() or {}
-        url = data.get("manifesto_pdf_url", "")
+        data.get("manifesto_pdf_url", "")
         # Extract commune code from candidate ID (cand-{commune_code}-{panneau})
         doc_id = doc.id
         if doc_id.startswith("cand-"):

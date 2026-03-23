@@ -23,7 +23,6 @@ export const initializedChatSession: ChatStoreActionHandlerFor<
   set((state) => {
     state.chatId = sessionId;
     state.localPreliminaryChatId = sessionId;
-    state.loading.initializingChatSocketSession = false;
   });
 
   if (pendingInitialQuestion && userId) {

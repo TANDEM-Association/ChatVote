@@ -82,7 +82,7 @@ export default defineConfig({
       NEXT_PUBLIC_FIREBASE_MESSAGING_SENDER_ID: "000000000000",
       NEXT_PUBLIC_FIREBASE_APP_ID: "1:000000000000:web:fake",
       NEXT_PUBLIC_USE_FIREBASE_EMULATORS: "true",
-      NEXT_PUBLIC_API_URL: `http://localhost:${ports.mockSocket}`,
+      NEXT_PUBLIC_API_URL: `http://localhost:${ports.frontend}`,
       NEXT_PUBLIC_APP_URL: `http://localhost:${ports.frontend}`,
       FIRESTORE_EMULATOR_HOST: "localhost:8081",
       FIREBASE_AUTH_EMULATOR_HOST: "localhost:9099",

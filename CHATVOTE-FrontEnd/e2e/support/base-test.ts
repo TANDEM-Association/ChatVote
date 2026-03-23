@@ -41,9 +41,7 @@ const TEST_ENV_ERROR_PATTERNS = [
   // Firebase emulator warnings
   /firestore.*emulator/i,
   /auth.*emulator/i,
-  // Socket.IO connection errors (mock server restarts between tests)
-  /WebSocket connection to.*socket\.io.*failed/,
-  // HTTP resource errors in test environment (mock server timing)
+  // HTTP resource errors in test environment
   /Failed to load resource/,
   // Firestore emulator connectivity (flaky in CI/test environment)
   /Could not reach Cloud Firestore backend/,

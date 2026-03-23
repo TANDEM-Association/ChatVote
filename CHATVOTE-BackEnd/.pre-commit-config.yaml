@@ -31,7 +31,7 @@ repos:
     hooks:
       - id: vulture
         name: Vulture (dead code)
-        entry: bash -c 'cd CHATVOTE-BackEnd && poetry run vulture src/ --min-confidence 80'
+        entry: bash -c 'cd CHATVOTE-BackEnd && poetry run vulture src/ vulture_whitelist.py --min-confidence 80'
         language: system
         files: \.py$
         pass_filenames: false

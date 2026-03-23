@@ -1,5 +1,5 @@
 import { addMessageToGroupedMessageOfChatSession } from "@lib/firebase/firebase";
-import { type StreamingMessage } from "@lib/socket.types";
+import { type StreamingMessage } from "@lib/chat.types";
 import {
   type ChatStoreActionHandlerFor,
   type GroupedMessage,

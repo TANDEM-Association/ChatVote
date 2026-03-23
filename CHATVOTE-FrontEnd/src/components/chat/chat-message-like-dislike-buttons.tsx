@@ -1,12 +1,12 @@
 "use client";
 import { useChatStore } from "@components/providers/chat-store-provider";
 import { Button } from "@components/ui/button";
-import { type StreamingMessage } from "@lib/socket.types";
+import { type StreamingMessage } from "@lib/chat.types";
 import { type MessageItem } from "@lib/stores/chat-store.types";
 import { cn } from "@lib/utils";
 import { trackMessageDisliked, trackMessageLiked } from "@lib/firebase/analytics";
 import { track } from "@vercel/analytics/react";
-import { ThumbsUp } from "lucide-react";
+import { ThumbsUp } from "@components/icons";
 
 import ChatDislikeFeedbackButton from "./chat-dislike-feedback-button";
 

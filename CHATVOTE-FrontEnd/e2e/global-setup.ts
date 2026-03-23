@@ -2,18 +2,14 @@ import { chromium } from "@playwright/test";
 import { type ChildProcess, execSync, spawn } from "child_process";
 import path from "path";
 
-import { startMockServer } from "./support/mock-socket-server";
 import { readPorts } from "./support/port-utils";
 
-let mockServer: { close: () => Promise<void> } | null = null;
 let emulatorProcess: ChildProcess | null = null;
 
 async function globalSetup() {
   // Ports are already allocated synchronously by playwright.config.ts — just read them.
   const ports = readPorts();
-  console.info(
-    `Using ports — frontend: ${ports.frontend}, mockSocket: ${ports.mockSocket}`,
-  );
+  console.info(`Using ports — frontend: ${ports.frontend}`);
 
   // Check if emulators are already running
   const emulatorsRunning = await isServiceRunning("http://localhost:8081");
@@ -107,28 +103,6 @@ async function globalSetup() {
   // Seed test data
   await seedEmulatorData();
 
-  // Start mock Socket.IO server on the allocated port.
-  // Wrap in try/catch: multiple parallel worker runs may race to start it,
-  // and EADDRINUSE means another worker already started it — treat as "already running".
-  const mockUrl = `http://localhost:${ports.mockSocket}`;
-  const mockRunning = await isServiceRunning(mockUrl);
-  if (!mockRunning) {
-    try {
-      mockServer = await startMockServer(ports.mockSocket);
-      console.info(`Mock Socket.IO server started on :${ports.mockSocket}`);
-    } catch (err: unknown) {
-      if ((err as NodeJS.ErrnoException).code === "EADDRINUSE") {
-        console.info(
-          `Mock server already running on :${ports.mockSocket} (caught EADDRINUSE from race)`,
-        );
-      } else {
-        throw err;
-      }
-    }
-  } else {
-    console.info(`Mock server already running on :${ports.mockSocket}`);
-  }
-
   // Warm up the Next.js test server using a real browser so Turbopack
   // compiles ALL client-side bundles before tests run.
   console.info("Warming up Next.js dev server...");
@@ -136,7 +110,6 @@ async function globalSetup() {
   console.info("Dev server warmed up");
 
   // Store references for teardown
-  (globalThis as Record<string, unknown>).__MOCK_SERVER__ = mockServer;
   (globalThis as Record<string, unknown>).__EMULATOR_PROCESS__ =
     emulatorProcess;
 }

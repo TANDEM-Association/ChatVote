@@ -1,7 +1,7 @@
 import { useMemo } from "react";
 
 import useCarouselCurrentIndex from "@lib/hooks/use-carousel-current-index";
-import { type Vote } from "@lib/socket.types";
+import { type Vote } from "@lib/chat.types";
 
 import AnimateTextOverflow from "./animate-text-overflow";
 

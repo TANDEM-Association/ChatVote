@@ -196,7 +196,7 @@ sio = socketio.AsyncServer(
 
 
 @sio.event
-async def connect(sid: str, environ: dict, auth: Optional[dict] = None):
+async def connect(sid: str, environ: dict, _auth: Optional[dict] = None):
     logger.info(f"Client connected: {sid}")
 
 

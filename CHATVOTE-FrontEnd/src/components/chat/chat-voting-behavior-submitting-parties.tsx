@@ -4,7 +4,7 @@ import { useMemo } from "react";
 
 import Image from "next/image";
 
-import { type Vote } from "@lib/socket.types";
+import { type Vote } from "@lib/chat.types";
 import { buildPartyImageUrl, toTitleCase } from "@lib/utils";
 import { useTranslations } from "next-intl";
 

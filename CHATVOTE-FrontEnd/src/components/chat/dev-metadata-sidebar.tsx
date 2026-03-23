@@ -10,7 +10,7 @@ import {
 import { useChatStore } from "@components/providers/chat-store-provider";
 import { Badge } from "@components/ui/badge";
 import { Button } from "@components/ui/button";
-import { type DebugLlmCallPayload } from "@lib/socket.types";
+import { type DebugLlmCallPayload } from "@lib/chat.types";
 import { type Source } from "@lib/stores/chat-store.types";
 import { cn } from "@lib/utils";
 import {

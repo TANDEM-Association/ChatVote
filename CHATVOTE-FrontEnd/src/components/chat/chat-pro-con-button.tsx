@@ -2,7 +2,7 @@
 
 import { useChatStore } from "@components/providers/chat-store-provider";
 import { Button } from "@components/ui/button";
-import { type StreamingMessage } from "@lib/socket.types";
+import { type StreamingMessage } from "@lib/chat.types";
 import { type MessageItem } from "@lib/stores/chat-store.types";
 import { track } from "@vercel/analytics/react";
 import { useTranslations } from "next-intl";
