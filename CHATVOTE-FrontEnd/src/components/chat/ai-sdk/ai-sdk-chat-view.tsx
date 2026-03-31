@@ -458,11 +458,11 @@ export default function AiSdkChatView({
                 priority
               />
 
-              <p className="text-muted-foreground text-center text-sm">
-                {municipalityCode
-                  ? "Sélectionnez les candidats dans le panneau latéral puis posez une question"
-                  : "Avant de poser votre question, renseignez votre commune ou code postal"}
-              </p>
+              {municipalityCode && (
+                <p className="text-muted-foreground text-center text-sm">
+                  Sélectionnez les candidats dans le panneau latéral puis posez une question
+                </p>
+              )}
 
               {!municipalityCode && (
                 <div
