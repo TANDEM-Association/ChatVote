@@ -92,7 +92,7 @@ export default function SponsorPartners({ compact = false }: Props) {
 
       {/* Wahl.chat civil-tech partnership */}
       <div className="flex flex-col items-center gap-1 text-[10px] text-white/30 md:flex-row md:gap-2 md:text-xs">
-        <span>En partenariat civil-tech européen avec</span>
+        <span>En partenariat CIVIL-TECH européenne avec</span>
         <a
           href="https://wahl.chat"
           target="_blank"
