@@ -894,14 +894,11 @@ const handleChat = observe(
         const decoded = await auth.verifyIdToken(token);
         uid = decoded.uid;
       } catch {
-        // Token was provided but is invalid/expired/revoked — reject
-        return new Response(
-          JSON.stringify({ error: "Invalid or expired auth token" }),
-          {
-            status: 401,
-            headers: { "Content-Type": "application/json" },
-          },
-        );
+        // Token was provided but is invalid/expired/revoked — fall back to
+        // anonymous instead of rejecting.  This handles race conditions where
+        // the client sends a message before signInAnonymously() fully completes,
+        // as well as expired tokens and transient Firebase outages.
+        console.warn("[ai-chat] token verification failed, falling back to anonymous");
       }
     }
 
