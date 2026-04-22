@@ -33,6 +33,7 @@ import {
 } from "ai";
 
 import ChatPostcodePrompt from "../chat-postcode-prompt";
+import MiniDashboardCard from "../mini-dashboard-card";
 import SponsorPartners from "../sponsor-partners";
 
 import AiSdkFeatureRibbon from "./ai-sdk-feature-ribbon";
@@ -462,6 +463,13 @@ export default function AiSdkChatView({
                 <p className="text-muted-foreground text-center text-sm">
                   Sélectionnez les candidats dans le panneau latéral puis posez une question
                 </p>
+              )}
+
+              {municipalityCode && (
+                <MiniDashboardCard
+                  communeCode={municipalityCode}
+                  communeName={selectedMunicipality?.nom}
+                />
               )}
 
               {!municipalityCode && (
