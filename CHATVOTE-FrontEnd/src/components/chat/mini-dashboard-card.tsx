@@ -109,12 +109,107 @@ function buildCombinedMiniData(
 }
 
 // ---------------------------------------------------------------------------
+// Mock dashboard — used as a preview when the backend has no coverage for
+// the selected commune. Keeps the widget visible (instead of returning null)
+// so citizens see the shape of what's coming while we backfill data.
+// ---------------------------------------------------------------------------
+
+function buildMockDashboard(
+  communeCode: string,
+  communeName: string,
+): DashboardData {
+  return {
+    commune: {
+      code: communeCode,
+      name: communeName,
+      postal_code: "",
+      epci_nom: "",
+      list_count: 3,
+      lists: [
+        {
+          panel_number: 1,
+          list_label: "Liste A",
+          list_short_label: "A",
+          head_first_name: "",
+          head_last_name: "",
+          nuance_code: null,
+          nuance_label: null,
+        },
+        {
+          panel_number: 2,
+          list_label: "Liste B",
+          list_short_label: "B",
+          head_first_name: "",
+          head_last_name: "",
+          nuance_code: null,
+          nuance_label: null,
+        },
+        {
+          panel_number: 3,
+          list_label: "Liste C",
+          list_short_label: "C",
+          head_first_name: "",
+          head_last_name: "",
+          nuance_code: null,
+          nuance_label: null,
+        },
+      ],
+    },
+    stats: {
+      total_questions: 42,
+      total_lists: 3,
+      total_chunks: 128,
+      themes_detected: 6,
+    },
+    taxonomy: {
+      themes: [
+        {
+          theme: "Logement",
+          total_count: 28,
+          percentage: 32,
+          by_list: { "Liste A": 12, "Liste B": 9, "Liste C": 7 },
+        },
+        {
+          theme: "Mobilité",
+          total_count: 22,
+          percentage: 25,
+          by_list: { "Liste A": 6, "Liste B": 10, "Liste C": 6 },
+        },
+        {
+          theme: "Écologie",
+          total_count: 18,
+          percentage: 20,
+          by_list: { "Liste A": 4, "Liste B": 6, "Liste C": 8 },
+        },
+        {
+          theme: "Sécurité",
+          total_count: 12,
+          percentage: 14,
+          by_list: { "Liste A": 5, "Liste B": 4, "Liste C": 3 },
+        },
+        {
+          theme: "Éducation",
+          total_count: 8,
+          percentage: 9,
+          by_list: { "Liste A": 3, "Liste B": 2, "Liste C": 3 },
+        },
+      ],
+    },
+    citizen: {
+      total_messages: 0,
+      classified_messages: 0,
+      themes: [],
+    },
+  };
+}
+
+// ---------------------------------------------------------------------------
 // Component
 // ---------------------------------------------------------------------------
 
 type Props = {
   communeCode: string;
-  communeName: string;
+  communeName?: string;
 };
 
 // Feature-gated: hidden until NEXT_PUBLIC_ENABLE_COMMUNE_DASHBOARD=true
@@ -124,13 +219,13 @@ const COMMUNE_DASHBOARD_ENABLED =
 export default function MiniDashboardCard({ communeCode, communeName }: Props) {
   const [data, setData] = useState<DashboardData | null>(null);
   const [loading, setLoading] = useState(true);
-  const [hasEnoughData, setHasEnoughData] = useState(false);
+  const [isMock, setIsMock] = useState(false);
 
   useEffect(() => {
     if (!COMMUNE_DASHBOARD_ENABLED) return;
 
     setLoading(true);
-    setHasEnoughData(false);
+    setIsMock(false);
     setData(null);
 
     const abortController = new AbortController();
@@ -145,25 +240,31 @@ export default function MiniDashboardCard({ communeCode, communeName }: Props) {
         return res.json() as Promise<DashboardData>;
       })
       .then((d) => {
-        setData(d);
-        // Same check as commune page: need themes + lists
         const enough =
           d.taxonomy.themes.length > 0 && d.commune.lists.length > 0;
-        setHasEnoughData(enough);
+        if (enough) {
+          setData(d);
+          setIsMock(false);
+        } else {
+          setData(buildMockDashboard(communeCode, communeName ?? d.commune.name));
+          setIsMock(true);
+        }
         setLoading(false);
       })
       .catch((err) => {
         // Ignore abort errors (component unmounted or timed out)
         if (err instanceof Error && err.name === "AbortError") return;
+        // Fallback to mock so the widget still renders
+        setData(buildMockDashboard(communeCode, communeName ?? "Votre commune"));
+        setIsMock(true);
         setLoading(false);
-        setHasEnoughData(false);
       });
 
     return () => {
       clearTimeout(timeout);
       abortController.abort();
     };
-  }, [communeCode]);
+  }, [communeCode, communeName]);
 
   if (!COMMUNE_DASHBOARD_ENABLED) {
     return null;
@@ -184,12 +285,12 @@ export default function MiniDashboardCard({ communeCode, communeName }: Props) {
     );
   }
 
-  // Not enough data → don't render anything
-  if (!hasEnoughData || !data) {
+  if (!data) {
     return null;
   }
 
   const { commune, stats, taxonomy } = data;
+  const displayName = communeName ?? commune.name;
   const radarData = buildCombinedMiniData(taxonomy.themes, commune.lists);
   const topThemes = taxonomy.themes.slice(0, 3);
 
@@ -208,10 +309,10 @@ export default function MiniDashboardCard({ communeCode, communeName }: Props) {
               </div>
               <div>
                 <p className="text-foreground text-sm leading-tight font-semibold">
-                  {communeName}
+                  {displayName}
                 </p>
                 <p className="text-muted-foreground text-[11px]">
-                  Tableau de bord
+                  {isMock ? "Tableau de bord · Aperçu" : "Tableau de bord"}
                 </p>
               </div>
             </div>
